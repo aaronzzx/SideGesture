@@ -56,5 +56,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(libs.com.aaronzzx.fastcompose)
+    implementation(libs.com.aaronzzx.fastcompose.compose)
+    implementation(libs.com.aaronzzx.fastcompose.compose.accessibility)
 }

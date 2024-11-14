@@ -14,7 +14,8 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-com-aaronzzx-fastcompose = { group = "com.github.aaronzzx", name = "fastcompose", version.ref = "fastCompose" }
+com-aaronzzx-fastcompose-compose = { group = "com.github.aaronzzx.fastcompose", name = "compose", version.ref = "fastCompose" }
+com-aaronzzx-fastcompose-compose-accessibility = { group = "com.github.aaronzzx.fastcompose", name = "composeaccessibility", version.ref = "fastCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
