@@ -454,7 +454,7 @@ class MultipleActionHandler(
                     key(index) {
                         val animX = remember { Animatable(0f) }
                         val animY = remember { Animatable(0f) }
-                        val animScale = remember { Animatable(1f) }
+                        val animScale = remember { Animatable(0f) }
                         LaunchedEffect(key1 = Unit) {
                             val avgAngDeg = 35.0
                             val totalAngDeg = avgAngDeg * (actions.size - 1)
@@ -470,15 +470,16 @@ class MultipleActionHandler(
                             launch {
                                 animY.animateTo(dy.toFloat())
                             }
+                            launch {
+                                animScale.animateTo(1f)
+                            }
                         }
 
                         var originBounds by remember { mutableStateOf(Rect.Zero) }
                         LaunchedEffect(animX, animY, animScale) {
                             snapshotFlow { finger }
                                 .filter {
-                                    val zero = animX.value == 0f && animY.value == 0f
-                                    val running = animX.isRunning || animY.isRunning
-                                    !zero && !running
+                                    animScale.value >= 1f
                                 }
                                 .collect {
                                     val offset = Offset(x = animX.value, y = animY.value)
