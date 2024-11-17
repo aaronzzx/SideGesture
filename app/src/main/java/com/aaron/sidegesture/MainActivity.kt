@@ -1,7 +1,6 @@
 package com.aaron.sidegesture
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,10 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.aaron.compose.ktx.roundToPx
+import com.aaron.sidegesture.config.GestureAction
 import com.aaron.sidegesture.config.GestureActions
 import com.aaron.sidegesture.ui.GestureButton
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.blankj.utilcode.util.ToastUtils
 
 class MainActivity : ComponentActivity() {
 
@@ -39,37 +42,50 @@ private fun SideSlideContainer() {
         SideGesturePad(
             modifier = Modifier.fillMaxSize(),
             onAction = { action ->
-                Log.d("zzx", "$action")
+                ToastUtils.showShort("$action")
             },
             buttons = listOf(
                 GestureButton(
                     position = GestureButton.LEFT,
-                    start = 0f,
-                    end = 0.5f,
-                    pressActions = GestureActions(
-                        up = GestureActions.BACK,
-                        center = GestureActions.HOME,
-                        down = GestureActions.MENU
+                    width = 80.dp.roundToPx(),
+                    pressAction = GestureAction.Single(
+                        center = GestureActions.BACK
                     ),
-                    longPressActions = GestureActions(
-                        up = GestureActions.RECENT,
-                        center = GestureActions.VOLUME_UP,
-                        down = GestureActions.VOLUME_DOWN
+                    longPressAction = GestureAction.Multiple(
+                        up = listOf(
+                            GestureActions.HOME,
+                        ),
+                        center = listOf(
+                            GestureActions.HOME,
+                            GestureActions.RECENT,
+                        ),
+                        down = listOf(
+                            GestureActions.HOME,
+                            GestureActions.RECENT,
+                            GestureActions.MENU,
+                        )
                     )
                 ),
                 GestureButton(
                     position = GestureButton.RIGHT,
-                    start = 0f,
-                    end = 0.5f,
-                    pressActions = GestureActions(
-                        up = GestureActions.BACK,
-                        center = GestureActions.HOME,
-                        down = GestureActions.MENU
+                    width = 80.dp.roundToPx(),
+                    pressAction = GestureAction.Single(
+                        center = GestureActions.BACK
                     ),
-                    longPressActions = GestureActions(
-                        up = GestureActions.RECENT,
-                        center = GestureActions.VOLUME_UP,
-                        down = GestureActions.VOLUME_DOWN
+                    longPressAction = GestureAction.Multiple(
+                        up = listOf(
+                            GestureActions.HOME,
+                            GestureActions.RECENT,
+                            GestureActions.MENU,
+                            GestureActions.MUTE,
+                        ),
+                        center = listOf(
+                            GestureActions.HOME,
+                            GestureActions.RECENT,
+                            GestureActions.MENU,
+                            GestureActions.MUTE,
+                            GestureActions.VOLUME_DOWN
+                        )
                     )
                 )
             )

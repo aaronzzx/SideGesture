@@ -10,8 +10,8 @@ import com.aaron.sidegesture.ui.TriggerDirection
 @Keep
 data class GestureAngles(
     val p1: Float = 0.12f,
-    val p2: Float = 0.4f,
-    val p3: Float = 0.75f,
+    val p2: Float = 0.43f,
+    val p3: Float = 0.70f,
     val p4: Float = 0.88f
 ) {
     companion object {
