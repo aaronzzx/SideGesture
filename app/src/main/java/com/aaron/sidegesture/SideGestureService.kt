@@ -4,20 +4,24 @@ import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.IntSize
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
@@ -26,10 +30,17 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.sidegesture.config.GestureAction
-import com.aaron.sidegesture.config.GestureActions
-import com.aaron.sidegesture.ui.GestureButton
+import com.aaron.composeaccessibility.setComposeOverlay
+import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.entity.GestureActions
+import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
+import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.attachGestureButtons
+import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ui.SideGesturePad
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -59,30 +70,50 @@ class SideGestureService : ComponentAccessibilityService() {
 
     override fun onSetOverlay() {
         setComposeOverlay2(this, this, this) {
+            val coroutineScope = rememberCoroutineScope()
+            var rootSize by remember { mutableStateOf(IntSize.Zero) }
+
+            DisposableEffect(key1 = coroutineScope) {
+                val buttons = listOf(
+                    GestureButton(LEFT, 0.00f, 0.30f),
+                    GestureButton(LEFT, 0.35f, 0.65f),
+                    GestureButton(LEFT, 0.70f, 1.00f),
+                    GestureButton(RIGHT, 0.00f, 0.30f),
+                    GestureButton(RIGHT, 0.35f, 0.65f),
+                    GestureButton(RIGHT, 0.70f, 1.00f),
+                )
+                var windows: List<View>? = null
+                coroutineScope.launch {
+                    snapshotFlow { rootSize }
+                        .filter { it.width > 0 && it.height > 0 }
+                        .collect { size ->
+                            val windowsVal = windows
+                            if (!windowsVal.isNullOrEmpty()) {
+                                removeWindows(windowsVal)
+                            }
+                            windows = attachGestureButtons(size, buttons)
+                        }
+                }
+                onDispose {
+                    val windowsVal = windows
+                    if (!windowsVal.isNullOrEmpty()) {
+                        removeWindows(windowsVal)
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(color = Color.Blue.copy(alpha = 0.1f))
-                    .pointerInput(Unit) {
-                        var origin = Offset.Zero
-                        var finger = Offset.Zero
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                origin = offset
-                                finger = offset
-                            },
-                            onDrag = { _, dragAmount ->
-                                finger += dragAmount
-                                Log.d("zzx", "$finger")
-                            }
-                        )
+                    .onGloballyPositioned {
+                        rootSize = it.size
                     }
+                    .fillMaxSize()
             )
         }
     }
 
     private fun test() {
-        setComposeOverlay2(this, this, this) {
+        setComposeOverlay(this, this, this) {
             SideGesturePad(
                 modifier = Modifier.fillMaxSize(),
                 onAction = { action ->
@@ -100,18 +131,18 @@ class SideGestureService : ComponentAccessibilityService() {
                 },
                 buttons = listOf(
                     GestureButton(
-                        position = GestureButton.LEFT,
-                        pressAction = GestureAction.Single(
-                            up = GestureActions.LOCK_SCREEN,
-                            center = GestureActions.BACK
+                        position = LEFT,
+                        pressAction = GestureActions.Single(
+                            up = Actions.LOCK_SCREEN,
+                            center = Actions.BACK
                         ),
-                        longPressAction = GestureAction.Multiple(
+                        longPressAction = GestureActions.Multiple(
                             center = listOf(
-                                GestureActions.PREVIOUS_APP,
-                                GestureActions.PREVIOUS_APP,
-                                GestureActions.PREVIOUS_APP,
-                                GestureActions.PREVIOUS_APP,
-                                GestureActions.PREVIOUS_APP
+                                Actions.PREVIOUS_APP,
+                                Actions.PREVIOUS_APP,
+                                Actions.PREVIOUS_APP,
+                                Actions.PREVIOUS_APP,
+                                Actions.PREVIOUS_APP
                             )
                         )
                     ),
@@ -154,15 +185,14 @@ fun AccessibilityService.setComposeOverlay2(
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
         type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-
         format = PixelFormat.TRANSPARENT
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
 
-        flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-
-        width = 100
-        height = 400
+        width = WindowManager.LayoutParams.MATCH_PARENT
+        height = WindowManager.LayoutParams.MATCH_PARENT
         @SuppressLint("RtlHardcoded")
-        gravity = Gravity.CENTER
+        gravity = Gravity.LEFT or Gravity.TOP
     }
 
     val composeView = ComposeView(this).apply {

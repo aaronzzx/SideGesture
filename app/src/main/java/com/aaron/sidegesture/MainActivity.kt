@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.roundToPx
-import com.aaron.sidegesture.config.GestureAction
-import com.aaron.sidegesture.config.GestureActions
-import com.aaron.sidegesture.ui.GestureButton
+import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.entity.GestureActions
+import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.blankj.utilcode.util.ToastUtils
@@ -48,43 +48,43 @@ private fun SideSlideContainer() {
                 GestureButton(
                     position = GestureButton.LEFT,
                     width = 80.dp.roundToPx(),
-                    pressAction = GestureAction.Single(
-                        center = GestureActions.BACK
+                    pressAction = GestureActions.Single(
+                        center = Actions.BACK
                     ),
-                    longPressAction = GestureAction.Multiple(
+                    longPressAction = GestureActions.Multiple(
                         up = listOf(
-                            GestureActions.HOME,
+                            Actions.HOME,
                         ),
                         center = listOf(
-                            GestureActions.HOME,
-                            GestureActions.RECENT,
+                            Actions.HOME,
+                            Actions.RECENT,
                         ),
                         down = listOf(
-                            GestureActions.HOME,
-                            GestureActions.RECENT,
-                            GestureActions.MENU,
+                            Actions.HOME,
+                            Actions.RECENT,
+                            Actions.MENU,
                         )
                     )
                 ),
                 GestureButton(
                     position = GestureButton.RIGHT,
                     width = 80.dp.roundToPx(),
-                    pressAction = GestureAction.Single(
-                        center = GestureActions.BACK
+                    pressAction = GestureActions.Single(
+                        center = Actions.BACK
                     ),
-                    longPressAction = GestureAction.Multiple(
+                    longPressAction = GestureActions.Multiple(
                         up = listOf(
-                            GestureActions.HOME,
-                            GestureActions.RECENT,
-                            GestureActions.MENU,
-                            GestureActions.MUTE,
+                            Actions.HOME,
+                            Actions.RECENT,
+                            Actions.MENU,
+                            Actions.MUTE,
                         ),
                         center = listOf(
-                            GestureActions.HOME,
-                            GestureActions.RECENT,
-                            GestureActions.MENU,
-                            GestureActions.MUTE,
-                            GestureActions.VOLUME_DOWN
+                            Actions.HOME,
+                            Actions.RECENT,
+                            Actions.MENU,
+                            Actions.MUTE,
+                            Actions.VOLUME_DOWN
                         )
                     )
                 )

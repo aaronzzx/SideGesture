@@ -60,16 +60,18 @@ import androidx.compose.ui.zIndex
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
-import com.aaron.sidegesture.config.GestureAction
-import com.aaron.sidegesture.config.GestureActions
-import com.aaron.sidegesture.config.GestureAngles
-import com.aaron.sidegesture.config.Vibrators
-import com.aaron.sidegesture.ui.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.ui.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.entity.GestureAngles
+import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
+import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.actionBy
+import com.aaron.sidegesture.ktx.fraction
+import com.aaron.sidegesture.ktx.getTriggerDirection
+import com.aaron.sidegesture.ktx.vibrate
 import com.aaron.sidegesture.ui.TriggerDirection.Center
 import com.aaron.sidegesture.ui.TriggerDirection.Down
 import com.aaron.sidegesture.ui.TriggerDirection.Up
-import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -283,26 +285,26 @@ class StateHolder(
             } else if (!button.longPressNeedFingerUp &&
                 timeMs - longPressFirstTriggerMs >= longPressDelayMs
             ) {
-                if (button.vibrators.forLongPress && !longPressTriggerFlags) {
+                if (button.vibrations.forLongPress && !longPressTriggerFlags) {
                     longPressTriggerFlags = true
-                    button.vibrators.vibrate()
+                    button.vibrations.vibrate()
                 }
                 val listener = listener
-                val actions = button.longPressAction.select(triggerDirection)
+                val actions = button.longPressAction.actionBy(triggerDirection)
                 if (actions.size > 1) {
                     return actions
                 } else if (actions.size == 1) {
                     val action = actions.first()
-                    if (action != GestureActions.NONE) {
+                    if (action != Actions.NONE) {
                         listener.onTrigger(action)
                         return listOf(action)
                     }
                 }
             }
         } else if (canDistanceTrigger(false)) {
-            if (button.vibrators.forPress && !pressTriggerFlags) {
+            if (button.vibrations.forPress && !pressTriggerFlags) {
                 pressTriggerFlags = true
-                button.vibrators.vibrate()
+                button.vibrations.vibrate()
             }
         } else {
             longPressTriggerFlags = false
@@ -320,16 +322,16 @@ class StateHolder(
             canDistanceTrigger(true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
-            val actions = button.longPressAction.select(triggerDirection)
+            val actions = button.longPressAction.actionBy(triggerDirection)
             if (actions.isNotEmpty()) {
                 val action = actions.first()
-                if (action != GestureActions.NONE) {
+                if (action != Actions.NONE) {
                     listener.onTrigger(action)
                 }
             }
         } else if (canDistanceTrigger(false)) {
-            val action = button.pressAction.select(triggerDirection)
-            if (action != GestureActions.NONE) {
+            val action = button.pressAction.actionBy(triggerDirection)
+            if (action != Actions.NONE) {
                 listener.onTrigger(action)
             }
         }
@@ -377,7 +379,7 @@ class StateHolder(
                         longPressAction.center.isNotEmpty()
             }
             return distance >= button.pressTriggerDistance &&
-                    pressAction.center != GestureActions.NONE
+                    pressAction.center != Actions.NONE
         } else if (triggerDirection == Up || triggerDirection == Down) {
             val edge1 = abs(fingerX - originX)
             val edge2 = abs(fingerY - originY)
@@ -391,9 +393,9 @@ class StateHolder(
             }
             val canTrigger = edge3 >= button.pressTriggerDistance
             if (triggerDirection == Up) {
-                return canTrigger && pressAction.up != GestureActions.NONE
+                return canTrigger && pressAction.up != Actions.NONE
             }
-            return canTrigger && pressAction.down != GestureActions.NONE
+            return canTrigger && pressAction.down != Actions.NONE
         }
         return false
     }
@@ -501,8 +503,8 @@ class MultipleActionHandler(
                                             animScale.animateTo(1.15f)
                                             pendingActions[index] = action
                                             val button = button
-                                            if (button.vibrators.forActionPanel) {
-                                                button.vibrators.vibrate()
+                                            if (button.vibrations.forActionPanel) {
+                                                button.vibrations.vibrate()
                                             }
                                         }
                                     } else {
@@ -562,7 +564,7 @@ class MultipleActionHandler(
     fun onDragEnd() {
         val pendingActions = pendingActions
         val action = pendingActions.values.find { it != null }
-        if (action != null && action != GestureActions.NONE) {
+        if (action != null && action != Actions.NONE) {
             listener.onTrigger(action)
         }
         reset()
@@ -589,28 +591,6 @@ class MultipleActionHandler(
 interface ActionListener {
 
     fun onTrigger(action: Int)
-}
-
-@Keep
-data class GestureButton(
-    val position: Int,
-    val start: Float = 0f,
-    val end: Float = 1f,
-    val width: Int = ConvertUtils.dp2px(20f),
-    val pressAction: GestureAction<Int> = GestureAction.Single(),
-    val longPressAction: GestureAction<List<Int>> = GestureAction.Multiple(),
-    val pressTriggerDistance: Int = ConvertUtils.dp2px(30f),
-    val longPressTriggerDistance: Int = ConvertUtils.dp2px(100f),
-    val longPressTriggerDelayMs: Long = 100L,
-    val longPressNeedFingerUp: Boolean = false,
-    val vibrators: Vibrators = Vibrators()
-) {
-    companion object {
-        const val LEFT = 1
-        const val RIGHT = 2
-    }
-
-    val fraction: Float get() = end - start
 }
 
 enum class TriggerDirection {
