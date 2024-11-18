@@ -9,7 +9,7 @@ import androidx.annotation.Keep
 @Keep
 data class GestureAngles(
     val p1: Float = 0.12f,
-    val p2: Float = 0.43f,
+    val p2: Float = 0.40f,
     val p3: Float = 0.70f,
     val p4: Float = 0.88f
 )

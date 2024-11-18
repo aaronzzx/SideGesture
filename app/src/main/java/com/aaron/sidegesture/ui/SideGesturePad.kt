@@ -5,13 +5,8 @@ import androidx.annotation.Keep
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -27,16 +22,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.AbsoluteAlignment.TopLeft
-import androidx.compose.ui.AbsoluteAlignment.TopRight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.DrawResult
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
@@ -46,19 +41,14 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
-import androidx.compose.ui.zIndex
 import com.aaron.compose.ktx.clipToBackground
-import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.config.Actions
 import com.aaron.sidegesture.entity.GestureAngles
@@ -66,12 +56,13 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionBy
-import com.aaron.sidegesture.ktx.fraction
+import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
 import com.aaron.sidegesture.ktx.vibrate
 import com.aaron.sidegesture.ui.TriggerDirection.Center
 import com.aaron.sidegesture.ui.TriggerDirection.Down
 import com.aaron.sidegesture.ui.TriggerDirection.Up
+import com.aaron.sidegesture.utils.GestureHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -106,112 +97,101 @@ fun SideGesturePad(
             }
         }
     }
-    Box(
-        modifier = modifier.onSizeChanged {
-            rootSize = it.toSize()
-        }
-    ) {
-        buttons.fastForEach { button ->
-            key(button) {
-                val multipleActionHandler = rememberMultipleActionHandler(
-                    rootSize = rootSize,
-                    button = button,
-                    listener = actionListener
-                )
-                val stateHolder = rememberStateHolder(
-                    coroutineScope = coroutineScope,
-                    rootSize = rootSize,
-                    button = button,
-                    angles = angles,
-                    listener = actionListener
-                )
-                val defaultIcon = rememberVectorPainter(
-                    image = when (button.position) {
-                        LEFT -> Icons.Default.ArrowForward
-                        else -> Icons.Default.ArrowBack
-                    }
-                )
-                Box(
-                    modifier = Modifier
-                        .align(TopLeft.takeIf { button.position == LEFT } ?: TopRight)
-                        .drawWithCache {
-                            animationStyle.draw(this, stateHolder, defaultIcon)
-                        }
-                        .offset {
-                            IntOffset(x = 0, y = (rootSize.height * button.start).toInt())
-                        }
-                        .width(button.width.toDp())
-                        .fillMaxHeight(button.fraction)
-                        .background(color = Color.Blue.copy(alpha = 0.1f))
-                        .pointerInput(multipleActionHandler, stateHolder) {
-                            var isCancelGesture = false
-                            var isMultipleAction = false
-                            detectDragGestures(
-                                onDragStart = onDragStart@{ offset ->
-                                    if (obj != null && obj != stateHolder) {
-                                        return@onDragStart
-                                    }
-                                    multipleActionHandler.onDragStart(
-                                        offset = offset,
-                                        buttonSize = size.toSize(),
-                                        position = button.position
-                                    )
-                                    obj = stateHolder
-                                    stateHolder.onStartDrag(offset)
-                                },
-                                onDrag = onDrag@{ _, dragAmount ->
-                                    if (obj != stateHolder || isCancelGesture) {
-                                        return@onDrag
-                                    }
-                                    multipleActionHandler.onDrag(dragAmount)
-                                    if (isMultipleAction) {
-                                        // 已经触发长动作
-                                        return@onDrag
-                                    }
-                                    val actions = stateHolder.onDrag(dragAmount)
-                                    if (actions != null) {
-                                        if (actions.size > 1) {
-                                            // 触发长动作，拦截当前拖拽
-                                            isMultipleAction = true
-                                            stateHolder.onDragCancel()
-                                            multipleActionHandler.onExpanded(
-                                                button.position,
-                                                actions
-                                            )
-                                        } else if (actions.size == 1) {
-                                            isCancelGesture = true
-                                            stateHolder.onDragCancel()
-                                        }
-                                    } else {
-                                        isCancelGesture = true
-                                        stateHolder.onDragCancel()
-                                    }
-                                },
-                                onDragEnd = onDragEnd@{
-                                    if (obj != stateHolder) {
-                                        return@onDragEnd
-                                    }
-                                    if (isMultipleAction) {
-                                        multipleActionHandler.onDragEnd()
-                                    } else if (!isCancelGesture) {
-                                        stateHolder.onDragEnd()
-                                    }
-                                    obj = null
-                                    isCancelGesture = false
-                                    isMultipleAction = false
-                                },
-                                onDragCancel = onDragCancel@{
-                                    obj = null
-                                    isCancelGesture = false
-                                    isMultipleAction = false
-                                    stateHolder.onDragCancel()
-                                    multipleActionHandler.onDragCancel()
-                                }
-                            )
-                        }
-                )
-                multipleActionHandler.ActionPanel()
+
+    val multipleActionHandler = rememberMultipleActionHandler(listener = actionListener)
+    val stateHolder = rememberStateHolder(
+        coroutineScope = coroutineScope,
+        rootSize = rootSize,
+        buttons = buttons,
+        angles = angles,
+        listener = actionListener
+    )
+    val arrowBack = rememberVectorPainter(Icons.Default.ArrowBack)
+    val arrowForward = rememberVectorPainter(Icons.Default.ArrowForward)
+    val defaultIcons = remember(arrowForward, arrowBack) { arrowForward to arrowBack }
+
+    var isCancelGesture by remember { mutableStateOf(false) }
+    var isMultipleAction by remember { mutableStateOf(false) }
+    GestureHandler(
+        onDragStart = onDragStart@{ offset ->
+            if (obj != null && obj != stateHolder) {
+                return@onDragStart
             }
+            obj = stateHolder
+            multipleActionHandler.onDragStart(offset)
+            stateHolder.onDragStart(offset)
+        },
+        onDrag = onDrag@{ dragAmount ->
+            if (obj != stateHolder || isCancelGesture) {
+                return@onDrag
+            }
+            multipleActionHandler.onDrag(dragAmount)
+            if (isMultipleAction) {
+                // 已经触发长动作
+                return@onDrag
+            }
+            val actions = stateHolder.onDrag(dragAmount)
+            if (actions != null) {
+                if (actions.size > 1) {
+                    // 触发长动作，拦截当前拖拽
+                    isMultipleAction = true
+                    stateHolder.onDragCancel()
+                    val button = stateHolder.button
+                    if (button != null) {
+                        multipleActionHandler.onExpanded(actions, button.position)
+                    }
+                } else if (actions.size == 1) {
+                    isCancelGesture = true
+                    stateHolder.onDragCancel()
+                }
+            } else {
+                isCancelGesture = true
+                stateHolder.onDragCancel()
+            }
+        },
+        onDragEnd = onDragEnd@{
+            if (obj != stateHolder) {
+                return@onDragEnd
+            }
+            if (isMultipleAction) {
+                multipleActionHandler.onDragEnd()
+            } else if (!isCancelGesture) {
+                stateHolder.onDragEnd()
+            }
+            obj = null
+            isCancelGesture = false
+            isMultipleAction = false
+        },
+        onDragCancel = onDragCancel@{
+            obj = null
+            isCancelGesture = false
+            isMultipleAction = false
+            stateHolder.onDragCancel()
+            multipleActionHandler.onDragCancel()
+        }
+    )
+    Box(
+        modifier = modifier
+            .onSizeChanged {
+                rootSize = it.toSize()
+            }
+            .drawBehind {
+//                buttons.fastForEach { button ->
+//                    val bounds = button.bounds(rootSize)
+//                    drawRect(
+//                        color = Color(button.color),
+//                        topLeft = bounds.topLeft,
+//                        size = bounds.size
+//                    )
+//                }
+            }
+            .drawWithCache {
+                animationStyle.draw(this, stateHolder, defaultIcons)
+            }
+    ) {
+        val button = stateHolder.button
+        if (button != null) {
+            multipleActionHandler.ActionPanel(button)
         }
     }
 }
@@ -220,20 +200,23 @@ fun SideGesturePad(
 private fun rememberStateHolder(
     coroutineScope: CoroutineScope,
     rootSize: Size,
-    button: GestureButton,
+    buttons: List<GestureButton>,
     angles: GestureAngles,
     listener: ActionListener
-): StateHolder = remember(coroutineScope, rootSize, button, angles, listener) {
-    StateHolder(coroutineScope, rootSize, button, angles, listener)
+): StateHolder = remember(coroutineScope, rootSize, buttons, angles, listener) {
+    StateHolder(coroutineScope, rootSize, buttons, angles, listener)
 }
 
 class StateHolder(
     val coroutineScope: CoroutineScope,
     val rootSize: Size,
-    val button: GestureButton,
+    val buttons: List<GestureButton>,
     val angles: GestureAngles,
     private val listener: ActionListener
 ) {
+
+    var button: GestureButton? by mutableStateOf(null)
+        private set
 
     val originY = Animatable(Float.NaN)
     val fingerX = Animatable(Float.NaN)
@@ -241,8 +224,8 @@ class StateHolder(
 
     var triggerDirection = Center
 
-    var origin = Offset.Zero
-    var finger = Offset.Zero
+    private var origin = Offset.Unspecified
+    private var finger = Offset.Unspecified
 
     private var longPressFirstTriggerMs = 0L
     private var longPressTriggerFlags = false
@@ -250,12 +233,13 @@ class StateHolder(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
-    fun onStartDrag(offset: Offset) {
+    fun onDragStart(offset: Offset) {
         origin = offset
         finger = offset
+        button = buttons.find(rootSize, offset)
+
         coroutineScope.launch {
-            val initialY = rootSize.height * button.start
-            val curY = initialY + offset.y
+            val curY = offset.y
             originY.snapTo(curY)
             fingerY.snapTo(curY)
             fingerX.snapTo(0f)
@@ -266,9 +250,11 @@ class StateHolder(
      * @return 返回null表示不识别任何手势，空列表表示还没触发动作，单列表表示触发一个动作，长列表表示触发长动作
      */
     fun onDrag(dragAmount: Offset): List<Int>? {
+        val button = button ?: return null
+
         finger += dragAmount
         // 没触发方向，这一轮不再识别手势
-        triggerDirection = calcDirection() ?: return null
+        triggerDirection = calcDirection(button.position) ?: return null
         coroutineScope.launch {
             val fingerX = fingerX
             val fingerY = fingerY
@@ -276,9 +262,8 @@ class StateHolder(
             fingerY.snapTo(fingerY.value + dragAmount.y)
         }
 
-        val button = button
         val longPressDelayMs = button.longPressTriggerDelayMs
-        if (canDistanceTrigger(true)) {
+        if (canDistanceTrigger(button, true)) {
             val timeMs = SystemClock.uptimeMillis()
             if (longPressFirstTriggerMs == 0L) {
                 longPressFirstTriggerMs = timeMs
@@ -301,7 +286,7 @@ class StateHolder(
                     }
                 }
             }
-        } else if (canDistanceTrigger(false)) {
+        } else if (canDistanceTrigger(button, false)) {
             if (button.vibrations.forPress && !pressTriggerFlags) {
                 pressTriggerFlags = true
                 button.vibrations.vibrate()
@@ -314,12 +299,12 @@ class StateHolder(
     }
 
     fun onDragEnd() {
-        val button = button
+        val button = checkNotNull(button)
         val listener = listener
         val longPressDelayMs = button.longPressTriggerDelayMs
         val triggerDirection = triggerDirection
         if (button.longPressNeedFingerUp &&
-            canDistanceTrigger(true) &&
+            canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
             val actions = button.longPressAction.actionBy(triggerDirection)
@@ -329,7 +314,7 @@ class StateHolder(
                     listener.onTrigger(action)
                 }
             }
-        } else if (canDistanceTrigger(false)) {
+        } else if (canDistanceTrigger(button, false)) {
             val action = button.pressAction.actionBy(triggerDirection)
             if (action != Actions.NONE) {
                 listener.onTrigger(action)
@@ -343,17 +328,18 @@ class StateHolder(
     }
 
     private fun reset() {
-        origin = Offset.Zero
-        finger = Offset.Zero
+        origin = Offset.Unspecified
+        finger = Offset.Unspecified
         longPressFirstTriggerMs = 0L
         coroutineScope.launch {
             val originY = originY
             val fingerX = fingerX
             val fingerY = fingerY
-            launch {
+            val job = launch {
                 fingerY.animateTo(originY.value, animationSpec)
             }
             fingerX.animateTo(0f, animationSpec)
+            job.join()
             originY.snapTo(Float.NaN)
             fingerX.snapTo(Float.NaN)
             fingerY.snapTo(Float.NaN)
@@ -363,8 +349,7 @@ class StateHolder(
     /**
      * 手指划过的距离是否足够触发动作，上和下的动作需要按斜线距离计算
      */
-    private fun canDistanceTrigger(isLongPress: Boolean): Boolean {
-        val button = button
+    private fun canDistanceTrigger(button: GestureButton, isLongPress: Boolean): Boolean {
         val pressAction = button.pressAction
         val longPressAction = button.longPressAction
         val originX = origin.x
@@ -400,10 +385,10 @@ class StateHolder(
         return false
     }
 
-    private fun calcDirection(): TriggerDirection? {
+    private fun calcDirection(position: Int): TriggerDirection? {
         val origin = origin
         val finger = finger
-        val x = when (button.position == LEFT) {
+        val x = when (position == LEFT) {
             true -> finger.x
             else -> origin.x - finger.x
         }
@@ -422,35 +407,28 @@ class StateHolder(
 
 @Composable
 private fun rememberMultipleActionHandler(
-    rootSize: Size,
-    button: GestureButton,
     listener: ActionListener
-): MultipleActionHandler = remember(rootSize, button, listener) {
-    MultipleActionHandler(rootSize, button, listener)
+): MultipleActionHandler = remember(listener) {
+    MultipleActionHandler(listener)
 }
 
-class MultipleActionHandler(
-    private val rootSize: Size,
-    private val button: GestureButton,
-    private val listener: ActionListener
-) {
+class MultipleActionHandler(private val listener: ActionListener) {
 
     private var origin: Origin by mutableStateOf(Origin())
-    private var finger: Offset by mutableStateOf(Offset.Zero)
+    private var finger: Offset by mutableStateOf(Offset.Unspecified)
     private var actions: List<Int> by mutableStateOf(emptyList())
     private var pendingActions: MutableMap<Int, Int?> = mutableMapOf()
 
     @Composable
-    fun ActionPanel() {
+    fun ActionPanel(button: GestureButton) {
         val actions by rememberUpdatedState(newValue = actions)
         val origin by rememberUpdatedState(newValue = origin)
         val finger by rememberUpdatedState(newValue = finger)
         val itemSize = 60.dp
         val hypot = itemSize.toPx() * 2f
-        if (!origin.isEmpty && finger != Offset.Zero && actions.isNotEmpty()) {
+        if (!origin.isInvalid && finger != Offset.Unspecified && actions.isNotEmpty()) {
             Box(
                 Modifier
-                    .zIndex(1f)
                     .graphicsLayer {
                         val offsetX = when (origin.position) {
                             LEFT -> itemSize.toPx() / 3
@@ -502,7 +480,6 @@ class MultipleActionHandler(
                                         if (cache != action) {
                                             animScale.animateTo(1.15f)
                                             pendingActions[index] = action
-                                            val button = button
                                             if (button.vibrations.forActionPanel) {
                                                 button.vibrations.vibrate()
                                             }
@@ -540,23 +517,18 @@ class MultipleActionHandler(
         }
     }
 
-    fun onDragStart(offset: Offset, buttonSize: Size, position: Int) {
+    fun onDragStart(offset: Offset) {
         origin = Origin()
-        if (position == LEFT) {
-            finger = offset
-        } else {
-            val offsetX = rootSize.width - buttonSize.width
-            finger = offset.copy(x = offset.x + offsetX)
-        }
+        finger = offset
     }
 
     fun onDrag(dragAmount: Offset) {
         finger += dragAmount
     }
 
-    fun onExpanded(position: Int, actions: List<Int>) {
+    fun onExpanded(actions: List<Int>, position: Int) {
         this.actions = actions
-        if (origin.isEmpty) {
+        if (origin.isInvalid) {
             origin = Origin(finger, position)
         }
     }
@@ -575,16 +547,16 @@ class MultipleActionHandler(
     }
 
     private fun reset() {
-        finger = Offset.Zero
+        finger = Offset.Unspecified
         actions = emptyList()
         pendingActions.clear()
     }
 
     private data class Origin(
-        val offset: Offset = Offset.Zero,
+        val offset: Offset = Offset.Unspecified,
         val position: Int = -1
     ) {
-        val isEmpty: Boolean get() = offset == Offset.Zero || position == -1
+        val isInvalid: Boolean get() = offset.isUnspecified || position == -1
     }
 }
 
@@ -600,7 +572,11 @@ enum class TriggerDirection {
 
 sealed interface AnimationStyle {
 
-    fun draw(drawScope: CacheDrawScope, stateHolder: StateHolder, defaultIcon: Painter): DrawResult
+    fun draw(
+        drawScope: CacheDrawScope,
+        stateHolder: StateHolder,
+        defaultIcons: Pair<Painter, Painter>
+    ): DrawResult
 
     @Keep
     data class Wave(
@@ -614,10 +590,9 @@ sealed interface AnimationStyle {
         override fun draw(
             drawScope: CacheDrawScope,
             stateHolder: StateHolder,
-            defaultIcon: Painter
+            defaultIcons: Pair<Painter, Painter>
         ): DrawResult = drawScope.run {
             val rootSize = stateHolder.rootSize
-            val button = stateHolder.button
             val bezierPath = Path()
             // 贝塞尔间距
             val bezierSpacing = 60.dp.toPx()
@@ -637,6 +612,7 @@ sealed interface AnimationStyle {
                 if (originY.isNaN() || fingerX.isNaN() || fingerY.isNaN()) {
                     return@onDrawWithContent
                 }
+                val button = stateHolder.button ?: return@onDrawWithContent
                 if (button.position == LEFT && fingerX < 0f) {
                     return@onDrawWithContent
                 } else if (button.position == RIGHT && fingerX > 0f) {
@@ -709,6 +685,9 @@ sealed interface AnimationStyle {
                 val bezierBounds = bezierPath.getBounds().translate(Offset(0f, -offsetY))
                 if (iconUriString == null) {
                     // 默认图标
+                    val defaultIcon = defaultIcons.first.takeIf {
+                        button.position == LEFT
+                    } ?: defaultIcons.second
                     defaultIcon.run {
                         val degree = when (stateHolder.triggerDirection) {
                             Up -> if (button.position == LEFT) -45f else 45f

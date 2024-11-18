@@ -8,7 +8,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -30,7 +29,6 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.composeaccessibility.setComposeOverlay
 import com.aaron.sidegesture.config.Actions
 import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.GestureButton
@@ -39,6 +37,7 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ui.SideGesturePad
+import com.blankj.utilcode.util.ToastUtils
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
@@ -69,19 +68,37 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onSetOverlay() {
+        val buttons = listOf(
+            GestureButton(
+                position = LEFT,
+                start = 0.3f,
+                end = 1.0f,
+                pressAction = GestureActions.Single(
+                    up = Actions.LOCK_SCREEN,
+                    center = Actions.BACK
+                ),
+                longPressAction = GestureActions.Multiple(
+                    center = listOf(Actions.PREVIOUS_APP)
+                )
+            ),
+            GestureButton(
+                position = RIGHT,
+                start = 0.3f,
+                end = 1.0f,
+                pressAction = GestureActions.Single(
+                    up = Actions.LOCK_SCREEN,
+                    center = Actions.BACK
+                ),
+                longPressAction = GestureActions.Multiple(
+                    center = listOf(Actions.PREVIOUS_APP)
+                )
+            )
+        )
         setComposeOverlay2(this, this, this) {
             val coroutineScope = rememberCoroutineScope()
             var rootSize by remember { mutableStateOf(IntSize.Zero) }
 
             DisposableEffect(key1 = coroutineScope) {
-                val buttons = listOf(
-                    GestureButton(LEFT, 0.00f, 0.30f),
-                    GestureButton(LEFT, 0.35f, 0.65f),
-                    GestureButton(LEFT, 0.70f, 1.00f),
-                    GestureButton(RIGHT, 0.00f, 0.30f),
-                    GestureButton(RIGHT, 0.35f, 0.65f),
-                    GestureButton(RIGHT, 0.70f, 1.00f),
-                )
                 var windows: List<View>? = null
                 coroutineScope.launch {
                     snapshotFlow { rootSize }
@@ -102,67 +119,36 @@ class SideGestureService : ComponentAccessibilityService() {
                 }
             }
 
-            Box(
+            SideGesturePad(
                 modifier = Modifier
                     .onGloballyPositioned {
                         rootSize = it.size
                     }
-                    .fillMaxSize()
-            )
-        }
-    }
-
-    private fun test() {
-        setComposeOverlay(this, this, this) {
-            SideGesturePad(
-                modifier = Modifier.fillMaxSize(),
+                    .fillMaxSize(),
                 onAction = { action ->
-//                    when (action) {
-//                        GestureActions.BACK -> {
-//                            performGlobalAction(GLOBAL_ACTION_BACK)
-//                        }
-//                        GestureActions.LOCK_SCREEN -> {
-//                            performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
-//                        }
-//                        GestureActions.PREVIOUS_APP -> {
-//                            previousApp()
-//                        }
-//                    }
+                    when (action) {
+                        Actions.BACK -> {
+                            performGlobalAction(GLOBAL_ACTION_BACK)
+                        }
+                        Actions.LOCK_SCREEN -> {
+                            performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                        }
+                        Actions.PREVIOUS_APP -> {
+                            previousApp()
+                        }
+                    }
                 },
-                buttons = listOf(
-                    GestureButton(
-                        position = LEFT,
-                        pressAction = GestureActions.Single(
-                            up = Actions.LOCK_SCREEN,
-                            center = Actions.BACK
-                        ),
-                        longPressAction = GestureActions.Multiple(
-                            center = listOf(
-                                Actions.PREVIOUS_APP,
-                                Actions.PREVIOUS_APP,
-                                Actions.PREVIOUS_APP,
-                                Actions.PREVIOUS_APP,
-                                Actions.PREVIOUS_APP
-                            )
-                        )
-                    ),
-//                    GestureButton(
-//                        position = GestureButton.RIGHT,
-//                        pressAction = GestureAction.Single(
-//                            up = GestureActions.LOCK_SCREEN,
-//                            center = GestureActions.BACK
-//                        ),
-//                        longPressAction = GestureAction.Multiple(
-//                            center = listOf(GestureActions.PREVIOUS_APP)
-//                        )
-//                    )
-                )
+                buttons = buttons,
             )
         }
     }
 
     private fun previousApp() {
-        val prevPkgName = prevPkgName ?: return
+        val prevPkgName = prevPkgName
+        if (prevPkgName.isNullOrEmpty()) {
+            ToastUtils.showShort("没有上一个应用")
+            return
+        }
         val curPkgName = curPkgName
         if (prevPkgName == curPkgName) return
         val intent = packageManager.getLaunchIntentForPackage(prevPkgName) ?: return
@@ -196,12 +182,12 @@ fun AccessibilityService.setComposeOverlay2(
     }
 
     val composeView = ComposeView(this).apply {
-        setContent {
-            content()
-        }
         setViewTreeLifecycleOwner(lifecycleOwner)
         setViewTreeViewModelStoreOwner(viewModelStoreOwner)
         setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
+        setContent {
+            content()
+        }
     }
     wm.addView(composeView, lp)
 

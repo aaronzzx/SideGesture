@@ -50,10 +50,9 @@ fun AccessibilityService.attachGestureButton(
 
     @SuppressLint("ClickableViewAccessibility")
     val view = View(this).apply {
-        setBackgroundColor(button.color)
         setOnTouchListener { _, event ->
             MotionEventHelper.dispatchMotionEvent(event)
-            true
+            false
         }
     }
     wm.addView(view, lp)

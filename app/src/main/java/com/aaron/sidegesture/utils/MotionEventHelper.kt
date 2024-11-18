@@ -6,10 +6,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.Offset
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
  * @author aaronzzxup@gmail.com
@@ -17,8 +16,8 @@ import kotlinx.coroutines.flow.filterNotNull
  */
 object MotionEventHelper {
 
-    private val _motionEvent: MutableStateFlow<MotionEvent?> = MutableStateFlow(null)
-    val motionEvent: StateFlow<MotionEvent?> = _motionEvent.asStateFlow()
+    private val _motionEvent: MutableLiveData<MotionEvent?> = MutableLiveData(null)
+    val motionEvent: LiveData<MotionEvent?> = _motionEvent
 
     fun dispatchMotionEvent(event: MotionEvent) {
         _motionEvent.value = event
@@ -36,26 +35,44 @@ fun GestureHandler(
     val curOnDragEnd by rememberUpdatedState(newValue = onDragEnd)
     val curOnDragCancel by rememberUpdatedState(newValue = onDragCancel)
     val curOnDrag by rememberUpdatedState(newValue = onDrag)
-    LaunchedEffect(key1 = MotionEventHelper) {
-        var offset = Offset.Unspecified
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, MotionEventHelper) {
+        var dragging = false
+        var x = -1f
+        var y = -1f
         MotionEventHelper
             .motionEvent
-            .filterNotNull()
-            .collect { event ->
-                val rawOffset = Offset(event.rawX, event.rawY)
+            .observe(lifecycleOwner) { event ->
+                event ?: return@observe
+                val rawX = event.rawX
+                val rawY = event.rawY
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        curOnDragStart(rawOffset)
+                        x = rawX
+                        y = rawY
+                        curOnDragStart(Offset(x, y))
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        offset += rawOffset
-                        curOnDrag(offset)
+                        val offsetX = rawX - x
+                        val offsetY = rawY - y
+                        x = rawX
+                        y = rawY
+                        if (offsetX != 0f) {
+                            curOnDrag(Offset(offsetX, offsetY))
+                        }
                     }
                     MotionEvent.ACTION_UP -> {
                         curOnDragEnd()
+                        dragging = false
+                        x = -1f
+                        y = -1f
                     }
                     MotionEvent.ACTION_CANCEL -> {
                         curOnDragCancel()
+                        dragging = false
+                        x = -1f
+                        y = -1f
                     }
                     else -> Unit
                 }
