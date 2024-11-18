@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
+import android.content.Intent
 import android.provider.Settings
 import android.text.TextUtils
 
@@ -9,6 +10,16 @@ import android.text.TextUtils
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+fun Context.gotoAccessibilitySettings() {
+    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+    try {
+        startActivity(intent)
+    } catch (ignored: Exception) {
+        intent.action = Settings.ACTION_SETTINGS
+        startActivity(intent)
+    }
+}
 
 fun Context.isAccessibilitySettingsOn(clazz: Class<out AccessibilityService?>): Boolean {
     // 判断设备的无障碍功能是否可用

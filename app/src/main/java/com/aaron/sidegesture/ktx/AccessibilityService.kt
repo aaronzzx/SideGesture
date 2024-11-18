@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ktx
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.graphics.PixelFormat
+import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -33,7 +34,10 @@ fun AccessibilityService.attachGestureButton(
     val lp = WindowManager.LayoutParams().apply {
         type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         format = PixelFormat.TRANSPARENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
 
         val windowHeight = size.height
         width = button.width
@@ -67,5 +71,8 @@ fun AccessibilityService.removeWindows(views: Collection<View>) {
 
 fun AccessibilityService.removeWindow(view: View) {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
-    wm.removeView(view)
+    try {
+        wm.removeView(view)
+    } catch (ignored: Exception) {
+    }
 }

@@ -4,6 +4,8 @@ import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -37,6 +39,7 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ui.SideGesturePad
+import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.blankj.utilcode.util.ToastUtils
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -78,6 +81,13 @@ class SideGestureService : ComponentAccessibilityService() {
                     center = Actions.BACK
                 ),
                 longPressAction = GestureActions.Multiple(
+                    up = listOf(
+                        Actions.HOME,
+                        Actions.HOME,
+                        Actions.HOME,
+                        Actions.HOME,
+                        Actions.HOME
+                    ),
                     center = listOf(Actions.PREVIOUS_APP)
                 )
             ),
@@ -95,51 +105,59 @@ class SideGestureService : ComponentAccessibilityService() {
             )
         )
         setComposeOverlay2(this, this, this) {
-            val coroutineScope = rememberCoroutineScope()
-            var rootSize by remember { mutableStateOf(IntSize.Zero) }
+            SideGestureTheme {
+                val coroutineScope = rememberCoroutineScope()
+                var rootSize by remember { mutableStateOf(IntSize.Zero) }
 
-            DisposableEffect(key1 = coroutineScope) {
-                var windows: List<View>? = null
-                coroutineScope.launch {
-                    snapshotFlow { rootSize }
-                        .filter { it.width > 0 && it.height > 0 }
-                        .collect { size ->
-                            val windowsVal = windows
-                            if (!windowsVal.isNullOrEmpty()) {
-                                removeWindows(windowsVal)
+                DisposableEffect(coroutineScope) {
+                    var windows: List<View>? = null
+                    coroutineScope.launch {
+                        snapshotFlow { rootSize }
+                            .filter { it.width > 0 && it.height > 0 }
+                            .collect { size ->
+                                Log.d("zzx", "$size")
+                                val windowsVal = windows
+                                if (!windowsVal.isNullOrEmpty()) {
+                                    removeWindows(windowsVal)
+                                }
+                                windows = attachGestureButtons(size, buttons)
                             }
-                            windows = attachGestureButtons(size, buttons)
+                    }
+                    onDispose {
+                        val windowsVal = windows
+                        if (!windowsVal.isNullOrEmpty()) {
+                            removeWindows(windowsVal)
                         }
-                }
-                onDispose {
-                    val windowsVal = windows
-                    if (!windowsVal.isNullOrEmpty()) {
-                        removeWindows(windowsVal)
                     }
                 }
-            }
 
-            SideGesturePad(
-                modifier = Modifier
-                    .onGloballyPositioned {
-                        rootSize = it.size
-                    }
-                    .fillMaxSize(),
-                onAction = { action ->
-                    when (action) {
-                        Actions.BACK -> {
-                            performGlobalAction(GLOBAL_ACTION_BACK)
+                SideGesturePad(
+                    modifier = Modifier
+                        .onGloballyPositioned {
+                            rootSize = it.size
                         }
-                        Actions.LOCK_SCREEN -> {
-                            performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                        .fillMaxSize(),
+                    onAction = { action ->
+                        when (action) {
+                            Actions.BACK -> {
+                                performGlobalAction(GLOBAL_ACTION_BACK)
+                            }
+                            Actions.HOME -> {
+                                performGlobalAction(GLOBAL_ACTION_HOME)
+                            }
+                            Actions.LOCK_SCREEN -> {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                    performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                                }
+                            }
+                            Actions.PREVIOUS_APP -> {
+                                previousApp()
+                            }
                         }
-                        Actions.PREVIOUS_APP -> {
-                            previousApp()
-                        }
-                    }
-                },
-                buttons = buttons,
-            )
+                    },
+                    buttons = buttons,
+                )
+            }
         }
     }
 
@@ -174,6 +192,9 @@ fun AccessibilityService.setComposeOverlay2(
         format = PixelFormat.TRANSPARENT
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
 
         width = WindowManager.LayoutParams.MATCH_PARENT
         height = WindowManager.LayoutParams.MATCH_PARENT

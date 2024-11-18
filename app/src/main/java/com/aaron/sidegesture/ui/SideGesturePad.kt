@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui
 
 import android.os.SystemClock
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +27,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.DrawResult
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -86,6 +87,9 @@ fun SideGesturePad(
     angles: GestureAngles = GestureAngles(),
     animationStyle: AnimationStyle = AnimationStyle.Wave()
 ) {
+    SideEffect {
+        Log.d("zzx", "recompose")
+    }
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val coroutineScope = rememberCoroutineScope()
     var rootSize by remember { mutableStateOf(Size.Zero) }
@@ -175,7 +179,7 @@ fun SideGesturePad(
             .onSizeChanged {
                 rootSize = it.toSize()
             }
-            .drawBehind {
+//            .drawBehind {
 //                buttons.fastForEach { button ->
 //                    val bounds = button.bounds(rootSize)
 //                    drawRect(
@@ -184,7 +188,7 @@ fun SideGesturePad(
 //                        size = bounds.size
 //                    )
 //                }
-            }
+//            }
             .drawWithCache {
                 animationStyle.draw(this, stateHolder, defaultIcons)
             }
