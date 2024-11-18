@@ -13,7 +13,7 @@ import com.aaron.sidegesture.App
  * @author aaronzzxup@gmail.com
  * @since 2024/11/17
  */
-object VibratorUtils {
+object VibrateUtils {
 
     @RequiresPermission(VIBRATE)
     fun vibrate() {
@@ -25,9 +25,9 @@ object VibratorUtils {
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
         } else {
-            VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE)
+            VibrationEffect.createOneShot(40, 255)
         }
         vibrator.vibrate(effect)
     }

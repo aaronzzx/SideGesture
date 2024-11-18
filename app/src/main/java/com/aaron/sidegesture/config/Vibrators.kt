@@ -2,7 +2,7 @@ package com.aaron.sidegesture.config
 
 import android.Manifest.permission.VIBRATE
 import androidx.annotation.RequiresPermission
-import com.aaron.sidegesture.utils.VibratorUtils
+import com.aaron.sidegesture.utils.VibrateUtils
 
 /**
  * @author aaronzzxup@gmail.com
@@ -15,6 +15,6 @@ data class Vibrators(
 ) {
     @RequiresPermission(VIBRATE)
     fun vibrate() {
-        VibratorUtils.vibrate()
+        VibrateUtils.vibrate()
     }
 }

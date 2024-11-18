@@ -142,7 +142,8 @@ fun SideGesturePad(
                         .fillMaxHeight(button.fraction)
                         .background(color = Color.Blue.copy(alpha = 0.1f))
                         .pointerInput(multipleActionHandler, stateHolder) {
-                            var intercept = false
+                            var isCancelGesture = false
+                            var isMultipleAction = false
                             detectDragGestures(
                                 onDragStart = onDragStart@{ offset ->
                                     if (obj != null && obj != stateHolder) {
@@ -157,44 +158,52 @@ fun SideGesturePad(
                                     stateHolder.onStartDrag(offset)
                                 },
                                 onDrag = onDrag@{ _, dragAmount ->
-                                    if (obj != stateHolder) {
+                                    if (obj != stateHolder || isCancelGesture) {
                                         return@onDrag
                                     }
                                     multipleActionHandler.onDrag(dragAmount)
-                                    if (intercept) {
-                                        // 已经触发长按动作
+                                    if (isMultipleAction) {
+                                        // 已经触发长动作
                                         return@onDrag
                                     }
                                     val actions = stateHolder.onDrag(dragAmount)
                                     if (actions != null) {
-                                        // 触发长按动作，拦截当前拖拽
-                                        intercept = true
-                                        stateHolder.onDragCancel()
-                                        if (actions.isNotEmpty()) {
+                                        if (actions.size > 1) {
+                                            // 触发长动作，拦截当前拖拽
+                                            isMultipleAction = true
+                                            stateHolder.onDragCancel()
                                             multipleActionHandler.onExpanded(
                                                 button.position,
                                                 actions
                                             )
+                                        } else if (actions.size == 1) {
+                                            isCancelGesture = true
+                                            stateHolder.onDragCancel()
                                         }
+                                    } else {
+                                        isCancelGesture = true
+                                        stateHolder.onDragCancel()
                                     }
                                 },
                                 onDragEnd = onDragEnd@{
                                     if (obj != stateHolder) {
                                         return@onDragEnd
                                     }
-                                    if (intercept) {
+                                    if (isMultipleAction) {
                                         multipleActionHandler.onDragEnd()
-                                    } else {
+                                    } else if (!isCancelGesture) {
                                         stateHolder.onDragEnd()
                                     }
                                     obj = null
-                                    intercept = false
+                                    isCancelGesture = false
+                                    isMultipleAction = false
                                 },
                                 onDragCancel = onDragCancel@{
-                                    multipleActionHandler.onDragCancel()
                                     obj = null
-                                    intercept = false
+                                    isCancelGesture = false
+                                    isMultipleAction = false
                                     stateHolder.onDragCancel()
+                                    multipleActionHandler.onDragCancel()
                                 }
                             )
                         }
@@ -252,11 +261,12 @@ class StateHolder(
     }
 
     /**
-     * @return 返回null表示没触发长距离动作，空列表表示触发一个动作，长列表表示触发ActionPanel
+     * @return 返回null表示不识别任何手势，空列表表示还没触发动作，单列表表示触发一个动作，长列表表示触发长动作
      */
     fun onDrag(dragAmount: Offset): List<Int>? {
         finger += dragAmount
-        triggerDirection = calcDirection()
+        // 没触发方向，这一轮不再识别手势
+        triggerDirection = calcDirection() ?: return null
         coroutineScope.launch {
             val fingerX = fingerX
             val fingerY = fingerY
@@ -285,7 +295,7 @@ class StateHolder(
                     val action = actions.first()
                     if (action != GestureActions.NONE) {
                         listener.onTrigger(action)
-                        return emptyList()
+                        return listOf(action)
                     }
                 }
             }
@@ -298,7 +308,7 @@ class StateHolder(
             longPressTriggerFlags = false
             pressTriggerFlags = false
         }
-        return null
+        return emptyList()
     }
 
     fun onDragEnd() {
@@ -388,7 +398,7 @@ class StateHolder(
         return false
     }
 
-    private fun calcDirection(): TriggerDirection {
+    private fun calcDirection(): TriggerDirection? {
         val origin = origin
         val finger = finger
         val x = when (button.position == LEFT) {

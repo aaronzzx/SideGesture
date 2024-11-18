@@ -19,6 +19,8 @@ object GestureActions {
     const val VOLUME_UP = 6
     const val VOLUME_DOWN = 7
     const val MUTE = 8
+    const val LOCK_SCREEN = 9
+    const val PREVIOUS_APP = 10
 }
 
 @Keep

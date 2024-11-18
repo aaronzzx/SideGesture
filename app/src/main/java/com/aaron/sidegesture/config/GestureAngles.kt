@@ -23,12 +23,14 @@ data class GestureAngles(
     private val angle3: Float = BASE * p3
     private val angle4: Float = BASE * p4
 
-    fun getTriggerDirection(degree: Float): TriggerDirection {
+    fun getTriggerDirection(degree: Float): TriggerDirection? {
         if (degree in angle1..angle2) {
             return TriggerDirection.Up
+        } else if (degree in angle2..angle3) {
+            return TriggerDirection.Center
         } else if (degree in angle3..angle4) {
             return TriggerDirection.Down
         }
-        return TriggerDirection.Center
+        return null
     }
 }
