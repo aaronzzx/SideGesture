@@ -599,13 +599,13 @@ sealed interface AnimationStyle {
             val rootSize = stateHolder.rootSize
             val bezierPath = Path()
             // 贝塞尔间距
-            val bezierSpacing = 60.dp.toPx()
+            val bezierSpacing = 45.dp.toPx()
             // 贝塞尔的最大宽度
             val bezierMaxWidth = 40.dp.toPx()
             // 贝塞尔长度的一半
             val halfBezierLength = 100.dp.toPx()
             // 贝塞尔变形限制
-            val offsetYCoerce = 50.dp.toPx()
+            val offsetYCoerce = 55.dp.toPx()
 
             onDrawWithContent {
                 drawContent()
