@@ -28,7 +28,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.DrawResult
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -49,7 +48,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toPx
@@ -58,7 +56,6 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionBy
-import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
 import com.aaron.sidegesture.ktx.vibrate
@@ -177,16 +174,16 @@ fun SideGesturePad(
                 rootSize = it.toSize()
             }
 //            .background(color = Color.Red.copy(alpha = 0.1f))
-            .drawBehind {
-                buttons.fastForEach { button ->
-                    val bounds = button.bounds(rootSize)
-                    drawRect(
-                        color = Color(button.color),
-                        topLeft = bounds.topLeft,
-                        size = bounds.size
-                    )
-                }
-            }
+//            .drawBehind {
+//                buttons.fastForEach { button ->
+//                    val bounds = button.bounds(rootSize)
+//                    drawRect(
+//                        color = Color(button.color),
+//                        topLeft = bounds.topLeft,
+//                        size = bounds.size
+//                    )
+//                }
+//            }
             .drawWithCache {
                 animationStyle.draw(this, stateHolder, defaultIcons)
             }

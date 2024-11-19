@@ -1,35 +1,14 @@
 package com.aaron.sidegesture
 
-import android.accessibilityservice.AccessibilityService
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.PixelFormat
+import android.content.res.Configuration
 import android.os.Build
-import android.view.Gravity
 import android.view.View
-import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntSize
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.config.Actions
 import com.aaron.sidegesture.entity.GestureActions
@@ -41,12 +20,13 @@ import com.aaron.sidegesture.ktx.gotoAliPayPayCode
 import com.aaron.sidegesture.ktx.gotoAliPayScan
 import com.aaron.sidegesture.ktx.gotoWechatPayCode
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
+import com.aaron.sidegesture.ktx.setComposeOverlay
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.blankj.utilcode.util.ScreenUtils
 import com.blankj.utilcode.util.ToastUtils
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -56,6 +36,55 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private var prevPkgName: String? = null
     private var curPkgName: String? = null
+
+    private val buttons = listOf(
+        GestureButton(
+            position = LEFT,
+            start = 0.3f,
+            end = 1.0f,
+            pressAction = GestureActions.Single(
+                up = Actions.LOCK_SCREEN,
+                center = Actions.BACK
+            ),
+            longPressAction = GestureActions.Multiple(
+//                up = listOf(
+//                    Actions.WECHAT_SCAN,
+//                    Actions.WECHAT_PAY,
+//                    Actions.SEARCH_IN_APP,
+//                    Actions.ALIPAY_SCAN,
+//                    Actions.ALIPAY_PAY
+//                ),
+                center = listOf(Actions.PREVIOUS_APP)
+            )
+        ),
+        GestureButton(
+            position = RIGHT,
+            start = 0.3f,
+            end = 1.0f,
+            pressAction = GestureActions.Single(
+                up = Actions.LOCK_SCREEN,
+                center = Actions.BACK
+            ),
+            longPressAction = GestureActions.Multiple(
+//                up = listOf(
+//                    Actions.ALIPAY_SCAN,
+//                    Actions.ALIPAY_PAY
+//                ),
+                center = listOf(Actions.PREVIOUS_APP)
+            )
+        )
+    )
+
+    private var mainView: View? = null
+    private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (orientation != newConfig.orientation) {
+            orientation = newConfig.orientation
+            onSetOverlay()
+        }
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         when(event?.eventType){
@@ -75,73 +104,22 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onSetOverlay() {
-        val buttons = listOf(
-            GestureButton(
-                position = LEFT,
-                start = 0.3f,
-                end = 1.0f,
-                pressAction = GestureActions.Single(
-                    up = Actions.LOCK_SCREEN,
-                    center = Actions.BACK
-                ),
-                longPressAction = GestureActions.Multiple(
-                    up = listOf(
-                        Actions.ALIPAY_SCAN,
-                        Actions.ALIPAY_PAY
-                    ),
-                    center = listOf(Actions.PREVIOUS_APP)
-                )
-            ),
-            GestureButton(
-                position = RIGHT,
-                start = 0.3f,
-                end = 1.0f,
-                pressAction = GestureActions.Single(
-                    up = Actions.LOCK_SCREEN,
-                    center = Actions.BACK
-                ),
-                longPressAction = GestureActions.Multiple(
-                    up = listOf(
-                        Actions.ALIPAY_SCAN,
-                        Actions.ALIPAY_PAY
-                    ),
-                    center = listOf(Actions.PREVIOUS_APP)
-                )
-            )
-        )
-        setComposeOverlay2(this, this, this) {
+        val view = mainView
+        if (view != null) {
+            removeWindow(view)
+        }
+        mainView = setComposeOverlay {
             SideGestureTheme {
-                val coroutineScope = rememberCoroutineScope()
-                var rootSize by remember { mutableStateOf(IntSize.Zero) }
-
-                DisposableEffect(coroutineScope) {
-                    var windows: List<View>? = null
-                    coroutineScope.launch {
-                        snapshotFlow { rootSize }
-                            .filter { it.width > 0 && it.height > 0 }
-                            .collect { size ->
-                                val windowsVal = windows
-                                if (!windowsVal.isNullOrEmpty()) {
-                                    removeWindows(windowsVal)
-                                }
-                                windows = attachGestureButtons(size, buttons)
-                            }
-                    }
+                DisposableEffect(Unit) {
+                    val windows = attachGestureButtons(buttons)
                     onDispose {
-                        val windowsVal = windows
-                        if (!windowsVal.isNullOrEmpty()) {
-                            removeWindows(windowsVal)
-                        }
+                        removeWindows(windows)
                     }
                 }
 
                 val context = LocalContext.current
                 SideGesturePad(
-                    modifier = Modifier
-                        .onGloballyPositioned {
-                            rootSize = it.size
-                        }
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     onAction = { action ->
                         when (action) {
                             Actions.BACK -> {
@@ -196,42 +174,4 @@ class SideGestureService : ComponentAccessibilityService() {
         } catch (ignored: Exception) {
         }
     }
-}
-
-fun AccessibilityService.setComposeOverlay2(
-    lifecycleOwner: LifecycleOwner,
-    viewModelStoreOwner: ViewModelStoreOwner,
-    savedStateRegistryOwner: SavedStateRegistryOwner,
-    content: @Composable () -> Unit,
-): ComposeView {
-    val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
-    val lp = WindowManager.LayoutParams().apply {
-        type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        format = PixelFormat.TRANSPARENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
-
-        width = WindowManager.LayoutParams.MATCH_PARENT
-        height = WindowManager.LayoutParams.MATCH_PARENT
-        @SuppressLint("RtlHardcoded")
-        gravity = Gravity.LEFT or Gravity.TOP
-    }
-
-    val composeView = ComposeView(this).apply {
-        setViewTreeLifecycleOwner(lifecycleOwner)
-        setViewTreeViewModelStoreOwner(viewModelStoreOwner)
-        setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
-        setContent {
-            content()
-        }
-    }
-    wm.addView(composeView, lp)
-
-    return composeView
 }
