@@ -3,9 +3,12 @@ package com.aaron.sidegesture.ui
 import android.os.SystemClock
 import androidx.annotation.Keep
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -25,8 +28,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.DrawResult
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -46,6 +49,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toPx
@@ -54,6 +58,7 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionBy
+import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
 import com.aaron.sidegesture.ktx.vibrate
@@ -62,6 +67,7 @@ import com.aaron.sidegesture.ui.TriggerDirection.Down
 import com.aaron.sidegesture.ui.TriggerDirection.Up
 import com.aaron.sidegesture.utils.GestureHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -171,16 +177,16 @@ fun SideGesturePad(
                 rootSize = it.toSize()
             }
 //            .background(color = Color.Red.copy(alpha = 0.1f))
-//            .drawBehind {
-//                buttons.fastForEach { button ->
-//                    val bounds = button.bounds(rootSize)
-//                    drawRect(
-//                        color = Color(button.color),
-//                        topLeft = bounds.topLeft,
-//                        size = bounds.size
-//                    )
-//                }
-//            }
+            .drawBehind {
+                buttons.fastForEach { button ->
+                    val bounds = button.bounds(rootSize)
+                    drawRect(
+                        color = Color(button.color),
+                        topLeft = bounds.topLeft,
+                        size = bounds.size
+                    )
+                }
+            }
             .drawWithCache {
                 animationStyle.draw(this, stateHolder, defaultIcons)
             }
@@ -418,93 +424,121 @@ class MultipleActionHandler(private val listener: ActionListener) {
         val actions by rememberUpdatedState(newValue = actions)
         val origin by rememberUpdatedState(newValue = origin)
         val finger by rememberUpdatedState(newValue = finger)
-        val itemSize = 60.dp
+        val itemSize = 48.dp
         val hypot = itemSize.toPx() * 2f
-        if (!origin.isInvalid && finger != Offset.Unspecified && actions.isNotEmpty()) {
-            Box(
-                Modifier
-                    .graphicsLayer {
-                        val offsetX = when (origin.position) {
-                            LEFT -> itemSize.toPx() / 3
-                            else -> -itemSize.toPx() / 3
+        if (!origin.isInvalid && actions.isNotEmpty()) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                val alpha by animateFloatAsState(
+                    targetValue = when (finger) {
+                        Offset.Unspecified -> 0f
+                        else -> 1f
+                    },
+                    label = "ActionPanelBackground"
+                )
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            this.alpha = alpha
                         }
-                        val offset = itemSize.toPx() / 2
-                        translationX = origin.offset.x - offset - offsetX
-                        translationY = origin.offset.y - offset
-                    }
-                    .size(itemSize)
-            ) {
-                actions.fastForEachIndexed { index, action ->
-                    key(index) {
-                        val animX = remember { Animatable(0f) }
-                        val animY = remember { Animatable(0f) }
-                        val animScale = remember { Animatable(0f) }
-                        LaunchedEffect(key1 = Unit) {
-                            val avgAngDeg = 35.0
-                            val totalAngDeg = avgAngDeg * (actions.size - 1)
-                            val angDeg = 90.0 - totalAngDeg / 2.0 + avgAngDeg * index
-                            val radians = Math.toRadians(angDeg)
-                            val dy = hypot * cos(radians)
-                            val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
-                                if (origin.position == LEFT) value else -value
-                            }
-                            launch {
-                                animX.animateTo(dx.toFloat())
-                            }
-                            launch {
-                                animY.animateTo(dy.toFloat())
-                            }
-                            launch {
-                                animScale.animateTo(1f)
-                            }
+                        .matchParentSize()
+                        .background(color = Color.Black.copy(0.5f))
+                )
+                Box(
+                    Modifier
+                        .graphicsLayer {
+                            val offset = itemSize.toPx() / 2
+                            translationX = origin.offset.x - offset
+                            translationY = origin.offset.y - offset
                         }
+                        .size(itemSize)
+                ) {
+                    actions.fastForEachIndexed { index, action ->
+                        key(index) {
+                            val animX = remember { Animatable(0f) }
+                            val animY = remember { Animatable(0f) }
+                            val animScale = remember { Animatable(0f) }
 
-                        var originBounds by remember { mutableStateOf(Rect.Zero) }
-                        LaunchedEffect(animX, animY, animScale) {
-                            snapshotFlow { finger }
-                                .filter {
-                                    animScale.value >= 1f
-                                }
-                                .collect {
-                                    val offset = Offset(x = animX.value, y = animY.value)
-                                    val transFinger = it - offset
-                                    val pendingActions = pendingActions
-                                    if (originBounds.contains(transFinger)) {
-                                        val cache = pendingActions[index]
-                                        if (cache != action) {
-                                            animScale.animateTo(1.15f)
-                                            pendingActions[index] = action
-                                            if (button.vibrations.forActionPanel) {
-                                                button.vibrations.vibrate()
-                                            }
-                                        }
-                                    } else {
-                                        val cache = pendingActions[index]
-                                        if (cache != null) {
-                                            animScale.animateTo(1f)
-                                            pendingActions[index] = null
-                                        }
+                            LaunchedEffect(key1 = finger) {
+                                if (finger == Offset.Unspecified) {
+                                    coroutineScope {
+                                        launch { animX.animateTo(0f) }
+                                        launch { animY.animateTo(0f) }
+                                        launch { animScale.animateTo(0f) }
                                     }
                                 }
+                            }
+
+                            LaunchedEffect(key1 = Unit) {
+                                val avgAngDeg = 35.0
+                                val totalAngDeg = avgAngDeg * (actions.size - 1)
+                                val angDeg = -90.0 - totalAngDeg / 2.0 + avgAngDeg * index
+                                val radians = Math.toRadians(angDeg)
+                                val dy = hypot * cos(radians)
+                                val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
+                                    if (origin.position == LEFT) value else -value
+                                }
+                                coroutineScope {
+                                    launch { animX.animateTo(dx.toFloat()) }
+                                    launch { animY.animateTo(dy.toFloat()) }
+                                    launch { animScale.animateTo(1f) }
+                                }
+                            }
+
+                            var originBounds by remember { mutableStateOf(Rect.Zero) }
+                            val pendingActions = pendingActions
+                            LaunchedEffect(button, pendingActions, index, action, animX, animY, animScale) {
+                                snapshotFlow { finger }
+                                    .filter {
+                                        it != Offset.Unspecified && animScale.value >= 1f
+                                    }
+                                    .collect {
+                                        val offset = Offset(x = animX.value, y = animY.value)
+                                        val transFinger = it - offset
+                                        if (originBounds.contains(transFinger)) {
+                                            val cache = pendingActions[index]
+                                            if (cache != action) {
+                                                launch { animScale.animateTo(1.15f) }
+                                                pendingActions[index] = action
+                                                if (button.vibrations.forActionPanel) {
+                                                    button.vibrations.vibrate()
+                                                }
+                                            }
+                                        } else {
+                                            val cache = pendingActions[index]
+                                            if (cache != null) {
+                                                launch { animScale.animateTo(1f) }
+                                                pendingActions[index] = null
+                                            }
+                                        }
+                                    }
+                            }
+                            Image(
+                                modifier = Modifier
+                                    .onGloballyPositioned {
+                                        originBounds = it.boundsInRoot()
+                                    }
+                                    .graphicsLayer {
+                                        scaleX = animScale.value
+                                        scaleY = animScale.value
+                                        translationX = animX.value
+                                        translationY = animY.value
+                                    }
+                                    .matchParentSize()
+                                    .clipToBackground(
+                                        color = when (action) {
+                                            Actions.WECHAT_SCAN -> Color.Green
+                                            Actions.WECHAT_PAY -> Color.Red
+                                            Actions.ALIPAY_SCAN -> Color.Magenta
+                                            Actions.ALIPAY_PAY -> Color.Blue
+                                            else -> Color.Yellow
+                                        },
+                                        shape = CircleShape
+                                    ),
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                contentScale = ContentScale.Inside
+                            )
                         }
-                        Image(
-                            modifier = Modifier
-                                .onGloballyPositioned {
-                                    originBounds = it.boundsInRoot()
-                                }
-                                .graphicsLayer {
-                                    scaleX = animScale.value
-                                    scaleY = animScale.value
-                                    translationX = animX.value
-                                    translationY = animY.value
-                                }
-                                .matchParentSize()
-                                .shadow(elevation = 16.dp, shape = CircleShape)
-                                .clipToBackground(color = Color.White, shape = CircleShape),
-                            imageVector = Icons.Default.Email,
-                            contentDescription = null,
-                            contentScale = ContentScale.Inside
-                        )
                     }
                 }
             }
@@ -542,7 +576,6 @@ class MultipleActionHandler(private val listener: ActionListener) {
 
     private fun reset() {
         finger = Offset.Unspecified
-        actions = emptyList()
         pendingActions.clear()
     }
 
