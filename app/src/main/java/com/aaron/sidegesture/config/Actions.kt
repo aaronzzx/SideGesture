@@ -18,4 +18,8 @@ object Actions {
     const val MUTE = 8
     const val LOCK_SCREEN = 9
     const val PREVIOUS_APP = 10
+    const val WECHAT_SCAN = 11
+    const val WECHAT_PAY = 12
+    const val ALIPAY_SCAN = 13
+    const val ALIPAY_PAY = 14
 }

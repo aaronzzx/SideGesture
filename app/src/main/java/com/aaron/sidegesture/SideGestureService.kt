@@ -22,6 +22,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -37,6 +38,10 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.attachGestureButtons
+import com.aaron.sidegesture.ktx.gotoAliPayPayCode
+import com.aaron.sidegesture.ktx.gotoAliPayScan
+import com.aaron.sidegesture.ktx.gotoWechatPayCode
+import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
@@ -82,11 +87,8 @@ class SideGestureService : ComponentAccessibilityService() {
                 ),
                 longPressAction = GestureActions.Multiple(
                     up = listOf(
-                        Actions.HOME,
-                        Actions.HOME,
-                        Actions.HOME,
-                        Actions.HOME,
-                        Actions.HOME
+                        Actions.ALIPAY_SCAN,
+                        Actions.ALIPAY_PAY
                     ),
                     center = listOf(Actions.PREVIOUS_APP)
                 )
@@ -100,6 +102,10 @@ class SideGestureService : ComponentAccessibilityService() {
                     center = Actions.BACK
                 ),
                 longPressAction = GestureActions.Multiple(
+                    up = listOf(
+                        Actions.ALIPAY_SCAN,
+                        Actions.ALIPAY_PAY
+                    ),
                     center = listOf(Actions.PREVIOUS_APP)
                 )
             )
@@ -131,6 +137,7 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                 }
 
+                val context = LocalContext.current
                 SideGesturePad(
                     modifier = Modifier
                         .onGloballyPositioned {
@@ -153,6 +160,18 @@ class SideGestureService : ComponentAccessibilityService() {
                             Actions.PREVIOUS_APP -> {
                                 previousApp()
                             }
+                            Actions.WECHAT_SCAN -> {
+                                context.gotoWechatScan()
+                            }
+                            Actions.WECHAT_PAY -> {
+                                context.gotoWechatPayCode()
+                            }
+                            Actions.ALIPAY_SCAN -> {
+                                context.gotoAliPayScan()
+                            }
+                            Actions.ALIPAY_PAY -> {
+                                context.gotoAliPayPayCode()
+                            }
                         }
                     },
                     buttons = buttons,
@@ -164,6 +183,7 @@ class SideGestureService : ComponentAccessibilityService() {
     private fun previousApp() {
         val prevPkgName = prevPkgName
         if (prevPkgName.isNullOrEmpty()) {
+            // TODO: hardcode
             ToastUtils.showShort("没有上一个应用")
             return
         }

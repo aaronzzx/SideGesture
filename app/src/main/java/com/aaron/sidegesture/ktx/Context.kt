@@ -3,13 +3,82 @@ package com.aaron.sidegesture.ktx
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import android.text.TextUtils
+import com.blankj.utilcode.util.ToastUtils
+
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+fun Context.gotoWechatScan() {
+//    try {
+//        //利用Intent打开微信
+//        val uri = Uri.parse("weixin://dl/scan")
+//        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//        }
+//        startActivity(intent)
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//        //若无法正常跳转，在此进行错误处理
+//        // TODO: hardcode
+//        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+//    }
+}
+
+fun Context.gotoWechatPayCode() {
+//    val cmd = "am start -n com.tencent.mm/com.tencent.mm.plugin.offline.ui.WalletOfflineCoinPurseUI"
+//    ShellUtils.execCmd(cmd, false)
+//    try {
+//        //利用Intent打开微信
+//        val uri = Uri.parse("weixin://wxapppay/?action=scan")
+//        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//        }
+//        startActivity(intent)
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//        //若无法正常跳转，在此进行错误处理
+//        // TODO: hardcode
+//        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+//    }
+}
+
+fun Context.gotoAliPayScan() {
+    try {
+        //利用Intent打开支付宝
+        //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=20000056和
+        //alipayqr://platformapi/startapp?saId=10000007
+        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=20000056")
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(intent)
+    } catch (e: Exception) {
+        //若无法正常跳转，在此进行错误处理
+        ToastUtils.showShort("无法跳转到支付宝，请检查您是否安装了支付宝！")
+    }
+}
+
+fun Context.gotoAliPayPayCode() {
+    try {
+        //利用Intent打开支付宝
+        //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
+        //alipayqr://platformapi/startapp?saId=20000056
+        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=10000007")
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(intent)
+    } catch (e: Exception) {
+        //若无法正常跳转，在此进行错误处理
+        ToastUtils.showShort("无法跳转到支付宝，请检查您是否安装了支付宝！")
+    }
+}
 
 fun Context.gotoAccessibilitySettings() {
     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)

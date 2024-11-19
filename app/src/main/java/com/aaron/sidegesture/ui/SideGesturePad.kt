@@ -335,6 +335,8 @@ class StateHolder(
         origin = Offset.Unspecified
         finger = Offset.Unspecified
         longPressFirstTriggerMs = 0L
+        longPressTriggerFlags = false
+        pressTriggerFlags = false
         coroutineScope.launch {
             val originY = originY
             val fingerX = fingerX
