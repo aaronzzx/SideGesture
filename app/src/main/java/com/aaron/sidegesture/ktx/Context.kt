@@ -1,8 +1,10 @@
 package com.aaron.sidegesture.ktx
 
 import android.accessibilityservice.AccessibilityService
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.text.TextUtils
@@ -15,22 +17,27 @@ import com.blankj.utilcode.util.ToastUtils
  */
 
 fun Context.gotoWechatScan() {
-//    try {
-//        //利用Intent打开微信
-//        val uri = Uri.parse("weixin://dl/scan")
-//        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//        }
-//        startActivity(intent)
-//    } catch (e: Exception) {
-//        e.printStackTrace()
-//        //若无法正常跳转，在此进行错误处理
-//        // TODO: hardcode
-//        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
-//    }
+    val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
+    if (intent != null &&
+        packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null
+    ) {
+        intent.putExtra("LauncherUI.From.Scaner.Shortcut", true)
+        intent.setAction("android.intent.action.VIEW")
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            startActivity(intent)
+        } catch (exception: ActivityNotFoundException) {
+            // TODO: hardcode
+            ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+        }
+    } else {
+        // TODO: hardcode
+        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+    }
 }
 
 fun Context.gotoWechatPayCode() {
+    // 可能需要无障碍识别界面元素来跳转
 //    val cmd = "am start -n com.tencent.mm/com.tencent.mm.plugin.offline.ui.WalletOfflineCoinPurseUI"
 //    ShellUtils.execCmd(cmd, false)
 //    try {
