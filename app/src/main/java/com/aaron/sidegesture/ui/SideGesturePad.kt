@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.ui
 
 import android.os.SystemClock
-import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -15,7 +14,6 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +50,6 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.config.Actions
-import com.aaron.sidegesture.entity.GestureAngles
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
@@ -84,16 +81,12 @@ fun SideGesturePad(
     onAction: (Int) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
-    angles: GestureAngles = GestureAngles(),
     animationStyle: AnimationStyle = AnimationStyle.Wave()
 ) {
-    SideEffect {
-        Log.d("zzx", "recompose")
-    }
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val coroutineScope = rememberCoroutineScope()
     var rootSize by remember { mutableStateOf(Size.Zero) }
-    var obj: Any? by remember { mutableStateOf(null) }
+    var lock: Any? by remember { mutableStateOf(null) }
     val actionListener = remember {
         object : ActionListener {
             override fun onTrigger(action: Int) {
@@ -105,9 +98,7 @@ fun SideGesturePad(
     val multipleActionHandler = rememberMultipleActionHandler(listener = actionListener)
     val stateHolder = rememberStateHolder(
         coroutineScope = coroutineScope,
-        rootSize = rootSize,
         buttons = buttons,
-        angles = angles,
         listener = actionListener
     )
     val arrowBack = rememberVectorPainter(Icons.Default.ArrowBack)
@@ -118,15 +109,15 @@ fun SideGesturePad(
     var isMultipleAction by remember { mutableStateOf(false) }
     GestureHandler(
         onDragStart = onDragStart@{ offset ->
-            if (obj != null && obj != stateHolder) {
+            if (lock != null && lock != stateHolder) {
                 return@onDragStart
             }
-            obj = stateHolder
+            lock = stateHolder
+            stateHolder.onDragStart(rootSize, offset)
             multipleActionHandler.onDragStart(offset)
-            stateHolder.onDragStart(offset)
         },
         onDrag = onDrag@{ dragAmount ->
-            if (obj != stateHolder || isCancelGesture) {
+            if (lock != stateHolder || isCancelGesture) {
                 return@onDrag
             }
             multipleActionHandler.onDrag(dragAmount)
@@ -154,7 +145,7 @@ fun SideGesturePad(
             }
         },
         onDragEnd = onDragEnd@{
-            if (obj != stateHolder) {
+            if (lock != stateHolder) {
                 return@onDragEnd
             }
             if (isMultipleAction) {
@@ -162,12 +153,12 @@ fun SideGesturePad(
             } else if (!isCancelGesture) {
                 stateHolder.onDragEnd()
             }
-            obj = null
+            lock = null
             isCancelGesture = false
             isMultipleAction = false
         },
         onDragCancel = onDragCancel@{
-            obj = null
+            lock = null
             isCancelGesture = false
             isMultipleAction = false
             stateHolder.onDragCancel()
@@ -179,6 +170,7 @@ fun SideGesturePad(
             .onSizeChanged {
                 rootSize = it.toSize()
             }
+//            .background(color = Color.Red.copy(alpha = 0.1f))
 //            .drawBehind {
 //                buttons.fastForEach { button ->
 //                    val bounds = button.bounds(rootSize)
@@ -203,30 +195,26 @@ fun SideGesturePad(
 @Composable
 private fun rememberStateHolder(
     coroutineScope: CoroutineScope,
-    rootSize: Size,
     buttons: List<GestureButton>,
-    angles: GestureAngles,
     listener: ActionListener
-): StateHolder = remember(coroutineScope, rootSize, buttons, angles, listener) {
-    StateHolder(coroutineScope, rootSize, buttons, angles, listener)
+): StateHolder = remember(coroutineScope, buttons, listener) {
+    StateHolder(coroutineScope, buttons, listener)
 }
 
 class StateHolder(
-    val coroutineScope: CoroutineScope,
-    val rootSize: Size,
-    val buttons: List<GestureButton>,
-    val angles: GestureAngles,
+    private val coroutineScope: CoroutineScope,
+    private val buttons: List<GestureButton>,
     private val listener: ActionListener
 ) {
 
     var button: GestureButton? by mutableStateOf(null)
         private set
+    var triggerDirection by mutableStateOf(Center)
+        private set
 
     val originY = Animatable(Float.NaN)
     val fingerX = Animatable(Float.NaN)
     val fingerY = Animatable(Float.NaN)
-
-    var triggerDirection = Center
 
     private var origin = Offset.Unspecified
     private var finger = Offset.Unspecified
@@ -237,7 +225,7 @@ class StateHolder(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
-    fun onDragStart(offset: Offset) {
+    fun onDragStart(rootSize: Size, offset: Offset) {
         origin = offset
         finger = offset
         button = buttons.find(rootSize, offset)
@@ -258,7 +246,7 @@ class StateHolder(
 
         finger += dragAmount
         // 没触发方向，这一轮不再识别手势
-        triggerDirection = calcDirection(button.position) ?: return null
+        triggerDirection = calcDirection(button) ?: return null
         coroutineScope.launch {
             val fingerX = fingerX
             val fingerY = fingerY
@@ -391,10 +379,10 @@ class StateHolder(
         return false
     }
 
-    private fun calcDirection(position: Int): TriggerDirection? {
+    private fun calcDirection(button: GestureButton): TriggerDirection? {
         val origin = origin
         val finger = finger
-        val x = when (position == LEFT) {
+        val x = when (button.position == LEFT) {
             true -> finger.x
             else -> origin.x - finger.x
         }
@@ -407,7 +395,7 @@ class StateHolder(
             // 第四象限
             180f - Math.toDegrees(radians.toDouble())
         }
-        return angles.getTriggerDirection(degree.toFloat())
+        return button.angles.getTriggerDirection(degree.toFloat())
     }
 }
 
@@ -589,7 +577,7 @@ sealed interface AnimationStyle {
         val backgroundColor: Int = android.graphics.Color.BLACK,
         val strokeColor: Int = android.graphics.Color.TRANSPARENT,
         val strokeWidth: Int = 0,
-        val iconColor: Int = android.graphics.Color.argb(0.8f, 1f, 1f, 1f),
+        val iconColor: Int = android.graphics.Color.argb(200, 255, 255, 255),
         val iconUriString: String? = null
     ) : AnimationStyle {
 
@@ -598,10 +586,12 @@ sealed interface AnimationStyle {
             stateHolder: StateHolder,
             defaultIcons: Pair<Painter, Painter>
         ): DrawResult = drawScope.run {
-            val rootSize = stateHolder.rootSize
+            val size = size
             val bezierPath = Path()
-            // 贝塞尔间距
-            val bezierSpacing = 45.dp.toPx()
+            // 贝塞尔偏移值，使贝塞尔显示在手指落点上方
+            val bezierOffset = 70.dp.toPx()
+            // 贝塞尔与边界间距
+            val bezierSpacing = 40.dp.toPx()
             // 贝塞尔的最大宽度
             val bezierMaxWidth = 40.dp.toPx()
             // 贝塞尔长度的一半
@@ -628,9 +618,9 @@ sealed interface AnimationStyle {
                 // 动画y轴偏移值
                 val offsetY = (originY - fingerY).coerceIn(-offsetYCoerce, offsetYCoerce)
                 // 能完整显示整个贝塞尔并且留有间距
-                val safeOriginY = (originY - bezierSpacing).coerceIn(
+                val safeOriginY = (originY - bezierOffset).coerceIn(
                     minimumValue = halfBezierLength + bezierSpacing,
-                    maximumValue = rootSize.height - halfBezierLength - bezierSpacing
+                    maximumValue = size.height - halfBezierLength - bezierSpacing
                 )
                 bezierPath.also {
                     it.reset()

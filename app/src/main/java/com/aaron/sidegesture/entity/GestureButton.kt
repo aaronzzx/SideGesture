@@ -13,6 +13,7 @@ data class GestureButton(
     val start: Float = 0f,
     val end: Float = 1f,
     val width: Int = ConvertUtils.dp2px(10f),
+    val angles: GestureAngles = GestureAngles(),
     val pressAction: GestureActions<Int> = GestureActions.Single(),
     val longPressAction: GestureActions<List<Int>> = GestureActions.Multiple(),
     val pressTriggerDistance: Int = ConvertUtils.dp2px(30f),

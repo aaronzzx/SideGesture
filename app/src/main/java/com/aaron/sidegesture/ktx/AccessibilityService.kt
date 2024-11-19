@@ -34,7 +34,12 @@ fun AccessibilityService.attachGestureButton(
     val lp = WindowManager.LayoutParams().apply {
         type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         format = PixelFormat.TRANSPARENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
@@ -54,7 +59,7 @@ fun AccessibilityService.attachGestureButton(
 
     @SuppressLint("ClickableViewAccessibility")
     val view = View(this).apply {
-        setOnTouchListener { _, event ->
+        setOnTouchListener { view, event ->
             MotionEventHelper.dispatchMotionEvent(event)
             false
         }

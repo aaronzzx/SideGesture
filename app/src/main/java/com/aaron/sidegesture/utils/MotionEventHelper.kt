@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.utils
 
-import android.util.Log
 import android.view.MotionEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,10 +57,7 @@ fun GestureHandler(
                         val offsetY = rawY - y
                         x = rawX
                         y = rawY
-                        Log.d("zzx", "$x, $y")
-                        if (offsetX != 0f) {
-                            curOnDrag(Offset(offsetX, offsetY))
-                        }
+                        curOnDrag(Offset(offsetX, offsetY))
                     }
                     MotionEvent.ACTION_UP -> {
                         curOnDragEnd()

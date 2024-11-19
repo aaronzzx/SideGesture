@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -121,7 +120,6 @@ class SideGestureService : ComponentAccessibilityService() {
                         snapshotFlow { rootSize }
                             .filter { it.width > 0 && it.height > 0 }
                             .collect { size ->
-                                Log.d("zzx", "$size")
                                 val windowsVal = windows
                                 if (!windowsVal.isNullOrEmpty()) {
                                     removeWindows(windowsVal)
@@ -211,7 +209,10 @@ fun AccessibilityService.setComposeOverlay2(
         type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         format = PixelFormat.TRANSPARENT
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
