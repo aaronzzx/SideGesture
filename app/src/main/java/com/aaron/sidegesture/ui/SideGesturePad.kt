@@ -58,7 +58,9 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionBy
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
-import com.aaron.sidegesture.ktx.vibrate
+import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
+import com.aaron.sidegesture.ktx.tryVibrateForLongPress
+import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.ui.TriggerDirection.Center
 import com.aaron.sidegesture.ui.TriggerDirection.Down
 import com.aaron.sidegesture.ui.TriggerDirection.Up
@@ -258,9 +260,9 @@ class StateHolder(
         }
 
         if (canDistanceTrigger(button, false)) {
-            if (button.vibrations.forPress && !pressTriggerFlags) {
+            if (!pressTriggerFlags) {
                 pressTriggerFlags = true
-                button.vibrations.vibrate()
+                button.vibrations.tryVibrateForPress()
             }
         } else {
             pressTriggerFlags = false
@@ -274,9 +276,9 @@ class StateHolder(
             } else if (!button.longPressNeedFingerUp &&
                 timeMs - longPressFirstTriggerMs >= longPressDelayMs
             ) {
-                if (button.vibrations.forLongPress && !longPressTriggerFlags) {
+                if (!longPressTriggerFlags) {
                     longPressTriggerFlags = true
-                    button.vibrations.vibrate()
+                    button.vibrations.tryVibrateForLongPress()
                 }
                 val listener = listener
                 val actions = button.longPressAction.actionBy(triggerDirection)
@@ -500,9 +502,7 @@ class MultipleActionHandler(private val listener: ActionListener) {
                                             if (cache != action) {
                                                 launch { animScale.animateTo(1.15f) }
                                                 pendingActions[index] = action
-                                                if (button.vibrations.forActionPanel) {
-                                                    button.vibrations.vibrate()
-                                                }
+                                                button.vibrations.tryVibrateForActionPanel()
                                             }
                                         } else {
                                             val cache = pendingActions[index]

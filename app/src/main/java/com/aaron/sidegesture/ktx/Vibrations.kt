@@ -11,6 +11,22 @@ import com.aaron.sidegesture.utils.VibrateUtils
  */
 
 @RequiresPermission(VIBRATE)
-fun Vibrations.vibrate() {
-    VibrateUtils.vibrate()
+fun Vibrations.tryVibrateForPress() {
+    if (forPress) {
+        VibrateUtils.vibrate()
+    }
+}
+
+@RequiresPermission(VIBRATE)
+fun Vibrations.tryVibrateForLongPress() {
+    if (forLongPress) {
+        VibrateUtils.vibrate()
+    }
+}
+
+@RequiresPermission(VIBRATE)
+fun Vibrations.tryVibrateForActionPanel() {
+    if (forActionPanel) {
+        VibrateUtils.vibrate()
+    }
 }
