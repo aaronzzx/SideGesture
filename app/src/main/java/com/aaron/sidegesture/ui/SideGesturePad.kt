@@ -245,9 +245,9 @@ class StateHolder(
      * @return 返回null表示不识别任何手势，空列表表示还没触发动作，单列表表示触发一个动作，长列表表示触发长动作
      */
     fun onDrag(dragAmount: Offset): List<Int>? {
-        val button = button ?: return null
-
         finger += dragAmount
+        // 理论上能到这里button不应该为空
+        val button = button ?: return null
         // 没触发方向，这一轮不再识别手势
         triggerDirection = calcDirection(button) ?: return null
         coroutineScope.launch {
@@ -257,8 +257,17 @@ class StateHolder(
             fingerY.snapTo(fingerY.value + dragAmount.y)
         }
 
-        val longPressDelayMs = button.longPressTriggerDelayMs
+        if (canDistanceTrigger(button, false)) {
+            if (button.vibrations.forPress && !pressTriggerFlags) {
+                pressTriggerFlags = true
+                button.vibrations.vibrate()
+            }
+        } else {
+            pressTriggerFlags = false
+        }
+
         if (canDistanceTrigger(button, true)) {
+            val longPressDelayMs = button.longPressTriggerDelayMs
             val timeMs = SystemClock.uptimeMillis()
             if (longPressFirstTriggerMs == 0L) {
                 longPressFirstTriggerMs = timeMs
@@ -281,15 +290,10 @@ class StateHolder(
                     }
                 }
             }
-        } else if (canDistanceTrigger(button, false)) {
-            if (button.vibrations.forPress && !pressTriggerFlags) {
-                pressTriggerFlags = true
-                button.vibrations.vibrate()
-            }
         } else {
             longPressTriggerFlags = false
-            pressTriggerFlags = false
         }
+
         return emptyList()
     }
 
