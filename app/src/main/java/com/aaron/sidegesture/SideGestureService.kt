@@ -69,10 +69,13 @@ class SideGestureService : ComponentAccessibilityService() {
                 center = Actions.BACK
             ),
             longPressAction = GestureActions.Multiple(
-//                up = listOf(
-//                    Actions.ALIPAY_SCAN,
-//                    Actions.ALIPAY_PAY
-//                ),
+                up = listOf(
+                    Actions.WECHAT_SCAN,
+                    Actions.WECHAT_PAY,
+                    Actions.SEARCH_IN_APP,
+                    Actions.ALIPAY_SCAN,
+                    Actions.ALIPAY_PAY
+                ),
                 center = listOf(Actions.PREVIOUS_APP)
             )
         )

@@ -58,9 +58,9 @@ fun Context.gotoWechatPayCode() {
 fun Context.gotoAliPayScan() {
     try {
         //利用Intent打开支付宝
-        //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=20000056和
-        //alipayqr://platformapi/startapp?saId=10000007
-        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=20000056")
+        //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
+        //alipayqr://platformapi/startapp?saId=20000056
+        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=10000007")
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
@@ -76,7 +76,7 @@ fun Context.gotoAliPayPayCode() {
         //利用Intent打开支付宝
         //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
         //alipayqr://platformapi/startapp?saId=20000056
-        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=10000007")
+        val uri = Uri.parse("alipayqr://platformapi/startapp?saId=20000056")
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

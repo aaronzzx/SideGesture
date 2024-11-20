@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,7 +46,7 @@ fun SideGesturePad(
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
     animationStyle: AnimationStyle = AnimationStyle.Wave(),
-    actionPanelStyle: ActionPanelStyle = ActionPanelStyle.Arc
+    actionPanelStyle: ActionPanelStyle = ActionPanelStyle.Arc()
 ) {
     val sideGestureState = rememberSideGestureState(buttons, onAction)
     val actionPanelState = rememberActionPanelState(onAction)
@@ -63,8 +64,9 @@ fun SideGesturePad(
             }
             val actions = sideGestureState.onDrag(dragAmount)
             if (actions != null) {
-                if (actions.size > 1) {
-                    actionPanelState.onDragStart(sideGestureState.finger, actions)
+                val button = sideGestureState.button
+                if (actions.size > 1 && button != null) {
+                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions)
                     sideGestureState.cancel()
                 } else if (actions.size == 1) {
                     sideGestureState.cancel()
@@ -97,16 +99,12 @@ fun SideGesturePad(
             sideGestureState = sideGestureState
         )
 
-        val button = sideGestureState.button
-        if (button != null) {
-            ActionPanel(
-                modifier = Modifier.matchParentSize(),
-                actionPanelStyle = actionPanelStyle,
-                actionPanelState = actionPanelState,
-                position = button.position,
-                vibrations = button.vibrations
-            )
-        }
+        ActionPanel(
+            modifier = Modifier.matchParentSize(),
+            actionPanelStyle = actionPanelStyle,
+            actionPanelState = actionPanelState,
+            vibrations = sideGestureState.button?.vibrations
+        )
     }
 }
 
@@ -353,12 +351,15 @@ class ActionPanelState(private val onAction: (Int) -> Unit) {
         private set
     var actions: List<Int> by mutableStateOf(emptyList())
         private set
+    var position: Int by mutableIntStateOf(LEFT)
+        private set
     private val pendingActions: MutableMap<Int, Int?> = mutableMapOf()
 
-    fun onDragStart(offset: Offset, actions: List<Int>) {
+    fun onDragStart(position: Int, offset: Offset, actions: List<Int>) {
         isExpanded = true
-        origin = offset
-        finger = offset
+        this.position = position
+        this.origin = offset
+        this.finger = offset
         this.actions = actions
     }
 
@@ -389,8 +390,8 @@ class ActionPanelState(private val onAction: (Int) -> Unit) {
 
     private fun reset() {
         isExpanded = false
+        pendingActions.clear()
         origin = Offset.Unspecified
         finger = Offset.Unspecified
-        pendingActions.clear()
     }
 }

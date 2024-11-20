@@ -1,43 +1,50 @@
 package com.aaron.sidegesture.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterExitState.Visible
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
+import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.config.Actions
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.cos
@@ -54,152 +61,141 @@ fun ActionPanel(
     actionPanelStyle: ActionPanelStyle,
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
-    position: Int = LEFT,
-    vibrations: Vibrations = Vibrations()
+    vibrations: Vibrations? = null
 ) {
-    when (actionPanelStyle) {
-        is ActionPanelStyle.Arc -> {
-            ArcActionPanel(
-                modifier = modifier,
-                actionPanelStyle = actionPanelStyle,
-                actionPanelState = actionPanelState,
-                position = position,
-                vibrations = vibrations
-            )
+    AnimatedVisibility(
+        modifier = modifier,
+        visible = actionPanelState.isExpanded,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        when (actionPanelStyle) {
+            is ActionPanelStyle.Arc -> {
+                ArcActionPanel(
+                    modifier = Modifier.fillMaxSize(),
+                    actionPanelStyle = actionPanelStyle,
+                    actionPanelState = actionPanelState,
+                    vibrations = vibrations
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ArcActionPanel(
+private fun AnimatedVisibilityScope.ArcActionPanel(
     actionPanelStyle: ActionPanelStyle.Arc,
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
-    position: Int = LEFT,
-    vibrations: Vibrations = Vibrations()
+    vibrations: Vibrations? = null
 ) {
-    val origin by rememberUpdatedState(newValue = actionPanelState.origin)
-    val finger by rememberUpdatedState(newValue = actionPanelState.finger)
-    val actions by rememberUpdatedState(newValue = actionPanelState.actions)
-    val itemSize = 48.dp
+    val itemSize = actionPanelStyle.itemSize.toDp()
     val hypot = itemSize.toPx() * 2f
     Box(modifier = modifier) {
-        val bgAlpha by animateFloatAsState(
-            targetValue = 1f.takeIf { origin.isSpecified } ?: 0f,
-            label = ""
-        )
         Box(
             modifier = Modifier
-                .graphicsLayer {
-                    alpha = bgAlpha
-                }
                 .matchParentSize()
                 .background(color = Color.Black.copy(0.5f))
         )
 
-        var transOffset by remember { mutableStateOf(Offset.Zero) }
-        LaunchedEffect(key1 = Unit) {
-            snapshotFlow { origin }
-                .filter { it.isSpecified }
-                .collect {
-                    transOffset = origin
-                }
-        }
         Box(
             Modifier
-                .graphicsLayer {
-                    val offset = itemSize.toPx() / 2
-                    translationX = transOffset.x - offset
-                    translationY = transOffset.y - offset
+                .run graphicsLayer@{
+                    val origin = remember(actionPanelState) { actionPanelState.origin }
+                    graphicsLayer {
+                        val offset = itemSize.toPx() / 2f
+                        translationX = origin.x - offset
+                        translationY = origin.y - offset
+                    }
                 }
                 .size(itemSize)
         ) {
-            actions.fastForEachIndexed { index, action ->
+            val transition = transition
+            actionPanelState.actions.fastForEachIndexed { index, action ->
                 key(index) {
-                    val animX = remember { Animatable(0f) }
-                    val animY = remember { Animatable(0f) }
-                    val animScale = remember { Animatable(0f) }
-
-                    LaunchedEffect(animX, animY, animScale) {
-                        snapshotFlow { origin }
-                            .filter { it.isUnspecified }
-                            .collect {
-                                coroutineScope {
-                                    launch { animX.animateTo(0f) }
-                                    launch { animY.animateTo(0f) }
-                                    launch { animScale.animateTo(0f) }
-                                }
-                            }
+                    val animOffset = remember {
+                        val avgAngDeg = 35.0
+                        val totalAngDeg = avgAngDeg * (actionPanelState.actions.size - 1)
+                        val angDeg = -90.0 - totalAngDeg / 2.0 + avgAngDeg * index
+                        val radians = Math.toRadians(angDeg)
+                        val dy = hypot * cos(radians)
+                        val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
+                            if (actionPanelState.position == LEFT) value else -value
+                        }
+                        Offset(x = dx.toFloat(), y = dy.toFloat())
                     }
-
-                    LaunchedEffect(index, animX, animY, animScale) {
-                        snapshotFlow { origin }
-                            .filter { origin.isSpecified }
-                            .collect {
-                                val avgAngDeg = 35.0
-                                val totalAngDeg = avgAngDeg * (actions.size - 1)
-                                val angDeg = -90.0 - totalAngDeg / 2.0 + avgAngDeg * index
-                                val radians = Math.toRadians(angDeg)
-                                val dy = hypot * cos(radians)
-                                val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
-                                    if (position == LEFT) value else -value
-                                }
-                                coroutineScope {
-                                    launch { animX.animateTo(dx.toFloat()) }
-                                    launch { animY.animateTo(dy.toFloat()) }
-                                    launch { animScale.animateTo(1f) }
-                                }
-                            }
-                    }
+                    val selectAnim = remember { Animatable(1f) }
 
                     var originBounds by remember { mutableStateOf(Rect.Zero) }
-                    LaunchedEffect(actionPanelState, index, action, animX, animY, animScale) {
-                        snapshotFlow { finger }
+                    LaunchedEffect(transition, actionPanelState, index, action, selectAnim) {
+                        snapshotFlow { actionPanelState.finger }
                             .filter {
-                                it.isSpecified && animScale.value >= 1f
+                                it.isSpecified &&
+                                        !transition.isRunning &&
+                                        transition.currentState == Visible
                             }
-                            .collect {
-                                val offset = Offset(x = animX.value, y = animY.value)
-                                val transFinger = it - offset
+                            .collect { finger ->
+                                val transFinger = finger - animOffset
                                 if (originBounds.contains(transFinger)) {
                                     if (!actionPanelState.isSelected(action)) {
-                                        launch { animScale.animateTo(1.15f) }
+                                        launch { selectAnim.animateTo(1.15f) }
                                         actionPanelState.select(index, action)
-                                        vibrations.tryVibrateForActionPanel()
+                                        vibrations?.tryVibrateForActionPanel()
                                     }
                                 } else {
                                     if (actionPanelState.isSelected(action)) {
-                                        launch { animScale.animateTo(1f) }
+                                        launch { selectAnim.animateTo(1f) }
                                         actionPanelState.select(index, null)
                                     }
                                 }
                             }
                     }
-                    Image(
+                    Text(
                         modifier = Modifier
                             .onGloballyPositioned {
                                 originBounds = it.boundsInRoot()
                             }
                             .graphicsLayer {
-                                scaleX = animScale.value
-                                scaleY = animScale.value
-                                translationX = animX.value
-                                translationY = animY.value
+                                translationX = animOffset.x
+                                translationY = animOffset.y
+                                scaleX = selectAnim.value
+                                scaleY = selectAnim.value
+                            }
+                            .run animateEnterExit@{
+                                val stiffness = Spring.StiffnessMedium
+                                animateEnterExit(
+                                    enter = scaleIn(spring(stiffness = stiffness)) +
+                                            slideIn(animationSpec = spring(stiffness = stiffness)) {
+                                                -animOffset.toIntOffset()
+                                            },
+                                    exit = scaleOut(spring(stiffness = stiffness)) +
+                                            slideOut(animationSpec = spring(stiffness = stiffness)) {
+                                                -animOffset.toIntOffset()
+                                            }
+                                )
                             }
                             .matchParentSize()
                             .clipToBackground(
+                                // TODO: hardcode
                                 color = when (action) {
-                                    Actions.WECHAT_SCAN -> Color.Green
-                                    Actions.WECHAT_PAY -> Color.Red
-                                    Actions.ALIPAY_SCAN -> Color.Magenta
-                                    Actions.ALIPAY_PAY -> Color.Blue
-                                    else -> Color.Yellow
+                                    Actions.WECHAT_SCAN -> Color(0xFF1FCA37)
+                                    Actions.WECHAT_PAY -> Color(0xFF1FCA37)
+                                    Actions.ALIPAY_SCAN -> Color(0xFF008EFF)
+                                    Actions.ALIPAY_PAY -> Color(0xFF008EFF)
+                                    else -> Color(0xFFFF7E55)
                                 },
                                 shape = CircleShape
-                            ),
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        contentScale = ContentScale.Inside
+                            )
+                            .wrapContentSize(),
+                        // TODO: hardcode
+                        text = when (action) {
+                            Actions.WECHAT_SCAN -> "WS"
+                            Actions.WECHAT_PAY -> "WP"
+                            Actions.ALIPAY_SCAN -> "AS"
+                            Actions.ALIPAY_PAY -> "AP"
+                            else -> "?"
+                        },
+                        color = Color.White
                     )
                 }
             }
