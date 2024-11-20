@@ -1,9 +1,6 @@
 package com.aaron.sidegesture.ktx
 
 import android.annotation.SuppressLint
-import android.graphics.PixelFormat
-import android.os.Build
-import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
@@ -14,39 +11,24 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.utils.MotionEventHelper
-import com.blankj.utilcode.util.ScreenUtils
+import com.aaron.sidegesture.utils.MotionEventDispatcher
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
 
-private val screenWidth get() = ScreenUtils.getScreenWidth()
-private val screenHeight get() = ScreenUtils.getScreenHeight()
+fun ComponentAccessibilityService.updateLayout(view: View, lp: WindowManager.LayoutParams) {
+    val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
+    wm.updateViewLayout(view, lp)
+}
 
 fun ComponentAccessibilityService.setComposeOverlay(content: @Composable () -> Unit): ComposeView {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
-        type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        format = PixelFormat.TRANSPARENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
-
-        width = screenWidth
-        height = screenHeight
-        @SuppressLint("RtlHardcoded")
-        gravity = Gravity.LEFT or Gravity.TOP
+        setBasic(false)
+        updateMainView()
     }
-
     val composeView = ComposeView(this).apply {
         setViewTreeLifecycleOwner(this@setComposeOverlay)
         setViewTreeViewModelStoreOwner(this@setComposeOverlay)
@@ -56,7 +38,6 @@ fun ComponentAccessibilityService.setComposeOverlay(content: @Composable () -> U
         }
     }
     wm.addView(composeView, lp)
-
     return composeView
 }
 
@@ -69,35 +50,14 @@ fun ComponentAccessibilityService.attachGestureButtons(buttons: Collection<Gestu
 fun ComponentAccessibilityService.attachGestureButton(button: GestureButton): View {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
-        type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        format = PixelFormat.TRANSPARENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
-
-        val windowHeight = screenHeight
-        width = button.width
-        height = (windowHeight * button.fraction).toInt()
-        y = (windowHeight * button.start).toInt()
-
-        @SuppressLint("RtlHardcoded")
-        gravity = if (button.position == GestureButton.LEFT) {
-            Gravity.LEFT or Gravity.TOP
-        } else {
-            Gravity.RIGHT or Gravity.TOP
-        }
+        setBasic(true)
+        updateGestureButton(button)
     }
-
     @SuppressLint("ClickableViewAccessibility")
     val view = View(this).apply {
+        tag = button
         setOnTouchListener { _, event ->
-            MotionEventHelper.dispatchMotionEvent(event)
+            MotionEventDispatcher.dispatch(event)
             false
         }
     }

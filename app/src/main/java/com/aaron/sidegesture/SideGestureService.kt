@@ -4,9 +4,9 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.aaron.composeaccessibility.ComponentAccessibilityService
@@ -23,6 +23,9 @@ import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ktx.setComposeOverlay
+import com.aaron.sidegesture.ktx.updateGestureButton
+import com.aaron.sidegesture.ktx.updateLayout
+import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.blankj.utilcode.util.ScreenUtils
@@ -76,13 +79,14 @@ class SideGestureService : ComponentAccessibilityService() {
     )
 
     private var mainView: View? = null
+    private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (orientation != newConfig.orientation) {
             orientation = newConfig.orientation
-            onSetOverlay()
+            updateLayout()
         }
     }
 
@@ -104,19 +108,12 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onSetOverlay() {
-        val view = mainView
-        if (view != null) {
-            removeWindow(view)
+        val mainView = mainView
+        if (mainView != null) {
+            removeWindow(mainView)
         }
-        mainView = setComposeOverlay {
+        this.mainView = setComposeOverlay {
             SideGestureTheme {
-                DisposableEffect(Unit) {
-                    val windows = attachGestureButtons(buttons)
-                    onDispose {
-                        removeWindows(windows)
-                    }
-                }
-
                 val context = LocalContext.current
                 SideGesturePad(
                     modifier = Modifier.fillMaxSize(),
@@ -153,6 +150,29 @@ class SideGestureService : ComponentAccessibilityService() {
                     buttons = buttons,
                 )
             }
+        }
+        val buttonViews = buttonViews
+        if (buttonViews != null) {
+            removeWindows(buttonViews)
+        }
+        this.buttonViews = attachGestureButtons(buttons)
+    }
+
+    private fun updateLayout() {
+        val mainView = mainView
+        if (mainView != null) {
+            val lp = (mainView.layoutParams as WindowManager.LayoutParams).apply {
+                updateMainView()
+            }
+            updateLayout(mainView, lp)
+        }
+        val buttonViews = buttonViews
+        buttonViews?.forEach { view ->
+            val button = view.tag as? GestureButton ?: return
+            val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
+                updateGestureButton(button)
+            }
+            updateLayout(view, lp)
         }
     }
 

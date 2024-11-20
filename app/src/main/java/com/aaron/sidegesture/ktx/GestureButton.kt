@@ -11,24 +11,24 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
  * @since 2024/11/18
  */
 
-val GestureButton.fraction: Float get() = end - start
-
-fun List<GestureButton>.find(rootSize: Size, offset: Offset): GestureButton? {
-    return find { it.contains(rootSize, offset) }
+fun List<GestureButton>.find(offset: Offset): GestureButton? {
+    return find { it.contains(offset) }
 }
 
-fun GestureButton.contains(rootSize: Size, offset: Offset): Boolean {
-    val bounds = bounds(rootSize)
+fun GestureButton.contains(offset: Offset): Boolean {
+    val bounds = bounds()
     return bounds.contains(offset)
 }
 
-fun GestureButton.bounds(rootSize: Size): Rect {
+fun GestureButton.bounds(): Rect {
     val y = rootSize.height * start
     val topLeft = if (position == LEFT) {
         Offset(0f, y)
     } else {
-        Offset(rootSize.width - width, y)
+        Offset((rootSize.width - width).toFloat(), y)
     }
     val boundsSize = Size(width.toFloat(), rootSize.height * fraction)
     return Rect(topLeft, boundsSize)
 }
+
+val GestureButton.fraction: Float get() = end - start

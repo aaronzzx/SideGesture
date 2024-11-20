@@ -45,9 +45,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toPx
@@ -64,7 +62,7 @@ import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.ui.TriggerDirection.Center
 import com.aaron.sidegesture.ui.TriggerDirection.Down
 import com.aaron.sidegesture.ui.TriggerDirection.Up
-import com.aaron.sidegesture.utils.GestureHandler
+import com.aaron.sidegesture.utils.DragGestureHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
@@ -88,41 +86,21 @@ fun SideGesturePad(
     modifier: Modifier = Modifier,
     animationStyle: AnimationStyle = AnimationStyle.Wave()
 ) {
-    val curOnAction by rememberUpdatedState(newValue = onAction)
-    val coroutineScope = rememberCoroutineScope()
-    var rootSize by remember { mutableStateOf(Size.Zero) }
-    var lock: Any? by remember { mutableStateOf(null) }
-    val actionListener = remember {
-        object : ActionListener {
-            override fun onTrigger(action: Int) {
-                curOnAction(action)
-            }
-        }
-    }
-
-    val multipleActionHandler = rememberMultipleActionHandler(listener = actionListener)
-    val stateHolder = rememberStateHolder(
-        coroutineScope = coroutineScope,
-        buttons = buttons,
-        listener = actionListener
-    )
+    val multipleActionHandler = rememberMultipleActionHandler(onAction)
+    val stateHolder = rememberStateHolder(buttons, onAction)
     val arrowBack = rememberVectorPainter(Icons.Default.ArrowBack)
     val arrowForward = rememberVectorPainter(Icons.Default.ArrowForward)
     val defaultIcons = remember(arrowForward, arrowBack) { arrowForward to arrowBack }
 
-    var isCancelGesture by remember { mutableStateOf(false) }
+    var isGestureCanceled by remember { mutableStateOf(false) }
     var isMultipleAction by remember { mutableStateOf(false) }
-    GestureHandler(
+    DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
-            if (lock != null && lock != stateHolder) {
-                return@onDragStart
-            }
-            lock = stateHolder
-            stateHolder.onDragStart(rootSize, offset)
+            stateHolder.onDragStart(offset)
             multipleActionHandler.onDragStart(offset)
         },
         onDrag = onDrag@{ dragAmount ->
-            if (lock != stateHolder || isCancelGesture) {
+            if (isGestureCanceled) {
                 return@onDrag
             }
             multipleActionHandler.onDrag(dragAmount)
@@ -141,40 +119,32 @@ fun SideGesturePad(
                         multipleActionHandler.onExpanded(actions, button.position)
                     }
                 } else if (actions.size == 1) {
-                    isCancelGesture = true
+                    isGestureCanceled = true
                     stateHolder.onDragCancel()
                 }
             } else {
-                isCancelGesture = true
+                isGestureCanceled = true
                 stateHolder.onDragCancel()
             }
         },
         onDragEnd = onDragEnd@{
-            if (lock != stateHolder) {
-                return@onDragEnd
-            }
             if (isMultipleAction) {
                 multipleActionHandler.onDragEnd()
-            } else if (!isCancelGesture) {
+            } else if (!isGestureCanceled) {
                 stateHolder.onDragEnd()
             }
-            lock = null
-            isCancelGesture = false
+            isGestureCanceled = false
             isMultipleAction = false
         },
         onDragCancel = onDragCancel@{
-            lock = null
-            isCancelGesture = false
-            isMultipleAction = false
             stateHolder.onDragCancel()
             multipleActionHandler.onDragCancel()
+            isGestureCanceled = false
+            isMultipleAction = false
         }
     )
     Box(
         modifier = modifier
-            .onSizeChanged {
-                rootSize = it.toSize()
-            }
 //            .background(color = Color.Red.copy(alpha = 0.1f))
 //            .drawBehind {
 //                buttons.fastForEach { button ->
@@ -199,17 +169,21 @@ fun SideGesturePad(
 
 @Composable
 private fun rememberStateHolder(
-    coroutineScope: CoroutineScope,
     buttons: List<GestureButton>,
-    listener: ActionListener
-): StateHolder = remember(coroutineScope, buttons, listener) {
-    StateHolder(coroutineScope, buttons, listener)
+    onAction: (Int) -> Unit
+): StateHolder {
+    val coroutineScope = rememberCoroutineScope()
+    val curButtons by rememberUpdatedState(newValue = buttons)
+    val curOnAction by rememberUpdatedState(newValue = onAction)
+    return remember(coroutineScope) {
+        StateHolder(coroutineScope, curButtons, curOnAction)
+    }
 }
 
 class StateHolder(
     private val coroutineScope: CoroutineScope,
     private val buttons: List<GestureButton>,
-    private val listener: ActionListener
+    private val onAction: (Int) -> Unit
 ) {
 
     var button: GestureButton? by mutableStateOf(null)
@@ -230,10 +204,10 @@ class StateHolder(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
-    fun onDragStart(rootSize: Size, offset: Offset) {
+    fun onDragStart(offset: Offset) {
         origin = offset
         finger = offset
-        button = buttons.find(rootSize, offset)
+        button = buttons.find(offset)
 
         coroutineScope.launch {
             val curY = offset.y
@@ -280,14 +254,13 @@ class StateHolder(
                     longPressTriggerFlags = true
                     button.vibrations.tryVibrateForLongPress()
                 }
-                val listener = listener
                 val actions = button.longPressAction.actionBy(triggerDirection)
                 if (actions.size > 1) {
                     return actions
                 } else if (actions.size == 1) {
                     val action = actions.first()
                     if (action != Actions.NONE) {
-                        listener.onTrigger(action)
+                        onAction(action)
                         return listOf(action)
                     }
                 }
@@ -301,7 +274,7 @@ class StateHolder(
 
     fun onDragEnd() {
         val button = checkNotNull(button)
-        val listener = listener
+        val onAction = onAction
         val longPressDelayMs = button.longPressTriggerDelayMs
         val triggerDirection = triggerDirection
         if (button.longPressNeedFingerUp &&
@@ -312,13 +285,13 @@ class StateHolder(
             if (actions.isNotEmpty()) {
                 val action = actions.first()
                 if (action != Actions.NONE) {
-                    listener.onTrigger(action)
+                    onAction(action)
                 }
             }
         } else if (canDistanceTrigger(button, false)) {
             val action = button.pressAction.actionBy(triggerDirection)
             if (action != Actions.NONE) {
-                listener.onTrigger(action)
+                onAction(action)
             }
         }
         reset()
@@ -409,13 +382,12 @@ class StateHolder(
 }
 
 @Composable
-private fun rememberMultipleActionHandler(
-    listener: ActionListener
-): MultipleActionHandler = remember(listener) {
-    MultipleActionHandler(listener)
+private fun rememberMultipleActionHandler(onAction: (Int) -> Unit): MultipleActionHandler {
+    val curOnAction by rememberUpdatedState(newValue = onAction)
+    return MultipleActionHandler(curOnAction)
 }
 
-class MultipleActionHandler(private val listener: ActionListener) {
+class MultipleActionHandler(private val onAction: (Int) -> Unit) {
 
     private var origin: Origin by mutableStateOf(Origin())
     private var finger: Offset by mutableStateOf(Offset.Unspecified)
@@ -566,7 +538,7 @@ class MultipleActionHandler(private val listener: ActionListener) {
         val pendingActions = pendingActions
         val action = pendingActions.values.find { it != null }
         if (action != null && action != Actions.NONE) {
-            listener.onTrigger(action)
+            onAction(action)
         }
         reset()
     }
@@ -586,11 +558,6 @@ class MultipleActionHandler(private val listener: ActionListener) {
     ) {
         val isInvalid: Boolean get() = offset.isUnspecified || position == -1
     }
-}
-
-interface ActionListener {
-
-    fun onTrigger(action: Int)
 }
 
 enum class TriggerDirection {
