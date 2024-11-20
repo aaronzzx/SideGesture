@@ -172,7 +172,12 @@ class SideGestureState(
         // 理论上能到这里button不应该为空
         val button = button ?: return null
         // 没触发方向，这一轮不再识别手势
-        triggerDirection = calcDirection(button) ?: return null
+        val direction = calcDirection(button) ?: return null
+        if (direction != triggerDirection) {
+            pressTriggerFlags = false
+            longPressTriggerFlags = false
+        }
+        triggerDirection = direction
         coroutineScope.launch {
             fingerXAnim.snapTo(fingerX + dragAmount.x)
             fingerYAnim.snapTo(fingerY + dragAmount.y)
