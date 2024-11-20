@@ -21,7 +21,7 @@ data class GestureButton(
     val longPressTriggerDelayMs: Long = 100L,
     val longPressNeedFingerUp: Boolean = false,
     val vibrations: Vibrations = Vibrations(),
-    val color: Int = android.graphics.Color.argb(1f, 0f, 0f, 1f)
+    val color: Int = android.graphics.Color.argb(255, 0, 0, 255)
 ) {
     companion object {
         const val LEFT = 1

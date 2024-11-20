@@ -1,78 +1,38 @@
 package com.aaron.sidegesture.ui
 
 import android.os.SystemClock
-import androidx.annotation.Keep
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.CacheDrawScope
-import androidx.compose.ui.draw.DrawResult
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isUnspecified
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastForEachIndexed
-import com.aaron.compose.ktx.clipToBackground
-import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.entity.ActionPanelStyle
+import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.entity.TriggerDirection
+import com.aaron.sidegesture.entity.TriggerDirection.Center
+import com.aaron.sidegesture.entity.TriggerDirection.Down
+import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.ktx.actionBy
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
-import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
-import com.aaron.sidegesture.ui.TriggerDirection.Center
-import com.aaron.sidegesture.ui.TriggerDirection.Down
-import com.aaron.sidegesture.ui.TriggerDirection.Up
 import com.aaron.sidegesture.utils.DragGestureHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.atan
-import kotlin.math.cos
 import kotlin.math.hypot
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 /**
  * @author aaronzzxup@gmail.com
@@ -84,119 +44,108 @@ fun SideGesturePad(
     onAction: (Int) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
-    animationStyle: AnimationStyle = AnimationStyle.Wave()
+    animationStyle: AnimationStyle = AnimationStyle.Wave(),
+    actionPanelStyle: ActionPanelStyle = ActionPanelStyle.Arc
 ) {
-    val multipleActionHandler = rememberMultipleActionHandler(onAction)
-    val stateHolder = rememberStateHolder(buttons, onAction)
-    val arrowBack = rememberVectorPainter(Icons.Default.ArrowBack)
-    val arrowForward = rememberVectorPainter(Icons.Default.ArrowForward)
-    val defaultIcons = remember(arrowForward, arrowBack) { arrowForward to arrowBack }
-
-    var isGestureCanceled by remember { mutableStateOf(false) }
-    var isMultipleAction by remember { mutableStateOf(false) }
+    val sideGestureState = rememberSideGestureState(buttons, onAction)
+    val actionPanelState = rememberActionPanelState(onAction)
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
-            stateHolder.onDragStart(offset)
-            multipleActionHandler.onDragStart(offset)
+            sideGestureState.onDragStart(offset)
         },
         onDrag = onDrag@{ dragAmount ->
-            if (isGestureCanceled) {
+            if (actionPanelState.isExpanded) {
+                actionPanelState.onDrag(dragAmount)
                 return@onDrag
             }
-            multipleActionHandler.onDrag(dragAmount)
-            if (isMultipleAction) {
-                // 已经触发长动作
+            if (sideGestureState.isCanceled) {
                 return@onDrag
             }
-            val actions = stateHolder.onDrag(dragAmount)
+            val actions = sideGestureState.onDrag(dragAmount)
             if (actions != null) {
                 if (actions.size > 1) {
-                    // 触发长动作，拦截当前拖拽
-                    isMultipleAction = true
-                    stateHolder.onDragCancel()
-                    val button = stateHolder.button
-                    if (button != null) {
-                        multipleActionHandler.onExpanded(actions, button.position)
-                    }
+                    actionPanelState.onDragStart(sideGestureState.finger, actions)
+                    sideGestureState.cancel()
                 } else if (actions.size == 1) {
-                    isGestureCanceled = true
-                    stateHolder.onDragCancel()
+                    sideGestureState.cancel()
                 }
             } else {
-                isGestureCanceled = true
-                stateHolder.onDragCancel()
+                sideGestureState.cancel()
             }
         },
         onDragEnd = onDragEnd@{
-            if (isMultipleAction) {
-                multipleActionHandler.onDragEnd()
-            } else if (!isGestureCanceled) {
-                stateHolder.onDragEnd()
+            if (actionPanelState.isExpanded) {
+                actionPanelState.onDragEnd()
             }
-            isGestureCanceled = false
-            isMultipleAction = false
+            if (sideGestureState.isCanceled) {
+                sideGestureState.reset()
+            } else {
+                sideGestureState.onDragEnd()
+            }
         },
         onDragCancel = onDragCancel@{
-            stateHolder.onDragCancel()
-            multipleActionHandler.onDragCancel()
-            isGestureCanceled = false
-            isMultipleAction = false
+            if (actionPanelState.isExpanded) {
+                actionPanelState.onDragCancel()
+            }
+            sideGestureState.onDragCancel()
         }
     )
-    Box(
-        modifier = modifier
-//            .background(color = Color.Red.copy(alpha = 0.1f))
-//            .drawBehind {
-//                buttons.fastForEach { button ->
-//                    val bounds = button.bounds(rootSize)
-//                    drawRect(
-//                        color = Color(button.color),
-//                        topLeft = bounds.topLeft,
-//                        size = bounds.size
-//                    )
-//                }
-//            }
-            .drawWithCache {
-                animationStyle.draw(this, stateHolder, defaultIcons)
-            }
-    ) {
-        val button = stateHolder.button
+    Box(modifier = modifier) {
+        GestureAnimation(
+            modifier = Modifier.matchParentSize(),
+            animationStyle = animationStyle,
+            sideGestureState = sideGestureState
+        )
+
+        val button = sideGestureState.button
         if (button != null) {
-            multipleActionHandler.ActionPanel(button)
+            ActionPanel(
+                modifier = Modifier.matchParentSize(),
+                actionPanelStyle = actionPanelStyle,
+                actionPanelState = actionPanelState,
+                position = button.position,
+                vibrations = button.vibrations
+            )
         }
     }
 }
 
 @Composable
-private fun rememberStateHolder(
+private fun rememberSideGestureState(
     buttons: List<GestureButton>,
     onAction: (Int) -> Unit
-): StateHolder {
+): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    val curButtons by rememberUpdatedState(newValue = buttons)
-    val curOnAction by rememberUpdatedState(newValue = onAction)
-    return remember(coroutineScope) {
-        StateHolder(coroutineScope, curButtons, curOnAction)
+    return remember(coroutineScope, buttons, onAction) {
+        SideGestureState(coroutineScope, buttons, onAction)
     }
 }
 
-class StateHolder(
+class SideGestureState(
     private val coroutineScope: CoroutineScope,
     private val buttons: List<GestureButton>,
     private val onAction: (Int) -> Unit
 ) {
+
+    var isCanceled: Boolean by mutableStateOf(false)
+        private set
 
     var button: GestureButton? by mutableStateOf(null)
         private set
     var triggerDirection by mutableStateOf(Center)
         private set
 
-    val originY = Animatable(Float.NaN)
-    val fingerX = Animatable(Float.NaN)
-    val fingerY = Animatable(Float.NaN)
+    val originY: Float get() = originYAnim.value
+    val fingerX: Float get() = fingerXAnim.value
+    val fingerY: Float get() = fingerYAnim.value
+    private val originYAnim = Animatable(Float.NaN)
+    private val fingerXAnim = Animatable(Float.NaN)
+    private val fingerYAnim = Animatable(Float.NaN)
 
-    private var origin = Offset.Unspecified
-    private var finger = Offset.Unspecified
+    var origin = Offset.Unspecified
+        private set
+    var finger = Offset.Unspecified
+        private set
 
     private var longPressFirstTriggerMs = 0L
     private var longPressTriggerFlags = false
@@ -211,9 +160,9 @@ class StateHolder(
 
         coroutineScope.launch {
             val curY = offset.y
-            originY.snapTo(curY)
-            fingerY.snapTo(curY)
-            fingerX.snapTo(0f)
+            originYAnim.snapTo(curY)
+            fingerXAnim.snapTo(0f)
+            fingerYAnim.snapTo(curY)
         }
     }
 
@@ -227,10 +176,8 @@ class StateHolder(
         // 没触发方向，这一轮不再识别手势
         triggerDirection = calcDirection(button) ?: return null
         coroutineScope.launch {
-            val fingerX = fingerX
-            val fingerY = fingerY
-            fingerX.snapTo(fingerX.value + dragAmount.x)
-            fingerY.snapTo(fingerY.value + dragAmount.y)
+            fingerXAnim.snapTo(fingerX + dragAmount.x)
+            fingerYAnim.snapTo(fingerY + dragAmount.y)
         }
 
         if (canDistanceTrigger(button, false)) {
@@ -301,24 +248,32 @@ class StateHolder(
         reset()
     }
 
-    private fun reset() {
+    /**
+     * 自己程序取消逻辑，非系统干预
+     */
+    fun cancel() {
+        reset()
+        isCanceled = true
+    }
+
+    fun reset() {
+        isCanceled = false
         origin = Offset.Unspecified
         finger = Offset.Unspecified
         longPressFirstTriggerMs = 0L
         longPressTriggerFlags = false
         pressTriggerFlags = false
         coroutineScope.launch {
-            val originY = originY
-            val fingerX = fingerX
-            val fingerY = fingerY
-            val job = launch {
-                fingerY.animateTo(originY.value, animationSpec)
+            val originYAnim = originYAnim
+            val fingerXAnim = fingerXAnim
+            val fingerYAnim = fingerYAnim
+            coroutineScope {
+                launch { fingerXAnim.animateTo(0f, animationSpec) }
+                launch { fingerYAnim.animateTo(originY, animationSpec) }
             }
-            fingerX.animateTo(0f, animationSpec)
-            job.join()
-            originY.snapTo(Float.NaN)
-            fingerX.snapTo(Float.NaN)
-            fingerY.snapTo(Float.NaN)
+            originYAnim.snapTo(Float.NaN)
+            fingerXAnim.snapTo(Float.NaN)
+            fingerYAnim.snapTo(Float.NaN)
         }
     }
 
@@ -382,156 +337,33 @@ class StateHolder(
 }
 
 @Composable
-private fun rememberMultipleActionHandler(onAction: (Int) -> Unit): MultipleActionHandler {
-    val curOnAction by rememberUpdatedState(newValue = onAction)
-    return MultipleActionHandler(curOnAction)
+private fun rememberActionPanelState(onAction: (Int) -> Unit): ActionPanelState {
+    return remember(onAction) {
+        ActionPanelState(onAction)
+    }
 }
 
-class MultipleActionHandler(private val onAction: (Int) -> Unit) {
+class ActionPanelState(private val onAction: (Int) -> Unit) {
 
-    private var origin: Origin by mutableStateOf(Origin())
-    private var finger: Offset by mutableStateOf(Offset.Unspecified)
-    private var actions: List<Int> by mutableStateOf(emptyList())
-    private var pendingActions: MutableMap<Int, Int?> = mutableMapOf()
+    var isExpanded: Boolean by mutableStateOf(false)
+        private set
+    var origin: Offset by mutableStateOf(Offset.Unspecified)
+        private set
+    var finger: Offset by mutableStateOf(Offset.Unspecified)
+        private set
+    var actions: List<Int> by mutableStateOf(emptyList())
+        private set
+    private val pendingActions: MutableMap<Int, Int?> = mutableMapOf()
 
-    @Composable
-    fun ActionPanel(button: GestureButton) {
-        val actions by rememberUpdatedState(newValue = actions)
-        val origin by rememberUpdatedState(newValue = origin)
-        val finger by rememberUpdatedState(newValue = finger)
-        val itemSize = 48.dp
-        val hypot = itemSize.toPx() * 2f
-        if (!origin.isInvalid && actions.isNotEmpty()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                val alpha by animateFloatAsState(
-                    targetValue = when (finger) {
-                        Offset.Unspecified -> 0f
-                        else -> 1f
-                    },
-                    label = "ActionPanelBackground"
-                )
-                Box(
-                    modifier = Modifier
-                        .graphicsLayer {
-                            this.alpha = alpha
-                        }
-                        .matchParentSize()
-                        .background(color = Color.Black.copy(0.5f))
-                )
-                Box(
-                    Modifier
-                        .graphicsLayer {
-                            val offset = itemSize.toPx() / 2
-                            translationX = origin.offset.x - offset
-                            translationY = origin.offset.y - offset
-                        }
-                        .size(itemSize)
-                ) {
-                    actions.fastForEachIndexed { index, action ->
-                        key(index) {
-                            val animX = remember { Animatable(0f) }
-                            val animY = remember { Animatable(0f) }
-                            val animScale = remember { Animatable(0f) }
-
-                            LaunchedEffect(key1 = finger) {
-                                if (finger == Offset.Unspecified) {
-                                    coroutineScope {
-                                        launch { animX.animateTo(0f) }
-                                        launch { animY.animateTo(0f) }
-                                        launch { animScale.animateTo(0f) }
-                                    }
-                                }
-                            }
-
-                            LaunchedEffect(key1 = Unit) {
-                                val avgAngDeg = 35.0
-                                val totalAngDeg = avgAngDeg * (actions.size - 1)
-                                val angDeg = -90.0 - totalAngDeg / 2.0 + avgAngDeg * index
-                                val radians = Math.toRadians(angDeg)
-                                val dy = hypot * cos(radians)
-                                val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
-                                    if (origin.position == LEFT) value else -value
-                                }
-                                coroutineScope {
-                                    launch { animX.animateTo(dx.toFloat()) }
-                                    launch { animY.animateTo(dy.toFloat()) }
-                                    launch { animScale.animateTo(1f) }
-                                }
-                            }
-
-                            var originBounds by remember { mutableStateOf(Rect.Zero) }
-                            val pendingActions = pendingActions
-                            LaunchedEffect(button, pendingActions, index, action, animX, animY, animScale) {
-                                snapshotFlow { finger }
-                                    .filter {
-                                        it != Offset.Unspecified && animScale.value >= 1f
-                                    }
-                                    .collect {
-                                        val offset = Offset(x = animX.value, y = animY.value)
-                                        val transFinger = it - offset
-                                        if (originBounds.contains(transFinger)) {
-                                            val cache = pendingActions[index]
-                                            if (cache != action) {
-                                                launch { animScale.animateTo(1.15f) }
-                                                pendingActions[index] = action
-                                                button.vibrations.tryVibrateForActionPanel()
-                                            }
-                                        } else {
-                                            val cache = pendingActions[index]
-                                            if (cache != null) {
-                                                launch { animScale.animateTo(1f) }
-                                                pendingActions[index] = null
-                                            }
-                                        }
-                                    }
-                            }
-                            Image(
-                                modifier = Modifier
-                                    .onGloballyPositioned {
-                                        originBounds = it.boundsInRoot()
-                                    }
-                                    .graphicsLayer {
-                                        scaleX = animScale.value
-                                        scaleY = animScale.value
-                                        translationX = animX.value
-                                        translationY = animY.value
-                                    }
-                                    .matchParentSize()
-                                    .clipToBackground(
-                                        color = when (action) {
-                                            Actions.WECHAT_SCAN -> Color.Green
-                                            Actions.WECHAT_PAY -> Color.Red
-                                            Actions.ALIPAY_SCAN -> Color.Magenta
-                                            Actions.ALIPAY_PAY -> Color.Blue
-                                            else -> Color.Yellow
-                                        },
-                                        shape = CircleShape
-                                    ),
-                                imageVector = Icons.Default.Email,
-                                contentDescription = null,
-                                contentScale = ContentScale.Inside
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun onDragStart(offset: Offset) {
-        origin = Origin()
+    fun onDragStart(offset: Offset, actions: List<Int>) {
+        isExpanded = true
+        origin = offset
         finger = offset
+        this.actions = actions
     }
 
     fun onDrag(dragAmount: Offset) {
         finger += dragAmount
-    }
-
-    fun onExpanded(actions: List<Int>, position: Int) {
-        this.actions = actions
-        if (origin.isInvalid) {
-            origin = Origin(finger, position)
-        }
     }
 
     fun onDragEnd() {
@@ -547,167 +379,18 @@ class MultipleActionHandler(private val onAction: (Int) -> Unit) {
         reset()
     }
 
+    fun isSelected(action: Int): Boolean {
+        return pendingActions.values.find { it == action } != null
+    }
+
+    fun select(index: Int, action: Int?) {
+        pendingActions[index] = action
+    }
+
     private fun reset() {
+        isExpanded = false
+        origin = Offset.Unspecified
         finger = Offset.Unspecified
         pendingActions.clear()
-    }
-
-    private data class Origin(
-        val offset: Offset = Offset.Unspecified,
-        val position: Int = -1
-    ) {
-        val isInvalid: Boolean get() = offset.isUnspecified || position == -1
-    }
-}
-
-enum class TriggerDirection {
-
-    Up, Center, Down
-}
-
-sealed interface AnimationStyle {
-
-    fun draw(
-        drawScope: CacheDrawScope,
-        stateHolder: StateHolder,
-        defaultIcons: Pair<Painter, Painter>
-    ): DrawResult
-
-    @Keep
-    data class Wave(
-        val backgroundColor: Int = android.graphics.Color.BLACK,
-        val strokeColor: Int = android.graphics.Color.TRANSPARENT,
-        val strokeWidth: Int = 0,
-        val iconColor: Int = android.graphics.Color.argb(200, 255, 255, 255),
-        val iconUriString: String? = null
-    ) : AnimationStyle {
-
-        override fun draw(
-            drawScope: CacheDrawScope,
-            stateHolder: StateHolder,
-            defaultIcons: Pair<Painter, Painter>
-        ): DrawResult = drawScope.run {
-            val size = size
-            val bezierPath = Path()
-            // 贝塞尔偏移值，使贝塞尔显示在手指落点上方
-            val bezierOffset = 70.dp.toPx()
-            // 贝塞尔与边界间距
-            val bezierSpacing = 40.dp.toPx()
-            // 贝塞尔的最大宽度
-            val bezierMaxWidth = 40.dp.toPx()
-            // 贝塞尔长度的一半
-            val halfBezierLength = 100.dp.toPx()
-            // 贝塞尔变形限制
-            val offsetYCoerce = 55.dp.toPx()
-
-            onDrawWithContent {
-                drawContent()
-
-                val originY = stateHolder.originY.value
-                val fingerX = stateHolder.fingerX.value
-                val fingerY = stateHolder.fingerY.value
-                if (originY.isNaN() || fingerX.isNaN() || fingerY.isNaN()) {
-                    return@onDrawWithContent
-                }
-                val button = stateHolder.button ?: return@onDrawWithContent
-                if (button.position == LEFT && fingerX < 0f) {
-                    return@onDrawWithContent
-                } else if (button.position == RIGHT && fingerX > 0f) {
-                    return@onDrawWithContent
-                }
-
-                // 动画y轴偏移值
-                val offsetY = (originY - fingerY).coerceIn(-offsetYCoerce, offsetYCoerce)
-                // 能完整显示整个贝塞尔并且留有间距
-                val safeOriginY = (originY - bezierOffset).coerceIn(
-                    minimumValue = halfBezierLength + bezierSpacing,
-                    maximumValue = size.height - halfBezierLength - bezierSpacing
-                )
-                bezierPath.also {
-                    it.reset()
-                    val moveToX = when (button.position == LEFT) {
-                        true -> 0f
-                        else -> size.width
-                    }
-                    val safeFingerX = when (button.position == LEFT) {
-                        true -> fingerX.coerceAtMost(bezierMaxWidth)
-                        else -> (size.width + fingerX).coerceAtLeast(size.width - bezierMaxWidth)
-                    }
-                    it.moveTo(moveToX, safeOriginY - halfBezierLength)
-                    it.cubicTo(
-                        x1 = when (button.position == LEFT) {
-                            true -> -1f
-                            else -> size.width + 1f
-                        },
-                        y1 = safeOriginY - halfBezierLength / 2.5f - offsetY,
-                        x2 = safeFingerX,
-                        y2 = safeOriginY - halfBezierLength / 2.5f - offsetY,
-                        x3 = safeFingerX,
-                        y3 = safeOriginY - offsetY
-                    )
-                    it.cubicTo(
-                        x1 = safeFingerX,
-                        y1 = safeOriginY + halfBezierLength / 2.5f - offsetY,
-                        x2 = when (button.position == LEFT) {
-                            true -> 0f
-                            else -> size.width
-                        },
-                        y2 = safeOriginY + halfBezierLength / 2.5f - offsetY,
-                        x3 = when (button.position == LEFT) {
-                            true -> -1f
-                            else -> size.width + 1f
-                        },
-                        y3 = safeOriginY + halfBezierLength
-                    )
-
-                    if (strokeWidth > 0) {
-                        val offset = when (button.position == LEFT) {
-                            true -> Offset(-strokeWidth.toFloat(), 0f)
-                            else -> Offset(strokeWidth.toFloat(), 0f)
-                        }
-                        it.translate(offset)
-                    }
-                }
-                // 绘制背景
-                drawPath(path = bezierPath, color = Color(backgroundColor))
-                if (strokeWidth > 0) {
-                    // 绘制轮廓
-                    drawPath(
-                        path = bezierPath,
-                        color = Color(strokeColor),
-                        style = Stroke(strokeWidth.toFloat())
-                    )
-                }
-
-                val bezierBounds = bezierPath.getBounds().translate(Offset(0f, -offsetY))
-                if (iconUriString == null) {
-                    // 默认图标
-                    val defaultIcon = defaultIcons.first.takeIf {
-                        button.position == LEFT
-                    } ?: defaultIcons.second
-                    defaultIcon.run {
-                        val degree = when (stateHolder.triggerDirection) {
-                            Up -> if (button.position == LEFT) -45f else 45f
-                            Center -> 0f
-                            Down -> if (button.position == LEFT) 45f else -45f
-                        }
-                        rotate(degree, pivot = bezierBounds.center) {
-                            val radius = bezierBounds.width * 0.6f
-                            val left = when (button.position) {
-                                LEFT -> bezierBounds.width * 0.2f - strokeWidth
-                                else -> size.width - bezierBounds.width * 0.8f + strokeWidth
-                            }
-                            val top = bezierBounds.top + bezierBounds.height / 2f - radius / 2f
-                            translate(left = left, top = top) {
-                                draw(
-                                    size = Size(radius, radius),
-                                    colorFilter = ColorFilter.tint(Color(iconColor))
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

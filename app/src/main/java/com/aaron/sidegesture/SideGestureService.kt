@@ -50,13 +50,13 @@ class SideGestureService : ComponentAccessibilityService() {
                 center = Actions.BACK
             ),
             longPressAction = GestureActions.Multiple(
-//                up = listOf(
-//                    Actions.WECHAT_SCAN,
-//                    Actions.WECHAT_PAY,
-//                    Actions.SEARCH_IN_APP,
-//                    Actions.ALIPAY_SCAN,
-//                    Actions.ALIPAY_PAY
-//                ),
+                up = listOf(
+                    Actions.WECHAT_SCAN,
+                    Actions.WECHAT_PAY,
+                    Actions.SEARCH_IN_APP,
+                    Actions.ALIPAY_SCAN,
+                    Actions.ALIPAY_PAY
+                ),
                 center = listOf(Actions.PREVIOUS_APP)
             )
         ),
@@ -117,6 +117,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 val context = LocalContext.current
                 SideGesturePad(
                     modifier = Modifier.fillMaxSize(),
+                    buttons = buttons,
                     onAction = { action ->
                         when (action) {
                             Actions.BACK -> {
@@ -146,8 +147,7 @@ class SideGestureService : ComponentAccessibilityService() {
                                 context.gotoAliPayPayCode()
                             }
                         }
-                    },
-                    buttons = buttons,
+                    }
                 )
             }
         }

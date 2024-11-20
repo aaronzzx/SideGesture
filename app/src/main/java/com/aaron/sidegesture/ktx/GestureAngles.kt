@@ -1,7 +1,7 @@
 package com.aaron.sidegesture.ktx
 
 import com.aaron.sidegesture.entity.GestureAngles
-import com.aaron.sidegesture.ui.TriggerDirection
+import com.aaron.sidegesture.entity.TriggerDirection
 
 /**
  * @author aaronzzxup@gmail.com
