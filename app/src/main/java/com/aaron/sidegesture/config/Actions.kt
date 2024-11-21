@@ -23,3 +23,25 @@ object Actions {
     const val ALIPAY_SCAN = 13
     const val ALIPAY_PAY = 14
 }
+
+sealed interface Action {
+
+    data object Back : Action
+    data object Home : Action
+    data object Recent : Action
+    data object Menu : Action
+    data object Mute : Action
+    data object LockScreen : Action
+    data object PreviousApp : Action
+    data object WechatScan : Action
+    data object WechatPay : Action
+    data object AlipayScan : Action
+    data object AlipayPay : Action
+    data class LaunchApp(val packageName: String) : Action
+
+    sealed interface PendingAction : Action
+    data object QuickSettings : PendingAction
+
+    sealed interface QuickStartAction : PendingAction
+    data class AppPanel(val packageNames: List<String>) : QuickStartAction
+}

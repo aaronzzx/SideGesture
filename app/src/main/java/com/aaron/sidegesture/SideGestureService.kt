@@ -45,7 +45,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 up = listOf(
                     Actions.WECHAT_SCAN,
                     Actions.WECHAT_PAY,
-                    Actions.SEARCH_IN_APP,
+                    Actions.HOME,
                     Actions.ALIPAY_SCAN,
                     Actions.ALIPAY_PAY
                 ),
@@ -64,7 +64,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 up = listOf(
                     Actions.WECHAT_SCAN,
                     Actions.WECHAT_PAY,
-                    Actions.SEARCH_IN_APP,
+                    Actions.HOME,
                     Actions.ALIPAY_SCAN,
                     Actions.ALIPAY_PAY
                 ),
