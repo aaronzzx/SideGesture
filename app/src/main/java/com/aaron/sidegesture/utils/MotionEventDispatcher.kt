@@ -26,8 +26,8 @@ object MotionEventDispatcher {
     fun dispatch(event: MotionEvent) {
         val listeners = listeners
         for (index in listeners.indices) {
-            val l = listeners[index]
-            l.onDispatch(event)
+            val l = listeners.getOrNull(index)
+            l?.onDispatch(event)
         }
     }
 }
