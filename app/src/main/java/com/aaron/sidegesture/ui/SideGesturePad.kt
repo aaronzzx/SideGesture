@@ -93,17 +93,17 @@ fun SideGesturePad(
         }
     )
     Box(modifier = modifier) {
-        GestureAnimation(
-            modifier = Modifier.matchParentSize(),
-            animationStyle = animationStyle,
-            sideGestureState = sideGestureState
-        )
-
         ActionPanel(
             modifier = Modifier.matchParentSize(),
             actionPanelStyle = actionPanelStyle,
             actionPanelState = actionPanelState,
             vibrations = sideGestureState.button?.vibrations
+        )
+
+        GestureAnimation(
+            modifier = Modifier.matchParentSize(),
+            animationStyle = animationStyle,
+            sideGestureState = sideGestureState
         )
     }
 }

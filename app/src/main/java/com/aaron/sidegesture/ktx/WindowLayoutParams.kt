@@ -35,7 +35,7 @@ fun WindowManager.LayoutParams.updateGestureButton(button: GestureButton) {
 
 fun WindowManager.LayoutParams.setBasic(touchEnabled: Boolean) {
     type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-    format = PixelFormat.TRANSPARENT
+    format = PixelFormat.RGBA_8888
     setFlags(touchEnabled)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
