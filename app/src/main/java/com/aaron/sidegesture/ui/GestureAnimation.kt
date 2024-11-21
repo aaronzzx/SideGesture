@@ -18,12 +18,13 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.toPx
+import com.aaron.sidegesture.constant.TriggerDirection.Center
+import com.aaron.sidegesture.constant.TriggerDirection.Down
+import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
-import com.aaron.sidegesture.entity.TriggerDirection.Center
-import com.aaron.sidegesture.entity.TriggerDirection.Down
-import com.aaron.sidegesture.entity.TriggerDirection.Up
+import com.aaron.sidegesture.entity.WaveStyle
 
 /**
  * @author aaronzzxup@gmail.com
@@ -37,7 +38,7 @@ fun GestureAnimation(
     modifier: Modifier = Modifier
 ) {
     when (animationStyle) {
-        is AnimationStyle.Wave -> WaveGestureAnimation(
+        is WaveStyle -> WaveGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
             sideGestureState = sideGestureState
@@ -47,7 +48,7 @@ fun GestureAnimation(
 
 @Composable
 private fun WaveGestureAnimation(
-    animationStyle: AnimationStyle.Wave,
+    animationStyle: WaveStyle,
     sideGestureState: SideGestureState,
     modifier: Modifier = Modifier
 ) {

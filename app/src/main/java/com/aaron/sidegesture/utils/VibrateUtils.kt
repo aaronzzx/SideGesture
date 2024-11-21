@@ -24,11 +24,15 @@ object VibrateUtils {
         } else {
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
-        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+            } else {
+                VibrationEffect.createOneShot(40, 255)
+            }
+            vibrator.vibrate(effect)
         } else {
-            VibrationEffect.createOneShot(40, 255)
+            vibrator.vibrate(50)
         }
-        vibrator.vibrate(effect)
     }
 }

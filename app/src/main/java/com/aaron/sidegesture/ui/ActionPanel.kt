@@ -39,8 +39,9 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
-import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.constant.Actions
 import com.aaron.sidegesture.entity.ActionPanelStyle
+import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.toIntOffset
@@ -70,7 +71,7 @@ fun ActionPanel(
         exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
         when (actionPanelStyle) {
-            is ActionPanelStyle.Arc -> {
+            is ArcStyle -> {
                 ArcActionPanel(
                     modifier = Modifier.fillMaxSize(),
                     actionPanelStyle = actionPanelStyle,
@@ -84,7 +85,7 @@ fun ActionPanel(
 
 @Composable
 private fun AnimatedVisibilityScope.ArcActionPanel(
-    actionPanelStyle: ActionPanelStyle.Arc,
+    actionPanelStyle: ArcStyle,
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
     vibrations: Vibrations? = null

@@ -13,15 +13,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.TriggerDirection
+import com.aaron.sidegesture.constant.TriggerDirection.Center
+import com.aaron.sidegesture.constant.TriggerDirection.Down
+import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.AnimationStyle
+import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.TriggerDirection
-import com.aaron.sidegesture.entity.TriggerDirection.Center
-import com.aaron.sidegesture.entity.TriggerDirection.Down
-import com.aaron.sidegesture.entity.TriggerDirection.Up
+import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.ktx.actionBy
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
@@ -45,8 +47,8 @@ fun SideGesturePad(
     onAction: (Int) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
-    animationStyle: AnimationStyle = AnimationStyle.Wave(),
-    actionPanelStyle: ActionPanelStyle = ActionPanelStyle.Arc()
+    animationStyle: AnimationStyle = WaveStyle(),
+    actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
     val sideGestureState = rememberSideGestureState(buttons, onAction)
     val actionPanelState = rememberActionPanelState(onAction)
@@ -204,7 +206,7 @@ class SideGestureState(
                 }
                 if (!button.longPressNeedFingerUp) {
                     // 要触发ActionPanel，longPressNeedFingerUp必须为false
-                    val actions = button.longPressAction.actionBy(triggerDirection)
+                    val actions = button.longPressActions.actionBy(triggerDirection)
                     if (actions.size > 1) {
                         return actions
                     } else if (actions.size == 1) {
@@ -233,7 +235,7 @@ class SideGestureState(
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
-            val actions = button.longPressAction.actionBy(triggerDirection)
+            val actions = button.longPressActions.actionBy(triggerDirection)
             if (actions.isNotEmpty()) {
                 val action = actions.first()
                 if (action != Actions.NONE) {
@@ -241,7 +243,7 @@ class SideGestureState(
                 }
             }
         } else if (canDistanceTrigger(button, false)) {
-            val action = button.pressAction.actionBy(triggerDirection)
+            val action = button.pressActions.actionBy(triggerDirection)
             if (action != Actions.NONE) {
                 onAction(action)
             }
@@ -282,8 +284,8 @@ class SideGestureState(
      * 手指划过的距离是否足够触发动作，上和下的动作需要按斜线距离计算
      */
     private fun canDistanceTrigger(button: GestureButton, isLongPress: Boolean): Boolean {
-        val pressAction = button.pressAction
-        val longPressAction = button.longPressAction
+        val pressAction = button.pressActions
+        val longPressAction = button.longPressActions
         val originX = origin.x
         val originY = origin.y
         val fingerX = finger.x

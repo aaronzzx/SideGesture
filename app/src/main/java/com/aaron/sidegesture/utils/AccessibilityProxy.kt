@@ -7,7 +7,7 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_LOCK_SCRE
 import android.content.Intent
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
-import com.aaron.sidegesture.config.Actions
+import com.aaron.sidegesture.constant.Actions
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatPayCode

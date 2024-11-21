@@ -25,6 +25,7 @@ import kotlin.coroutines.resume
  * @since 2024/11/18
  */
 
+// 需要在accessibility_service_config.xml中添加截图权限
 @RequiresApi(Build.VERSION_CODES.R)
 suspend fun SideGestureService.takeScreenshot(): Bitmap? = suspendCancellableCoroutine { cont ->
     takeScreenshot(0, applicationContext.mainExecutor, object : AccessibilityService.TakeScreenshotCallback {

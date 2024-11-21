@@ -7,11 +7,12 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.sidegesture.config.Actions
-import com.aaron.sidegesture.entity.GestureActions
+import com.aaron.sidegesture.constant.Actions
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.entity.LongPressActions
+import com.aaron.sidegesture.entity.PressActions
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindow
@@ -37,11 +38,11 @@ class SideGestureService : ComponentAccessibilityService() {
             position = LEFT,
             start = 0.3f,
             end = 1.0f,
-            pressAction = GestureActions.Single(
+            pressActions = PressActions(
                 up = Actions.LOCK_SCREEN,
                 center = Actions.BACK
             ),
-            longPressAction = GestureActions.Multiple(
+            longPressActions = LongPressActions(
                 up = listOf(
                     Actions.WECHAT_SCAN,
                     Actions.WECHAT_PAY,
@@ -56,11 +57,11 @@ class SideGestureService : ComponentAccessibilityService() {
             position = RIGHT,
             start = 0.3f,
             end = 1.0f,
-            pressAction = GestureActions.Single(
+            pressActions = PressActions(
                 up = Actions.LOCK_SCREEN,
                 center = Actions.BACK
             ),
-            longPressAction = GestureActions.Multiple(
+            longPressActions = LongPressActions(
                 up = listOf(
                     Actions.WECHAT_SCAN,
                     Actions.WECHAT_PAY,

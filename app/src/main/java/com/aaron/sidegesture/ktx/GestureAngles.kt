@@ -1,14 +1,12 @@
 package com.aaron.sidegesture.ktx
 
+import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.GestureAngles
-import com.aaron.sidegesture.entity.TriggerDirection
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
-
-private const val BASE = 180f
 
 fun GestureAngles.getTriggerDirection(degree: Float): TriggerDirection? {
     val base = BASE
@@ -23,3 +21,5 @@ fun GestureAngles.getTriggerDirection(degree: Float): TriggerDirection? {
         else -> null
     }
 }
+
+private const val BASE = 180f

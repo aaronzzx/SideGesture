@@ -8,7 +8,7 @@ import androidx.annotation.Keep
  */
 @Keep
 data class Vibrations(
-    val forPress: Boolean = true,
-    val forLongPress: Boolean = true,
-    val forActionPanel: Boolean = true
+    val pressEnabled: Boolean = true,
+    val longPressEnabled: Boolean = true,
+    val actionPanelEnabled: Boolean = true
 )
