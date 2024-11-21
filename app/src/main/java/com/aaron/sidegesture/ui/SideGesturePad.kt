@@ -267,16 +267,12 @@ class SideGestureState(
         longPressTriggerFlags = false
         pressTriggerFlags = false
         coroutineScope.launch {
-            val originYAnim = originYAnim
             val fingerXAnim = fingerXAnim
             val fingerYAnim = fingerYAnim
             coroutineScope {
                 launch { fingerXAnim.animateTo(0f, animationSpec) }
                 launch { fingerYAnim.animateTo(originY, animationSpec) }
             }
-            originYAnim.snapTo(Float.NaN)
-            fingerXAnim.snapTo(Float.NaN)
-            fingerYAnim.snapTo(Float.NaN)
         }
     }
 
