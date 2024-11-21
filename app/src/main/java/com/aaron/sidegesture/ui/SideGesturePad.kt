@@ -197,26 +197,28 @@ class SideGestureState(
             val timeMs = SystemClock.uptimeMillis()
             if (longPressFirstTriggerMs == 0L) {
                 longPressFirstTriggerMs = timeMs
-            } else if (!button.longPressNeedFingerUp &&
-                timeMs - longPressFirstTriggerMs >= longPressDelayMs
-            ) {
+            } else if (timeMs - longPressFirstTriggerMs >= longPressDelayMs) {
                 if (!longPressTriggerFlags) {
                     longPressTriggerFlags = true
                     button.vibrations.tryVibrateForLongPress()
                 }
-                val actions = button.longPressAction.actionBy(triggerDirection)
-                if (actions.size > 1) {
-                    return actions
-                } else if (actions.size == 1) {
-                    val action = actions.first()
-                    if (action != Actions.NONE) {
-                        onAction(action)
-                        return listOf(action)
+                if (!button.longPressNeedFingerUp) {
+                    // 要触发ActionPanel，longPressNeedFingerUp必须为false
+                    val actions = button.longPressAction.actionBy(triggerDirection)
+                    if (actions.size > 1) {
+                        return actions
+                    } else if (actions.size == 1) {
+                        val action = actions.first()
+                        if (action != Actions.NONE) {
+                            onAction(action)
+                            return listOf(action)
+                        }
                     }
                 }
             }
         } else {
             longPressTriggerFlags = false
+            longPressFirstTriggerMs = 0L
         }
 
         return emptyList()
