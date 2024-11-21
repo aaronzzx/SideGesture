@@ -55,7 +55,7 @@ fun Context.gotoWechatPayCode() {
 //    }
 }
 
-fun Context.gotoAliPayScan() {
+fun Context.gotoAlipayScan() {
     try {
         //利用Intent打开支付宝
         //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
@@ -71,7 +71,7 @@ fun Context.gotoAliPayScan() {
     }
 }
 
-fun Context.gotoAliPayPayCode() {
+fun Context.gotoAlipayPayCode() {
     try {
         //利用Intent打开支付宝
         //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和

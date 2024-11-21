@@ -66,8 +66,8 @@ fun ActionPanel(
     AnimatedVisibility(
         modifier = modifier,
         visible = actionPanelState.isExpanded,
-        enter = fadeIn(),
-        exit = fadeOut()
+        enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
+        exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
         when (actionPanelStyle) {
             is ActionPanelStyle.Arc -> {

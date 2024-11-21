@@ -23,16 +23,16 @@ fun ComponentAccessibilityService.updateLayout(view: View, lp: WindowManager.Lay
     wm.updateViewLayout(view, lp)
 }
 
-fun ComponentAccessibilityService.setComposeOverlay(content: @Composable () -> Unit): ComposeView {
+fun ComponentAccessibilityService.attachComposeOverlay(content: @Composable () -> Unit): ComposeView {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
         setBasic(false)
         updateMainView()
     }
     val composeView = ComposeView(this).apply {
-        setViewTreeLifecycleOwner(this@setComposeOverlay)
-        setViewTreeViewModelStoreOwner(this@setComposeOverlay)
-        setViewTreeSavedStateRegistryOwner(this@setComposeOverlay)
+        setViewTreeLifecycleOwner(this@attachComposeOverlay)
+        setViewTreeViewModelStoreOwner(this@attachComposeOverlay)
+        setViewTreeSavedStateRegistryOwner(this@attachComposeOverlay)
         setContent {
             content()
         }

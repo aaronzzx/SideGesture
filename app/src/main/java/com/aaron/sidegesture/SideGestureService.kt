@@ -1,35 +1,28 @@
 package com.aaron.sidegesture
 
-import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.config.Actions
 import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
-import com.aaron.sidegesture.ktx.gotoAliPayPayCode
-import com.aaron.sidegesture.ktx.gotoAliPayScan
-import com.aaron.sidegesture.ktx.gotoWechatPayCode
-import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
-import com.aaron.sidegesture.ktx.setComposeOverlay
 import com.aaron.sidegesture.ktx.updateGestureButton
 import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.aaron.sidegesture.utils.AccessibilityProxy
 import com.blankj.utilcode.util.ScreenUtils
-import com.blankj.utilcode.util.ToastUtils
 
 /**
  * @author aaronzzxup@gmail.com
@@ -37,8 +30,7 @@ import com.blankj.utilcode.util.ToastUtils
  */
 class SideGestureService : ComponentAccessibilityService() {
 
-    private var prevPkgName: String? = null
-    private var curPkgName: String? = null
+    private val accessibilityProxy = AccessibilityProxy(this)
 
     private val buttons = listOf(
         GestureButton(
@@ -94,17 +86,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        when(event?.eventType){
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                val pkgName = event.packageName?.toString() ?: ""
-                val intent = packageManager.getLaunchIntentForPackage(pkgName)
-                if (intent != null && curPkgName != pkgName) {
-                    prevPkgName = curPkgName
-                    curPkgName = pkgName
-                }
-            }
-            else -> Unit
-        }
+        accessibilityProxy.onAccessibilityEvent(event)
     }
 
     override fun onInterrupt() {
@@ -115,41 +97,13 @@ class SideGestureService : ComponentAccessibilityService() {
         if (mainView != null) {
             removeWindow(mainView)
         }
-        this.mainView = setComposeOverlay {
+        this.mainView = attachComposeOverlay {
             SideGestureTheme {
-                val context = LocalContext.current
                 SideGesturePad(
                     modifier = Modifier.fillMaxSize(),
                     buttons = buttons,
                     onAction = { action ->
-                        when (action) {
-                            Actions.BACK -> {
-                                performGlobalAction(GLOBAL_ACTION_BACK)
-                            }
-                            Actions.HOME -> {
-                                performGlobalAction(GLOBAL_ACTION_HOME)
-                            }
-                            Actions.LOCK_SCREEN -> {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                    performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
-                                }
-                            }
-                            Actions.PREVIOUS_APP -> {
-                                previousApp()
-                            }
-                            Actions.WECHAT_SCAN -> {
-                                context.gotoWechatScan()
-                            }
-                            Actions.WECHAT_PAY -> {
-                                context.gotoWechatPayCode()
-                            }
-                            Actions.ALIPAY_SCAN -> {
-                                context.gotoAliPayScan()
-                            }
-                            Actions.ALIPAY_PAY -> {
-                                context.gotoAliPayPayCode()
-                            }
-                        }
+                        accessibilityProxy.onAction(action)
                     }
                 )
             }
@@ -176,25 +130,6 @@ class SideGestureService : ComponentAccessibilityService() {
                 updateGestureButton(button)
             }
             updateLayout(view, lp)
-        }
-    }
-
-    private fun previousApp() {
-        val prevPkgName = prevPkgName
-        if (prevPkgName.isNullOrEmpty()) {
-            // TODO: hardcode
-            ToastUtils.showShort("没有上一个应用")
-            return
-        }
-        val curPkgName = curPkgName
-        if (prevPkgName == curPkgName) return
-        val intent = packageManager.getLaunchIntentForPackage(prevPkgName) ?: return
-        try {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            this.prevPkgName = curPkgName
-            this.curPkgName = prevPkgName
-        } catch (ignored: Exception) {
         }
     }
 }
