@@ -61,7 +61,7 @@ fun SideGesturePad(
             sideGestureState.onDragStart(offset)
         },
         onDrag = onDrag@{ dragAmount ->
-            if (actionPanelState.isExpanded) {
+            if (actionPanelState.visible) {
                 actionPanelState.onDrag(dragAmount)
                 return@onDrag
             }
@@ -83,7 +83,7 @@ fun SideGesturePad(
             }
         },
         onDragEnd = onDragEnd@{
-            if (actionPanelState.isExpanded) {
+            if (actionPanelState.visible) {
                 val action = actionPanelState.onDragEnd()
                 curOnAction(action)
             }
@@ -95,7 +95,7 @@ fun SideGesturePad(
             }
         },
         onDragCancel = onDragCancel@{
-            if (actionPanelState.isExpanded) {
+            if (actionPanelState.visible) {
                 actionPanelState.onDragCancel()
             }
             sideGestureState.onDragCancel()
@@ -327,16 +327,9 @@ class SideGestureState(
     }
 }
 
-@Composable
-private fun rememberActionPanelState(): ActionPanelState {
-    return remember {
-        ActionPanelState()
-    }
-}
+abstract class QuickStartState {
 
-class ActionPanelState {
-
-    var isExpanded: Boolean by mutableStateOf(false)
+    var visible: Boolean by mutableStateOf(false)
         private set
     var origin: Offset by mutableStateOf(Offset.Unspecified)
         private set
@@ -349,7 +342,7 @@ class ActionPanelState {
     private val pendingActions: MutableMap<Int, String> = mutableMapOf()
 
     fun onDragStart(position: Int, offset: Offset, actions: List<String>) {
-        isExpanded = true
+        visible = true
         this.position = position
         this.origin = offset
         this.finger = offset
@@ -382,7 +375,7 @@ class ActionPanelState {
     }
 
     private fun reset() {
-        isExpanded = false
+        visible = false
         pendingActions.clear()
         origin = Offset.Unspecified
         finger = Offset.Unspecified

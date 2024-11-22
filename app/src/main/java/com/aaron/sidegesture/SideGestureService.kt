@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import com.aaron.composeaccessibility.ComponentAccessibilityService
@@ -100,13 +101,15 @@ class SideGestureService : ComponentAccessibilityService() {
         }
         this.mainView = attachComposeOverlay {
             SideGestureTheme {
-                SideGesturePad(
-                    modifier = Modifier.fillMaxSize(),
-                    buttons = buttons,
-                    onAction = { action ->
-                        accessibilityProxy.onAction(action)
-                    }
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    SideGesturePad(
+                        modifier = Modifier.matchParentSize(),
+                        buttons = buttons,
+                        onAction = { action ->
+                            accessibilityProxy.onAction(action)
+                        }
+                    )
+                }
             }
         }
         val buttonViews = buttonViews

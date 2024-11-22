@@ -58,6 +58,15 @@ import kotlin.math.sqrt
  */
 
 @Composable
+fun rememberActionPanelState(): ActionPanelState {
+    return remember {
+        ActionPanelState()
+    }
+}
+
+class ActionPanelState : QuickStartState()
+
+@Composable
 fun ActionPanel(
     actionPanelStyle: ActionPanelStyle,
     actionPanelState: ActionPanelState,
@@ -66,7 +75,7 @@ fun ActionPanel(
 ) {
     AnimatedVisibility(
         modifier = modifier,
-        visible = actionPanelState.isExpanded,
+        visible = actionPanelState.visible,
         enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
         exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
