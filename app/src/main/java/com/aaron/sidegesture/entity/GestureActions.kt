@@ -1,30 +1,49 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
-import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.GlobalActions
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
 
-sealed interface GestureActions<T> {
+@Keep
+data class GestureActions(
+    val up: Actions = Actions(),
+    val center: Actions = Actions(),
+    val down: Actions = Actions()
+)
 
-    val up: T
-    val center: T
-    val down: T
+@Keep
+data class Actions(private val actionValue: String = GlobalActions.NONE) {
+
+    companion object {
+        val NONE = Actions()
+
+        fun single(action: String): Actions {
+            return Actions(action)
+        }
+
+        fun multiple(vararg actions: String): Actions {
+            return Actions(actions.joinToString(","))
+        }
+    }
+
+    @Transient
+    val values: List<String> = run {
+        val actionValue = actionValue
+        if (actionValue.contains(",")) {
+            return@run actionValue.split(",")
+        }
+        emptyList()
+    }
+
+    @Transient
+    val value: String = run {
+        if (values.isNotEmpty()) {
+            return@run values[0]
+        }
+        actionValue
+    }
 }
-
-@Keep
-data class PressActions(
-    override val up: Int = Actions.NONE,
-    override val center: Int = Actions.NONE,
-    override val down: Int = Actions.NONE
-) : GestureActions<Int>
-
-@Keep
-data class LongPressActions(
-    override val up: List<Int> = emptyList(),
-    override val center: List<Int> = emptyList(),
-    override val down: List<Int> = emptyList()
-) : GestureActions<List<Int>>

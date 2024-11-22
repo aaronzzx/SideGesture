@@ -7,12 +7,12 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.entity.Actions
+import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
-import com.aaron.sidegesture.entity.LongPressActions
-import com.aaron.sidegesture.entity.PressActions
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindow
@@ -38,38 +38,38 @@ class SideGestureService : ComponentAccessibilityService() {
             position = LEFT,
             start = 0.3f,
             end = 1.0f,
-            pressActions = PressActions(
-                up = Actions.LOCK_SCREEN,
-                center = Actions.BACK
+            pressActions = GestureActions(
+                up = Actions.single(GlobalActions.LOCK_SCREEN),
+                center = Actions.single(GlobalActions.BACK)
             ),
-            longPressActions = LongPressActions(
-                up = listOf(
-                    Actions.WECHAT_SCAN,
-                    Actions.WECHAT_PAY,
-                    Actions.HOME,
-                    Actions.ALIPAY_SCAN,
-                    Actions.ALIPAY_PAY
+            longPressActions = GestureActions(
+                up = Actions.multiple(
+                    GlobalActions.WECHAT_SCAN,
+                    GlobalActions.WECHAT_PAY,
+                    GlobalActions.HOME,
+                    GlobalActions.ALIPAY_SCAN,
+                    GlobalActions.ALIPAY_PAY
                 ),
-                center = listOf(Actions.PREVIOUS_APP)
+                center = Actions.single(GlobalActions.PREVIOUS_APP)
             )
         ),
         GestureButton(
             position = RIGHT,
             start = 0.3f,
             end = 1.0f,
-            pressActions = PressActions(
-                up = Actions.LOCK_SCREEN,
-                center = Actions.BACK
+            pressActions = GestureActions(
+                up = Actions.single(GlobalActions.LOCK_SCREEN),
+                center = Actions.single(GlobalActions.BACK)
             ),
-            longPressActions = LongPressActions(
-                up = listOf(
-                    Actions.WECHAT_SCAN,
-                    Actions.WECHAT_PAY,
-                    Actions.HOME,
-                    Actions.ALIPAY_SCAN,
-                    Actions.ALIPAY_PAY
+            longPressActions = GestureActions(
+                up = Actions.multiple(
+                    GlobalActions.WECHAT_SCAN,
+                    GlobalActions.WECHAT_PAY,
+                    GlobalActions.HOME,
+                    GlobalActions.ALIPAY_SCAN,
+                    GlobalActions.ALIPAY_PAY
                 ),
-                center = listOf(Actions.PREVIOUS_APP)
+                center = Actions.single(GlobalActions.PREVIOUS_APP)
             )
         )
     )

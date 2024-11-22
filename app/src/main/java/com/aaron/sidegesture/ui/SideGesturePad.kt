@@ -10,23 +10,26 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
 import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.ActionPanelStyle
+import com.aaron.sidegesture.entity.Actions
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.WaveStyle
-import com.aaron.sidegesture.ktx.actionBy
+import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
+import com.aaron.sidegesture.ktx.isNotEmpty
 import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.utils.DragGestureHandler
@@ -44,14 +47,15 @@ import kotlin.math.hypot
 
 @Composable
 fun SideGesturePad(
-    onAction: (Int) -> Unit,
+    onAction: (String) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
     animationStyle: AnimationStyle = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
-    val sideGestureState = rememberSideGestureState(buttons, onAction)
-    val actionPanelState = rememberActionPanelState(onAction)
+    val curOnAction by rememberUpdatedState(newValue = onAction)
+    val sideGestureState = rememberSideGestureState(buttons)
+    val actionPanelState = rememberActionPanelState()
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
             sideGestureState.onDragStart(offset)
@@ -67,10 +71,11 @@ fun SideGesturePad(
             val actions = sideGestureState.onDrag(dragAmount)
             if (actions != null) {
                 val button = sideGestureState.button
-                if (actions.size > 1 && button != null) {
-                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions)
+                if (actions.values.isNotEmpty() && button != null) {
+                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions.values)
                     sideGestureState.cancel()
-                } else if (actions.size == 1) {
+                } else if (actions.isNotEmpty()) {
+                    curOnAction(actions.value)
                     sideGestureState.cancel()
                 }
             } else {
@@ -79,12 +84,14 @@ fun SideGesturePad(
         },
         onDragEnd = onDragEnd@{
             if (actionPanelState.isExpanded) {
-                actionPanelState.onDragEnd()
+                val action = actionPanelState.onDragEnd()
+                curOnAction(action)
             }
             if (sideGestureState.isCanceled) {
                 sideGestureState.reset()
             } else {
-                sideGestureState.onDragEnd()
+                val action = sideGestureState.onDragEnd()
+                curOnAction(action)
             }
         },
         onDragCancel = onDragCancel@{
@@ -111,20 +118,16 @@ fun SideGesturePad(
 }
 
 @Composable
-private fun rememberSideGestureState(
-    buttons: List<GestureButton>,
-    onAction: (Int) -> Unit
-): SideGestureState {
+private fun rememberSideGestureState(buttons: List<GestureButton>): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    return remember(coroutineScope, buttons, onAction) {
-        SideGestureState(coroutineScope, buttons, onAction)
+    return remember(coroutineScope, buttons) {
+        SideGestureState(coroutineScope, buttons)
     }
 }
 
 class SideGestureState(
     private val coroutineScope: CoroutineScope,
-    private val buttons: List<GestureButton>,
-    private val onAction: (Int) -> Unit
+    private val buttons: List<GestureButton>
 ) {
 
     var isCanceled: Boolean by mutableStateOf(false)
@@ -167,9 +170,10 @@ class SideGestureState(
     }
 
     /**
-     * @return 返回null表示不识别任何手势，空列表表示还没触发动作，单列表表示触发一个动作，长列表表示触发长动作
+     * @return 返回null表示不识别任何手势，[Actions.NONE]表示还没触发动作，
+     * [Actions.values]不为空表示触发长动作，否则表示触发一个动作
      */
-    fun onDrag(dragAmount: Offset): List<Int>? {
+    fun onDrag(dragAmount: Offset): Actions? {
         finger += dragAmount
         // 理论上能到这里button不应该为空
         val button = button ?: return null
@@ -206,16 +210,7 @@ class SideGestureState(
                 }
                 if (!button.longPressNeedFingerUp) {
                     // 要触发ActionPanel，longPressNeedFingerUp必须为false
-                    val actions = button.longPressActions.actionBy(triggerDirection)
-                    if (actions.size > 1) {
-                        return actions
-                    } else if (actions.size == 1) {
-                        val action = actions.first()
-                        if (action != Actions.NONE) {
-                            onAction(action)
-                            return listOf(action)
-                        }
-                    }
+                    return button.longPressActions.actionsBy(triggerDirection)
                 }
             }
         } else {
@@ -223,32 +218,25 @@ class SideGestureState(
             longPressFirstTriggerMs = 0L
         }
 
-        return emptyList()
+        return Actions.NONE
     }
 
-    fun onDragEnd() {
-        val button = checkNotNull(button)
-        val onAction = onAction
+    fun onDragEnd(): String {
+        val button = button ?: return GlobalActions.NONE
         val longPressDelayMs = button.longPressTriggerDelayMs
         val triggerDirection = triggerDirection
         if (button.longPressNeedFingerUp &&
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
-            val actions = button.longPressActions.actionBy(triggerDirection)
-            if (actions.isNotEmpty()) {
-                val action = actions.first()
-                if (action != Actions.NONE) {
-                    onAction(action)
-                }
-            }
+            val actions = button.longPressActions.actionsBy(triggerDirection)
+            return actions.value
         } else if (canDistanceTrigger(button, false)) {
-            val action = button.pressActions.actionBy(triggerDirection)
-            if (action != Actions.NONE) {
-                onAction(action)
-            }
+            val actions = button.pressActions.actionsBy(triggerDirection)
+            return actions.value
         }
         reset()
+        return GlobalActions.NONE
     }
 
     fun onDragCancel() {
@@ -298,7 +286,7 @@ class SideGestureState(
                         longPressAction.center.isNotEmpty()
             }
             return distance >= button.pressTriggerDistance &&
-                    pressAction.center != Actions.NONE
+                    pressAction.center.isNotEmpty()
         } else if (triggerDirection == Up || triggerDirection == Down) {
             val edge1 = abs(fingerX - originX)
             val edge2 = abs(fingerY - originY)
@@ -312,9 +300,9 @@ class SideGestureState(
             }
             val canTrigger = edge3 >= button.pressTriggerDistance
             if (triggerDirection == Up) {
-                return canTrigger && pressAction.up != Actions.NONE
+                return canTrigger && pressAction.up.isNotEmpty()
             }
-            return canTrigger && pressAction.down != Actions.NONE
+            return canTrigger && pressAction.down.isNotEmpty()
         }
         return false
     }
@@ -340,13 +328,13 @@ class SideGestureState(
 }
 
 @Composable
-private fun rememberActionPanelState(onAction: (Int) -> Unit): ActionPanelState {
-    return remember(onAction) {
-        ActionPanelState(onAction)
+private fun rememberActionPanelState(): ActionPanelState {
+    return remember {
+        ActionPanelState()
     }
 }
 
-class ActionPanelState(private val onAction: (Int) -> Unit) {
+class ActionPanelState {
 
     var isExpanded: Boolean by mutableStateOf(false)
         private set
@@ -354,13 +342,13 @@ class ActionPanelState(private val onAction: (Int) -> Unit) {
         private set
     var finger: Offset by mutableStateOf(Offset.Unspecified)
         private set
-    var actions: List<Int> by mutableStateOf(emptyList())
+    var actions: List<String> by mutableStateOf(emptyList())
         private set
     var position: Int by mutableIntStateOf(LEFT)
         private set
-    private val pendingActions: MutableMap<Int, Int?> = mutableMapOf()
+    private val pendingActions: MutableMap<Int, String> = mutableMapOf()
 
-    fun onDragStart(position: Int, offset: Offset, actions: List<Int>) {
+    fun onDragStart(position: Int, offset: Offset, actions: List<String>) {
         isExpanded = true
         this.position = position
         this.origin = offset
@@ -372,24 +360,24 @@ class ActionPanelState(private val onAction: (Int) -> Unit) {
         finger += dragAmount
     }
 
-    fun onDragEnd() {
+    fun onDragEnd(): String {
         val pendingActions = pendingActions
-        val action = pendingActions.values.find { it != null }
-        if (action != null && action != Actions.NONE) {
-            onAction(action)
-        }
+        val action = pendingActions.values.find {
+            it != GlobalActions.NONE
+        } ?: GlobalActions.NONE
         reset()
+        return action
     }
 
     fun onDragCancel() {
         reset()
     }
 
-    fun isSelected(action: Int): Boolean {
+    fun isSelected(action: String): Boolean {
         return pendingActions.values.find { it == action } != null
     }
 
-    fun select(index: Int, action: Int?) {
+    fun select(index: Int, action: String) {
         pendingActions[index] = action
     }
 

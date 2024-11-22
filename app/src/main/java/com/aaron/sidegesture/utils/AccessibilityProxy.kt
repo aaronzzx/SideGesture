@@ -7,7 +7,7 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_LOCK_SCRE
 import android.content.Intent
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
-import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatPayCode
@@ -40,36 +40,36 @@ class AccessibilityProxy(private val host: AccessibilityService) {
         }
     }
 
-    fun onAction(action: Int) {
+    fun onAction(action: String) {
         host.onAction(action)
     }
 
-    private fun AccessibilityService.onAction(action: Int) {
+    private fun AccessibilityService.onAction(action: String) {
         when (action) {
-            Actions.BACK -> {
+            GlobalActions.BACK -> {
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
-            Actions.HOME -> {
+            GlobalActions.HOME -> {
                 performGlobalAction(GLOBAL_ACTION_HOME)
             }
-            Actions.LOCK_SCREEN -> {
+            GlobalActions.LOCK_SCREEN -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
                 }
             }
-            Actions.PREVIOUS_APP -> {
+            GlobalActions.PREVIOUS_APP -> {
                 previousApp()
             }
-            Actions.WECHAT_SCAN -> {
+            GlobalActions.WECHAT_SCAN -> {
                 gotoWechatScan()
             }
-            Actions.WECHAT_PAY -> {
+            GlobalActions.WECHAT_PAY -> {
                 gotoWechatPayCode()
             }
-            Actions.ALIPAY_SCAN -> {
+            GlobalActions.ALIPAY_SCAN -> {
                 gotoAlipayScan()
             }
-            Actions.ALIPAY_PAY -> {
+            GlobalActions.ALIPAY_PAY -> {
                 gotoAlipayPayCode()
             }
         }

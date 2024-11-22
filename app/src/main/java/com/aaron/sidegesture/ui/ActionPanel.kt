@@ -39,7 +39,7 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
-import com.aaron.sidegesture.constant.Actions
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
@@ -146,7 +146,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 } else {
                                     if (actionPanelState.isSelected(action)) {
                                         launch { selectAnim.animateTo(1f) }
-                                        actionPanelState.select(index, null)
+                                        actionPanelState.select(index, GlobalActions.NONE)
                                     }
                                 }
                             }
@@ -179,10 +179,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             .clipToBackground(
                                 // TODO: hardcode
                                 color = when (action) {
-                                    Actions.WECHAT_SCAN -> Color(0xFF1FCA37)
-                                    Actions.WECHAT_PAY -> Color(0xFF1FCA37)
-                                    Actions.ALIPAY_SCAN -> Color(0xFF008EFF)
-                                    Actions.ALIPAY_PAY -> Color(0xFF008EFF)
+                                    GlobalActions.WECHAT_SCAN -> Color(0xFF1FCA37)
+                                    GlobalActions.WECHAT_PAY -> Color(0xFF1FCA37)
+                                    GlobalActions.ALIPAY_SCAN -> Color(0xFF008EFF)
+                                    GlobalActions.ALIPAY_PAY -> Color(0xFF008EFF)
                                     else -> Color(0xFFFF7E55)
                                 },
                                 shape = CircleShape
@@ -190,10 +190,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             .wrapContentSize(),
                         // TODO: hardcode
                         text = when (action) {
-                            Actions.WECHAT_SCAN -> "WS"
-                            Actions.WECHAT_PAY -> "WP"
-                            Actions.ALIPAY_SCAN -> "AS"
-                            Actions.ALIPAY_PAY -> "AP"
+                            GlobalActions.WECHAT_SCAN -> "WS"
+                            GlobalActions.WECHAT_PAY -> "WP"
+                            GlobalActions.ALIPAY_SCAN -> "AS"
+                            GlobalActions.ALIPAY_PAY -> "AP"
                             else -> "?"
                         },
                         color = Color.White
