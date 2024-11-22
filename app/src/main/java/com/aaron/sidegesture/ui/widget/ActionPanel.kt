@@ -1,4 +1,4 @@
-package com.aaron.sidegesture.ui
+package com.aaron.sidegesture.ui.widget
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope

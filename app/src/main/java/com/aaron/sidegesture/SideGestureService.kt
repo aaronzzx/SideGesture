@@ -21,8 +21,8 @@ import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ktx.updateGestureButton
 import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
-import com.aaron.sidegesture.ui.SideGesturePad
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.aaron.sidegesture.ui.widget.SideGestureContainer
 import com.aaron.sidegesture.utils.AccessibilityProxy
 import com.blankj.utilcode.util.ScreenUtils
 
@@ -102,7 +102,7 @@ class SideGestureService : ComponentAccessibilityService() {
         this.mainView = attachComposeOverlay {
             SideGestureTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    SideGesturePad(
+                    SideGestureContainer(
                         modifier = Modifier.matchParentSize(),
                         buttons = buttons,
                         onAction = { action ->

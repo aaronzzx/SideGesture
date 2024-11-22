@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.compose)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
 android {
@@ -10,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.aaron.sidegesture"
-        minSdk = 24
+        minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -55,4 +56,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.com.aaronzzx.fastcompose.compose)
     implementation(libs.com.aaronzzx.fastcompose.compose.accessibility)
+    implementation(libs.jetbrains.kotlin.serialization)
 }

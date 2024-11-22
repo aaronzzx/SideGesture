@@ -1,4 +1,4 @@
-package com.aaron.sidegesture.ui
+package com.aaron.sidegesture.ui.widget
 
 import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
@@ -46,7 +46,7 @@ import kotlin.math.hypot
  */
 
 @Composable
-fun SideGesturePad(
+fun SideGestureContainer(
     onAction: (String) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,

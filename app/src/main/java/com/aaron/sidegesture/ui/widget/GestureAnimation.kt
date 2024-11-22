@@ -1,4 +1,4 @@
-package com.aaron.sidegesture.ui
+package com.aaron.sidegesture.ui.widget
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.material.icons.Icons
