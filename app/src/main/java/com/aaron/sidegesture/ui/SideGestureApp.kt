@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -16,14 +17,16 @@ import com.aaron.sidegesture.ui.theme.SideGestureTheme
 @Composable
 fun SideGestureApp() {
     SideGestureTheme {
-        val navController = rememberNavController()
-        NavHost(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController,
-            startDestination = Home
-        ) {
-            composable<Home> {
-                HomeScreen()
+        Surface {
+            val navController = rememberNavController()
+            NavHost(
+                modifier = Modifier.fillMaxSize(),
+                navController = navController,
+                startDestination = Home
+            ) {
+                composable<Home> {
+                    HomeScreen()
+                }
             }
         }
     }
