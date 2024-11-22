@@ -222,21 +222,22 @@ class SideGestureState(
     }
 
     fun onDragEnd(): String {
-        val button = button ?: return GlobalActions.NONE
+        val button = checkNotNull(button)
         val longPressDelayMs = button.longPressTriggerDelayMs
         val triggerDirection = triggerDirection
+        var returnAction = GlobalActions.NONE
         if (button.longPressNeedFingerUp &&
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
             val actions = button.longPressActions.actionsBy(triggerDirection)
-            return actions.value
+            returnAction = actions.value
         } else if (canDistanceTrigger(button, false)) {
             val actions = button.pressActions.actionsBy(triggerDirection)
-            return actions.value
+            returnAction = actions.value
         }
         reset()
-        return GlobalActions.NONE
+        return returnAction
     }
 
     fun onDragCancel() {
