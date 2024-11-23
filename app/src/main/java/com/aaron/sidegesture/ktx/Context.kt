@@ -97,6 +97,13 @@ fun Context.gotoAccessibilitySettings() {
     }
 }
 
+fun Context.gotoOverlaySettings() {
+    val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+        data = Uri.parse("package:${packageName}")
+    }
+    startActivity(intent)
+}
+
 fun Context.isAccessibilitySettingsOn(clazz: Class<out AccessibilityService?>): Boolean {
     // 判断设备的无障碍功能是否可用
     var accessibilityEnabled = false

@@ -1,0 +1,58 @@
+package com.aaron.sidegesture.ui.widget
+
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+
+/**
+ * @author aaronzzxup@gmail.com
+ * @since 2024/11/22
+ */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBar(
+    onBack: () -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    showBackIcon: Boolean = true
+) {
+    TopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+        title = {
+            Text(
+                modifier = Modifier.let {
+                    if (showBackIcon) it else {
+                        it.padding(start = TopBarPaddingExtra)
+                    }
+                },
+                text = title,
+                style = MaterialTheme.typography.headlineMedium
+            )
+        },
+        navigationIcon = {
+            if (showBackIcon) {
+                IconButton(
+                    modifier = Modifier.padding(start = TopBarPaddingExtra),
+                    onClick = onBack
+                ) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Go Back")
+                }
+            }
+        },
+        actions = actions
+    )
+}

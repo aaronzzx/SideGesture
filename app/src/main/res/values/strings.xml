@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">Side Gesture</string>
+    <string name="app_name">OK Gesture</string>
+    <string name="home_title">OK Gesture</string>
+    <string name="more">更多</string>
+    <string name="initial_settings">初始设置</string>
+    <string name="gesture_switch">手势开关</string>
+    <string name="system_overlay">悬浮窗</string>
+    <string name="accessibility_service">无障碍服务</string>
+    <string name="global_settings">全局设置</string>
+    <string name="advanced_settings">高级设置</string>
+    <string name="gesture_settings">手势设置</string>
+    <string name="gesture_button_settings">触钮设置</string>
+    <string name="advanced_settings_hint">应用黑名单·动画·隐藏触钮</string>
+    <string name="gesture_settings_hint">手势角度·滑动距离·振动</string>
+    <string name="gesture_button_settings_hint">长度·宽度·位置·颜色</string>
+    <string name="reset_all_settings">恢复默认设置</string>
+    <string name="unlock_advanced_feature">解锁高级功能</string>
+    <string name="about">关于</string>
+    <string name="gesture_button_list">触钮集合</string>
 </resources>
