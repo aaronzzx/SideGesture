@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui.widget
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,6 +14,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 
 /**
@@ -27,10 +29,11 @@ fun TopBar(
     title: String,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
-    showBackIcon: Boolean = true
+    showBackIcon: Boolean = true,
+    titleStyle: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
         title = {
             Text(
@@ -40,7 +43,7 @@ fun TopBar(
                     }
                 },
                 text = title,
-                style = MaterialTheme.typography.headlineMedium
+                style = titleStyle
             )
         },
         navigationIcon = {

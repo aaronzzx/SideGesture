@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.home
 
+import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.SideGestureService
@@ -7,6 +8,8 @@ import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.blankj.utilcode.util.PermissionUtils
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -20,9 +23,15 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         updateSystemPermissions()
     }
 
-    fun showMoreMenu(show: Boolean) {
-        updateUiState {
-            it.copy(showMoreMenu = show)
+    fun showMoreMenu(show: Boolean, delayBlock: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            updateUiState {
+                it.copy(showMoreMenu = show)
+            }
+            if (delayBlock != null) {
+                delay(100)
+                delayBlock()
+            }
         }
     }
 

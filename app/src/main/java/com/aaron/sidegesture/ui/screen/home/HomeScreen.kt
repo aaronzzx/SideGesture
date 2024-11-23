@@ -61,7 +61,14 @@ import kotlinx.serialization.Serializable
 data object Home
 
 @Composable
-fun HomeScreen(vm: HomeVM = viewModel()) {
+fun HomeScreen(
+    onNavToUnlock: () -> Unit,
+    onNavToAbout: () -> Unit,
+    onNavToAdvancedSettings: () -> Unit,
+    onNavToGestureSettings: () -> Unit,
+    onNavToGestureButtonSettings: () -> Unit,
+    vm: HomeVM = viewModel()
+) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -75,6 +82,7 @@ fun HomeScreen(vm: HomeVM = viewModel()) {
             TopBar(
                 onBack = { },
                 title = stringResource(id = R.string.home_title),
+                titleStyle = MaterialTheme.typography.headlineMedium,
                 showBackIcon = false,
                 actions = {
                     IconButton(onClick = { vm.showMoreMenu(true) }) {
@@ -92,19 +100,29 @@ fun HomeScreen(vm: HomeVM = viewModel()) {
                         onDismissRequest = { vm.showMoreMenu(false) }
                     ) {
                         DropdownMenuItem(
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                vm.showMoreMenu(false)
+                            },
                             text = {
                                 Text(text = stringResource(id = R.string.reset_all_settings),)
                             }
                         )
                         DropdownMenuItem(
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                vm.showMoreMenu(false) {
+                                    onNavToUnlock()
+                                }
+                            },
                             text = {
                                 Text(text = stringResource(id = R.string.unlock_advanced_feature))
                             }
                         )
                         DropdownMenuItem(
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                vm.showMoreMenu(false) {
+                                    onNavToAbout()
+                                }
+                            },
                             text = {
                                 Text(text = stringResource(id = R.string.about))
                             }
@@ -149,17 +167,17 @@ fun HomeScreen(vm: HomeVM = viewModel()) {
                     title = stringResource(id = R.string.global_settings)
                 ) {
                     MyTextButton(
-                        onClick = { /*TODO*/ },
+                        onClick = onNavToAdvancedSettings,
                         text = stringResource(id = R.string.advanced_settings),
                         secondaryText = stringResource(id = R.string.advanced_settings_hint)
                     )
                     MyTextButton(
-                        onClick = { /*TODO*/ },
+                        onClick = onNavToGestureSettings,
                         text = stringResource(id = R.string.gesture_settings),
                         secondaryText = stringResource(id = R.string.gesture_settings_hint)
                     )
                     MyTextButton(
-                        onClick = { /*TODO*/ },
+                        onClick = onNavToGestureButtonSettings,
                         text = stringResource(id = R.string.gesture_button_settings),
                         secondaryText = stringResource(id = R.string.gesture_button_settings_hint)
                     )
