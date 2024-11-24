@@ -100,7 +100,7 @@ fun MyExpandableColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 60.dp)
-                    .onClick(enableRipple = false) {
+                    .onClick {
                         onExpandedChange(!expanded)
                     }
                     .padding(

@@ -12,14 +12,14 @@ import com.blankj.utilcode.util.ToastUtils
 
 private var init = false
 
-fun toast(text: String) {
+fun showToast(text: String) {
     if (!init) {
         init()
     }
     ToastUtils.showShort(text)
 }
 
-fun toast(@StringRes resId: Int) {
+fun showToast(@StringRes resId: Int) {
     if (!init) {
         init()
     }

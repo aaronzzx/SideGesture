@@ -6,14 +6,11 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.entity.Actions
-import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindow
@@ -23,8 +20,13 @@ import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.ui.widget.SideGestureContainer
-import com.aaron.sidegesture.utils.AccessibilityProxy
+import com.aaron.sidegesture.utils.DataStoreHolder
 import com.blankj.utilcode.util.ScreenUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -32,52 +34,13 @@ import com.blankj.utilcode.util.ScreenUtils
  */
 class SideGestureService : ComponentAccessibilityService() {
 
-    private val accessibilityProxy = AccessibilityProxy(this)
-
-    private val buttons = listOf(
-        GestureButton(
-            position = LEFT,
-            start = 0.3f,
-            end = 1.0f,
-            pressActions = GestureActions(
-                up = Actions.single(GlobalActions.LOCK_SCREEN),
-                center = Actions.single(GlobalActions.BACK)
-            ),
-            longPressActions = GestureActions(
-                up = Actions.multiple(
-                    GlobalActions.WECHAT_SCAN,
-                    GlobalActions.WECHAT_PAY,
-                    GlobalActions.HOME,
-                    GlobalActions.ALIPAY_SCAN,
-                    GlobalActions.ALIPAY_PAY
-                ),
-                center = Actions.single(GlobalActions.PREVIOUS_APP)
-            )
-        ),
-        GestureButton(
-            position = RIGHT,
-            start = 0.3f,
-            end = 1.0f,
-            pressActions = GestureActions(
-                up = Actions.single(GlobalActions.LOCK_SCREEN),
-                center = Actions.single(GlobalActions.BACK)
-            ),
-            longPressActions = GestureActions(
-                up = Actions.multiple(
-                    GlobalActions.WECHAT_SCAN,
-                    GlobalActions.WECHAT_PAY,
-                    GlobalActions.HOME,
-                    GlobalActions.ALIPAY_SCAN,
-                    GlobalActions.ALIPAY_PAY
-                ),
-                center = Actions.single(GlobalActions.PREVIOUS_APP)
-            )
-        )
-    )
+    private val proxy = SideGestureServiceProxy(this)
 
     private var mainView: View? = null
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
+
+    private val coroutineScope = MainScope()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -88,10 +51,11 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        accessibilityProxy.onAccessibilityEvent(event)
+        proxy.onAccessibilityEvent(event)
     }
 
     override fun onInterrupt() {
+        coroutineScope.cancel()
     }
 
     override fun onSetOverlay() {
@@ -102,21 +66,30 @@ class SideGestureService : ComponentAccessibilityService() {
         this.mainView = attachComposeOverlay {
             SideGestureTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    val buttons by DataStoreHolder
+                        .gestureButtons
+                        .data
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
                     SideGestureContainer(
                         modifier = Modifier.matchParentSize(),
                         buttons = buttons,
                         onAction = { action ->
-                            accessibilityProxy.onAction(action)
+                            proxy.onAction(action)
                         }
                     )
                 }
             }
         }
-        val buttonViews = buttonViews
-        if (buttonViews != null) {
-            removeWindows(buttonViews)
+
+        coroutineScope.launch(Dispatchers.Main.immediate) {
+            DataStoreHolder.gestureButtons.data.collectLatest { buttons ->
+                val buttonViews = buttonViews
+                if (buttonViews != null) {
+                    removeWindows(buttonViews)
+                }
+                this@SideGestureService.buttonViews = attachGestureButtons(buttons)
+            }
         }
-        this.buttonViews = attachGestureButtons(buttons)
     }
 
     private fun updateLayout() {

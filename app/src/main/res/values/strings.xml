@@ -13,8 +13,9 @@
     <string name="advanced_settings_hint">应用黑名单·动画·隐藏触钮</string>
     <string name="gesture_settings_hint">手势角度·滑动距离·振动</string>
     <string name="gesture_button_settings_hint">长度·宽度·位置·颜色</string>
+    <string name="add_gesture_button">添加触钮</string>
     <string name="reset_all_settings">恢复默认设置</string>
-    <string name="unlock_advanced_feature">解锁高级功能</string>
+    <string name="unlock_advanced_feature">解锁完整版</string>
     <string name="about">关于</string>
     <string name="gesture_button_list">触钮集合</string>
 </resources>

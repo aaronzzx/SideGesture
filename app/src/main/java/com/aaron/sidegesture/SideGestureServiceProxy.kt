@@ -1,4 +1,4 @@
-package com.aaron.sidegesture.utils
+package com.aaron.sidegesture
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK
@@ -17,7 +17,7 @@ import com.aaron.sidegesture.ktx.gotoWechatScan
  * @author aaronzzxup@gmail.com
  * @since 2024/11/21
  */
-class AccessibilityProxy(private val host: AccessibilityService) {
+class SideGestureServiceProxy(private val host: AccessibilityService) {
 
     private var prevPackageName: String? = null
     private var currPackageName: String? = null

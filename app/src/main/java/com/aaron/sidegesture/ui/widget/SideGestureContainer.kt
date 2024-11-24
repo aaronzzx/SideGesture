@@ -13,7 +13,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.util.fastForEach
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
@@ -27,6 +30,7 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.ktx.actionsBy
+import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
 import com.aaron.sidegesture.ktx.isNotEmpty
@@ -50,6 +54,7 @@ fun SideGestureContainer(
     onAction: (String) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
+    drawButtonBounds: Boolean = false,
     animationStyle: AnimationStyle = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
@@ -101,7 +106,20 @@ fun SideGestureContainer(
             sideGestureState.onDragCancel()
         }
     )
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.drawBehind {
+            if (drawButtonBounds) {
+                buttons.fastForEach { button ->
+                    val bounds = button.bounds()
+                    drawRect(
+                        color = Color(button.color),
+                        topLeft = bounds.topLeft,
+                        size = bounds.size
+                    )
+                }
+            }
+        }
+    ) {
         ActionPanel(
             modifier = Modifier.matchParentSize(),
             actionPanelStyle = actionPanelStyle,

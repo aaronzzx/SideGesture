@@ -100,7 +100,7 @@ fun SideGestureService.removeWindows(views: Collection<View>) {
 fun SideGestureService.removeWindow(view: View) {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     try {
-        wm.removeView(view)
+        wm.removeViewImmediate(view)
     } catch (ignored: Exception) {
     }
 }
