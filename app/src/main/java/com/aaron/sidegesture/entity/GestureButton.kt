@@ -1,6 +1,8 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GlobalActions
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
@@ -15,8 +17,8 @@ data class GestureButton(
     val id: String,
     val position: Int,
     val enabled: Boolean = true,
-    val start: Float = 0f,
-    val end: Float = 1f,
+    val start: Float = 0.0f,
+    val end: Float = 0.25f,
     val width: Int = ConvertUtils.dp2px(16f),
     val angles: GestureAngles = GestureAngles(),
     val pressActions: GestureActions = GestureActions(),
@@ -26,11 +28,13 @@ data class GestureButton(
     val longPressTriggerDelayMs: Long = 100L,
     val longPressNeedFingerUp: Boolean = false,
     val vibrations: Vibrations = Vibrations(),
-    val color: Int = android.graphics.Color.argb(255, 0, 0, 255)
+    val color: Int = Color(0x99CFB3FF).toArgb()
 ) : Comparable<GestureButton> {
     companion object {
         const val LEFT = 1
         const val RIGHT = 2
+
+        const val MIN_STEP = 0.1f
 
         private const val ID = "1"
 
@@ -38,14 +42,14 @@ data class GestureButton(
             GestureButton(
                 id = ID,
                 position = LEFT,
-                start = 0.3f,
+                start = 0.0f,
                 end = 1.0f,
                 pressActions = GestureActions(center = Actions.single(GlobalActions.BACK))
             ),
             GestureButton(
                 id = ID,
                 position = RIGHT,
-                start = 0.3f,
+                start = 0.0f,
                 end = 1.0f,
                 pressActions = GestureActions(center = Actions.single(GlobalActions.BACK))
             )

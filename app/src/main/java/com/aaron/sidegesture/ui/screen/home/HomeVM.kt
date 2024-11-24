@@ -1,6 +1,8 @@
 package com.aaron.sidegesture.ui.screen.home
 
 import android.os.SystemClock
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
@@ -36,16 +38,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                     val b1 = GestureButton(
                         id = id,
                         position = GestureButton.LEFT,
-                        start = 0.0f,
-                        end = 0.3f,
-                        color = android.graphics.Color.YELLOW
+                        color = Color(0xFF000000).toArgb()
                     )
                     val b2 = GestureButton(
                         id = id,
                         position = GestureButton.RIGHT,
-                        start = 0.0f,
-                        end = 0.3f,
-                        color = android.graphics.Color.YELLOW
+                        color = Color(0xFF000000).toArgb()
                     )
                     add(b1)
                     add(b2)
@@ -73,10 +71,10 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     fun onGestureEnabledChange(enabled: Boolean) {
-        if (enabled && !uiState.isAccessibilityEnabled) {
-            // TODO: show toast
-            return
-        }
+//        if (enabled && !uiState.isAccessibilityEnabled) {
+//            // TODO: show toast
+//            return
+//        }
         updateUiState {
             it.copy(isGestureEnabled = enabled)
         }
@@ -106,7 +104,7 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     data class UiState(
         val gestureButtons: List<GestureButton> = emptyList(),
-        val isGestureEnabled: Boolean = false,
+        val isGestureEnabled: Boolean = true,
         val isAccessibilityEnabled: Boolean = false,
         val isDrawOverlayEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,

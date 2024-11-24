@@ -21,3 +21,4 @@ val DividerHeight = 24.dp
 val MainSecondaryTextPadding = 6.dp
 val EdgeMenuPadding = 8.dp
 val MarkColorSize = 16.dp
+val MinItemHeight = 60.dp
