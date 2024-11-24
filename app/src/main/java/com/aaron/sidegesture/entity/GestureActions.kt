@@ -2,12 +2,15 @@ package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GlobalActions
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
 
+@Serializable
 @Keep
 data class GestureActions(
     val up: Actions = Actions(),
@@ -15,6 +18,7 @@ data class GestureActions(
     val down: Actions = Actions()
 )
 
+@Serializable
 @Keep
 data class Actions(private val actionValue: String = GlobalActions.NONE) {
 

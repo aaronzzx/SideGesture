@@ -1,11 +1,13 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/16
  */
+@Serializable
 @Keep
 data class GestureAngles(
     val p1: Float = 0.12f,

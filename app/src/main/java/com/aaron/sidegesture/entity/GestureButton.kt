@@ -2,11 +2,21 @@ package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
 import com.blankj.utilcode.util.ConvertUtils
+import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+@Serializable
+@Keep
+data class GestureButtons(
+    val left: GestureButton? = null,
+    val right: GestureButton? = null
+)
+
+@Serializable
 @Keep
 data class GestureButton(
     val position: Int,
