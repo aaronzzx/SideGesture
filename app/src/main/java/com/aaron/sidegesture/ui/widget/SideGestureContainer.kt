@@ -208,7 +208,7 @@ class SideGestureState(
         }
 
         if (canDistanceTrigger(button, false)) {
-            if (!pressTriggerFlags) {
+            if (button.vibrations.vibrateImmediately && !pressTriggerFlags) {
                 pressTriggerFlags = true
                 button.vibrations.tryVibrateForPress()
             }
@@ -222,12 +222,12 @@ class SideGestureState(
             if (longPressFirstTriggerMs == 0L) {
                 longPressFirstTriggerMs = timeMs
             } else if (timeMs - longPressFirstTriggerMs >= longPressDelayMs) {
-                if (!longPressTriggerFlags) {
+                if (button.vibrations.vibrateImmediately && !longPressTriggerFlags) {
                     longPressTriggerFlags = true
                     button.vibrations.tryVibrateForLongPress()
                 }
-                if (!button.longPressNeedFingerUp) {
-                    // 要触发ActionPanel，longPressNeedFingerUp必须为false
+                if (button.longPressTriggerImmediately) {
+                    // 要触发ActionPanel，longPressTriggerImmediately必须为true
                     return button.longPressActions.actionsBy(triggerDirection)
                 }
             }
@@ -244,13 +244,19 @@ class SideGestureState(
         val longPressDelayMs = button.longPressTriggerDelayMs
         val triggerDirection = triggerDirection
         var returnAction = GlobalActions.NONE
-        if (button.longPressNeedFingerUp &&
+        if (!button.longPressTriggerImmediately &&
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
         ) {
+            if (!button.vibrations.vibrateImmediately) {
+                button.vibrations.tryVibrateForLongPress()
+            }
             val actions = button.longPressActions.actionsBy(triggerDirection)
             returnAction = actions.value
         } else if (canDistanceTrigger(button, false)) {
+            if (!button.vibrations.vibrateImmediately) {
+                button.vibrations.tryVibrateForPress()
+            }
             val actions = button.pressActions.actionsBy(triggerDirection)
             returnAction = actions.value
         }

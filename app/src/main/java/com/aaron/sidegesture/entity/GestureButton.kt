@@ -25,8 +25,8 @@ data class GestureButton(
     val longPressActions: GestureActions = GestureActions(),
     val pressTriggerDistance: Int = ConvertUtils.dp2px(30f),
     val longPressTriggerDistance: Int = ConvertUtils.dp2px(100f),
+    val longPressTriggerImmediately: Boolean = true,
     val longPressTriggerDelayMs: Long = 100L,
-    val longPressNeedFingerUp: Boolean = false,
     val vibrations: Vibrations = Vibrations(),
     val color: Int = Color(0x99CFB3FF).toArgb()
 ) : Comparable<GestureButton> {
@@ -54,6 +54,12 @@ data class GestureButton(
                 pressActions = GestureActions(center = Actions.single(GlobalActions.BACK))
             )
         )
+    }
+
+    init {
+        require(end - start >= MIN_STEP) {
+            "The min step must large than $MIN_STEP"
+        }
     }
 
     override fun compareTo(other: GestureButton): Int {

@@ -7,7 +7,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.annotation.RequiresPermission
-import com.aaron.sidegesture.App
+import com.aaron.sidegesture.entity.Vibrations
 
 /**
  * @author aaronzzxup@gmail.com
@@ -16,8 +16,7 @@ import com.aaron.sidegesture.App
 object VibrateUtils {
 
     @RequiresPermission(VIBRATE)
-    fun vibrate() {
-        val context = App.getContext()
+    fun vibrate(context: Context, vibrations: Vibrations) {
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
@@ -25,14 +24,21 @@ object VibrateUtils {
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+            val level = vibrations.predefinedVibrationLevel
+            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && level != Vibrations.EFFECT_NONE) {
+                val effect = when (level) {
+                    Vibrations.EFFECT_TICK -> VibrationEffect.EFFECT_TICK
+                    Vibrations.EFFECT_CLICK -> VibrationEffect.EFFECT_CLICK
+                    Vibrations.EFFECT_HEAVY_CLICK -> VibrationEffect.EFFECT_HEAVY_CLICK
+                    else -> error("Unknown predefinedVibrationLevel: ${vibrations.predefinedVibrationLevel}")
+                }
+                VibrationEffect.createPredefined(effect)
             } else {
-                VibrationEffect.createOneShot(40, 255)
+                VibrationEffect.createOneShot(vibrations.customVibrationMs, 255)
             }
             vibrator.vibrate(effect)
         } else {
-            vibrator.vibrate(50)
+            vibrator.vibrate(vibrations.customVibrationMs)
         }
     }
 }

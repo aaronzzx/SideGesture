@@ -6,6 +6,8 @@ package com.aaron.sidegesture.constant
  */
 object DataStoreFiles {
 
-    const val GESTURE_BUTTONS = "gesture_buttons"
-    const val ACTION_PANEL_STYLES = "action_panel_styles"
+    const val INITIAL_SETTINGS = "aa"
+    const val ADVANCED_SETTINGS = "bb"
+    const val GESTURE_SETTINGS = "cc"
+    const val GESTURE_BUTTONS = "dd"
 }
