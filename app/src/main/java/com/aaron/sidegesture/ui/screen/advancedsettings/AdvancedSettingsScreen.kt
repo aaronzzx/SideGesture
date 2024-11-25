@@ -1,11 +1,20 @@
 package com.aaron.sidegesture.ui.screen.advancedsettings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.widget.MyColumn
+import com.aaron.sidegesture.ui.widget.MySection
+import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlinx.serialization.Serializable
 
@@ -22,12 +31,72 @@ fun AdvancedSettingsScreen(
     onBack: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) {
+    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
         Column {
             TopBar(
                 onBack = onBack,
                 title = stringResource(id = R.string.advanced_settings)
             )
+            MyColumn {
+                MySection {
+                    MyTextButton(
+                        onClick = { /*TODO*/ },
+                        text = stringResource(id = R.string.exclude_app),
+                        secondaryText = stringResource(id = R.string.exclude_app_hint)
+                    )
+                }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextSwitch(
+                        onTextClick = { /*TODO*/ },
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.animation_style),
+                        secondaryText = "TODO",
+                        secondaryTextColor = MaterialTheme.colorScheme.primary
+                    )
+                    MyTextSwitch(
+                        onTextClick = { /*TODO*/ },
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.action_panel_style),
+                        secondaryText = "TODO",
+                        secondaryTextColor = MaterialTheme.colorScheme.primary
+                    )
+                }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextSwitch(
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.fit_soft_keyboard),
+                        secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
+                    )
+                }
+                MySection(
+                    modifier = Modifier.padding(top = SectionPadding),
+                    title = stringResource(id = R.string.hide_gesture_button)
+                ) {
+                    MyTextSwitch(
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.landscape)
+                    )
+                    MyTextSwitch(
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.quick_settings)
+                    )
+                    MyTextSwitch(
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.lock_screen)
+                    )
+                    MyTextSwitch(
+                        onCheckedChange = { /*TODO*/ },
+                        checked = false,
+                        text = stringResource(id = R.string.launcher)
+                    )
+                }
+            }
         }
     }
 }

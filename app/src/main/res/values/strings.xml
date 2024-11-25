@@ -18,4 +18,15 @@
     <string name="unlock_advanced_feature">解锁完整版</string>
     <string name="about">关于</string>
     <string name="gesture_button_list">触钮集合</string>
+    <string name="exclude_app">应用黑名单</string>
+    <string name="exclude_app_hint">选择不识别手势的应用</string>
+    <string name="animation_style">动画风格</string>
+    <string name="action_panel_style">动作面板风格</string>
+    <string name="fit_soft_keyboard">适配软键盘</string>
+    <string name="fit_soft_keyboard_hint">抬高覆盖在键盘上的手势触钮</string>
+    <string name="hide_gesture_button">隐藏触钮</string>
+    <string name="landscape">横屏模式</string>
+    <string name="quick_settings">快捷面板</string>
+    <string name="lock_screen">锁屏界面</string>
+    <string name="launcher">系统桌面</string>
 </resources>

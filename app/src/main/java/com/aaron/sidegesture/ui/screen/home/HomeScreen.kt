@@ -54,7 +54,7 @@ import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoOverlaySettings
 import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeight
+import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
@@ -238,7 +238,7 @@ fun HomeScreen(
                         Text(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = MinItemHeight)
+                                .heightIn(min = MinItemHeightNoSecondary)
                                 .onSingleClick {
                                 }
                                 .wrapContentSize(),

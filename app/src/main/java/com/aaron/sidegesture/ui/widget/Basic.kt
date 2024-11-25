@@ -52,6 +52,7 @@ import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MainSecondaryTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.MinItemHeight
+import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.SectionTitlePadding
@@ -126,7 +127,7 @@ fun MyExpandableColumn(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = MinItemHeight)
+                    .heightIn(min = MinItemHeightNoSecondary)
                     .onClick {
                         onExpandedChange(!expanded)
                     }
@@ -182,7 +183,14 @@ fun MyTextButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeight)
+            .let {
+                val minHeight = if (secondaryText.isEmpty()) {
+                    MinItemHeightNoSecondary
+                } else {
+                    MinItemHeight
+                }
+                it.heightIn(min = minHeight)
+            }
             .onSingleClick {
                 onClick()
             }
@@ -231,7 +239,14 @@ fun MyTextSwitch(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeight)
+            .let {
+                val minHeight = if (secondaryText.isEmpty()) {
+                    MinItemHeightNoSecondary
+                } else {
+                    MinItemHeight
+                }
+                it.heightIn(min = minHeight)
+            }
             .onSingleClick {
                 if (onTextClick != null) {
                     onTextClick()
