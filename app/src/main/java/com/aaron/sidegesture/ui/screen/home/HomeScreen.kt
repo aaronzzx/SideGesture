@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -57,9 +56,9 @@ import com.aaron.sidegesture.ktx.gotoOverlaySettings
 import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeight
 import com.aaron.sidegesture.ui.theme.RootPadding
-import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MyExpandableColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -148,12 +147,7 @@ fun HomeScreen(
                 )
 
                 val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .verticalScroll(scrollState)
-                        .padding(RootPadding)
-                        .padding(bottom = ScrollBottomPadding)
-                ) {
+                MyColumn(scrollState = scrollState) {
                     MySection(title = stringResource(id = R.string.initial_settings)) {
                         MyTextSwitch(
                             onCheckedChange = {
