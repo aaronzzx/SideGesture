@@ -80,7 +80,6 @@ fun HomeScreen(
     onNavToAbout: () -> Unit,
     onNavToAdvancedSettings: () -> Unit,
     onNavToGestureSettings: () -> Unit,
-    onNavToGestureButtonSettings: () -> Unit,
     vm: HomeVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -185,11 +184,6 @@ fun HomeScreen(
                             onClick = onNavToGestureSettings,
                             text = stringResource(id = R.string.gesture_settings),
                             secondaryText = stringResource(id = R.string.gesture_settings_hint)
-                        )
-                        MyTextButton(
-                            onClick = onNavToGestureButtonSettings,
-                            text = stringResource(id = R.string.gesture_button_settings),
-                            secondaryText = stringResource(id = R.string.gesture_button_settings_hint)
                         )
                     }
 

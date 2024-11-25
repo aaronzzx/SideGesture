@@ -1,11 +1,55 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
+import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalSettings.MaxLongPressTriggerDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MaxTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MaxVibrationDurationMs
+import com.aaron.sidegesture.constant.GlobalSettings.MinLongPressTriggerDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MinTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
+import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
+import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
+import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
+import com.aaron.sidegesture.ui.theme.ItemPadding
+import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
+import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.widget.MyColumn
+import com.aaron.sidegesture.ui.widget.MySection
+import com.aaron.sidegesture.ui.widget.MySlider
+import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlinx.serialization.Serializable
 
@@ -19,15 +63,166 @@ data object GestureSettings
 
 @Composable
 fun GestureSettingsScreen(
+    onNavToGestureAngles: () -> Unit,
     onBack: () -> Unit,
     vm: GestureSettingsVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) {
+    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
         Column {
             TopBar(
                 onBack = onBack,
                 title = stringResource(id = R.string.gesture_settings)
             )
+            val scrollState = rememberScrollState()
+            MyColumn(scrollState = scrollState) {
+                MySection {
+                    MyTextButton(
+                        onClick = onNavToGestureAngles,
+                        text = stringResource(id = R.string.gesture_angles),
+                        secondaryText = stringResource(id = R.string.gesture_angles_hint)
+                    )
+                }
+                MySection(
+                    modifier = Modifier.padding(top = SectionPadding),
+                    title = stringResource(id = R.string.press_action)
+                ) {
+                    MySlider(
+                        value = uiState.pressTriggerDistance,
+                        onValueChange = { vm.onPressTriggerDistanceChange(it) },
+                        onValueChangeFinished = {},
+                        text = stringResource(id = R.string.trigger_distance),
+                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
+                    )
+                }
+                MySection(
+                    modifier = Modifier.padding(top = SectionPadding),
+                    title = stringResource(id = R.string.long_press_action)
+                ) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onLongPressTriggerImmediatelyChange(it) },
+                        checked = uiState.longPressTriggerImmediately,
+                        text = stringResource(id = R.string.long_press_trigger_immediately),
+                        secondaryText = stringResource(id = R.string.long_press_trigger_immediately_hint)
+                    )
+                    MySlider(
+                        value = uiState.longPressTriggerDistance,
+                        onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
+                        onValueChangeFinished = {},
+                        text = stringResource(id = R.string.trigger_distance),
+                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
+                    )
+                    MySlider(
+                        value = uiState.longPressTriggerDelayMs.toFloat(),
+                        onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
+                        onValueChangeFinished = {},
+                        text = stringResource(id = R.string.long_press_trigger_delay_ms),
+                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
+                    )
+                }
+                MySection(
+                    modifier = Modifier.padding(top = SectionPadding),
+                    title = stringResource(id = R.string.vibration)
+                ) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onVibrateImmediatelyChange(it) },
+                        checked = uiState.vibrations.vibrateImmediately,
+                        text = stringResource(id = R.string.vibrate_immediately),
+                        secondaryText = stringResource(id = R.string.vibrate_immediately_hint)
+                    )
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onCustomVibrationChange(it) },
+                        checked = uiState.isCustomVibration,
+                        text = stringResource(id = R.string.custom_vibration),
+                        secondaryText = stringResource(id = R.string.custom_vibration_hint)
+                    )
+                    AnimatedVisibility(
+                        visible = uiState.isCustomVibration,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        Column {
+                            LaunchedEffect(key1 = scrollState) {
+                                scrollState.animateScrollBy(
+                                    value = 1000f,
+                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = MinItemHeightNoSecondary)
+                                    .onSingleClick {
+                                        vm.showPredefinedVibrationDropdown(true)
+                                    }
+                                    .padding(
+                                        horizontal = ContentPaddingHorizontal,
+                                        vertical = ContentPaddingVertical
+                                    ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                            ) {
+                                Text(
+                                    modifier = Modifier.weight(1f),
+                                    text = stringResource(id = R.string.predefined_style),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1
+                                )
+                                Box {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = getPredefinedVibrationEffectText(effect = uiState.vibrations.predefinedEffect),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            maxLines = 1
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDropDown,
+                                            contentDescription = stringResource(id = R.string.vibration_style)
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        shape = MaterialTheme.shapes.medium,
+                                        expanded = uiState.showPredefinedVibrationDropdown,
+                                        onDismissRequest = { vm.showPredefinedVibrationDropdown(false) }
+                                    ) {
+                                        listOf(
+                                            Vibrations.EFFECT_TICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_TICK),
+                                            Vibrations.EFFECT_CLICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_CLICK),
+                                            Vibrations.EFFECT_HEAVY_CLICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_HEAVY_CLICK),
+                                            Vibrations.EFFECT_NONE to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_NONE)
+                                        ).fastForEach { (effectValue, text) ->
+                                            key(effectValue) {
+                                                DropdownMenuItem(
+                                                    onClick = {
+                                                        vm.updatePredefinedVibration(effectValue)
+                                                        vm.showPredefinedVibrationDropdown(false)
+                                                    },
+                                                    text = {
+                                                        Text(text = text)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            MySlider(
+                                enabled = uiState.vibrations.predefinedEffect == Vibrations.EFFECT_NONE,
+                                value = uiState.vibrations.customVibrationMs.toFloat(),
+                                onValueChange = { vm.onCustomVibrationMsChange(it) },
+                                onValueChangeFinished = {},
+                                text = stringResource(id = R.string.vibration_strength),
+                                sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
+                                valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -15,8 +15,6 @@ import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
-import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettings
-import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsScreen
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
 import com.aaron.sidegesture.ui.screen.home.Home
@@ -47,8 +45,7 @@ fun SideGestureApp() {
                         onNavToUnlock = { navController.navigate(Unlock) },
                         onNavToAbout = { navController.navigate(About) },
                         onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
-                        onNavToGestureSettings = { navController.navigate(GestureSettings) },
-                        onNavToGestureButtonSettings = { navController.navigate(GestureButtonSettings) }
+                        onNavToGestureSettings = { navController.navigate(GestureSettings) }
                     )
                 }
                 composable<Unlock> {
@@ -61,10 +58,10 @@ fun SideGestureApp() {
                     AdvancedSettingsScreen(onBack = { navController.navigateUp() })
                 }
                 composable<GestureSettings> {
-                    GestureSettingsScreen(onBack = { navController.navigateUp() })
-                }
-                composable<GestureButtonSettings> {
-                    GestureButtonSettingsScreen(onBack = { navController.navigateUp() })
+                    GestureSettingsScreen(
+                        onNavToGestureAngles = { /*TODO*/ },
+                        onBack = { navController.navigateUp() }
+                    )
                 }
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -25,9 +27,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -35,6 +40,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -104,7 +110,7 @@ fun MySection(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
         ) {
-            Column(modifier = Modifier.heightIn(min = 60.dp)) {
+            Column {
                 content()
             }
         }
@@ -172,11 +178,87 @@ fun MyExpandableColumn(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MySlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    sliderValueHint: Pair<String, String>? = null,
+    onValueChangeFinished: (() -> Unit)? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = MinItemHeightNoSecondary)
+            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVertical),
+        verticalArrangement = Arrangement.spacedBy(IconTextPadding)
+    ) {
+        Text(
+            modifier = Modifier.width(IntrinsicSize.Max),
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1
+        )
+        if (sliderValueHint != null) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    text = sliderValueHint.first,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1
+                )
+                Text(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    text = sliderValueHint.second,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1
+                )
+            }
+        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val colors = SliderDefaults.colors()
+        Slider(
+            modifier = Modifier.height(30.dp),
+            enabled = enabled,
+            value = value,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
+            interactionSource = interactionSource,
+            colors = colors,
+            valueRange = valueRange,
+            thumb = {
+                SliderDefaults.Thumb(
+                    modifier = Modifier.requiredSize(20.dp),
+                    interactionSource = interactionSource,
+                    colors = colors,
+                    enabled = enabled
+                )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    modifier = Modifier.height(10.dp),
+                    colors = colors,
+                    enabled = enabled,
+                    sliderState = sliderState,
+//                    thumbTrackGapSize = 0.dp
+                )
+            }
+        )
+    }
+}
+
 @Composable
 fun MyTextButton(
     onClick: () -> Unit,
     text: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary
 ) {
@@ -231,6 +313,7 @@ fun MyTextSwitch(
     checked: Boolean,
     text: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onTextClick: (() -> Unit)? = null,
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,

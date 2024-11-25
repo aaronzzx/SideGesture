@@ -24,13 +24,13 @@ object VibrateUtils {
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val level = vibrations.predefinedVibrationLevel
+            val level = vibrations.predefinedEffect
             val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && level != Vibrations.EFFECT_NONE) {
                 val effect = when (level) {
                     Vibrations.EFFECT_TICK -> VibrationEffect.EFFECT_TICK
                     Vibrations.EFFECT_CLICK -> VibrationEffect.EFFECT_CLICK
                     Vibrations.EFFECT_HEAVY_CLICK -> VibrationEffect.EFFECT_HEAVY_CLICK
-                    else -> error("Unknown predefinedVibrationLevel: ${vibrations.predefinedVibrationLevel}")
+                    else -> error("Unknown predefinedVibrationLevel: ${vibrations.predefinedEffect}")
                 }
                 VibrationEffect.createPredefined(effect)
             } else {

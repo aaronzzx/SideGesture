@@ -49,7 +49,8 @@ fun TopBar(
         navigationIcon = {
             if (showBackIcon) {
                 IconButton(
-                    modifier = Modifier.padding(start = TopBarPaddingExtra),
+                    modifier = Modifier
+                        .padding(start = TopBarPaddingExtra / 2),
                     onClick = onBack
                 ) {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Go Back")
