@@ -8,12 +8,12 @@ import com.aaron.sidegesture.entity.GestureAngle
  * @since 2024/11/18
  */
 
+val GestureAngle.angle1: Float get() = BASE * p1
+val GestureAngle.angle2: Float get() = BASE * p2
+val GestureAngle.angle3: Float get() = BASE * p3
+val GestureAngle.angle4: Float get() = BASE * p4
+
 fun GestureAngle.getTriggerDirection(degree: Float): TriggerDirection? {
-    val base = BASE
-    val angle1: Float = base * p1
-    val angle2: Float = base * p2
-    val angle3: Float = base * p3
-    val angle4: Float = base * p4
     return when (degree) {
         in angle1..angle2 -> TriggerDirection.Up
         in angle2..angle3 -> TriggerDirection.Center
