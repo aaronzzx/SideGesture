@@ -348,7 +348,7 @@ class SideGestureState(
             // 第四象限
             180f - Math.toDegrees(radians.toDouble())
         }
-        return button.angles.getTriggerDirection(degree.toFloat())
+        return button.angle.getTriggerDirection(degree.toFloat())
     }
 }
 

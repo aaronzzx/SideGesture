@@ -128,7 +128,7 @@ fun HomeScreen(
                                     vm.showMoreMenu(false)
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.reset_all_settings),)
+                                    Text(text = stringResource(id = R.string.reset_default_settings),)
                                 }
                             )
                             DropdownMenuItem(

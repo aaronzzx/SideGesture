@@ -14,7 +14,7 @@
     <string name="gesture_settings_hint">手势角度·滑动距离·振动</string>
     <string name="gesture_button_settings_hint">长度·宽度·位置·颜色</string>
     <string name="add_gesture_button">添加触钮</string>
-    <string name="reset_all_settings">恢复默认设置</string>
+    <string name="reset_default_settings">恢复默认设置</string>
     <string name="unlock_advanced_feature">解锁完整版</string>
     <string name="about">关于</string>
     <string name="gesture_button_list">触钮集合</string>
@@ -49,9 +49,16 @@
     <string name="vibration_style">振动风格</string>
     <string name="predefined_style">预置风格</string>
     <string name="vibration_strength">振动强度</string>
-    <string name="vibration_tick">Tick</string>
-    <string name="vibration_click">Click</string>
-    <string name="vibration_heavy_click">Heavy Click</string>
+    <string name="vibration_tick">轻</string>
+    <string name="vibration_click">中</string>
+    <string name="vibration_heavy_click">重</string>
     <string name="none">无</string>
     <string name="custom">自定义</string>
+    <string name="reset_gesture_angles_warning">这将会清除现有的全局手势角度设置，并恢复到初始设置，不包含触钮自定义的部分。</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确认</string>
+    <string name="save_success">保存成功</string>
+    <string name="save_failure">保存失败</string>
+    <string name="reset_success">重置成功</string>
+    <string name="reset_failure">重置失败</string>
 </resources>

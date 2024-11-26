@@ -25,6 +25,8 @@ import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
+import com.aaron.sidegesture.ui.screen.gestureangles.GestureAngles
+import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesScreen
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
 import com.aaron.sidegesture.ui.screen.home.Home
@@ -80,9 +82,12 @@ fun SideGestureApp() {
             }
             myComposable<GestureSettings> {
                 GestureSettingsScreen(
-                    onNavToGestureAngles = { /*TODO*/ },
+                    onNavToGestureAngles = { navController.navigate(GestureAngles) },
                     onBack = { navController.navigateUp() }
                 )
+            }
+            myComposable<GestureAngles> {
+                GestureAnglesScreen(onBack = { navController.navigateUp() })
             }
         }
     }
