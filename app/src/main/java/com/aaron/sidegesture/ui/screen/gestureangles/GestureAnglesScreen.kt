@@ -1,11 +1,17 @@
 package com.aaron.sidegesture.ui.screen.gestureangles
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -13,13 +19,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -27,10 +40,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
+import com.aaron.compose.ktx.clipToBackground
+import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
@@ -44,6 +59,8 @@ import com.aaron.sidegesture.ktx.degree1
 import com.aaron.sidegesture.ktx.degree2
 import com.aaron.sidegesture.ktx.degree3
 import com.aaron.sidegesture.ktx.degree4
+import com.aaron.sidegesture.ui.theme.ItemPadding
+import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.blankj.utilcode.util.NumberUtils
 import kotlinx.serialization.Serializable
@@ -97,8 +114,9 @@ fun GestureAnglesScreen(
                 }
             )
         }
-        Column {
+        Box {
             TopBar(
+                modifier = Modifier.zIndex(1f),
                 onBack = onBack,
                 title = stringResource(id = R.string.gesture_angles),
                 actions = {
@@ -121,6 +139,40 @@ fun GestureAnglesScreen(
                 angle = uiState.angle,
                 position = uiState.position
             )
+            Icon(
+                modifier = Modifier
+                    .align(
+                        alignment = when (uiState.position) {
+                            LEFT -> Alignment.CenterEnd
+                            RIGHT -> Alignment.CenterStart
+                            else -> error("Unknown position: ${uiState.position}")
+                        }
+                    )
+                    .padding(horizontal = ItemPadding)
+                    .size(MinInteractiveSize)
+                    .graphicsLayer {
+                        rotationZ = when (uiState.position) {
+                            LEFT -> 0f
+                            RIGHT -> 180f
+                            else -> error("Unknown position: ${uiState.position}")
+                        }
+                    }
+                    .clipToBackground(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    )
+                    .onClick(enableRipple = false) {
+                        val newPosition = when (uiState.position) {
+                            LEFT -> RIGHT
+                            RIGHT -> LEFT
+                            else -> error("Unknown position: ${uiState.position}")
+                        }
+                        vm.switchPosition(newPosition)
+                    },
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -131,12 +183,15 @@ private fun AdjustAngle(
     modifier: Modifier = Modifier,
     position: Int = LEFT,
     color: Color = MaterialTheme.colorScheme.primary,
-    textColor: Color = MaterialTheme.colorScheme.onBackground,
-    disabledColor: Color = MaterialTheme.colorScheme.outlineVariant
+    inactiveColor: Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 ) {
     require(position == LEFT || position == RIGHT) {
         "Unknown position: $position"
     }
+    var p1 by remember { mutableStateOf(Rect.Zero) }
+    var p2 by remember { mutableStateOf(Rect.Zero) }
+    var p3 by remember { mutableStateOf(Rect.Zero) }
+    var p4 by remember { mutableStateOf(Rect.Zero) }
     val degrees = remember(angle) {
         listOf(angle.degree1, angle.degree2, angle.degree3, angle.degree4)
     }
@@ -144,7 +199,26 @@ private fun AdjustAngle(
         listOf(angle.arcDegree1, angle.arcDegree2, angle.arcDegree3, angle.arcDegree4, angle.arcDegree5)
     }
     val textMeasurer = rememberTextMeasurer()
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.pointerInput(Unit) {
+            detectDragGestures(
+                onDragStart = { offset ->
+                    if (p1.contains(offset)) {
+                        Log.d("zzx", "p1")
+                    } else if (p2.contains(offset)) {
+                        Log.d("zzx", "p2")
+                    } else if (p3.contains(offset)) {
+                        Log.d("zzx", "p3")
+                    } else if (p4.contains(offset)) {
+                        Log.d("zzx", "p4")
+                    }
+                },
+                onDrag = { _, dragAmount ->
+
+                }
+            )
+        }
+    ) {
         val radius = size.minDimension / 2f
         val myCenter = when (position) {
             LEFT -> center.copy(x = 0f)
@@ -157,26 +231,6 @@ private fun AdjustAngle(
                 center = myCenter,
                 alpha = 0.1f
             )
-            /*translate(left = -radius) {
-                val topLeft = myCenter.copy(y = myCenter.y - radius)
-                val arcSize = Size(size.minDimension, size.minDimension)
-                drawArc(
-                    color = disabledColor,
-                    startAngle = -90f,
-                    sweepAngle = angle.arcDegree1,
-                    useCenter = true,
-                    topLeft = topLeft,
-                    size = arcSize
-                )
-                drawArc(
-                    color = disabledColor,
-                    startAngle = angle.degree4 - 90f,
-                    sweepAngle = angle.arcDegree4,
-                    useCenter = true,
-                    topLeft = topLeft,
-                    size = arcSize
-                )
-            }*/
             drawCircle(
                 color = color,
                 radius = radius,
@@ -186,17 +240,27 @@ private fun AdjustAngle(
             )
         }
 
-        degrees.fastForEach { degree ->
+        degrees.fastForEachIndexed { index, degree ->
             val (x, y) = calcXY(myCenter, degree, position, radius, size)
+            val lineWidth = 6.dp.toPx()
+            val pointRadius = 20.dp.toPx()
+            val bounds = Rect(center = Offset(x, y), radius = pointRadius)
+            when (index) {
+                0 -> p1 = bounds
+                1 -> p2 = bounds
+                2 -> p3 = bounds
+                3 -> p4 = bounds
+                else -> error("Unknown index: $index")
+            }
             drawLine(
                 color = color,
                 start = myCenter,
                 end = Offset(x = x, y = y),
-                strokeWidth = 6.dp.toPx()
+                strokeWidth = lineWidth
             )
             drawCircle(
                 color = color,
-                radius = 20.dp.toPx(),
+                radius = pointRadius,
                 center = Offset(x = x, y = y)
             )
         }
@@ -219,6 +283,10 @@ private fun AdjustAngle(
                     y = textY - textMeasurer.measure(displayArcDegree).size.height / 2f
                 ),
                 style = TextStyle.Default.copy(
+                    color = when (index) {
+                        0, arcDegrees.lastIndex -> inactiveColor
+                        else -> color
+                    },
                     fontSize = 16.sp,
                     fontWeight = when (index) {
                         0, arcDegrees.lastIndex -> FontWeight.Normal

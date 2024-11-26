@@ -23,3 +23,4 @@ val EdgeMenuPadding = 8.dp
 val MarkColorSize = 16.dp
 val MinItemHeight = 70.dp
 val MinItemHeightNoSecondary = 50.dp
+val MinInteractiveSize = 48.dp
