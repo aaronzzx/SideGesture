@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.gestureangles
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -22,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +64,7 @@ import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.blankj.utilcode.util.NumberUtils
 import kotlinx.serialization.Serializable
+import kotlin.math.atan
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -137,6 +138,9 @@ fun GestureAnglesScreen(
             AdjustAngle(
                 modifier = Modifier.fillMaxSize(),
                 angle = uiState.angle,
+                onAngleChange = {
+                    vm.updateGestureAngle(it)
+                },
                 position = uiState.position
             )
             Icon(
@@ -179,6 +183,7 @@ fun GestureAnglesScreen(
 
 @Composable
 private fun AdjustAngle(
+    onAngleChange: (GestureAngle) -> Unit,
     angle: GestureAngle,
     modifier: Modifier = Modifier,
     position: Int = LEFT,
@@ -188,10 +193,17 @@ private fun AdjustAngle(
     require(position == LEFT || position == RIGHT) {
         "Unknown position: $position"
     }
+    val curOnAngleChange by rememberUpdatedState(newValue = onAngleChange)
+    var centerOffset by remember { mutableStateOf(Offset.Unspecified) }
+    var dragOffset by remember { mutableStateOf(Offset.Unspecified) }
     var p1 by remember { mutableStateOf(Rect.Zero) }
     var p2 by remember { mutableStateOf(Rect.Zero) }
     var p3 by remember { mutableStateOf(Rect.Zero) }
     var p4 by remember { mutableStateOf(Rect.Zero) }
+    var isP1Drag by remember { mutableStateOf(false) }
+    var isP2Drag by remember { mutableStateOf(false) }
+    var isP3Drag by remember { mutableStateOf(false) }
+    var isP4Drag by remember { mutableStateOf(false) }
     val degrees = remember(angle) {
         listOf(angle.degree1, angle.degree2, angle.degree3, angle.degree4)
     }
@@ -203,18 +215,71 @@ private fun AdjustAngle(
         modifier = modifier.pointerInput(Unit) {
             detectDragGestures(
                 onDragStart = { offset ->
-                    if (p1.contains(offset)) {
-                        Log.d("zzx", "p1")
+                    dragOffset = if (p1.contains(offset)) {
+                        isP1Drag = true
+                        offset
                     } else if (p2.contains(offset)) {
-                        Log.d("zzx", "p2")
+                        isP2Drag = true
+                        offset
                     } else if (p3.contains(offset)) {
-                        Log.d("zzx", "p3")
+                        isP3Drag = true
+                        offset
                     } else if (p4.contains(offset)) {
-                        Log.d("zzx", "p4")
+                        isP4Drag = true
+                        offset
+                    } else {
+                        Offset.Unspecified
                     }
                 },
                 onDrag = { _, dragAmount ->
-
+                    if (dragOffset != Offset.Unspecified &&
+                        centerOffset != Offset.Unspecified
+                    ) {
+                        dragOffset += dragAmount
+                        val x = dragOffset.x
+                        val y = centerOffset.y - dragOffset.y
+                        val tanVal = x / y
+                        val radians = atan(tanVal)
+                        var degree = Math.toDegrees(radians.toDouble())
+                        if (degree < 0f) {
+                            degree = 90f + (degree + 90f)
+                        }
+                        if (isP1Drag) {
+                            val degreeAmount = degree - angle.degree1
+                            val newDegree = angle.degree1 + degreeAmount
+                            val fraction = newDegree / 180f
+                            curOnAngleChange(angle.copy(p1 = fraction.toFloat()))
+                        } else if (isP2Drag) {
+                            val degreeAmount = degree - angle.degree2
+                            val newDegree = angle.degree2 + degreeAmount
+                            val fraction = newDegree / 180f
+                            curOnAngleChange(angle.copy(p2 = fraction.toFloat()))
+                        } else if (isP3Drag) {
+                            val degreeAmount = degree - angle.degree3
+                            val newDegree = angle.degree3 + degreeAmount
+                            val fraction = newDegree / 180f
+                            curOnAngleChange(angle.copy(p3 = fraction.toFloat()))
+                        } else if (isP4Drag) {
+                            val degreeAmount = degree - angle.degree4
+                            val newDegree = angle.degree4 + degreeAmount
+                            val fraction = newDegree / 180f
+                            curOnAngleChange(angle.copy(p4 = fraction.toFloat()))
+                        }
+                    }
+                },
+                onDragEnd = {
+                    dragOffset = Offset.Unspecified
+                    isP1Drag = false
+                    isP2Drag = false
+                    isP3Drag = false
+                    isP4Drag = false
+                },
+                onDragCancel = {
+                    dragOffset = Offset.Unspecified
+                    isP1Drag = false
+                    isP2Drag = false
+                    isP3Drag = false
+                    isP4Drag = false
                 }
             )
         }
@@ -224,6 +289,7 @@ private fun AdjustAngle(
             LEFT -> center.copy(x = 0f)
             else -> center.copy(x = size.width)
         }
+        centerOffset = myCenter
         clipRect {
             drawCircle(
                 color = color,
