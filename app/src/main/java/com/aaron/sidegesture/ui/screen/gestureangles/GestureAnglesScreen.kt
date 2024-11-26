@@ -13,20 +13,39 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.GestureAngle
-import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.ktx.angle1
+import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
+import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.arcDegree1
+import com.aaron.sidegesture.ktx.arcDegree2
+import com.aaron.sidegesture.ktx.arcDegree3
+import com.aaron.sidegesture.ktx.arcDegree4
+import com.aaron.sidegesture.ktx.arcDegree5
+import com.aaron.sidegesture.ktx.degree1
+import com.aaron.sidegesture.ktx.degree2
+import com.aaron.sidegesture.ktx.degree3
+import com.aaron.sidegesture.ktx.degree4
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.blankj.utilcode.util.NumberUtils
 import kotlinx.serialization.Serializable
 import kotlin.math.pow
 import kotlin.math.sin
@@ -110,16 +129,26 @@ fun GestureAnglesScreen(
 private fun AdjustAngle(
     angle: GestureAngle,
     modifier: Modifier = Modifier,
-    position: Int = GestureButton.LEFT,
-    color: Color = MaterialTheme.colorScheme.primary
+    position: Int = LEFT,
+    color: Color = MaterialTheme.colorScheme.primary,
+    textColor: Color = MaterialTheme.colorScheme.onBackground,
+    disabledColor: Color = MaterialTheme.colorScheme.outlineVariant
 ) {
-
+    require(position == LEFT || position == RIGHT) {
+        "Unknown position: $position"
+    }
+    val degrees = remember(angle) {
+        listOf(angle.degree1, angle.degree2, angle.degree3, angle.degree4)
+    }
+    val arcDegrees = remember(angle) {
+        listOf(angle.arcDegree1, angle.arcDegree2, angle.arcDegree3, angle.arcDegree4, angle.arcDegree5)
+    }
+    val textMeasurer = rememberTextMeasurer()
     Canvas(modifier = modifier) {
         val radius = size.minDimension / 2f
         val myCenter = when (position) {
-            GestureButton.LEFT -> center.copy(x = 0f)
-            GestureButton.RIGHT -> center.copy(x = size.width)
-            else -> error("Unknown position: $position")
+            LEFT -> center.copy(x = 0f)
+            else -> center.copy(x = size.width)
         }
         clipRect {
             drawCircle(
@@ -128,6 +157,26 @@ private fun AdjustAngle(
                 center = myCenter,
                 alpha = 0.1f
             )
+            /*translate(left = -radius) {
+                val topLeft = myCenter.copy(y = myCenter.y - radius)
+                val arcSize = Size(size.minDimension, size.minDimension)
+                drawArc(
+                    color = disabledColor,
+                    startAngle = -90f,
+                    sweepAngle = angle.arcDegree1,
+                    useCenter = true,
+                    topLeft = topLeft,
+                    size = arcSize
+                )
+                drawArc(
+                    color = disabledColor,
+                    startAngle = angle.degree4 - 90f,
+                    sweepAngle = angle.arcDegree4,
+                    useCenter = true,
+                    topLeft = topLeft,
+                    size = arcSize
+                )
+            }*/
             drawCircle(
                 color = color,
                 radius = radius,
@@ -137,22 +186,72 @@ private fun AdjustAngle(
             )
         }
 
-        drawLine(
-            color = color,
-            start = myCenter,
-            end = Offset(x = radius, y = myCenter.y),
-            strokeWidth = 4.dp.toPx()
-        )
+        degrees.fastForEach { degree ->
+            val (x, y) = calcXY(myCenter, degree, position, radius, size)
+            drawLine(
+                color = color,
+                start = myCenter,
+                end = Offset(x = x, y = y),
+                strokeWidth = 6.dp.toPx()
+            )
+            drawCircle(
+                color = color,
+                radius = 20.dp.toPx(),
+                center = Offset(x = x, y = y)
+            )
+        }
 
-        val radians1 = Math.toRadians(angle.angle1.toDouble())
-        val sin1 = sin(radians1)
-        val x1 = radius * sin1
-        val y1 = sqrt(radius.pow(2) - x1.pow(2))
-        drawLine(
-            color = color,
-            start = myCenter,
-            end = Offset(x = x1.toFloat(), y = y1.toFloat()),
-            strokeWidth = 4.dp.toPx()
-        )
+        arcDegrees.fastForEachIndexed { index, arcDegree ->
+            val degree = degrees.getOrNull(index) ?: 180f
+            val (textX, textY) = calcXY(
+                myCenter = myCenter,
+                degree = degree - (arcDegree / 2f),
+                position = position,
+                radius = radius + 40.dp.toPx(),
+                size = size
+            )
+            val displayArcDegree = NumberUtils.format(arcDegree, 1)
+            drawText(
+                textMeasurer = textMeasurer,
+                text = displayArcDegree,
+                topLeft = Offset(
+                    x = textX - textMeasurer.measure(displayArcDegree).size.width / 2f,
+                    y = textY - textMeasurer.measure(displayArcDegree).size.height / 2f
+                ),
+                style = TextStyle.Default.copy(
+                    fontSize = 16.sp,
+                    fontWeight = when (index) {
+                        0, arcDegrees.lastIndex -> FontWeight.Normal
+                        else -> FontWeight.Bold
+                    }
+                )
+            )
+        }
     }
+}
+
+private fun calcXY(
+    myCenter: Offset,
+    degree: Float,
+    position: Int,
+    radius: Float,
+    size: Size
+): Offset {
+    val modifiedDegree = when (degree > 90f) {
+        true -> 180f - degree
+        else -> degree
+    }
+    val radians = Math.toRadians(modifiedDegree.toDouble())
+    val sin = sin(radians)
+    val x = radius * sin
+    val y = sqrt(radius.pow(2) - x.pow(2))
+    val finalX = when (position) {
+        LEFT -> myCenter.x + x.toFloat()
+        else -> size.width - x.toFloat()
+    }
+    val finalY = when (degree > 90f) {
+        true -> myCenter.y + y.toFloat()
+        else -> myCenter.y - y.toFloat()
+    }
+    return Offset(x = finalX, y = finalY)
 }
