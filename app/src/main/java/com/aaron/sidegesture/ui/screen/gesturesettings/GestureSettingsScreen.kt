@@ -22,8 +22,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,6 +40,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -51,6 +52,7 @@ import com.aaron.sidegesture.ui.widget.MySlider
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 /**
@@ -67,13 +69,28 @@ fun GestureSettingsScreen(
     onBack: () -> Unit,
     vm: GestureSettingsVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = { event ->
+            when (event) {
+                UiEvent.ScrollToBottom -> {
+                    coroutineScope.launch {
+                        scrollState.animateScrollBy(
+                            value = 1000f,
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        )
+                    }
+                }
+            }
+        }
+    ) { uiState ->
         Column {
             TopBar(
                 onBack = onBack,
                 title = stringResource(id = R.string.gesture_settings)
             )
-            val scrollState = rememberScrollState()
             MyColumn(scrollState = scrollState) {
                 MySection {
                     MyTextButton(
@@ -89,7 +106,7 @@ fun GestureSettingsScreen(
                     MySlider(
                         value = uiState.pressTriggerDistance,
                         onValueChange = { vm.onPressTriggerDistanceChange(it) },
-                        onValueChangeFinished = {},
+                        onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
@@ -108,7 +125,7 @@ fun GestureSettingsScreen(
                     MySlider(
                         value = uiState.longPressTriggerDistance,
                         onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
-                        onValueChangeFinished = {},
+                        onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
@@ -116,7 +133,7 @@ fun GestureSettingsScreen(
                     MySlider(
                         value = uiState.longPressTriggerDelayMs.toFloat(),
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
-                        onValueChangeFinished = {},
+                        onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.long_press_trigger_delay_ms),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
@@ -144,12 +161,6 @@ fun GestureSettingsScreen(
                         exit = shrinkVertically()
                     ) {
                         Column {
-                            LaunchedEffect(key1 = scrollState) {
-                                scrollState.animateScrollBy(
-                                    value = 1000f,
-                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                                )
-                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -214,7 +225,7 @@ fun GestureSettingsScreen(
                                 enabled = uiState.vibrations.predefinedEffect == Vibrations.EFFECT_NONE,
                                 value = uiState.vibrations.customVibrationMs.toFloat(),
                                 onValueChange = { vm.onCustomVibrationMsChange(it) },
-                                onValueChangeFinished = {},
+                                onValueChangeFinished = { vm.saveSettings() },
                                 text = stringResource(id = R.string.vibration_strength),
                                 sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
                                 valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()

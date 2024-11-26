@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
@@ -194,17 +195,23 @@ fun MySlider(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = MinItemHeightNoSecondary)
-            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVertical),
+            .padding(vertical = ContentPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(IconTextPadding)
     ) {
         Text(
-            modifier = Modifier.width(IntrinsicSize.Max),
+            modifier = Modifier
+                .padding(horizontal = ContentPaddingHorizontal)
+                .width(IntrinsicSize.Max),
             text = text,
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1
         )
         if (sliderValueHint != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = ContentPaddingHorizontal)
+                    .fillMaxWidth()
+            ) {
                 Text(
                     modifier = Modifier.align(Alignment.CenterStart),
                     text = sliderValueHint.first,
@@ -224,7 +231,9 @@ fun MySlider(
         val interactionSource = remember { MutableInteractionSource() }
         val colors = SliderDefaults.colors()
         Slider(
-            modifier = Modifier.height(30.dp),
+            modifier = Modifier
+                .padding(horizontal = ContentPaddingHorizontal - 6.dp)
+                .height(30.dp),
             enabled = enabled,
             value = value,
             onValueChange = onValueChange,
@@ -234,7 +243,15 @@ fun MySlider(
             valueRange = valueRange,
             thumb = {
                 SliderDefaults.Thumb(
-                    modifier = Modifier.requiredSize(20.dp),
+                    modifier = Modifier
+                        .requiredSize(16.dp)
+                        .drawWithContent {
+                            drawContent()
+                            drawCircle(
+                                color = Color.White,
+                                radius = 5.dp.toPx()
+                            )
+                        },
                     interactionSource = interactionSource,
                     colors = colors,
                     enabled = enabled
@@ -243,10 +260,13 @@ fun MySlider(
             track = { sliderState ->
                 SliderDefaults.Track(
                     modifier = Modifier.height(10.dp),
-                    colors = colors,
+                    colors = colors.copy(
+                        activeTrackColor = colors.activeTrackColor.copy(alpha = 0.9f),
+                        disabledActiveTrackColor = colors.disabledActiveTrackColor.copy(alpha = 0.28f)
+                    ),
                     enabled = enabled,
                     sliderState = sliderState,
-//                    thumbTrackGapSize = 0.dp
+                    thumbTrackGapSize = 0.dp
                 )
             }
         )
@@ -264,6 +284,9 @@ fun MyTextButton(
 ) {
     Row(
         modifier = modifier
+            .graphicsLayer {
+                alpha = if (enabled) 1f else DISABLED_ALPHA
+            }
             .fillMaxWidth()
             .let {
                 val minHeight = if (secondaryText.isEmpty()) {
@@ -273,7 +296,7 @@ fun MyTextButton(
                 }
                 it.heightIn(min = minHeight)
             }
-            .onSingleClick {
+            .onSingleClick(enabled = enabled) {
                 onClick()
             }
             .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVertical),
@@ -303,7 +326,9 @@ fun MyTextButton(
                 )
             }
         }
-        Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = text)
+        if (enabled) {
+            Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = text)
+        }
     }
 }
 
@@ -321,6 +346,9 @@ fun MyTextSwitch(
 ) {
     Row(
         modifier = modifier
+            .graphicsLayer {
+                alpha = if (enabled) 1f else DISABLED_ALPHA
+            }
             .fillMaxWidth()
             .let {
                 val minHeight = if (secondaryText.isEmpty()) {
@@ -330,7 +358,7 @@ fun MyTextSwitch(
                 }
                 it.heightIn(min = minHeight)
             }
-            .onSingleClick {
+            .onSingleClick(enabled = enabled) {
                 if (onTextClick != null) {
                     onTextClick()
                 } else {
@@ -386,7 +414,13 @@ fun MyTextSwitch(
         CompositionLocalProvider(
             LocalMinimumInteractiveComponentSize provides 0.dp
         ) {
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+            Switch(
+                enabled = enabled,
+                checked = checked,
+                onCheckedChange = onCheckedChange
+            )
         }
     }
 }
+
+private const val DISABLED_ALPHA = 0.36f

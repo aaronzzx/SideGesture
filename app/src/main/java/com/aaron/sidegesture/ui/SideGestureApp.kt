@@ -1,13 +1,23 @@
 package com.aaron.sidegesture.ui
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDeepLink
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -22,6 +32,7 @@ import com.aaron.sidegesture.ui.screen.home.HomeScreen
 import com.aaron.sidegesture.ui.screen.unlock.Unlock
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import kotlin.reflect.KType
 
 /**
  * @author aaronzzxup@gmail.com
@@ -31,39 +42,90 @@ import com.aaron.sidegesture.ui.theme.SideGestureTheme
 @Composable
 fun SideGestureApp() {
     SideGestureTheme {
-        Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.background)) {
-            val navController = rememberNavController()
-            NavHost(
-                modifier = Modifier.fillMaxSize(),
-                navController = navController,
-                startDestination = Home,
-                enterTransition = { fadeIn() },
-                exitTransition = { fadeOut() }
-            ) {
-                composable<Home> {
-                    HomeScreen(
-                        onNavToUnlock = { navController.navigate(Unlock) },
-                        onNavToAbout = { navController.navigate(About) },
-                        onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
-                        onNavToGestureSettings = { navController.navigate(GestureSettings) }
-                    )
-                }
-                composable<Unlock> {
-                    UnlockScreen(onBack = { navController.navigateUp() })
-                }
-                composable<About> {
-                    AboutScreen(onBack = { navController.navigateUp() })
-                }
-                composable<AdvancedSettings> {
-                    AdvancedSettingsScreen(onBack = { navController.navigateUp() })
-                }
-                composable<GestureSettings> {
-                    GestureSettingsScreen(
-                        onNavToGestureAngles = { /*TODO*/ },
-                        onBack = { navController.navigateUp() }
-                    )
-                }
+        val navController = rememberNavController()
+        val durationMs = ANIMATION_DURATION_MS
+        NavHost(
+            modifier = Modifier.fillMaxSize(),
+            navController = navController,
+            startDestination = Home,
+            enterTransition = {
+                slideInHorizontally(animationSpec = tween(durationMs)) { it }
+            },
+            exitTransition = {
+                slideOutHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+            },
+            popEnterTransition = {
+                slideInHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+            },
+            popExitTransition = {
+                slideOutHorizontally(animationSpec = tween(durationMs)) { it }
+            }
+        ) {
+            myComposable<Home> {
+                HomeScreen(
+                    onNavToUnlock = { navController.navigate(Unlock) },
+                    onNavToAbout = { navController.navigate(About) },
+                    onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
+                    onNavToGestureSettings = { navController.navigate(GestureSettings) }
+                )
+            }
+            myComposable<Unlock> {
+                UnlockScreen(onBack = { navController.navigateUp() })
+            }
+            myComposable<About> {
+                AboutScreen(onBack = { navController.navigateUp() })
+            }
+            myComposable<AdvancedSettings> {
+                AdvancedSettingsScreen(onBack = { navController.navigateUp() })
+            }
+            myComposable<GestureSettings> {
+                GestureSettingsScreen(
+                    onNavToGestureAngles = { /*TODO*/ },
+                    onBack = { navController.navigateUp() }
+                )
             }
         }
     }
 }
+
+private inline fun <reified T : Any> NavGraphBuilder.myComposable(
+    typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap(),
+    deepLinks: List<NavDeepLink> = emptyList(),
+    noinline enterTransition:
+    (AnimatedContentTransitionScope<NavBackStackEntry>.() -> @JvmSuppressWildcards
+    EnterTransition?)? =
+        null,
+    noinline exitTransition:
+    (AnimatedContentTransitionScope<NavBackStackEntry>.() -> @JvmSuppressWildcards
+    ExitTransition?)? =
+        null,
+    noinline popEnterTransition:
+    (AnimatedContentTransitionScope<NavBackStackEntry>.() -> @JvmSuppressWildcards
+    EnterTransition?)? =
+        enterTransition,
+    noinline popExitTransition:
+    (AnimatedContentTransitionScope<NavBackStackEntry>.() -> @JvmSuppressWildcards
+    ExitTransition?)? =
+        exitTransition,
+    noinline sizeTransform:
+    (AnimatedContentTransitionScope<NavBackStackEntry>.() -> @JvmSuppressWildcards
+    SizeTransform?)? =
+        null,
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
+) {
+    composable<T>(
+        typeMap = typeMap,
+        deepLinks = deepLinks,
+        enterTransition = enterTransition,
+        exitTransition = exitTransition,
+        popEnterTransition = popEnterTransition,
+        popExitTransition = popExitTransition,
+        sizeTransform = sizeTransform
+    ) { navBackStackEntry ->
+        Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.background)) {
+            content(navBackStackEntry)
+        }
+    }
+}
+
+private const val ANIMATION_DURATION_MS = 400

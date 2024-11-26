@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ui.screen.gesturesettings
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -21,10 +22,27 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         loadData()
     }
 
+    fun saveSettings() {
+        viewModelScope.launch {
+            DataStoreHolder.gestureSettings.updateData {
+                val uiState = uiState
+                GestureSettings(
+                    pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
+                    longPressTriggerImmediately = uiState.longPressTriggerImmediately,
+                    longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
+                    longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
+                    isCustomVibration = uiState.isCustomVibration,
+                    vibrations = uiState.vibrations
+                )
+            }
+        }
+    }
+
     fun updatePredefinedVibration(effect: Int) {
         updateUiState {
             it.copy(vibrations = it.vibrations.copy(predefinedEffect = effect))
         }
+        saveSettings()
     }
 
     fun showPredefinedVibrationDropdown(show: Boolean) {
@@ -61,18 +79,22 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         updateUiState {
             it.copy(longPressTriggerImmediately = value)
         }
+        saveSettings()
     }
 
     fun onVibrateImmediatelyChange(value: Boolean) {
         updateUiState {
             it.copy(vibrations = it.vibrations.copy(vibrateImmediately = value))
         }
+        saveSettings()
     }
 
     fun onCustomVibrationChange(value: Boolean) {
         updateUiState {
             it.copy(isCustomVibration = value)
         }
+        saveSettings()
+        sendUiEvent(UiEvent.ScrollToBottom)
     }
 
     private fun loadData() {
@@ -102,5 +124,8 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val showPredefinedVibrationDropdown: Boolean = false
     )
 
-    sealed interface UiEvent
+    sealed interface UiEvent {
+
+        data object ScrollToBottom : UiEvent
+    }
 }
