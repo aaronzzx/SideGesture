@@ -61,4 +61,11 @@
     <string name="save_failure">保存失败</string>
     <string name="reset_success">重置成功</string>
     <string name="reset_failure">重置失败</string>
+
+    <string name="gesture_to_right_top">👆</string>
+    <string name="gesture_to_right">👉</string>
+    <string name="gesture_to_right_bottom">👇</string>
+    <string name="gesture_to_left_top">@string/gesture_to_right_top</string>
+    <string name="gesture_to_left">👈</string>
+    <string name="gesture_to_left_bottom">@string/gesture_to_right_bottom</string>
 </resources>

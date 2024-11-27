@@ -18,7 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -27,12 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,24 +54,23 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
-import com.aaron.sidegesture.ktx.arcDegree1
-import com.aaron.sidegesture.ktx.arcDegree2
-import com.aaron.sidegesture.ktx.arcDegree3
-import com.aaron.sidegesture.ktx.arcDegree4
-import com.aaron.sidegesture.ktx.arcDegree5
-import com.aaron.sidegesture.ktx.degree1
-import com.aaron.sidegesture.ktx.degree2
-import com.aaron.sidegesture.ktx.degree3
-import com.aaron.sidegesture.ktx.degree4
+import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
+import com.aaron.sidegesture.ktx.copyNew
+import com.aaron.sidegesture.ktx.getArcDegrees
+import com.aaron.sidegesture.ktx.getDegree
+import com.aaron.sidegesture.ktx.getDegrees
+import com.aaron.sidegesture.ktx.getKProperty
+import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.blankj.utilcode.util.NumberUtils
 import kotlinx.serialization.Serializable
 import kotlin.math.atan
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.reflect.KProperty0
 
 /**
  * @author aaronzzxup@gmail.com
@@ -82,7 +85,14 @@ fun GestureAnglesScreen(
     onBack: () -> Unit,
     vm: GestureAnglesVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = { event ->
+            when (event) {
+                UiEvent.Finish -> onBack()
+            }
+        }
+    ) { uiState ->
         if (uiState.showResetWarningDialog) {
             AlertDialog(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -97,7 +107,7 @@ fun GestureAnglesScreen(
                     TextButton(
                         onClick = {
                             vm.showResetWarningDialog(false)
-                            vm.saveSettings()
+                            vm.reset()
                         }
                     ) {
                         Text(text = stringResource(id = R.string.confirm))
@@ -107,7 +117,6 @@ fun GestureAnglesScreen(
                     TextButton(
                         onClick = {
                             vm.showResetWarningDialog(false)
-                            vm.reset()
                         }
                     ) {
                         Text(text = stringResource(id = R.string.cancel))
@@ -193,95 +202,82 @@ private fun AdjustAngle(
     require(position == LEFT || position == RIGHT) {
         "Unknown position: $position"
     }
-    val curOnAngleChange by rememberUpdatedState(newValue = onAngleChange)
-    var centerOffset by remember { mutableStateOf(Offset.Unspecified) }
-    var dragOffset by remember { mutableStateOf(Offset.Unspecified) }
-    var p1 by remember { mutableStateOf(Rect.Zero) }
-    var p2 by remember { mutableStateOf(Rect.Zero) }
-    var p3 by remember { mutableStateOf(Rect.Zero) }
-    var p4 by remember { mutableStateOf(Rect.Zero) }
-    var isP1Drag by remember { mutableStateOf(false) }
-    var isP2Drag by remember { mutableStateOf(false) }
-    var isP3Drag by remember { mutableStateOf(false) }
-    var isP4Drag by remember { mutableStateOf(false) }
-    val degrees = remember(angle) {
-        listOf(angle.degree1, angle.degree2, angle.degree3, angle.degree4)
-    }
-    val arcDegrees = remember(angle) {
-        listOf(angle.arcDegree1, angle.arcDegree2, angle.arcDegree3, angle.arcDegree4, angle.arcDegree5)
-    }
+    val lineWidth = 6.dp
+    val dragHandleRadius = 20.dp
+    var circleRadius by remember { mutableFloatStateOf(0f) }
+    var circleCenter by remember { mutableStateOf(Offset.Zero) }
+    var viewBounds by remember { mutableStateOf(Rect.Zero) }
+    val degrees = remember(angle) { angle.getDegrees() }
+    val arcDegrees = remember(angle) { angle.getArcDegrees() }
     val textMeasurer = rememberTextMeasurer()
+    val context = LocalContext.current
     Canvas(
-        modifier = modifier.pointerInput(Unit) {
-            detectDragGestures(
-                onDragStart = { offset ->
-                    dragOffset = if (p1.contains(offset)) {
-                        isP1Drag = true
-                        offset
-                    } else if (p2.contains(offset)) {
-                        isP2Drag = true
-                        offset
-                    } else if (p3.contains(offset)) {
-                        isP3Drag = true
-                        offset
-                    } else if (p4.contains(offset)) {
-                        isP4Drag = true
-                        offset
-                    } else {
-                        Offset.Unspecified
-                    }
-                },
-                onDrag = { _, dragAmount ->
-                    if (dragOffset != Offset.Unspecified &&
-                        centerOffset != Offset.Unspecified
-                    ) {
+        modifier = modifier.let {
+            // 两个拖拽触点间最少需要维持的夹角p值
+            val density = LocalDensity.current
+            val minGapP by remember(density) {
+                derivedStateOf {
+                    val x = density.run { dragHandleRadius.toPx() }
+                    val y = circleRadius
+                    val sinVal = x.toDouble() / y
+                    val radians = sin(sinVal)
+                    Math.toDegrees(radians) / GESTURE_ANGLE_BASE
+                }
+            }
+            val curOnAngleChange by rememberUpdatedState(newValue = onAngleChange)
+            val curAngle by rememberUpdatedState(newValue = angle)
+            val curPosition by rememberUpdatedState(newValue = position)
+            it.pointerInput(Unit) {
+                var dragOffset = Offset.Zero
+                var property: KProperty0<Float>? = null
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        dragOffset = offset
+                        val p = curAngle.ps.find { p ->
+                            val index = curAngle.ps.indexOf(p)
+                            val degree = curAngle.getDegree(index)
+                            val pOffset = calcXY(curPosition, circleCenter, circleRadius, degree)
+                            val bounds = Rect(center = pOffset, radius = dragHandleRadius.toPx())
+                            bounds.contains(offset)
+                        }
+                        property = curAngle.getKProperty(p)
+                    },
+                    onDrag = onDrag@{ _, dragAmount ->
                         dragOffset += dragAmount
-                        val x = dragOffset.x
-                        val y = centerOffset.y - dragOffset.y
+                        if (!viewBounds.contains(dragOffset)) {
+                            return@onDrag
+                        }
+                        val _property = property ?: return@onDrag
+                        val x = when (curPosition) {
+                            LEFT -> dragOffset.x
+                            RIGHT -> circleCenter.x - dragOffset.x
+                            else -> error("Unknown position: $curPosition")
+                        }
+                        val y = circleCenter.y - dragOffset.y
                         val tanVal = x / y
                         val radians = atan(tanVal)
-                        var degree = Math.toDegrees(radians.toDouble())
-                        if (degree < 0f) {
-                            degree = 90f + (degree + 90f)
+                        var newDegree = Math.toDegrees(radians.toDouble())
+                        if (newDegree < 0f) {
+                            newDegree = 90f + (newDegree + 90f)
                         }
-                        if (isP1Drag) {
-                            val degreeAmount = degree - angle.degree1
-                            val newDegree = angle.degree1 + degreeAmount
-                            val fraction = newDegree / 180f
-                            curOnAngleChange(angle.copy(p1 = fraction.toFloat()))
-                        } else if (isP2Drag) {
-                            val degreeAmount = degree - angle.degree2
-                            val newDegree = angle.degree2 + degreeAmount
-                            val fraction = newDegree / 180f
-                            curOnAngleChange(angle.copy(p2 = fraction.toFloat()))
-                        } else if (isP3Drag) {
-                            val degreeAmount = degree - angle.degree3
-                            val newDegree = angle.degree3 + degreeAmount
-                            val fraction = newDegree / 180f
-                            curOnAngleChange(angle.copy(p3 = fraction.toFloat()))
-                        } else if (isP4Drag) {
-                            val degreeAmount = degree - angle.degree4
-                            val newDegree = angle.degree4 + degreeAmount
-                            val fraction = newDegree / 180f
-                            curOnAngleChange(angle.copy(p4 = fraction.toFloat()))
-                        }
+                        val newDegreeToP = newDegree / GESTURE_ANGLE_BASE
+                        val newAngle = curAngle.copyNew(
+                            fieldName = _property.name,
+                            newP = newDegreeToP.toFloat(),
+                            minGapP = minGapP.toFloat()
+                        )
+                        curOnAngleChange(newAngle)
+                    },
+                    onDragEnd = {
+                        dragOffset = Offset.Zero
+                        property = null
+                    },
+                    onDragCancel = {
+                        dragOffset = Offset.Zero
+                        property = null
                     }
-                },
-                onDragEnd = {
-                    dragOffset = Offset.Unspecified
-                    isP1Drag = false
-                    isP2Drag = false
-                    isP3Drag = false
-                    isP4Drag = false
-                },
-                onDragCancel = {
-                    dragOffset = Offset.Unspecified
-                    isP1Drag = false
-                    isP2Drag = false
-                    isP3Drag = false
-                    isP4Drag = false
-                }
-            )
+                )
+            }
         }
     ) {
         val radius = size.minDimension / 2f
@@ -289,7 +285,10 @@ private fun AdjustAngle(
             LEFT -> center.copy(x = 0f)
             else -> center.copy(x = size.width)
         }
-        centerOffset = myCenter
+        circleRadius = radius
+        circleCenter = myCenter
+        viewBounds = Rect(offset = Offset.Zero, size = size)
+
         clipRect {
             drawCircle(
                 color = color,
@@ -306,54 +305,76 @@ private fun AdjustAngle(
             )
         }
 
-        degrees.fastForEachIndexed { index, degree ->
-            val (x, y) = calcXY(myCenter, degree, position, radius, size)
-            val lineWidth = 6.dp.toPx()
-            val pointRadius = 20.dp.toPx()
-            val bounds = Rect(center = Offset(x, y), radius = pointRadius)
-            when (index) {
-                0 -> p1 = bounds
-                1 -> p2 = bounds
-                2 -> p3 = bounds
-                3 -> p4 = bounds
-                else -> error("Unknown index: $index")
-            }
+        degrees.fastForEach { degree ->
+            val lineWidthPx = lineWidth.toPx()
+            val pointRadiusPx = dragHandleRadius.toPx()
+            val offset = calcXY(position, myCenter, radius, degree)
             drawLine(
                 color = color,
                 start = myCenter,
-                end = Offset(x = x, y = y),
-                strokeWidth = lineWidth
+                end = offset,
+                strokeWidth = lineWidthPx
             )
             drawCircle(
                 color = color,
-                radius = pointRadius,
-                center = Offset(x = x, y = y)
+                radius = pointRadiusPx,
+                center = offset
             )
         }
 
         arcDegrees.fastForEachIndexed { index, arcDegree ->
-            val degree = degrees.getOrNull(index) ?: 180f
+            val degree = degrees.getOrNull(index) ?: GESTURE_ANGLE_BASE
             val (textX, textY) = calcXY(
-                myCenter = myCenter,
-                degree = degree - (arcDegree / 2f),
                 position = position,
+                center = myCenter,
                 radius = radius + 40.dp.toPx(),
-                size = size
+                degree = degree - (arcDegree / 2f)
             )
-            val displayArcDegree = NumberUtils.format(arcDegree, 1)
+            val displayArcDegree = "${arcDegree.roundToInt()}"
+            val hint = when (index) {
+                1 -> when (position) {
+                    LEFT -> context.getString(R.string.gesture_to_right_top)
+                    RIGHT -> context.getString(R.string.gesture_to_left_top)
+                    else -> error("Unknown position: $position")
+                }
+                2 -> when (position) {
+                    LEFT -> context.getString(R.string.gesture_to_right)
+                    RIGHT -> context.getString(R.string.gesture_to_left)
+                    else -> error("Unknown position: $position")
+                }
+                3 -> when (position) {
+                    LEFT -> context.getString(R.string.gesture_to_right_bottom)
+                    RIGHT -> context.getString(R.string.gesture_to_left_bottom)
+                    else -> error("Unknown position: $position")
+                }
+                else -> ""
+            }
+            val displayText = when (position) {
+                LEFT -> "$displayArcDegree $hint"
+                RIGHT -> "$hint $displayArcDegree"
+                else -> error("Unknown position: $position")
+            }
             drawText(
                 textMeasurer = textMeasurer,
-                text = displayArcDegree,
+                text = displayText,
                 topLeft = Offset(
-                    x = textX - textMeasurer.measure(displayArcDegree).size.width / 2f,
-                    y = textY - textMeasurer.measure(displayArcDegree).size.height / 2f
+                    x = when (position) {
+                        LEFT -> textX - textMeasurer.measure(displayText).size.width / 2f
+                        RIGHT -> textX - textMeasurer.measure(displayText).size.width
+                        else -> error("Unknown position: $position")
+                    },
+                    y = textY - textMeasurer.measure(displayText).size.height / 2f
                 ),
+                maxLines = 1,
                 style = TextStyle.Default.copy(
                     color = when (index) {
                         0, arcDegrees.lastIndex -> inactiveColor
                         else -> color
                     },
-                    fontSize = 16.sp,
+                    fontSize = when (index) {
+                        0, arcDegrees.lastIndex -> 16.sp
+                        else -> 18.sp
+                    },
                     fontWeight = when (index) {
                         0, arcDegrees.lastIndex -> FontWeight.Normal
                         else -> FontWeight.Bold
@@ -365,11 +386,10 @@ private fun AdjustAngle(
 }
 
 private fun calcXY(
-    myCenter: Offset,
-    degree: Float,
     position: Int,
+    center: Offset,
     radius: Float,
-    size: Size
+    degree: Float
 ): Offset {
     val modifiedDegree = when (degree > 90f) {
         true -> 180f - degree
@@ -380,12 +400,12 @@ private fun calcXY(
     val x = radius * sin
     val y = sqrt(radius.pow(2) - x.pow(2))
     val finalX = when (position) {
-        LEFT -> myCenter.x + x.toFloat()
-        else -> size.width - x.toFloat()
+        LEFT -> center.x + x.toFloat()
+        else -> center.x - x.toFloat()
     }
     val finalY = when (degree > 90f) {
-        true -> myCenter.y + y.toFloat()
-        else -> myCenter.y - y.toFloat()
+        true -> center.y + y.toFloat()
+        else -> center.y - y.toFloat()
     }
     return Offset(x = finalX, y = finalY)
 }

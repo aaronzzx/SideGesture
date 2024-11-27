@@ -23,6 +23,9 @@ data class GestureAngle(
     val p3: Float = 0.70f,
     val p4: Float = 0.88f
 ) {
+
+    val ps: List<Float> = listOf(p1, p2, p3, p4)
+
     init {
         require(p1 >= 0f && p1 <= p2 && p2 <= p3 && p3 <= p4 && p4 <= 1f) {
             "Illegal arguments: $p1, $p2, $p3, $p4, need 0<=p1<=p2<=p3<=p4<=1"
