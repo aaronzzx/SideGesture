@@ -59,7 +59,6 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }.invokeOnCompletion { ex ->
             if (ex == null) {
                 showToast(R.string.save_success)
-                sendUiEvent(UiEvent.Finish)
             } else {
                 showToast(R.string.save_failure)
             }
@@ -74,7 +73,6 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }.invokeOnCompletion { ex ->
             if (ex == null) {
                 showToast(R.string.reset_success)
-                sendUiEvent(UiEvent.Finish)
             } else {
                 showToast(R.string.reset_failure)
             }

@@ -350,8 +350,8 @@ private fun AdjustAngle(
                 else -> ""
             }
             val displayText = when (position) {
-                LEFT -> "$displayArcDegree $hint"
-                RIGHT -> "$hint $displayArcDegree"
+                LEFT -> "$hint $displayArcDegree"
+                RIGHT -> "$displayArcDegree $hint"
                 else -> error("Unknown position: $position")
             }
             drawText(
