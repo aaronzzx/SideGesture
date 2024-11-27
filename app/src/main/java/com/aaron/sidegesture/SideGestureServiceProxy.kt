@@ -76,7 +76,7 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
                     @OptIn(DelicateCoroutinesApi::class)
                     GlobalScope.launch {
                         gotoWechat()
-                        delay(300)
+                        delay(500)
                         val screenWidth = ScreenUtils.getScreenWidth()
                         val statusBarHeight = BarUtils.getStatusBarHeight()
                         val radius = ConvertUtils.dp2px(12f)
