@@ -10,8 +10,16 @@ import android.view.accessibility.AccessibilityEvent
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
-import com.aaron.sidegesture.ktx.gotoWechatPayCode
+import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.utils.AccessibilityUtils
+import com.blankj.utilcode.util.BarUtils
+import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.ScreenUtils
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -64,7 +72,23 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
                 gotoWechatScan()
             }
             GlobalActions.WECHAT_PAY -> {
-                gotoWechatPayCode()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    @OptIn(DelicateCoroutinesApi::class)
+                    GlobalScope.launch {
+                        gotoWechat()
+                        delay(300)
+                        val screenWidth = ScreenUtils.getScreenWidth()
+                        val statusBarHeight = BarUtils.getStatusBarHeight()
+                        val radius = ConvertUtils.dp2px(12f)
+                        var x = screenWidth - ConvertUtils.dp2px(14f) - radius
+                        var y = statusBarHeight + ConvertUtils.dp2px(10f) + radius
+                        AccessibilityUtils.click(this@onAction, x, y)
+                        delay(500)
+                        x = screenWidth - ConvertUtils.dp2px(60f) - radius
+                        y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
+                        AccessibilityUtils.click(this@onAction, x, y)
+                    }
+                }
             }
             GlobalActions.ALIPAY_SCAN -> {
                 gotoAlipayScan()

@@ -16,6 +16,23 @@ import com.blankj.utilcode.util.ToastUtils
  * @since 2024/11/18
  */
 
+fun Context.gotoWechat() {
+    val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
+    if (intent != null &&
+        packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null
+    ) {
+        try {
+            startActivity(intent)
+        } catch (exception: ActivityNotFoundException) {
+            // TODO: hardcode
+            ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+        }
+    } else {
+        // TODO: hardcode
+        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+    }
+}
+
 fun Context.gotoWechatScan() {
     val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
     if (intent != null &&

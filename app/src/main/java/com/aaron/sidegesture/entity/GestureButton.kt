@@ -44,14 +44,40 @@ data class GestureButton(
                 position = LEFT,
                 start = 0.0f,
                 end = 1.0f,
-                pressActions = GestureActions(center = Actions.single(GlobalActions.BACK))
+                pressActions = GestureActions(
+                    up = Actions.single(GlobalActions.LOCK_SCREEN),
+                    center = Actions.single(GlobalActions.BACK)
+                ),
+                longPressActions = GestureActions(
+                    up = Actions.multiple(
+                        GlobalActions.WECHAT_SCAN,
+                        GlobalActions.WECHAT_PAY,
+                        GlobalActions.HOME,
+                        GlobalActions.ALIPAY_SCAN,
+                        GlobalActions.ALIPAY_PAY
+                    ),
+                    center = Actions.single(GlobalActions.PREVIOUS_APP)
+                )
             ),
             GestureButton(
                 id = ID,
                 position = RIGHT,
                 start = 0.0f,
                 end = 1.0f,
-                pressActions = GestureActions(center = Actions.single(GlobalActions.BACK))
+                pressActions = GestureActions(
+                    up = Actions.single(GlobalActions.LOCK_SCREEN),
+                    center = Actions.single(GlobalActions.BACK)
+                ),
+                longPressActions = GestureActions(
+                    up = Actions.multiple(
+                        GlobalActions.WECHAT_SCAN,
+                        GlobalActions.WECHAT_PAY,
+                        GlobalActions.HOME,
+                        GlobalActions.ALIPAY_SCAN,
+                        GlobalActions.ALIPAY_PAY
+                    ),
+                    center = Actions.single(GlobalActions.PREVIOUS_APP)
+                )
             )
         )
     }
