@@ -50,6 +50,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
+import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoOverlaySettings
@@ -80,6 +82,7 @@ fun HomeScreen(
     onNavToAbout: () -> Unit,
     onNavToAdvancedSettings: () -> Unit,
     onNavToGestureSettings: () -> Unit,
+    onNavToGestureButtonSettings: (GestureButton) -> Unit,
     vm: HomeVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -219,7 +222,7 @@ fun HomeScreen(
                         uiState.gestureButtons.fastForEach { button ->
                             key(button) {
                                 MyTextSwitch(
-                                    onTextClick = { },
+                                    onTextClick = { onNavToGestureButtonSettings(button) },
                                     onCheckedChange = { },
                                     checked = true,
                                     text = "触钮${button.id}-${button.position}",
@@ -249,6 +252,7 @@ fun HomeScreen(
                 enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMedium)),
                 exit = fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMedium))
             ) {
+                val colorScheme = MaterialTheme.colorScheme
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -256,7 +260,10 @@ fun HomeScreen(
                             uiState.gestureButtons.fastForEach { button ->
                                 val bounds = button.bounds()
                                 drawRect(
-                                    color = Color(button.color),
+                                    color = when (button.isDefault) {
+                                        true -> colorScheme.primary.copy(GestureButtonColorAlpha)
+                                        else -> Color(button.color)
+                                    },
                                     topLeft = bounds.topLeft,
                                     size = bounds.size
                                 )

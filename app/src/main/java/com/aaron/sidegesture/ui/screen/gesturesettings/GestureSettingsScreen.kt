@@ -48,8 +48,8 @@ import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
-import com.aaron.sidegesture.ui.widget.MySlider
 import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlinx.coroutines.launch
@@ -103,7 +103,7 @@ fun GestureSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.press_action)
                 ) {
-                    MySlider(
+                    MyTextSlider(
                         value = uiState.pressTriggerDistance,
                         onValueChange = { vm.onPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
@@ -122,7 +122,7 @@ fun GestureSettingsScreen(
                         text = stringResource(id = R.string.long_press_trigger_immediately),
                         secondaryText = stringResource(id = R.string.long_press_trigger_immediately_hint)
                     )
-                    MySlider(
+                    MyTextSlider(
                         value = uiState.longPressTriggerDistance,
                         onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
@@ -130,7 +130,7 @@ fun GestureSettingsScreen(
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
                     )
-                    MySlider(
+                    MyTextSlider(
                         value = uiState.longPressTriggerDelayMs.toFloat(),
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
@@ -221,7 +221,7 @@ fun GestureSettingsScreen(
                                     }
                                 }
                             }
-                            MySlider(
+                            MyTextSlider(
                                 enabled = uiState.vibrations.predefinedEffect == Vibrations.EFFECT_NONE,
                                 value = uiState.vibrations.customVibrationMs.toFloat(),
                                 onValueChange = { vm.onCustomVibrationMsChange(it) },

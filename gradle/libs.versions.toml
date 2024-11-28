@@ -10,6 +10,7 @@ fastCompose = "dev-SNAPSHOT"
 kotlinSerialization = "1.7.3"
 dataStore = "1.1.1"
 compose = "1.7.5"
+colorpicker = "1.1.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -22,6 +23,7 @@ com-aaronzzx-fastcompose-compose-accessibility = { group = "com.github.aaronzzx.
 jetbrains-kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose" }
+compose-colorpicker = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpicker" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

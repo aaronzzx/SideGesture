@@ -61,4 +61,5 @@ dependencies {
     implementation(libs.com.aaronzzx.fastcompose.compose.accessibility)
     implementation(libs.jetbrains.kotlin.serialization)
     implementation(libs.androidx.datastore)
+    implementation(libs.compose.colorpicker)
 }

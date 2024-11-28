@@ -181,7 +181,7 @@ fun MyExpandableColumn(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MySlider(
+fun MyTextSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     text: String,
@@ -228,9 +228,7 @@ fun MySlider(
                 )
             }
         }
-        val interactionSource = remember { MutableInteractionSource() }
-        val colors = SliderDefaults.colors()
-        Slider(
+        MySlider(
             modifier = Modifier
                 .padding(horizontal = ContentPaddingHorizontal - 6.dp)
                 .height(30.dp),
@@ -238,39 +236,61 @@ fun MySlider(
             value = value,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
-            interactionSource = interactionSource,
-            colors = colors,
-            valueRange = valueRange,
-            thumb = {
-                SliderDefaults.Thumb(
-                    modifier = Modifier
-                        .requiredSize(16.dp)
-                        .drawWithContent {
-                            drawContent()
-                            drawCircle(
-                                color = Color.White,
-                                radius = 5.dp.toPx()
-                            )
-                        },
-                    interactionSource = interactionSource,
-                    colors = colors,
-                    enabled = enabled
-                )
-            },
-            track = { sliderState ->
-                SliderDefaults.Track(
-                    modifier = Modifier.height(10.dp),
-                    colors = colors.copy(
-                        activeTrackColor = colors.activeTrackColor.copy(alpha = 0.9f),
-                        disabledActiveTrackColor = colors.disabledActiveTrackColor.copy(alpha = 0.28f)
-                    ),
-                    enabled = enabled,
-                    sliderState = sliderState,
-                    thumbTrackGapSize = 0.dp
-                )
-            }
+            valueRange = valueRange
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MySlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val colors = SliderDefaults.colors()
+    Slider(
+        modifier = modifier,
+        enabled = enabled,
+        value = value,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+        interactionSource = interactionSource,
+        colors = colors,
+        valueRange = valueRange,
+        thumb = {
+            SliderDefaults.Thumb(
+                modifier = Modifier
+                    .requiredSize(16.dp)
+                    .drawWithContent {
+                        drawContent()
+                        drawCircle(
+                            color = Color.White,
+                            radius = 5.dp.toPx()
+                        )
+                    },
+                interactionSource = interactionSource,
+                colors = colors,
+                enabled = enabled
+            )
+        },
+        track = { sliderState ->
+            SliderDefaults.Track(
+                modifier = Modifier.height(10.dp),
+                colors = colors.copy(
+                    activeTrackColor = colors.activeTrackColor.copy(alpha = 0.9f),
+                    disabledActiveTrackColor = colors.disabledActiveTrackColor.copy(alpha = 0.28f)
+                ),
+                enabled = enabled,
+                sliderState = sliderState,
+                thumbTrackGapSize = 0.dp
+            )
+        }
+    )
 }
 
 @Composable
@@ -280,7 +300,8 @@ fun MyTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     secondaryText: String = "",
-    secondaryTextColor: Color = MaterialTheme.colorScheme.secondary
+    secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
+    prefix: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -303,27 +324,36 @@ fun MyTextButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .weight(1f)
                 .height(IntrinsicSize.Max),
-            verticalArrangement = Arrangement.spacedBy(MainSecondaryTextPadding)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(IconTextPadding)
         ) {
-            Text(
-                modifier = Modifier.width(IntrinsicSize.Max),
-                text = text,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1
-            )
-            if (secondaryText.isNotEmpty()) {
+            prefix?.invoke()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .width(IntrinsicSize.Max),
+                verticalArrangement = Arrangement.spacedBy(MainSecondaryTextPadding)
+            ) {
                 Text(
                     modifier = Modifier.width(IntrinsicSize.Max),
-                    text = secondaryText,
-                    color = secondaryTextColor,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    text = text,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1
                 )
+                if (secondaryText.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier.width(IntrinsicSize.Max),
+                        text = secondaryText,
+                        color = secondaryTextColor,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         if (enabled) {

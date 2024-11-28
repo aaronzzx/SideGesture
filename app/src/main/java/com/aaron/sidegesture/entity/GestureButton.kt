@@ -1,8 +1,6 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GlobalActions
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
@@ -28,13 +26,12 @@ data class GestureButton(
     val longPressTriggerImmediately: Boolean = true,
     val longPressTriggerDelayMs: Long = 100L,
     val vibrations: Vibrations = Vibrations(),
-    val color: Int = Color(0x99CFB3FF).toArgb()
+    val color: Int = 0
 ) : Comparable<GestureButton> {
+
     companion object {
         const val LEFT = 1
         const val RIGHT = 2
-
-        const val MIN_STEP = 0.1f
 
         private const val ID = "1"
 
@@ -82,11 +79,7 @@ data class GestureButton(
         )
     }
 
-    init {
-        require(end - start >= MIN_STEP) {
-            "The min step must large than $MIN_STEP"
-        }
-    }
+    val isDefault: Boolean = id == ID
 
     override fun compareTo(other: GestureButton): Int {
         val idCompared = id.compareTo(other.id)

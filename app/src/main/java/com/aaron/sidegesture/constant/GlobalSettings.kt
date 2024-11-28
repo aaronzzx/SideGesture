@@ -12,12 +12,19 @@ import com.blankj.utilcode.util.ConvertUtils
  */
 object GlobalSettings {
 
+    val MinGestureButtonWidth = ConvertUtils.dp2px(8f)
+    val MaxGestureButtonWidth = ConvertUtils.dp2px(60f)
     val MinTriggerDistance = ConvertUtils.dp2px(10f)
     val MaxTriggerDistance = ConvertUtils.dp2px(200f)
+    const val MinGestureButtonLength = 0.1f
+    const val MaxGestureButtonLength = 1f
+    const val MinGestureButtonStart = 0f
+    const val MaxGestureButtonStart = MaxGestureButtonLength - MinGestureButtonLength
     const val MinLongPressTriggerDelayMs = 100L
     const val MaxLongPressTriggerDelayMs = 2000L
     const val MinVibrationDurationMs = 5L
     const val MaxVibrationDurationMs = 1000L
+    const val GestureButtonColorAlpha = 0.2f
 
     @Composable
     fun getPredefinedVibrationEffectText(effect: Int): String {

@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.util.fastForEach
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
@@ -106,13 +108,17 @@ fun SideGestureContainer(
             sideGestureState.onDragCancel()
         }
     )
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = modifier.drawBehind {
             if (drawButtonBounds) {
                 buttons.fastForEach { button ->
                     val bounds = button.bounds()
                     drawRect(
-                        color = Color(button.color),
+                        color = when (button.isDefault) {
+                            true -> colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                            else -> Color(button.color)
+                        },
                         topLeft = bounds.topLeft,
                         size = bounds.size
                     )

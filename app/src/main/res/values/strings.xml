@@ -33,6 +33,8 @@
     <string name="gesture_angles">手势角度</string>
     <string name="gesture_angles_hint">调整不同方向的触发角度</string>
     <string name="trigger_distance">触发距离</string>
+    <string name="slider_small">小</string>
+    <string name="slider_large">大</string>
     <string name="slider_short">短</string>
     <string name="slider_long">长</string>
     <string name="slider_low">低</string>
@@ -68,4 +70,16 @@
     <string name="gesture_to_left_top">@string/gesture_to_right_top</string>
     <string name="gesture_to_left">👈</string>
     <string name="gesture_to_left_bottom">@string/gesture_to_right_bottom</string>
+    <string name="slide_to_right">向右滑动</string>
+    <string name="slide_to_top_right">向右上滑动</string>
+    <string name="slide_to_bottom_right">向右下滑动</string>
+    <string name="slide_to_left">向左滑动</string>
+    <string name="slide_to_top_left">向左上滑动</string>
+    <string name="slide_to_bottom_left">向左下滑动</string>
+    <string name="gesture_button_width">触钮宽度</string>
+    <string name="gesture_button_length">触钮长度</string>
+    <string name="gesture_button_location">触钮位置</string>
+    <string name="gesture_button_color">触钮颜色</string>
+    <string name="gesture_button_align">对齐触钮</string>
+    <string name="gesture_button_align_hint">两侧保持相同尺寸和位置</string>
 </resources>
