@@ -60,6 +60,8 @@ import com.aaron.sidegesture.ktx.getArcDegrees
 import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
+import com.aaron.sidegesture.ktx.requirePosition
+import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
@@ -155,31 +157,31 @@ fun GestureAnglesScreen(
             Icon(
                 modifier = Modifier
                     .align(
-                        alignment = when (uiState.position) {
-                            LEFT -> Alignment.CenterEnd
-                            RIGHT -> Alignment.CenterStart
-                            else -> error("Unknown position: ${uiState.position}")
-                        }
+                        alignment = whenPosition(
+                            onLeft = { Alignment.CenterEnd },
+                            onRight = { Alignment.CenterStart },
+                            position = uiState.position
+                        )
                     )
                     .padding(horizontal = ItemPadding)
                     .size(MinInteractiveSize)
                     .graphicsLayer {
-                        rotationZ = when (uiState.position) {
-                            LEFT -> 0f
-                            RIGHT -> 180f
-                            else -> error("Unknown position: ${uiState.position}")
-                        }
+                        rotationZ = whenPosition(
+                            onLeft = { 0f },
+                            onRight = { 180f },
+                            position = uiState.position
+                        )
                     }
                     .clipToBackground(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                         shape = CircleShape
                     )
                     .onClick(enableRipple = false) {
-                        val newPosition = when (uiState.position) {
-                            LEFT -> RIGHT
-                            RIGHT -> LEFT
-                            else -> error("Unknown position: ${uiState.position}")
-                        }
+                        val newPosition = whenPosition(
+                            onLeft = { RIGHT },
+                            onRight = { LEFT },
+                            position = uiState.position
+                        )
                         vm.switchPosition(newPosition)
                     },
                 imageVector = Icons.Default.KeyboardArrowRight,
@@ -199,9 +201,7 @@ private fun AdjustAngle(
     color: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 ) {
-    require(position == LEFT || position == RIGHT) {
-        "Unknown position: $position"
-    }
+    requirePosition(position)
     val lineWidth = 6.dp
     val dragHandleRadius = 20.dp
     var circleRadius by remember { mutableFloatStateOf(0f) }
@@ -248,11 +248,11 @@ private fun AdjustAngle(
                             return@onDrag
                         }
                         val _property = property ?: return@onDrag
-                        val x = when (curPosition) {
-                            LEFT -> dragOffset.x
-                            RIGHT -> circleCenter.x - dragOffset.x
-                            else -> error("Unknown position: $curPosition")
-                        }
+                        val x = whenPosition(
+                            onLeft = { dragOffset.x },
+                            onRight = { circleCenter.x - dragOffset.x },
+                            position = curPosition
+                        )
                         val y = circleCenter.y - dragOffset.y
                         val tanVal = x / y
                         val radians = atan(tanVal)
@@ -332,37 +332,37 @@ private fun AdjustAngle(
             )
             val displayArcDegree = "${arcDegree.roundToInt()}"
             val hint = when (index) {
-                1 -> when (position) {
-                    LEFT -> context.getString(R.string.gesture_to_right_top)
-                    RIGHT -> context.getString(R.string.gesture_to_left_top)
-                    else -> error("Unknown position: $position")
-                }
-                2 -> when (position) {
-                    LEFT -> context.getString(R.string.gesture_to_right)
-                    RIGHT -> context.getString(R.string.gesture_to_left)
-                    else -> error("Unknown position: $position")
-                }
-                3 -> when (position) {
-                    LEFT -> context.getString(R.string.gesture_to_right_bottom)
-                    RIGHT -> context.getString(R.string.gesture_to_left_bottom)
-                    else -> error("Unknown position: $position")
-                }
+                1 -> whenPosition(
+                    onLeft = { context.getString(R.string.gesture_to_right_top) },
+                    onRight = { context.getString(R.string.gesture_to_left_top) },
+                    position = position
+                )
+                2 -> whenPosition(
+                    onLeft = { context.getString(R.string.gesture_to_right) },
+                    onRight = { context.getString(R.string.gesture_to_left) },
+                    position = position
+                )
+                3 -> whenPosition(
+                    onLeft = { context.getString(R.string.gesture_to_right_bottom) },
+                    onRight = { context.getString(R.string.gesture_to_left_bottom) },
+                    position = position
+                )
                 else -> ""
             }
-            val displayText = when (position) {
-                LEFT -> "$hint $displayArcDegree"
-                RIGHT -> "$displayArcDegree $hint"
-                else -> error("Unknown position: $position")
-            }
+            val displayText = whenPosition(
+                onLeft = { "$hint $displayArcDegree" },
+                onRight = { "$displayArcDegree $hint" },
+                position = position
+            )
             drawText(
                 textMeasurer = textMeasurer,
                 text = displayText,
                 topLeft = Offset(
-                    x = when (position) {
-                        LEFT -> textX - textMeasurer.measure(displayText).size.width / 2f
-                        RIGHT -> textX - textMeasurer.measure(displayText).size.width
-                        else -> error("Unknown position: $position")
-                    },
+                    x = whenPosition(
+                        onLeft = { textX - textMeasurer.measure(displayText).size.width / 2f },
+                        onRight = { textX - textMeasurer.measure(displayText).size.width },
+                        position = position
+                    ),
                     y = textY - textMeasurer.measure(displayText).size.height / 2f
                 ),
                 maxLines = 1,

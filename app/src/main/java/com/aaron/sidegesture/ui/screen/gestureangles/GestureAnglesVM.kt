@@ -6,6 +6,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureAngles
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -42,11 +43,11 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun updateGestureAngle(angle: GestureAngle) {
         updateUiState {
-            when (it.position) {
-                GestureButton.LEFT -> leftAngle = angle
-                GestureButton.RIGHT -> rightAngle = angle
-                else -> error("Unknown position: ${it.position}")
-            }
+            whenPosition(
+                onLeft = { leftAngle = angle },
+                onRight = { rightAngle = angle },
+                position = it.position
+            )
             it.copy(angle = angle)
         }
     }
@@ -63,11 +64,11 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = when (gestureButton.position) {
-                                    GestureButton.LEFT -> leftAngle
-                                    GestureButton.RIGHT -> rightAngle
-                                    else -> error("Unknown position: ${gestureButton.position}")
-                                }
+                                angle = whenPosition(
+                                    onLeft = { leftAngle },
+                                    onRight = { rightAngle },
+                                    position = gestureButton.position
+                                )
                             )
                             set(index, newButton)
                         }
@@ -110,11 +111,11 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     private fun getGestureAngle(position: Int): GestureAngle {
-        return when (position) {
-            GestureButton.LEFT -> leftAngle
-            GestureButton.RIGHT -> rightAngle
-            else -> error("Unknown position: $position")
-        }
+        return whenPosition(
+            onLeft = { leftAngle },
+            onRight = { rightAngle },
+            position = position
+        )
     }
 
     data class UiState(

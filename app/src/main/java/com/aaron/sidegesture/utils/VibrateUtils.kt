@@ -8,6 +8,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.annotation.RequiresPermission
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.ktx.whenVibrationEffect
 
 /**
  * @author aaronzzxup@gmail.com
@@ -25,14 +26,14 @@ object VibrateUtils {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val level = vibrations.predefinedEffect
-            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && level != Vibrations.EFFECT_NONE) {
-                val effect = when (level) {
-                    Vibrations.EFFECT_TICK -> VibrationEffect.EFFECT_TICK
-                    Vibrations.EFFECT_CLICK -> VibrationEffect.EFFECT_CLICK
-                    Vibrations.EFFECT_HEAVY_CLICK -> VibrationEffect.EFFECT_HEAVY_CLICK
-                    else -> error("Unknown predefinedVibrationLevel: ${vibrations.predefinedEffect}")
-                }
-                VibrationEffect.createPredefined(effect)
+            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                whenVibrationEffect(
+                    onNone = { VibrationEffect.createOneShot(vibrations.customVibrationMs, 255) },
+                    onTick = { VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK) },
+                    onClick = { VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK) },
+                    onHeavyClick = { VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK) },
+                    effect = level
+                )
             } else {
                 VibrationEffect.createOneShot(vibrations.customVibrationMs, 255)
             }

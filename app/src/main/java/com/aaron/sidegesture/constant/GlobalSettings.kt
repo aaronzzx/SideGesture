@@ -3,7 +3,7 @@ package com.aaron.sidegesture.constant
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.ktx.whenVibrationEffect
 import com.blankj.utilcode.util.ConvertUtils
 
 /**
@@ -28,12 +28,12 @@ object GlobalSettings {
 
     @Composable
     fun getPredefinedVibrationEffectText(effect: Int): String {
-        return when (effect) {
-            Vibrations.EFFECT_TICK -> stringResource(id = R.string.vibration_tick)
-            Vibrations.EFFECT_CLICK -> stringResource(id = R.string.vibration_click)
-            Vibrations.EFFECT_HEAVY_CLICK -> stringResource(id = R.string.vibration_heavy_click)
-            Vibrations.EFFECT_NONE -> stringResource(id = R.string.custom)
-            else -> error("Unknown vibration effect: $effect")
-        }
+        return whenVibrationEffect(
+            onNone = { stringResource(id = R.string.custom) },
+            onTick = { stringResource(id = R.string.vibration_tick) },
+            onClick = { stringResource(id = R.string.vibration_click) },
+            onHeavyClick = { stringResource(id = R.string.vibration_heavy_click) },
+            effect = effect
+        )
     }
 }

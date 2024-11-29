@@ -46,6 +46,7 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
+import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
@@ -344,21 +345,21 @@ private fun MyGestureSettings(
     MyTextButton(
         onClick = onClick,
         text = when (direction) {
-            TriggerDirection.Center -> when (gestureButton.position) {
-                LEFT -> stringResource(id = R.string.slide_to_right)
-                RIGHT -> stringResource(id = R.string.slide_to_left)
-                else -> error("Unknown position: ${gestureButton.position}")
-            }
-            TriggerDirection.Up -> when (gestureButton.position) {
-                LEFT -> stringResource(id = R.string.slide_to_top_right)
-                RIGHT -> stringResource(id = R.string.slide_to_top_left)
-                else -> error("Unknown position: ${gestureButton.position}")
-            }
-            TriggerDirection.Down -> when (gestureButton.position) {
-                LEFT -> stringResource(id = R.string.slide_to_bottom_right)
-                RIGHT -> stringResource(id = R.string.slide_to_bottom_left)
-                else -> error("Unknown position: ${gestureButton.position}")
-            }
+            TriggerDirection.Center -> whenPosition(
+                onLeft = { stringResource(id = R.string.slide_to_right) },
+                onRight = { stringResource(id = R.string.slide_to_left) },
+                position = gestureButton.position
+            )
+            TriggerDirection.Up -> whenPosition(
+                onLeft = { stringResource(id = R.string.slide_to_top_right) },
+                onRight = { stringResource(id = R.string.slide_to_top_left) },
+                position = gestureButton.position
+            )
+            TriggerDirection.Down -> whenPosition(
+                onLeft = { stringResource(id = R.string.slide_to_bottom_right) },
+                onRight = { stringResource(id = R.string.slide_to_bottom_left) },
+                position = gestureButton.position
+            )
         },
         secondaryText = run {
             if (secondaryText.isNotEmpty()) {
