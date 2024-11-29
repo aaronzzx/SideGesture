@@ -113,6 +113,9 @@ fun SideGestureContainer(
         modifier = modifier.drawBehind {
             if (drawButtonBounds) {
                 buttons.fastForEach { button ->
+                    if (!button.enabled) {
+                        return@fastForEach
+                    }
                     val bounds = button.bounds()
                     drawRect(
                         color = when (button.isDefault) {

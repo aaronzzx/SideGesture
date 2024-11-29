@@ -4,13 +4,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.res.stringResource
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
+import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+val GestureButton.buttonTextCompose: String @Composable get() {
+    if (position == LEFT) {
+        return stringResource(id = R.string.left_gesture_button)
+    } else if (position == RIGHT) {
+        return stringResource(id = R.string.right_gesture_button)
+    }
+    return ""
+}
 
 val GestureButton.actionText: String get() {
     var text = ""

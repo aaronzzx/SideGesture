@@ -16,24 +16,24 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -54,8 +54,10 @@ import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
+import com.aaron.sidegesture.ktx.buttonTextCompose
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoOverlaySettings
+import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
@@ -67,6 +69,7 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 /**
@@ -86,7 +89,54 @@ fun HomeScreen(
     onNavToGestureButtonSettings: (GestureButton) -> Unit,
     vm: HomeVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = { event ->
+            when (event) {
+                is UiEvent.ScrollEvent -> {
+                    coroutineScope.launch {
+                        if (!event.offsetY.isNaN()) {
+                            scrollState.animateScrollBy(
+                                value = event.offsetY,
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    ) { uiState ->
+        if (uiState.showResetWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { vm.showResetWarningDialog(false) },
+                title = {
+                    Text(text = stringResource(id = R.string.reset_default_settings))
+                },
+                text = {
+                    Text(text = stringResource(id = R.string.reset_default_settings_hint))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            vm.reset()
+                            vm.showResetWarningDialog(false)
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { vm.showResetWarningDialog(false) }
+                    ) {
+                        Text(text = stringResource(id = R.string.cancel))
+                    }
+                }
+            )
+        }
+
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
         LaunchedEffect(key1 = lifecycleOwner) {
@@ -130,6 +180,7 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 onClick = {
                                     vm.showMoreMenu(false)
+                                    vm.showResetWarningDialog(true)
                                 },
                                 text = {
                                     Text(text = stringResource(id = R.string.reset_default_settings),)
@@ -149,12 +200,11 @@ fun HomeScreen(
                     }
                 )
 
-                val scrollState = rememberScrollState()
                 MyColumn(scrollState = scrollState) {
                     MySection(title = stringResource(id = R.string.initial_settings)) {
                         MyTextSwitch(
                             onCheckedChange = {
-                                vm.onGestureEnabledChange(it)
+                                vm.onAppGestureEnabledChange(it)
                             },
                             checked = uiState.isGestureEnabled,
                             text = stringResource(id = R.string.gesture_switch)
@@ -191,42 +241,38 @@ fun HomeScreen(
                         )
                     }
 
-                    val density = LocalDensity.current
-                    var gestureButtonListOffset by remember { mutableStateOf(Offset.Unspecified) }
-                    if (uiState.isGestureButtonListExpanded && gestureButtonListOffset.isSpecified) {
-                        LaunchedEffect(scrollState) {
-                            scrollState.animateScrollBy(
-                                value = gestureButtonListOffset.y,
-                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                            )
-                        }
+                    var gestureButtonListOffset by rememberSaveable {
+                        mutableFloatStateOf(Float.NaN)
                     }
+                    val density = LocalDensity.current
                     MyExpandableColumn(
                         modifier = Modifier
                             .onGloballyPositioned {
-                                if (gestureButtonListOffset.isUnspecified) {
+                                if (gestureButtonListOffset.isNaN()) {
                                     density.run {
                                         val position = it.positionInParent()
-                                        gestureButtonListOffset = position.copy(
-                                            y = position.y + RootPadding.toPx()
-                                        )
+                                        gestureButtonListOffset = position.y + RootPadding.toPx()
                                     }
                                 }
                             }
                             .padding(top = SectionPaddingNoTitle),
                         title = stringResource(id = R.string.gesture_button_list),
                         expanded = uiState.isGestureButtonListExpanded,
-                        onExpandedChange = {
-                            vm.expandGestureButtonList(it)
+                        onExpandedChange = { expanded ->
+                            if (expanded) {
+                                vm.expandGestureButtonList(true, gestureButtonListOffset)
+                            } else {
+                                vm.expandGestureButtonList(false)
+                            }
                         }
                     ) {
                         uiState.gestureButtons.fastForEach { button ->
                             key(button) {
                                 MyTextSwitch(
                                     onTextClick = { onNavToGestureButtonSettings(button) },
-                                    onCheckedChange = { },
-                                    checked = true,
-                                    text = "触钮${button.id}-${button.position}",
+                                    onCheckedChange = { vm.onGestureButtonEnabledChange(button, it) },
+                                    checked = button.enabled,
+                                    text = button.buttonTextCompose,
                                     secondaryText = run {
                                         val expected = button.actionTextCompose
                                         if (expected.isNotEmpty()) {
@@ -247,6 +293,7 @@ fun HomeScreen(
                                 .fillMaxWidth()
                                 .heightIn(min = MinItemHeightNoSecondary)
                                 .onSingleClick {
+                                    vm.addGestureButton()
                                 }
                                 .wrapContentSize(),
                             text = stringResource(id = R.string.add_gesture_button),
@@ -268,6 +315,9 @@ fun HomeScreen(
                         .fillMaxSize()
                         .drawBehind {
                             uiState.gestureButtons.fastForEach { button ->
+                                if (!button.enabled) {
+                                    return@fastForEach
+                                }
                                 val bounds = button.bounds()
                                 drawRect(
                                     color = when (button.isDefault) {

@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
@@ -43,6 +46,9 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
+import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
+import com.aaron.sidegesture.ui.theme.IconTextPadding
+import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -72,7 +78,42 @@ fun GestureButtonSettingsScreen(
     onBack: () -> Unit,
     vm: GestureButtonSettingsVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = { event ->
+            when (event) {
+                UiEvent.Finish -> onBack()
+            }
+        }
+    ) { uiState ->
+        if (uiState.showDeleteWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { vm.showDeleteWarningDialog(false) },
+                title = {
+                    Text(text = stringResource(id = R.string.delete_gesture_button))
+                },
+                text = {
+                    Text(text = stringResource(id = R.string.delete_gesture_button_hint))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            vm.deleteGestureButton()
+                            vm.showDeleteWarningDialog(false)
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { vm.showDeleteWarningDialog(false) }
+                    ) {
+                        Text(text = stringResource(id = R.string.cancel))
+                    }
+                }
+            )
+        }
         if (uiState.colorPickerDialog.first) {
             AlertDialog(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -123,7 +164,39 @@ fun GestureButtonSettingsScreen(
             Column {
                 TopBar(
                     onBack = onBack,
-                    title = stringResource(id = R.string.gesture_button_settings)
+                    title = uiState.gestureButton.let {
+                        when (it?.position) {
+                            LEFT -> stringResource(id = R.string.left_gesture_button)
+                            RIGHT -> stringResource(id = R.string.right_gesture_button)
+                            else -> ""
+                        }
+                    },
+                    postfixTitle = {
+                        if (uiState.gestureButton != null) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = IconTextPadding)
+                                    .size(MarkColorSize)
+                                    .background(
+                                        color = when (uiState.gestureButton.isDefault) {
+                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                                            else -> Color(uiState.gestureButton.color)
+                                        },
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    },
+                    actions = {
+                        if (uiState.gestureButton?.isDefault != true) {
+                            IconButton(onClick = { vm.showDeleteWarningDialog(true) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    }
                 )
                 val gestureButton = uiState.gestureButton
                 if (gestureButton != null) {
@@ -243,16 +316,17 @@ fun GestureButtonSettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .drawBehind {
-                        val button = uiState.gestureButton ?: return@drawBehind
-                        val bounds = button.bounds()
-                        drawRect(
-                            color = when (button.isDefault) {
-                                true -> colorScheme.primary.copy(GestureButtonColorAlpha)
-                                else -> Color(button.color)
-                            },
-                            topLeft = bounds.topLeft,
-                            size = bounds.size
-                        )
+                        uiState.gestureButtons.fastForEach { button ->
+                            val bounds = button.bounds()
+                            drawRect(
+                                color = when (button.isDefault) {
+                                    true -> colorScheme.primary.copy(GestureButtonColorAlpha)
+                                    else -> Color(button.color)
+                                },
+                                topLeft = bounds.topLeft,
+                                size = bounds.size
+                            )
+                        }
                     }
             )
         }

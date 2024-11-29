@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.widget
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
@@ -30,21 +32,25 @@ fun TopBar(
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     showBackIcon: Boolean = true,
-    titleStyle: TextStyle = MaterialTheme.typography.titleLarge
+    titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
+    postfixTitle: (@Composable () -> Unit)? = null
 ) {
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
         title = {
-            Text(
-                modifier = Modifier.let {
-                    if (showBackIcon) it else {
-                        it.padding(start = TopBarPaddingExtra)
-                    }
-                },
-                text = title,
-                style = titleStyle
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    modifier = Modifier.let {
+                        if (showBackIcon) it else {
+                            it.padding(start = TopBarPaddingExtra)
+                        }
+                    },
+                    text = title,
+                    style = titleStyle
+                )
+                postfixTitle?.invoke()
+            }
         },
         navigationIcon = {
             if (showBackIcon) {

@@ -22,9 +22,9 @@ import kotlinx.coroutines.launch
  */
 class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, UiEvent>() {
 
-    override val initialState: UiState = UiState()
-
     private val gestureButtonSettings = savedStateHandle.toRoute<GestureButtonSettings>()
+
+    override val initialState: UiState = UiState(gestureButtonSettings)
 
     val colorPickerDialog = ColorPickerDialog()
 
@@ -32,75 +32,124 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         loadData()
     }
 
+    fun showDeleteWarningDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showDeleteWarningDialog = show)
+        }
+    }
+
+    fun deleteGestureButton() {
+        viewModelScope.launch {
+            DataStoreHolder.gestureButtons.updateData {
+                it.toMutableList().apply {
+                    removeAll { item ->
+                        item.id == uiState.gestureButton?.id
+                    }
+                }
+            }
+        }.invokeOnCompletion {
+            sendUiEvent(UiEvent.Finish)
+        }
+    }
+
     fun onGestureButtonWidthChange(width: Float) {
         updateUiState {
-            it.copy(gestureButton = it.gestureButton?.copy(width = width.toInt()))
+            val l = it.gestureButtons.toMutableList().also { list ->
+                list.forEachIndexed { index, b ->
+                    if (b.id != gestureButtonSettings.buttonId) {
+                        return@forEachIndexed
+                    }
+                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                        list[index] = b.copy(width = width.toInt())
+                    }
+                }
+            }
+            it.copy(gestureButtons = l)
         }
         saveSettings()
     }
 
     fun onGestureButtonLengthChange(fraction: Float) {
         updateUiState {
-            it.copy(
-                gestureButton = it.gestureButton?.let { b ->
-                    val start = b.start
-                    val end = b.end
-                    val newEnd = start + fraction
-                    if (newEnd > MaxGestureButtonLength) {
-                        val residue = newEnd - MaxGestureButtonLength
-                        val newStart = end - b.fraction - residue
-                        return@let b.copy(start = newStart, end = newEnd)
+            val l = it.gestureButtons.toMutableList().also { list ->
+                list.forEachIndexed { index, b ->
+                    if (b.id != gestureButtonSettings.buttonId) {
+                        return@forEachIndexed
                     }
-                    b.copy(start = start, end = newEnd)
+                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                        list[index] = b.let {
+                            val start = b.start
+                            val end = b.end
+                            val newEnd = start + fraction
+                            if (newEnd > MaxGestureButtonLength) {
+                                val residue = newEnd - MaxGestureButtonLength
+                                val newStart = end - b.fraction - residue
+                                return@let b.copy(start = newStart, end = newEnd)
+                            }
+                            b.copy(start = start, end = newEnd)
+                        }
+                    }
                 }
-            )
+            }
+            it.copy(gestureButtons = l)
         }
     }
 
     fun onGestureButtonLocationChange(value: Float) {
         updateUiState {
-            it.copy(
-                gestureButton = it.gestureButton?.let { b ->
-                    var startValue = MaxGestureButtonStart - value
-                    val fraction = b.fraction
-                    var end = startValue + fraction
-                    if (end >= MaxGestureButtonLength) {
-                        end = MaxGestureButtonLength
-                        startValue = end - fraction
+            val l = it.gestureButtons.toMutableList().also { list ->
+                list.forEachIndexed { index, b ->
+                    if (b.id != gestureButtonSettings.buttonId) {
+                        return@forEachIndexed
                     }
-                    b.copy(start = startValue, end = end)
+                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                        list[index] = b.let {
+                            var startValue = MaxGestureButtonStart - value
+                            val fraction = b.fraction
+                            var end = startValue + fraction
+                            if (end >= MaxGestureButtonLength) {
+                                end = MaxGestureButtonLength
+                                startValue = end - fraction
+                            }
+                            b.copy(start = startValue, end = end)
+                        }
+                    }
                 }
-            )
+
+            }
+            it.copy(gestureButtons = l)
         }
     }
 
     fun onGestureButtonAlignChange(value: Boolean) {
         updateUiState {
-            it.copy(alignRegion = value)
-        }
-    }
-
-    fun saveSettings() {
-        val curButton = uiState.gestureButton ?: return
-        viewModelScope.launch {
-            DataStoreHolder.gestureButtons.updateData {
-                val list = it.toMutableList()
-                for (index in list.indices) {
-                    val button = list[index]
-                    if (button.id == curButton.id) {
-                        if (button.position == curButton.position) {
-                            list[index] = curButton
-                        } else if (uiState.alignRegion) {
-                            list[index] = button.copy(
-                                width = curButton.width,
-                                start = curButton.start,
-                                end = curButton.end,
-                                color = curButton.color
+            val button = it.gestureButton
+            val list = if (!value || button == null) it.gestureButtons else {
+                it.gestureButtons.toMutableList().apply {
+                    forEachIndexed { index, b ->
+                        if (button.id == b.id) {
+                            val newB = b.copy(
+                                width = button.width,
+                                start = button.start,
+                                end = button.end
                             )
+                            set(index, newB)
                         }
                     }
                 }
-                list
+            }
+            it.copy(
+                gestureButtons = list,
+                alignRegion = value
+            )
+        }
+        saveSettings()
+    }
+
+    fun saveSettings() {
+        viewModelScope.launch {
+            DataStoreHolder.gestureButtons.updateData {
+                uiState.gestureButtons
             }
         }
     }
@@ -125,7 +174,18 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         fun confirm() {
             updateUiState {
                 val pickedColor = it.colorPickerDialog.second
-                it.copy(gestureButton = it.gestureButton?.copy(color = pickedColor.toArgb()))
+                val l = it.gestureButtons.toMutableList().also { list ->
+                    val gestureButtonSettings = gestureButtonSettings
+                    list.forEachIndexed { index, b ->
+                        if (b.id != gestureButtonSettings.buttonId) {
+                            return@forEachIndexed
+                        }
+                        if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                            list[index] = b.copy(color = pickedColor.toArgb())
+                        }
+                    }
+                }
+                it.copy(gestureButtons = l)
             }
             saveSettings()
         }
@@ -134,22 +194,41 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     private fun loadData() {
         viewModelScope.launch {
             DataStoreHolder.gestureButtons.data.collectLatest { items ->
-                val gestureButtonSettings = gestureButtonSettings
-                val buttonId = gestureButtonSettings.buttonId
-                val position = gestureButtonSettings.position
-                val filtered = items.filter { it.id == buttonId }
+                val button = items.find {
+                    it.id == gestureButtonSettings.buttonId &&
+                            it.position == gestureButtonSettings.position
+                }
                 updateUiState {
-                    it.copy(gestureButton = filtered.find { b -> b.position == position })
+                    it.copy(
+                        gestureButtons = items,
+                        alignRegion = button != null && items.filter { b ->
+                            b.id == gestureButtonSettings.buttonId
+                        }.all { b ->
+                            b.width == button.width &&
+                                    b.start == button.start &&
+                                    b.end == button.end
+                        }
+                    )
                 }
             }
         }
     }
 
     data class UiState(
-        val gestureButton: GestureButton? = null,
+        val gestureButtonSettings: GestureButtonSettings,
+        val gestureButtons: List<GestureButton> = emptyList(),
         val alignRegion: Boolean = true,
+        val showDeleteWarningDialog: Boolean = false,
         val colorPickerDialog: Pair<Boolean, Color> = Pair(false, Color.Red.copy(alpha = 0.1f))
-    )
+    ) {
+        val gestureButton: GestureButton? = gestureButtons.find {
+            it.id == gestureButtonSettings.buttonId &&
+                    it.position == gestureButtonSettings.position
+        }
+    }
 
-    sealed interface UiEvent
+    sealed interface UiEvent {
+
+        data object Finish : UiEvent
+    }
 }

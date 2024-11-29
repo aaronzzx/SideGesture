@@ -1,8 +1,5 @@
 package com.aaron.sidegesture.ui.screen.home
 
-import android.os.SystemClock
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
@@ -26,29 +23,22 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     override val initialState: UiState = UiState()
 
     init {
-        updatePermissionState()
         loadData()
     }
 
     fun addGestureButton() {
         viewModelScope.launch {
             DataStoreHolder.gestureButtons.updateData {
-                GestureButton.Defaults.toMutableList().apply {
-                    val id = SystemClock.uptimeMillis().toString()
-                    val b1 = GestureButton(
-                        id = id,
-                        position = GestureButton.LEFT,
-                        color = Color(0xFF000000).toArgb()
-                    )
-                    val b2 = GestureButton(
-                        id = id,
-                        position = GestureButton.RIGHT,
-                        color = Color(0xFF000000).toArgb()
-                    )
-                    add(b1)
-                    add(b2)
+                it.toMutableList().apply {
+                    addAll(GestureButton.createPair())
                 }
             }
+        }
+    }
+
+    fun showResetWarningDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showResetWarningDialog = show)
         }
     }
 
@@ -64,31 +54,70 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun expandGestureButtonList(expanded: Boolean) {
+    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Float = Float.NaN) {
         updateUiState {
             it.copy(isGestureButtonListExpanded = expanded)
         }
-    }
-
-    fun onGestureEnabledChange(enabled: Boolean) {
-//        if (enabled && !uiState.isAccessibilityEnabled) {
-//            // TODO: show toast
-//            return
-//        }
-        updateUiState {
-            it.copy(isGestureEnabled = enabled)
+        if (expanded) {
+            sendUiEvent(UiEvent.ScrollEvent(scrollOffset))
         }
     }
 
-    fun updatePermissionState() {
-        val app = App.getContext()
-        val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
+    fun onAppGestureEnabledChange(enabled: Boolean) {
         updateUiState {
-            it.copy(
-                isAccessibilityEnabled = isAccessibilityEnabled,
-                isDrawOverlayEnabled = PermissionUtils.isGrantedDrawOverlays(),
-                isGestureEnabled = isAccessibilityEnabled
-            )
+            it.copy(isGestureEnabled = enabled)
+        }
+        saveSettings()
+    }
+
+    fun onGestureButtonEnabledChange(button: GestureButton, enabled: Boolean) {
+        updateUiState {
+            val buttons = it.gestureButtons
+            val index = buttons.indexOf(button)
+            if (index < 0) it else {
+                val list = buttons.toMutableList().apply {
+                    set(index, button.copy(enabled = enabled))
+                }
+                it.copy(gestureButtons = list)
+            }
+        }
+        saveSettings()
+    }
+
+    fun updatePermissionState() {
+        viewModelScope.launch {
+            DataStoreHolder.initialSettings.data.collectLatest { item ->
+                val app = App.getContext()
+                val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
+                updateUiState {
+                    it.copy(
+                        isAccessibilityEnabled = isAccessibilityEnabled,
+                        isDrawOverlayEnabled = PermissionUtils.isGrantedDrawOverlays(),
+                        isGestureEnabled = item.gestureEnabled
+                    )
+                }
+            }
+        }
+    }
+
+    fun reset() {
+        viewModelScope.launch {
+            DataStoreHolder.resetAll()
+        }
+    }
+
+    private fun saveSettings() {
+        viewModelScope.launch {
+            launch {
+                DataStoreHolder.initialSettings.updateData {
+                    it.copy(gestureEnabled = uiState.isGestureEnabled)
+                }
+            }
+            launch {
+                DataStoreHolder.gestureButtons.updateData {
+                    uiState.gestureButtons
+                }
+            }
         }
     }
 
@@ -104,12 +133,16 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     data class UiState(
         val gestureButtons: List<GestureButton> = emptyList(),
-        val isGestureEnabled: Boolean = true,
+        val isGestureEnabled: Boolean = false,
         val isAccessibilityEnabled: Boolean = false,
         val isDrawOverlayEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,
-        val showMoreMenu: Boolean = false
+        val showMoreMenu: Boolean = false,
+        val showResetWarningDialog: Boolean = false
     )
 
-    sealed interface UiEvent
+    sealed interface UiEvent {
+
+        data class ScrollEvent(val offsetY: Float) : UiEvent
+    }
 }

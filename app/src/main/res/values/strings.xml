@@ -2,6 +2,7 @@
     <string name="app_name">OK Gesture</string>
     <string name="home_title">OK Gesture</string>
     <string name="more">更多</string>
+    <string name="delete">删除</string>
     <string name="initial_settings">初始设置</string>
     <string name="gesture_switch">手势开关</string>
     <string name="system_overlay">悬浮窗</string>
@@ -15,6 +16,7 @@
     <string name="gesture_button_settings_hint">长度·宽度·位置·颜色</string>
     <string name="add_gesture_button">添加触钮</string>
     <string name="reset_default_settings">恢复默认设置</string>
+    <string name="reset_default_settings_hint">将重置为初始默认设置并彻底删除所有数据。</string>
     <string name="unlock_advanced_feature">解锁完整版</string>
     <string name="about">关于</string>
     <string name="gesture_button_list">触钮集合</string>
@@ -63,6 +65,8 @@
     <string name="save_failure">保存失败</string>
     <string name="reset_success">重置成功</string>
     <string name="reset_failure">重置失败</string>
+    <string name="left_gesture_button">左侧触钮</string>
+    <string name="right_gesture_button">右侧触钮</string>
 
     <string name="gesture_to_right_top">👆</string>
     <string name="gesture_to_right">👉</string>
@@ -128,4 +132,6 @@
     <string name="action_wechat_pay_simulate_click">微信付款码(模拟点击)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>
     <string name="action_alipay_pay">支付宝付款码</string>
+    <string name="delete_gesture_button">删除触钮</string>
+    <string name="delete_gesture_button_hint">将会同步删除对侧触钮，是否继续？</string>
 </resources>

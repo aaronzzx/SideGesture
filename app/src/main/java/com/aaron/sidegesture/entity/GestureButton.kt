@@ -1,9 +1,14 @@
 package com.aaron.sidegesture.entity
 
+import android.os.SystemClock
 import androidx.annotation.Keep
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
+import kotlin.random.Random
 
 /**
  * @author aaronzzxup@gmail.com
@@ -16,7 +21,7 @@ data class GestureButton(
     val position: Int,
     val enabled: Boolean = true,
     val start: Float = 0.0f,
-    val end: Float = 0.25f,
+    val end: Float = 0.1f,
     val width: Int = ConvertUtils.dp2px(16f),
     val angle: GestureAngle = GestureAngle(),
     val pressActions: GestureActions = GestureActions(),
@@ -77,6 +82,28 @@ data class GestureButton(
                 )
             )
         )
+
+        fun createPair(): List<GestureButton> {
+            val id = SystemClock.uptimeMillis().toString()
+            val hue = Random(System.currentTimeMillis()).nextDouble(0.0, 360.0).toFloat()
+            val color = Color.hsl(
+                hue = hue,
+                saturation = 0.5f,
+                lightness = 0.5f,
+                alpha = GestureButtonColorAlpha
+            ).toArgb()
+            val b1 = GestureButton(
+                id = id,
+                position = LEFT,
+                color = color
+            )
+            val b2 = GestureButton(
+                id = id,
+                position = RIGHT,
+                color = color
+            )
+            return listOf(b1, b2)
+        }
     }
 
     val isDefault: Boolean = id == ID

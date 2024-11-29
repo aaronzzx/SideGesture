@@ -410,6 +410,12 @@ fun MyTextSwitch(
                 horizontalArrangement = Arrangement.spacedBy(IconTextPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    modifier = Modifier.weight(1f, false),
+                    text = text,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1
+                )
                 if (markColor.isSpecified) {
                     Box(
                         modifier = Modifier
@@ -417,12 +423,6 @@ fun MyTextSwitch(
                             .background(color = markColor, shape = CircleShape)
                     )
                 }
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = text,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1
-                )
             }
             if (secondaryText.isNotEmpty()) {
                 Text(

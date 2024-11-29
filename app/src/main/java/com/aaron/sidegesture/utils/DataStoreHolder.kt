@@ -38,4 +38,11 @@ object DataStoreHolder {
         val defValue = GestureButton.Defaults
         App.getContext().dataStore(fileName, defValue)
     }
+
+    suspend fun resetAll() {
+        initialSettings.updateData { InitialSettings() }
+        advancedSettings.updateData { AdvancedSettings() }
+        gestureSettings.updateData { GestureSettings() }
+        gestureButtons.updateData { GestureButton.Defaults }
+    }
 }
