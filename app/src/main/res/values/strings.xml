@@ -67,6 +67,7 @@
     <string name="reset_failure">重置失败</string>
     <string name="left_gesture_button">左侧触钮</string>
     <string name="right_gesture_button">右侧触钮</string>
+    <string name="gesture_button_size_max">已达到最大触钮数量</string>
 
     <string name="gesture_to_right_top">👆</string>
     <string name="gesture_to_right">👉</string>

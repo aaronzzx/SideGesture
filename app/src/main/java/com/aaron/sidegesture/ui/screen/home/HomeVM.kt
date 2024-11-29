@@ -3,12 +3,14 @@ package com.aaron.sidegesture.ui.screen.home
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.PermissionUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -27,6 +29,10 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     fun addGestureButton() {
+        if (uiState.gestureButtons.size >= 20) {
+            showToast(R.string.gesture_button_size_max)
+            return
+        }
         viewModelScope.launch {
             DataStoreHolder.gestureButtons.updateData {
                 it.toMutableList().apply {
