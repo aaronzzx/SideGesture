@@ -55,12 +55,12 @@ import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
+import com.aaron.sidegesture.ktx.checkPositionValid
 import com.aaron.sidegesture.ktx.copyNew
 import com.aaron.sidegesture.ktx.getArcDegrees
 import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
-import com.aaron.sidegesture.ktx.requirePosition
 import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -201,7 +201,7 @@ private fun AdjustAngle(
     color: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 ) {
-    requirePosition(position)
+    checkPositionValid(position)
     val lineWidth = 6.dp
     val dragHandleRadius = 20.dp
     var circleRadius by remember { mutableFloatStateOf(0f) }

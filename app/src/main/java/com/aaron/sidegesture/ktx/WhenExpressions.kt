@@ -8,7 +8,7 @@ import com.aaron.sidegesture.entity.Vibrations
  * @since 2024/11/29
  */
 
-fun requirePosition(position: Int) {
+fun checkPositionValid(position: Int) {
     whenPosition(
         onLeft = { },
         onRight = { },
