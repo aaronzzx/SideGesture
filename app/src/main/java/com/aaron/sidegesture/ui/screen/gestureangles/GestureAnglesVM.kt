@@ -53,8 +53,26 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun saveSettings() {
         viewModelScope.launch {
-            DataStoreHolder.gestureSettings.updateData {
-                it.copy(angles = GestureAngles(left = leftAngle, right = rightAngle))
+            launch {
+                DataStoreHolder.gestureSettings.updateData {
+                    it.copy(angles = GestureAngles(left = leftAngle, right = rightAngle))
+                }
+            }
+            launch {
+                DataStoreHolder.gestureButtons.updateData {
+                    it.toMutableList().apply {
+                        forEachIndexed { index, gestureButton ->
+                            val newButton = gestureButton.copy(
+                                angle = when (gestureButton.position) {
+                                    GestureButton.LEFT -> leftAngle
+                                    GestureButton.RIGHT -> rightAngle
+                                    else -> error("Unknown position: ${gestureButton.position}")
+                                }
+                            )
+                            set(index, newButton)
+                        }
+                    }
+                }
             }
         }.invokeOnCompletion { ex ->
             if (ex == null) {

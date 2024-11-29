@@ -24,16 +24,34 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun saveSettings() {
         viewModelScope.launch {
-            DataStoreHolder.gestureSettings.updateData {
-                val uiState = uiState
-                GestureSettings(
-                    pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
-                    longPressTriggerImmediately = uiState.longPressTriggerImmediately,
-                    longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
-                    longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
-                    isCustomVibration = uiState.isCustomVibration,
-                    vibrations = uiState.vibrations
-                )
+            val uiState = uiState
+            launch {
+                DataStoreHolder.gestureSettings.updateData {
+                    GestureSettings(
+                        pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
+                        longPressTriggerImmediately = uiState.longPressTriggerImmediately,
+                        longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
+                        longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
+                        isCustomVibration = uiState.isCustomVibration,
+                        vibrations = uiState.vibrations
+                    )
+                }
+            }
+            launch {
+                DataStoreHolder.gestureButtons.updateData {
+                    it.toMutableList().apply {
+                        forEachIndexed { index, button ->
+                            val newButton = button.copy(
+                                pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
+                                longPressTriggerImmediately = uiState.longPressTriggerImmediately,
+                                longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
+                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
+                                vibrations = uiState.vibrations
+                            )
+                            set(index, newButton)
+                        }
+                    }
+                }
             }
         }
     }
