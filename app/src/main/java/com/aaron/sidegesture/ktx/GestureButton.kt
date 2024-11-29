@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ktx
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -10,6 +11,32 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+val GestureButton.actionText: String get() {
+    var text = ""
+    val pressActionText = pressActions.actionText
+    if (pressActionText.isNotEmpty()) {
+        text += pressActionText
+    }
+    val longPressActionText = longPressActions.actionText
+    if (longPressActionText.isNotEmpty()) {
+        text += ",$longPressActionText"
+    }
+    return text
+}
+
+val GestureButton.actionTextCompose: String @Composable get() {
+    var text = ""
+    val pressActionText = pressActions.actionTextCompose
+    if (pressActionText.isNotEmpty()) {
+        text += pressActionText
+    }
+    val longPressActionText = longPressActions.actionTextCompose
+    if (longPressActionText.isNotEmpty()) {
+        text += ",$longPressActionText"
+    }
+    return text
+}
 
 fun List<GestureButton>.find(offset: Offset): GestureButton? {
     return find { it.contains(offset) }

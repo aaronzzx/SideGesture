@@ -52,6 +52,7 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoOverlaySettings
@@ -226,9 +227,18 @@ fun HomeScreen(
                                     onCheckedChange = { },
                                     checked = true,
                                     text = "触钮${button.id}-${button.position}",
-                                    secondaryText = "返回键,最近键,快速工具,主页键,快速启动器,任务切换器,隐藏触钮,启动应用程序,静音开关,打开通知面板,打开快捷面板,锁屏,关闭应用程序",
+                                    secondaryText = run {
+                                        val expected = button.actionTextCompose
+                                        if (expected.isNotEmpty()) {
+                                            return@run expected
+                                        }
+                                        stringResource(id = R.string.action_none)
+                                    },
                                     secondaryTextColor = MaterialTheme.colorScheme.primary,
-                                    markColor = Color(button.color)
+                                    markColor = when (button.isDefault) {
+                                        true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                                        else -> Color(button.color)
+                                    }
                                 )
                             }
                         }

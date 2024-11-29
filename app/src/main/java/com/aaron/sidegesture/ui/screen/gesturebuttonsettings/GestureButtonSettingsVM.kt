@@ -61,11 +61,12 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         updateUiState {
             it.copy(
                 gestureButton = it.gestureButton?.let { b ->
-                    val startValue = MaxGestureButtonStart - value
+                    var startValue = MaxGestureButtonStart - value
                     val fraction = b.fraction
-                    val end = startValue + fraction
+                    var end = startValue + fraction
                     if (end >= MaxGestureButtonLength) {
-                        return@let b
+                        end = MaxGestureButtonLength
+                        startValue = end - fraction
                     }
                     b.copy(start = startValue, end = end)
                 }

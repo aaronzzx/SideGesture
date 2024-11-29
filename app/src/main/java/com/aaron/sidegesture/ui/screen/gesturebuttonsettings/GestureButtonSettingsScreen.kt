@@ -40,6 +40,7 @@ import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -132,19 +133,22 @@ fun GestureButtonSettingsScreen(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Center,
-                                isLongSlide = false
+                                isLongSlide = false,
+                                secondaryText = gestureButton.pressActions.center.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Up,
-                                isLongSlide = false
+                                isLongSlide = false,
+                                secondaryText = gestureButton.pressActions.up.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Down,
-                                isLongSlide = false
+                                isLongSlide = false,
+                                secondaryText = gestureButton.pressActions.down.actionTextCompose
                             )
                         }
 
@@ -156,19 +160,22 @@ fun GestureButtonSettingsScreen(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Center,
-                                isLongSlide = true
+                                isLongSlide = true,
+                                secondaryText = gestureButton.longPressActions.center.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Up,
-                                isLongSlide = true
+                                isLongSlide = true,
+                                secondaryText = gestureButton.longPressActions.up.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Down,
-                                isLongSlide = true
+                                isLongSlide = true,
+                                secondaryText = gestureButton.longPressActions.down.actionTextCompose
                             )
                         }
 
@@ -257,7 +264,8 @@ private fun MyGestureSettings(
     onClick: () -> Unit,
     gestureButton: GestureButton,
     direction: TriggerDirection,
-    isLongSlide: Boolean
+    isLongSlide: Boolean,
+    secondaryText: String
 ) {
     MyTextButton(
         onClick = onClick,
@@ -278,7 +286,12 @@ private fun MyGestureSettings(
                 else -> error("Unknown position: ${gestureButton.position}")
             }
         },
-        secondaryText = "返回键",
+        secondaryText = run {
+            if (secondaryText.isNotEmpty()) {
+                return@run secondaryText
+            }
+            stringResource(id = R.string.action_none)
+        },
         secondaryTextColor = MaterialTheme.colorScheme.primary,
         prefix = {
             val imageVector = Icons.Default.ArrowForward
