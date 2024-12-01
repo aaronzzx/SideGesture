@@ -62,4 +62,5 @@ dependencies {
     implementation(libs.jetbrains.kotlin.serialization)
     implementation(libs.androidx.datastore)
     implementation(libs.compose.colorpicker)
+    implementation(libs.material.icons.extended)
 }

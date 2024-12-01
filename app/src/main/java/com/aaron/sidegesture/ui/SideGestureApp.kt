@@ -25,6 +25,8 @@ import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
+import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklist
+import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAngles
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesScreen
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettings
@@ -81,7 +83,10 @@ fun SideGestureApp() {
                 AboutScreen(onBack = { navController.navigateUp() })
             }
             myComposable<AdvancedSettings> {
-                AdvancedSettingsScreen(onBack = { navController.navigateUp() })
+                AdvancedSettingsScreen(
+                    onBack = { navController.navigateUp() },
+                    onNavToAppBlacklist = { navController.navigate(AppBlacklist) }
+                )
             }
             myComposable<GestureSettings> {
                 GestureSettingsScreen(
@@ -94,6 +99,9 @@ fun SideGestureApp() {
             }
             myComposable<GestureButtonSettings> {
                 GestureButtonSettingsScreen(onBack = { navController.navigateUp() })
+            }
+            myComposable<AppBlacklist> {
+                AppBlacklistScreen(onBack = { navController.navigateUp() })
             }
         }
     }

@@ -29,6 +29,7 @@ data object AdvancedSettings
 @Composable
 fun AdvancedSettingsScreen(
     onBack: () -> Unit,
+    onNavToAppBlacklist: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -40,7 +41,7 @@ fun AdvancedSettingsScreen(
             MyColumn {
                 MySection {
                     MyTextButton(
-                        onClick = { /*TODO*/ },
+                        onClick = onNavToAppBlacklist,
                         text = stringResource(id = R.string.exclude_app),
                         secondaryText = stringResource(id = R.string.exclude_app_hint)
                     )

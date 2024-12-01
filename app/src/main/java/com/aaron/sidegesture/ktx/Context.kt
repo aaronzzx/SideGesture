@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.text.TextUtils
+import com.blankj.utilcode.util.AppUtils
 import com.blankj.utilcode.util.ToastUtils
 
 
@@ -119,6 +120,10 @@ fun Context.gotoOverlaySettings() {
         data = Uri.parse("package:${packageName}")
     }
     startActivity(intent)
+}
+
+fun Context.gotoAppDetailSettings() {
+    AppUtils.launchAppDetailsSettings(packageName)
 }
 
 fun Context.isAccessibilitySettingsOn(clazz: Class<out AccessibilityService?>): Boolean {

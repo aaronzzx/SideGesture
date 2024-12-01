@@ -372,7 +372,8 @@ fun MyTextSwitch(
     onTextClick: (() -> Unit)? = null,
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
-    markColor: Color = Color.Unspecified
+    markColor: Color = Color.Unspecified,
+    mainSecondaryTextPadding: Boolean = true
 ) {
     Row(
         modifier = modifier
@@ -399,11 +400,15 @@ fun MyTextSwitch(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {
+        val mainSecondaryPadding = when (mainSecondaryTextPadding) {
+            true -> MainSecondaryTextPadding
+            else -> 0.dp
+        }
         Column(
             modifier = Modifier
                 .weight(1f)
                 .height(IntrinsicSize.Max),
-            verticalArrangement = Arrangement.spacedBy(MainSecondaryTextPadding)
+            verticalArrangement = Arrangement.spacedBy(mainSecondaryPadding)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

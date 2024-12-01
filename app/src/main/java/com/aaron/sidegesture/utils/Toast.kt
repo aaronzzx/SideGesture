@@ -1,7 +1,10 @@
 package com.aaron.sidegesture.utils
 
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import androidx.annotation.StringRes
+import androidx.core.os.postDelayed
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ToastUtils
 
@@ -12,18 +15,30 @@ import com.blankj.utilcode.util.ToastUtils
 
 private var init = false
 
-fun showToast(text: String) {
+private val handler = Handler(Looper.getMainLooper())
+
+fun showToast(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
     if (!init) {
         init()
     }
     ToastUtils.showShort(text)
+    if (delayMs > 0 && continueBlock != null) {
+        handler.postDelayed(delayMs) {
+            continueBlock()
+        }
+    }
 }
 
-fun showToast(@StringRes resId: Int) {
+fun showToast(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
     if (!init) {
         init()
     }
     ToastUtils.showShort(resId)
+    if (delayMs > 0 && continueBlock != null) {
+        handler.postDelayed(delayMs) {
+            continueBlock()
+        }
+    }
 }
 
 private fun init() {
