@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +49,7 @@ import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -73,34 +73,13 @@ fun AppBlacklistScreen(
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showResetWarningDialog) {
-            AlertDialog(
-                containerColor = MaterialTheme.colorScheme.surface,
+            MyAlertDialog(
                 onDismissRequest = {
                     vm.showResetWarningDialog(false)
                 },
-                title = { Text(text = stringResource(id = R.string.reset_default_settings)) },
-                text = {
-                    Text(text = stringResource(id = R.string.reset_exclude_apps_warning))
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.showResetWarningDialog(false)
-                            vm.reset()
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            vm.showResetWarningDialog(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
+                title = stringResource(id = R.string.reset_default_settings),
+                text = stringResource(id = R.string.reset_exclude_apps_warning),
+                onConfirmClick = { vm.reset() }
             )
         }
 

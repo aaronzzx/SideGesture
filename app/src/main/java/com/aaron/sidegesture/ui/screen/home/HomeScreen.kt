@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +61,7 @@ import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MyExpandableColumn
 import com.aaron.sidegesture.ui.widget.MySection
@@ -109,31 +108,11 @@ fun HomeScreen(
         }
     ) { uiState ->
         if (uiState.showResetWarningDialog) {
-            AlertDialog(
+            MyAlertDialog(
                 onDismissRequest = { vm.showResetWarningDialog(false) },
-                title = {
-                    Text(text = stringResource(id = R.string.reset_default_settings))
-                },
-                text = {
-                    Text(text = stringResource(id = R.string.reset_default_settings_hint))
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.reset()
-                            vm.showResetWarningDialog(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { vm.showResetWarningDialog(false) }
-                    ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
+                onConfirmClick = { vm.reset() },
+                title = stringResource(id = R.string.reset_default_settings),
+                text = stringResource(id = R.string.reset_default_settings_hint)
             )
         }
 

@@ -11,12 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -64,6 +61,7 @@ import com.aaron.sidegesture.ktx.getKProperty
 import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlinx.serialization.Serializable
 import kotlin.math.atan
@@ -88,34 +86,13 @@ fun GestureAnglesScreen(
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showResetWarningDialog) {
-            AlertDialog(
-                containerColor = MaterialTheme.colorScheme.surface,
+            MyAlertDialog(
                 onDismissRequest = {
                     vm.showResetWarningDialog(false)
                 },
-                title = { Text(text = stringResource(id = R.string.reset_default_settings)) },
-                text = {
-                    Text(text = stringResource(id = R.string.reset_gesture_angles_warning))
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.showResetWarningDialog(false)
-                            vm.reset()
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            vm.showResetWarningDialog(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
+                title = stringResource(id = R.string.reset_default_settings),
+                text = stringResource(id = R.string.reset_gesture_angles_warning),
+                onConfirmClick = { vm.reset() }
             )
         }
         Box {

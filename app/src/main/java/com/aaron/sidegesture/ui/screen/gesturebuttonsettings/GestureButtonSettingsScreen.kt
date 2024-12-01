@@ -51,6 +51,7 @@ import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -80,31 +81,11 @@ fun GestureButtonSettingsScreen(
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showDeleteWarningDialog) {
-            AlertDialog(
+            MyAlertDialog(
                 onDismissRequest = { vm.showDeleteWarningDialog(false) },
-                title = {
-                    Text(text = stringResource(id = R.string.delete_gesture_button))
-                },
-                text = {
-                    Text(text = stringResource(id = R.string.delete_gesture_button_hint))
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.deleteGestureButton()
-                            vm.showDeleteWarningDialog(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { vm.showDeleteWarningDialog(false) }
-                    ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
+                title = stringResource(id = R.string.delete_gesture_button),
+                text = stringResource(id = R.string.delete_gesture_button_hint),
+                onConfirmClick = { vm.deleteGestureButton() }
             )
         }
         if (uiState.colorPickerDialog.first) {
