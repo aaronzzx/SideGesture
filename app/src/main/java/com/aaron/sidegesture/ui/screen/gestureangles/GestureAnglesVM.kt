@@ -10,7 +10,6 @@ import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
-import com.aaron.sidegesture.utils.showToast
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -77,9 +76,9 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
             }
         }.invokeOnCompletion { ex ->
             if (ex == null) {
-                showToast(R.string.save_success)
+                toast(R.string.save_success)
             } else {
-                showToast(R.string.save_failure)
+                toast(R.string.save_failure)
             }
         }
     }
@@ -91,9 +90,9 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
             }
         }.invokeOnCompletion { ex ->
             if (ex == null) {
-                showToast(R.string.reset_success)
+                toast(R.string.reset_success)
             } else {
-                showToast(R.string.reset_failure)
+                toast(R.string.reset_failure)
             }
         }
     }
@@ -124,7 +123,5 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         val showResetWarningDialog: Boolean = false
     )
 
-    sealed interface UiEvent {
-        data object Finish : UiEvent
-    }
+    sealed interface UiEvent
 }

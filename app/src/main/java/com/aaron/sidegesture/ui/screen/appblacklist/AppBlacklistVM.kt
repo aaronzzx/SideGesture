@@ -10,7 +10,6 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
-import com.aaron.sidegesture.utils.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -23,8 +22,6 @@ import kotlinx.coroutines.withContext
 class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
 
     override val initialState: UiState = UiState()
-
-    private var init = true
 
     init {
         loadData()
@@ -57,9 +54,9 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
             }
         }.invokeOnCompletion {
             if (it == null) {
-                showToast(R.string.reset_success)
+                toast(R.string.reset_success)
             } else {
-                showToast(R.string.reset_failure)
+                toast(R.string.reset_failure)
             }
         }
     }
@@ -130,7 +127,5 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         )
     }
 
-    sealed interface UiEvent {
-        data object Finish : UiEvent
-    }
+    sealed interface UiEvent
 }

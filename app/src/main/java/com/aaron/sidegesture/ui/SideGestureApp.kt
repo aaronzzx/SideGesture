@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -21,6 +22,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
@@ -50,58 +52,62 @@ fun SideGestureApp() {
     SideGestureTheme {
         val navController = rememberNavController()
         val durationMs = ANIMATION_DURATION_MS
-        NavHost(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController,
-            startDestination = Home,
-            enterTransition = {
-                slideInHorizontally(animationSpec = tween(durationMs)) { it }
-            },
-            exitTransition = {
-                slideOutHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
-            },
-            popEnterTransition = {
-                slideInHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
-            },
-            popExitTransition = {
-                slideOutHorizontally(animationSpec = tween(durationMs)) { it }
-            }
+        CompositionLocalProvider(
+            LocalNavController provides navController
         ) {
-            myComposable<Home> {
-                HomeScreen(
-                    onNavToUnlock = { navController.navigate(Unlock) },
-                    onNavToAbout = { navController.navigate(About) },
-                    onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
-                    onNavToGestureSettings = { navController.navigate(GestureSettings) },
-                    onNavToGestureButtonSettings = { navController.navigate(GestureButtonSettings(it.id, it.position)) }
-                )
-            }
-            myComposable<Unlock> {
-                UnlockScreen(onBack = { navController.navigateUp() })
-            }
-            myComposable<About> {
-                AboutScreen(onBack = { navController.navigateUp() })
-            }
-            myComposable<AdvancedSettings> {
-                AdvancedSettingsScreen(
-                    onBack = { navController.navigateUp() },
-                    onNavToAppBlacklist = { navController.navigate(AppBlacklist) }
-                )
-            }
-            myComposable<GestureSettings> {
-                GestureSettingsScreen(
-                    onNavToGestureAngles = { navController.navigate(GestureAngles) },
-                    onBack = { navController.navigateUp() }
-                )
-            }
-            myComposable<GestureAngles> {
-                GestureAnglesScreen(onBack = { navController.navigateUp() })
-            }
-            myComposable<GestureButtonSettings> {
-                GestureButtonSettingsScreen(onBack = { navController.navigateUp() })
-            }
-            myComposable<AppBlacklist> {
-                AppBlacklistScreen(onBack = { navController.navigateUp() })
+            NavHost(
+                modifier = Modifier.fillMaxSize(),
+                navController = navController,
+                startDestination = Home,
+                enterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMs)) { it }
+                },
+                exitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+                },
+                popEnterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+                },
+                popExitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMs)) { it }
+                }
+            ) {
+                myComposable<Home> {
+                    HomeScreen(
+                        onNavToUnlock = { navController.navigate(Unlock) },
+                        onNavToAbout = { navController.navigate(About) },
+                        onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
+                        onNavToGestureSettings = { navController.navigate(GestureSettings) },
+                        onNavToGestureButtonSettings = { navController.navigate(GestureButtonSettings(it.id, it.position)) }
+                    )
+                }
+                myComposable<Unlock> {
+                    UnlockScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<About> {
+                    AboutScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<AdvancedSettings> {
+                    AdvancedSettingsScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToAppBlacklist = { navController.navigate(AppBlacklist) }
+                    )
+                }
+                myComposable<GestureSettings> {
+                    GestureSettingsScreen(
+                        onNavToGestureAngles = { navController.navigate(GestureAngles) },
+                        onBack = { navController.navigateUp() }
+                    )
+                }
+                myComposable<GestureAngles> {
+                    GestureAnglesScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<GestureButtonSettings> {
+                    GestureButtonSettingsScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<AppBlacklist> {
+                    AppBlacklistScreen(onBack = { navController.navigateUp() })
+                }
             }
         }
     }

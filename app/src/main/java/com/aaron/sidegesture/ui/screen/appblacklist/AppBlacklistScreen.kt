@@ -43,7 +43,6 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
-import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
@@ -72,14 +71,7 @@ fun AppBlacklistScreen(
     onBack: () -> Unit,
     vm: AppBlacklistVM = viewModel()
 ) {
-    UDFComponent(
-        component = vm.udfComponent,
-        onEvent = { event ->
-            when (event) {
-                UiEvent.Finish -> onBack()
-            }
-        }
-    ) { uiState ->
+    UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showResetWarningDialog) {
             AlertDialog(
                 containerColor = MaterialTheme.colorScheme.surface,

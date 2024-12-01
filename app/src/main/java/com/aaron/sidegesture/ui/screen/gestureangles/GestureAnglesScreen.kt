@@ -62,7 +62,6 @@ import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
 import com.aaron.sidegesture.ktx.whenPosition
-import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -87,14 +86,7 @@ fun GestureAnglesScreen(
     onBack: () -> Unit,
     vm: GestureAnglesVM = viewModel()
 ) {
-    UDFComponent(
-        component = vm.udfComponent,
-        onEvent = { event ->
-            when (event) {
-                UiEvent.Finish -> onBack()
-            }
-        }
-    ) { uiState ->
+    UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showResetWarningDialog) {
             AlertDialog(
                 containerColor = MaterialTheme.colorScheme.surface,

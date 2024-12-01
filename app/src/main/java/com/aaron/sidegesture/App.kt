@@ -3,6 +3,8 @@ package com.aaron.sidegesture
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import com.aaron.compose.component.UDFComponentDefaults
+import com.aaron.sidegesture.defaults.UDFComponentDefaultsImpl
 
 /**
  * @author aaronzzxup@gmail.com
@@ -22,5 +24,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         context = applicationContext
+
+        UDFComponentDefaults.set(UDFComponentDefaultsImpl())
     }
 }

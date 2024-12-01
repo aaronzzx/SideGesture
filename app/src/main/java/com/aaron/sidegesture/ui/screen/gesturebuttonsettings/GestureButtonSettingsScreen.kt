@@ -47,7 +47,6 @@ import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ktx.whenPosition
-import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -79,14 +78,7 @@ fun GestureButtonSettingsScreen(
     onBack: () -> Unit,
     vm: GestureButtonSettingsVM = viewModel()
 ) {
-    UDFComponent(
-        component = vm.udfComponent,
-        onEvent = { event ->
-            when (event) {
-                UiEvent.Finish -> onBack()
-            }
-        }
-    ) { uiState ->
+    UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
         if (uiState.showDeleteWarningDialog) {
             AlertDialog(
                 onDismissRequest = { vm.showDeleteWarningDialog(false) },

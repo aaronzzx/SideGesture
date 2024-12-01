@@ -48,7 +48,7 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 }
             }
         }.invokeOnCompletion {
-            sendUiEvent(UiEvent.Finish)
+            finish()
         }
     }
 
@@ -227,8 +227,5 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         }
     }
 
-    sealed interface UiEvent {
-
-        data object Finish : UiEvent
-    }
+    sealed interface UiEvent
 }
