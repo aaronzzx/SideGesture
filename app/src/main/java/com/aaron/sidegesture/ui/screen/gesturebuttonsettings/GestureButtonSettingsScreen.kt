@@ -5,23 +5,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -31,7 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
+import com.aaron.compose.ktx.onClick
+import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.constant.GlobalActions.NONE
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
@@ -40,13 +51,18 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonStart
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonWidth
 import com.aaron.sidegesture.constant.TriggerDirection
+import com.aaron.sidegesture.constant.TriggerDirection.Center
+import com.aaron.sidegesture.constant.TriggerDirection.Down
+import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
+import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ktx.whenPosition
+import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -133,6 +149,23 @@ fun GestureButtonSettingsScreen(
                 }
             )
         }
+        if (uiState.actionDialog.first) {
+            ActionDialog(
+                onDismissRequest = { vm.hideActionDialog() },
+                onSelected = { vm.onActionSelect(it) },
+                selected = uiState.actionDialog.second,
+                actions = GlobalActions.ALL
+            )
+        }
+        if (uiState.longActionDialog.first) {
+            LongActionDialog(
+                onDismissRequest = { vm.hideLongActionDialog() },
+                onConfirm = { vm.onLongActionConfirm(it) },
+                onSelected = { vm.onLongActionSelect(it) },
+                selected = uiState.longActionDialog.second,
+                actions = GlobalActions.ALL
+            )
+        }
 
         Box {
             Column {
@@ -177,23 +210,29 @@ fun GestureButtonSettingsScreen(
                     MyColumn {
                         MySection(title = stringResource(id = R.string.slide_action)) {
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showActionDialog(Center, gestureButton.slideActions.center)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Center,
+                                direction = Center,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.center.actionTextCompose
                             )
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showActionDialog(Up, gestureButton.slideActions.up)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Up,
+                                direction = Up,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.up.actionTextCompose
                             )
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showActionDialog(Down, gestureButton.slideActions.down)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Down,
+                                direction = Down,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.down.actionTextCompose
                             )
@@ -204,23 +243,29 @@ fun GestureButtonSettingsScreen(
                             title = stringResource(id = R.string.long_slide_action)
                         ) {
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showLongActionDialog(Center, gestureButton.longSlideActions.center)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Center,
+                                direction = Center,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.center.actionTextCompose
                             )
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showLongActionDialog(Up, gestureButton.longSlideActions.up)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Up,
+                                direction = Up,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.up.actionTextCompose
                             )
                             MyGestureSettings(
-                                onClick = { /*TODO*/ },
+                                onClick = {
+                                    vm.showLongActionDialog(Down, gestureButton.longSlideActions.down)
+                                },
                                 gestureButton = gestureButton,
-                                direction = TriggerDirection.Down,
+                                direction = Down,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.down.actionTextCompose
                             )
@@ -318,17 +363,17 @@ private fun MyGestureSettings(
     MyTextButton(
         onClick = onClick,
         text = when (direction) {
-            TriggerDirection.Center -> whenPosition(
+            Center -> whenPosition(
                 onLeft = { stringResource(id = R.string.slide_to_right) },
                 onRight = { stringResource(id = R.string.slide_to_left) },
                 position = gestureButton.position
             )
-            TriggerDirection.Up -> whenPosition(
+            Up -> whenPosition(
                 onLeft = { stringResource(id = R.string.slide_to_top_right) },
                 onRight = { stringResource(id = R.string.slide_to_top_left) },
                 position = gestureButton.position
             )
-            TriggerDirection.Down -> whenPosition(
+            Down -> whenPosition(
                 onLeft = { stringResource(id = R.string.slide_to_bottom_right) },
                 onRight = { stringResource(id = R.string.slide_to_bottom_left) },
                 position = gestureButton.position
@@ -348,9 +393,9 @@ private fun MyGestureSettings(
                     .graphicsLayer {
                         val position = gestureButton.position
                         rotationZ = when (direction) {
-                            TriggerDirection.Up -> if (position == LEFT) -45f else -135f
-                            TriggerDirection.Center -> if (position == LEFT) 0f else 180f
-                            TriggerDirection.Down -> if (position == LEFT) 45f else 135f
+                            Up -> if (position == LEFT) -45f else -135f
+                            Center -> if (position == LEFT) 0f else 180f
+                            Down -> if (position == LEFT) 45f else 135f
                         }
                     }
                     .size(20.dp)
@@ -370,6 +415,157 @@ private fun MyGestureSettings(
                 contentDescription = null,
                 tint = LocalContentColor.current
             )
+        }
+    )
+}
+
+@Composable
+private fun ActionDialog(
+    onDismissRequest: () -> Unit,
+    onSelected: (String) -> Unit,
+    selected: String,
+    actions: List<String>
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onDismissRequest,
+        title = null,
+        text = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            ) {
+                items(
+                    items = actions,
+                    key = { it }
+                ) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .onSingleClick {
+                                onSelected(item)
+                                onDismissRequest()
+                            }
+                            .padding(vertical = ContentPaddingVertical,),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = actionText(action = item, emptyIfNone = false),
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        RadioButton(
+                            selected = item == selected,
+                            onClick = {
+                                onSelected(item)
+                                onDismissRequest()
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {}
+    )
+}
+
+@Composable
+private fun LongActionDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: (List<String>) -> Unit,
+    onSelected: (List<String>) -> Unit,
+    selected: List<String>,
+    actions: List<String>,
+    maxSelectedCount: Int = 5
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onDismissRequest,
+        title = null,
+        text = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            ) {
+                items(
+                    items = actions,
+                    key = { it }
+                ) { item ->
+                    val isItemDisabled = (item !in selected && selected.size >= maxSelectedCount) ||
+                            (item == NONE && item !in selected && selected.isNotEmpty()) ||
+                            (item != NONE && NONE in selected)
+                    Row(
+                        modifier = Modifier
+                            .graphicsLayer {
+                                alpha = if (isItemDisabled) {
+                                    0.36f
+                                } else {
+                                    1f
+                                }
+                            }
+                            .fillParentMaxWidth()
+                            .onClick(enabled = !isItemDisabled) {
+                                val newList = selected
+                                    .toMutableList()
+                                    .also { list ->
+                                        if (item in list) {
+                                            list.remove(item)
+                                        } else if (selected.size < maxSelectedCount) {
+                                            list.add(item)
+                                        }
+                                    }
+                                onSelected(newList)
+                            }
+                            .padding(vertical = ContentPaddingVertical,),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = actionText(action = item, emptyIfNone = false),
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Checkbox(
+                            enabled = !isItemDisabled,
+                            checked = item in selected,
+                            onCheckedChange = onCheckedChange@{
+                                val newList = selected.toMutableList().also { list ->
+                                    if (item in list) {
+                                        list.remove(item)
+                                    } else if (selected.size < maxSelectedCount) {
+                                        list.add(item)
+                                    }
+                                }
+                                onSelected(newList)
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(selected)
+                    onDismissRequest()
+                }
+            ) {
+                Text(text = stringResource(id = R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                }
+            ) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
         }
     )
 }

@@ -78,7 +78,7 @@ fun SideGestureContainer(
             val actions = sideGestureState.onDrag(dragAmount)
             if (actions != null) {
                 val button = sideGestureState.button
-                if (actions.values.isNotEmpty() && button != null) {
+                if (actions.isLongActions && button != null) {
                     actionPanelState.onDragStart(button.position, sideGestureState.finger, actions.values)
                     sideGestureState.cancel()
                 } else if (actions.isNotEmpty()) {
@@ -198,7 +198,7 @@ class SideGestureState(
 
     /**
      * @return 返回null表示不识别任何手势，[Actions.NONE]表示还没触发动作，
-     * [Actions.values]不为空表示触发长动作，否则表示触发一个动作
+     * [Actions.isLongActions]表示触发长动作，否则表示触发一个动作
      */
     fun onDrag(dragAmount: Offset): Actions? {
         finger += dragAmount

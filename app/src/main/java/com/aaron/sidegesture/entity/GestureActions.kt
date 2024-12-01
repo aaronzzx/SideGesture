@@ -34,13 +34,15 @@ data class Actions(private val actionValue: String = GlobalActions.NONE) {
         }
     }
 
+    val isLongActions: Boolean = actionValue.contains(",")
+
     @Transient
     val values: List<String> = run {
         val actionValue = actionValue
         if (actionValue.contains(",")) {
             return@run actionValue.split(",")
         }
-        emptyList()
+        listOf(actionValue)
     }
 
     @Transient
