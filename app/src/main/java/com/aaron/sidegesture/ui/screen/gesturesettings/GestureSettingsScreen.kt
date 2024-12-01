@@ -101,10 +101,10 @@ fun GestureSettingsScreen(
                 }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
-                    title = stringResource(id = R.string.press_action)
+                    title = stringResource(id = R.string.slide_action)
                 ) {
                     MyTextSlider(
-                        value = uiState.pressTriggerDistance,
+                        value = uiState.slideTriggerDistance,
                         onValueChange = { vm.onPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
@@ -114,16 +114,16 @@ fun GestureSettingsScreen(
                 }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
-                    title = stringResource(id = R.string.long_press_action)
+                    title = stringResource(id = R.string.long_slide_action)
                 ) {
                     MyTextSwitch(
                         onCheckedChange = { vm.onLongPressTriggerImmediatelyChange(it) },
-                        checked = uiState.longPressTriggerImmediately,
-                        text = stringResource(id = R.string.long_press_trigger_immediately),
-                        secondaryText = stringResource(id = R.string.long_press_trigger_immediately_hint)
+                        checked = uiState.longSlideTriggerImmediately,
+                        text = stringResource(id = R.string.long_slide_trigger_immediately),
+                        secondaryText = stringResource(id = R.string.long_slide_trigger_immediately_hint)
                     )
                     MyTextSlider(
-                        value = uiState.longPressTriggerDistance,
+                        value = uiState.longSlideTriggerDistance,
                         onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
@@ -131,10 +131,10 @@ fun GestureSettingsScreen(
                         valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
                     )
                     MyTextSlider(
-                        value = uiState.longPressTriggerDelayMs.toFloat(),
+                        value = uiState.longSlideTriggerDelayMs.toFloat(),
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
-                        text = stringResource(id = R.string.long_press_trigger_delay_ms),
+                        text = stringResource(id = R.string.long_slide_trigger_delay_ms),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
                     )

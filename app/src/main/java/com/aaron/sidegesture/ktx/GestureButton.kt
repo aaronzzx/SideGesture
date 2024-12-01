@@ -26,26 +26,26 @@ val GestureButton.buttonTextCompose: String @Composable get() {
 
 val GestureButton.actionText: String get() {
     var text = ""
-    val pressActionText = pressActions.actionText
-    if (pressActionText.isNotEmpty()) {
-        text += pressActionText
+    val slideActionText = slideActions.actionText
+    if (slideActionText.isNotEmpty()) {
+        text += slideActionText
     }
-    val longPressActionText = longPressActions.actionText
-    if (longPressActionText.isNotEmpty()) {
-        text += ",$longPressActionText"
+    val longSlideActionText = longSlideActions.actionText
+    if (longSlideActionText.isNotEmpty()) {
+        text += ",$longSlideActionText"
     }
     return text
 }
 
 val GestureButton.actionTextCompose: String @Composable get() {
     var text = ""
-    val pressActionText = pressActions.actionTextCompose
-    if (pressActionText.isNotEmpty()) {
-        text += pressActionText
+    val slideActionText = slideActions.actionTextCompose
+    if (slideActionText.isNotEmpty()) {
+        text += slideActionText
     }
-    val longPressActionText = longPressActions.actionTextCompose
-    if (longPressActionText.isNotEmpty()) {
-        text += ",$longPressActionText"
+    val longSlideActionText = longSlideActions.actionTextCompose
+    if (longSlideActionText.isNotEmpty()) {
+        text += ",$longSlideActionText"
     }
     return text
 }

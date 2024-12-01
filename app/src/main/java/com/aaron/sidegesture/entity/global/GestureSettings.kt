@@ -14,10 +14,10 @@ import kotlinx.serialization.Serializable
 @Keep
 data class GestureSettings(
     val angles: GestureAngles = GestureAngles(),
-    val pressTriggerDistance: Int = ConvertUtils.dp2px(30f),
-    val longPressTriggerImmediately: Boolean = true,
-    val longPressTriggerDistance: Int = ConvertUtils.dp2px(100f),
-    val longPressTriggerDelayMs: Long = 100L,
+    val slideTriggerDistance: Int = ConvertUtils.dp2px(30f),
+    val longSlideTriggerImmediately: Boolean = true,
+    val longSlideTriggerDistance: Int = ConvertUtils.dp2px(100f),
+    val longSlideTriggerDelayMs: Long = 100L,
     val isCustomVibration: Boolean = false,
     val vibrations: Vibrations = Vibrations()
 )

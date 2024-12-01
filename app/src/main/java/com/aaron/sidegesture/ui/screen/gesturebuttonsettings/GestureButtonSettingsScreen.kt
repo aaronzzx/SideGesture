@@ -175,54 +175,54 @@ fun GestureButtonSettingsScreen(
                 val gestureButton = uiState.gestureButton
                 if (gestureButton != null) {
                     MyColumn {
-                        MySection(title = stringResource(id = R.string.press_action)) {
+                        MySection(title = stringResource(id = R.string.slide_action)) {
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Center,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.pressActions.center.actionTextCompose
+                                secondaryText = gestureButton.slideActions.center.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Up,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.pressActions.up.actionTextCompose
+                                secondaryText = gestureButton.slideActions.up.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Down,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.pressActions.down.actionTextCompose
+                                secondaryText = gestureButton.slideActions.down.actionTextCompose
                             )
                         }
 
                         MySection(
                             modifier = Modifier.padding(top = SectionPadding),
-                            title = stringResource(id = R.string.long_press_action)
+                            title = stringResource(id = R.string.long_slide_action)
                         ) {
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Center,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longPressActions.center.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.center.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Up,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longPressActions.up.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.up.actionTextCompose
                             )
                             MyGestureSettings(
                                 onClick = { /*TODO*/ },
                                 gestureButton = gestureButton,
                                 direction = TriggerDirection.Down,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longPressActions.down.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.down.actionTextCompose
                             )
                         }
 

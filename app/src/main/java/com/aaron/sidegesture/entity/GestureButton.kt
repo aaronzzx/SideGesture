@@ -24,12 +24,12 @@ data class GestureButton(
     val end: Float = 0.1f,
     val width: Int = ConvertUtils.dp2px(16f),
     val angle: GestureAngle = GestureAngle(),
-    val pressActions: GestureActions = GestureActions(),
-    val longPressActions: GestureActions = GestureActions(),
-    val pressTriggerDistance: Int = ConvertUtils.dp2px(30f),
-    val longPressTriggerDistance: Int = ConvertUtils.dp2px(100f),
-    val longPressTriggerImmediately: Boolean = true,
-    val longPressTriggerDelayMs: Long = 100L,
+    val slideActions: GestureActions = GestureActions(),
+    val longSlideActions: GestureActions = GestureActions(),
+    val slideTriggerDistance: Int = ConvertUtils.dp2px(30f),
+    val longSlideTriggerDistance: Int = ConvertUtils.dp2px(100f),
+    val longSlideTriggerImmediately: Boolean = true,
+    val longSlideTriggerDelayMs: Long = 100L,
     val vibrations: Vibrations = Vibrations(),
     val color: Int = 0
 ) : Comparable<GestureButton> {
@@ -46,11 +46,11 @@ data class GestureButton(
                 position = LEFT,
                 start = 0.0f,
                 end = 1.0f,
-                pressActions = GestureActions(
+                slideActions = GestureActions(
                     up = Actions.single(GlobalActions.LOCK_SCREEN),
                     center = Actions.single(GlobalActions.BACK)
                 ),
-                longPressActions = GestureActions(
+                longSlideActions = GestureActions(
                     up = Actions.multiple(
                         GlobalActions.WECHAT_SCAN,
                         GlobalActions.WECHAT_PAY,
@@ -66,11 +66,11 @@ data class GestureButton(
                 position = RIGHT,
                 start = 0.0f,
                 end = 1.0f,
-                pressActions = GestureActions(
+                slideActions = GestureActions(
                     up = Actions.single(GlobalActions.LOCK_SCREEN),
                     center = Actions.single(GlobalActions.BACK)
                 ),
-                longPressActions = GestureActions(
+                longSlideActions = GestureActions(
                     up = Actions.multiple(
                         GlobalActions.WECHAT_SCAN,
                         GlobalActions.WECHAT_PAY,

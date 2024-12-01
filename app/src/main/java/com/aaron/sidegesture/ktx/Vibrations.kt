@@ -13,14 +13,14 @@ import com.aaron.sidegesture.utils.VibrateUtils
 
 @RequiresPermission(VIBRATE)
 fun Vibrations.tryVibrateForPress() {
-    if (pressEnabled) {
+    if (slideEnabled) {
         VibrateUtils.vibrate(App.getContext(), this)
     }
 }
 
 @RequiresPermission(VIBRATE)
 fun Vibrations.tryVibrateForLongPress() {
-    if (longPressEnabled) {
+    if (longSlideEnabled) {
         VibrateUtils.vibrate(App.getContext(), this)
     }
 }

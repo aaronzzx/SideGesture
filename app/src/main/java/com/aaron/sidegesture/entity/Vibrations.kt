@@ -11,8 +11,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class Vibrations(
-    val pressEnabled: Boolean = true,
-    val longPressEnabled: Boolean = true,
+    val slideEnabled: Boolean = true,
+    val longSlideEnabled: Boolean = true,
     val actionPanelEnabled: Boolean = true,
     // 识别到手势立即振动
     val vibrateImmediately: Boolean = true,

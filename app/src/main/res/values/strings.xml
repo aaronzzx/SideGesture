@@ -32,7 +32,7 @@
     <string name="quick_settings">快捷面板</string>
     <string name="lock_screen">锁屏界面</string>
     <string name="launcher">系统桌面</string>
-    <string name="press_action">短距离滑动</string>
+    <string name="slide_action">短距离滑动</string>
     <string name="gesture_angles">手势角度</string>
     <string name="gesture_angles_hint">调整不同方向的触发角度</string>
     <string name="trigger_distance">触发距离</string>
@@ -42,10 +42,10 @@
     <string name="slider_long">长</string>
     <string name="slider_low">低</string>
     <string name="slider_high">高</string>
-    <string name="long_press_action">长距离滑动</string>
-    <string name="long_press_trigger_immediately">立即触发</string>
-    <string name="long_press_trigger_immediately_hint">识别到手势立即触发</string>
-    <string name="long_press_trigger_delay_ms">长距离滑动触发延迟</string>
+    <string name="long_slide_action">长距离滑动</string>
+    <string name="long_slide_trigger_immediately">立即触发</string>
+    <string name="long_slide_trigger_immediately_hint">识别到手势立即触发</string>
+    <string name="long_slide_trigger_delay_ms">长距离滑动触发延迟</string>
     <string name="vibration">振动</string>
     <string name="vibrate_immediately">立即振动</string>
     <string name="vibrate_immediately_hint">识别到手势立即振动，而不是等到抬手</string>

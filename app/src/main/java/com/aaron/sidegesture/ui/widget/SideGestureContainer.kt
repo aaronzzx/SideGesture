@@ -177,9 +177,9 @@ class SideGestureState(
     var finger = Offset.Unspecified
         private set
 
-    private var longPressFirstTriggerMs = 0L
-    private var longPressTriggerFlags = false
-    private var pressTriggerFlags = false
+    private var longSlideFirstTriggerMs = 0L
+    private var longSlideTriggerFlags = false
+    private var slideTriggerFlags = false
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
@@ -207,8 +207,8 @@ class SideGestureState(
         // 没触发方向，这一轮不再识别手势
         val direction = calcDirection(button) ?: return null
         if (direction != triggerDirection) {
-            pressTriggerFlags = false
-            longPressTriggerFlags = false
+            slideTriggerFlags = false
+            longSlideTriggerFlags = false
         }
         triggerDirection = direction
         coroutineScope.launch {
@@ -217,32 +217,32 @@ class SideGestureState(
         }
 
         if (canDistanceTrigger(button, false)) {
-            if (button.vibrations.vibrateImmediately && !pressTriggerFlags) {
-                pressTriggerFlags = true
+            if (button.vibrations.vibrateImmediately && !slideTriggerFlags) {
+                slideTriggerFlags = true
                 button.vibrations.tryVibrateForPress()
             }
         } else {
-            pressTriggerFlags = false
+            slideTriggerFlags = false
         }
 
         if (canDistanceTrigger(button, true)) {
-            val longPressDelayMs = button.longPressTriggerDelayMs
+            val longPressDelayMs = button.longSlideTriggerDelayMs
             val timeMs = SystemClock.uptimeMillis()
-            if (longPressFirstTriggerMs == 0L) {
-                longPressFirstTriggerMs = timeMs
-            } else if (timeMs - longPressFirstTriggerMs >= longPressDelayMs) {
-                if (button.vibrations.vibrateImmediately && !longPressTriggerFlags) {
-                    longPressTriggerFlags = true
+            if (longSlideFirstTriggerMs == 0L) {
+                longSlideFirstTriggerMs = timeMs
+            } else if (timeMs - longSlideFirstTriggerMs >= longPressDelayMs) {
+                if (button.vibrations.vibrateImmediately && !longSlideTriggerFlags) {
+                    longSlideTriggerFlags = true
                     button.vibrations.tryVibrateForLongPress()
                 }
-                if (button.longPressTriggerImmediately) {
+                if (button.longSlideTriggerImmediately) {
                     // 要触发ActionPanel，longPressTriggerImmediately必须为true
-                    return button.longPressActions.actionsBy(triggerDirection)
+                    return button.longSlideActions.actionsBy(triggerDirection)
                 }
             }
         } else {
-            longPressTriggerFlags = false
-            longPressFirstTriggerMs = 0L
+            longSlideTriggerFlags = false
+            longSlideFirstTriggerMs = 0L
         }
 
         return Actions.NONE
@@ -250,23 +250,23 @@ class SideGestureState(
 
     fun onDragEnd(): String {
         val button = checkNotNull(button)
-        val longPressDelayMs = button.longPressTriggerDelayMs
+        val longPressDelayMs = button.longSlideTriggerDelayMs
         val triggerDirection = triggerDirection
         var returnAction = GlobalActions.NONE
-        if (!button.longPressTriggerImmediately &&
+        if (!button.longSlideTriggerImmediately &&
             canDistanceTrigger(button, true) &&
-            SystemClock.uptimeMillis() - longPressFirstTriggerMs >= longPressDelayMs
+            SystemClock.uptimeMillis() - longSlideFirstTriggerMs >= longPressDelayMs
         ) {
             if (!button.vibrations.vibrateImmediately) {
                 button.vibrations.tryVibrateForLongPress()
             }
-            val actions = button.longPressActions.actionsBy(triggerDirection)
+            val actions = button.longSlideActions.actionsBy(triggerDirection)
             returnAction = actions.value
         } else if (canDistanceTrigger(button, false)) {
             if (!button.vibrations.vibrateImmediately) {
                 button.vibrations.tryVibrateForPress()
             }
-            val actions = button.pressActions.actionsBy(triggerDirection)
+            val actions = button.slideActions.actionsBy(triggerDirection)
             returnAction = actions.value
         }
         reset()
@@ -289,9 +289,9 @@ class SideGestureState(
         isCanceled = false
         origin = Offset.Unspecified
         finger = Offset.Unspecified
-        longPressFirstTriggerMs = 0L
-        longPressTriggerFlags = false
-        pressTriggerFlags = false
+        longSlideFirstTriggerMs = 0L
+        longSlideTriggerFlags = false
+        slideTriggerFlags = false
         coroutineScope.launch {
             val fingerXAnim = fingerXAnim
             val fingerYAnim = fingerYAnim
@@ -306,8 +306,8 @@ class SideGestureState(
      * 手指划过的距离是否足够触发动作，上和下的动作需要按斜线距离计算
      */
     private fun canDistanceTrigger(button: GestureButton, isLongPress: Boolean): Boolean {
-        val pressAction = button.pressActions
-        val longPressAction = button.longPressActions
+        val slideAction = button.slideActions
+        val longSlideAction = button.longSlideActions
         val originX = origin.x
         val originY = origin.y
         val fingerX = finger.x
@@ -316,27 +316,27 @@ class SideGestureState(
         if (triggerDirection == Center) {
             val distance = abs(fingerX - originX)
             if (isLongPress) {
-                return distance >= button.longPressTriggerDistance &&
-                        longPressAction.center.isNotEmpty()
+                return distance >= button.longSlideTriggerDistance &&
+                        longSlideAction.center.isNotEmpty()
             }
-            return distance >= button.pressTriggerDistance &&
-                    pressAction.center.isNotEmpty()
+            return distance >= button.slideTriggerDistance &&
+                    slideAction.center.isNotEmpty()
         } else if (triggerDirection == Up || triggerDirection == Down) {
             val edge1 = abs(fingerX - originX)
             val edge2 = abs(fingerY - originY)
             val edge3 = hypot(edge1, edge2)
             if (isLongPress) {
-                val canTrigger = edge3 >= button.longPressTriggerDistance
+                val canTrigger = edge3 >= button.longSlideTriggerDistance
                 if (triggerDirection == Up) {
-                    return canTrigger && longPressAction.up.isNotEmpty()
+                    return canTrigger && longSlideAction.up.isNotEmpty()
                 }
-                return canTrigger && longPressAction.down.isNotEmpty()
+                return canTrigger && longSlideAction.down.isNotEmpty()
             }
-            val canTrigger = edge3 >= button.pressTriggerDistance
+            val canTrigger = edge3 >= button.slideTriggerDistance
             if (triggerDirection == Up) {
-                return canTrigger && pressAction.up.isNotEmpty()
+                return canTrigger && slideAction.up.isNotEmpty()
             }
-            return canTrigger && pressAction.down.isNotEmpty()
+            return canTrigger && slideAction.down.isNotEmpty()
         }
         return false
     }

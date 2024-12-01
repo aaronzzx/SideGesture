@@ -28,10 +28,10 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             launch {
                 DataStoreHolder.gestureSettings.updateData {
                     GestureSettings(
-                        pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
-                        longPressTriggerImmediately = uiState.longPressTriggerImmediately,
-                        longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
-                        longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
+                        slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                        longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
+                        longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
+                        longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
                         isCustomVibration = uiState.isCustomVibration,
                         vibrations = uiState.vibrations
                     )
@@ -42,10 +42,10 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, button ->
                             val newButton = button.copy(
-                                pressTriggerDistance = uiState.pressTriggerDistance.toInt(),
-                                longPressTriggerImmediately = uiState.longPressTriggerImmediately,
-                                longPressTriggerDistance = uiState.longPressTriggerDistance.toInt(),
-                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
+                                slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                                longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
+                                longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
+                                longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
                                 vibrations = uiState.vibrations
                             )
                             set(index, newButton)
@@ -77,25 +77,25 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun onPressTriggerDistanceChange(value: Float) {
         updateUiState {
-            it.copy(pressTriggerDistance = value)
+            it.copy(slideTriggerDistance = value)
         }
     }
 
     fun onLongPressTriggerDistanceChange(value: Float) {
         updateUiState {
-            it.copy(longPressTriggerDistance = value)
+            it.copy(longSlideTriggerDistance = value)
         }
     }
 
     fun onLongPressTriggerDelayMsChange(value: Float) {
         updateUiState {
-            it.copy(longPressTriggerDelayMs = value.toLong())
+            it.copy(longSlideTriggerDelayMs = value.toLong())
         }
     }
 
     fun onLongPressTriggerImmediatelyChange(value: Boolean) {
         updateUiState {
-            it.copy(longPressTriggerImmediately = value)
+            it.copy(longSlideTriggerImmediately = value)
         }
         saveSettings()
     }
@@ -120,10 +120,10 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder.gestureSettings.data.collectLatest { item ->
                 updateUiState {
                     it.copy(
-                        pressTriggerDistance = item.pressTriggerDistance.toFloat(),
-                        longPressTriggerImmediately = item.longPressTriggerImmediately,
-                        longPressTriggerDistance = item.longPressTriggerDistance.toFloat(),
-                        longPressTriggerDelayMs = item.longPressTriggerDelayMs,
+                        slideTriggerDistance = item.slideTriggerDistance.toFloat(),
+                        longSlideTriggerImmediately = item.longSlideTriggerImmediately,
+                        longSlideTriggerDistance = item.longSlideTriggerDistance.toFloat(),
+                        longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
                         isCustomVibration = item.isCustomVibration,
                         vibrations = item.vibrations
                     )
@@ -133,10 +133,10 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     data class UiState(
-        val pressTriggerDistance: Float = 0f,
-        val longPressTriggerImmediately: Boolean = true,
-        val longPressTriggerDistance: Float = 0f,
-        val longPressTriggerDelayMs: Long = 0L,
+        val slideTriggerDistance: Float = 0f,
+        val longSlideTriggerImmediately: Boolean = true,
+        val longSlideTriggerDistance: Float = 0f,
+        val longSlideTriggerDelayMs: Long = 0L,
         val isCustomVibration: Boolean = false,
         val vibrations: Vibrations = Vibrations(),
         val showPredefinedVibrationDropdown: Boolean = false
