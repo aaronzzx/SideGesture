@@ -16,12 +16,8 @@ data class AdvancedSettings(
     val animationStyles: AnimationStyles = AnimationStyles(),
     val actionPanelStyles: ActionPanelStyles = ActionPanelStyles(),
     val fitSoftKeyboard: Boolean = true,
-    val hideGestureButtons: List<Int> = emptyList()
-) {
-    companion object {
-        const val HIDE_SCREEN_LANDSCAPE = 1
-        const val HIDE_QUICK_SETTINGS = 2
-        const val HIDE_SCREEN_LOCK = 3
-        const val HIDE_HOME_SCREEN = 4
-    }
-}
+    val hideLandscape: Boolean = false,
+    val hideQuickPanel: Boolean = false,
+    val hideScreenLock: Boolean = false,
+    val hideHomeScreen: Boolean = false
+)

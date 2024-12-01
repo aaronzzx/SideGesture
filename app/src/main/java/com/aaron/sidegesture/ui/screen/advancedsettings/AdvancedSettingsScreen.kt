@@ -2,7 +2,6 @@ package com.aaron.sidegesture.ui.screen.advancedsettings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,28 +45,28 @@ fun AdvancedSettingsScreen(
                         secondaryText = stringResource(id = R.string.exclude_app_hint)
                     )
                 }
+//                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+//                    MyTextSwitch(
+//                        onTextClick = { /*TODO*/ },
+//                        onCheckedChange = { /*TODO*/ },
+//                        checked = false,
+//                        text = stringResource(id = R.string.animation_style),
+//                        secondaryText = "TODO",
+//                        secondaryTextColor = MaterialTheme.colorScheme.primary
+//                    )
+//                    MyTextSwitch(
+//                        onTextClick = { /*TODO*/ },
+//                        onCheckedChange = { /*TODO*/ },
+//                        checked = false,
+//                        text = stringResource(id = R.string.action_panel_style),
+//                        secondaryText = "TODO",
+//                        secondaryTextColor = MaterialTheme.colorScheme.primary
+//                    )
+//                }
                 MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
                     MyTextSwitch(
-                        onTextClick = { /*TODO*/ },
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
-                        text = stringResource(id = R.string.animation_style),
-                        secondaryText = "TODO",
-                        secondaryTextColor = MaterialTheme.colorScheme.primary
-                    )
-                    MyTextSwitch(
-                        onTextClick = { /*TODO*/ },
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
-                        text = stringResource(id = R.string.action_panel_style),
-                        secondaryText = "TODO",
-                        secondaryTextColor = MaterialTheme.colorScheme.primary
-                    )
-                }
-                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
-                    MyTextSwitch(
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
+                        onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
+                        checked = uiState.fitSoftKeyboard,
                         text = stringResource(id = R.string.fit_soft_keyboard),
                         secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
                     )
@@ -77,23 +76,23 @@ fun AdvancedSettingsScreen(
                     title = stringResource(id = R.string.hide_gesture_button)
                 ) {
                     MyTextSwitch(
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
+                        onCheckedChange = { vm.onHideLandscapeChange(it) },
+                        checked = uiState.hideLandscape,
                         text = stringResource(id = R.string.landscape)
                     )
                     MyTextSwitch(
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
+                        onCheckedChange = { vm.onHideQuickPanelChange(it) },
+                        checked = uiState.hideQuickPanel,
                         text = stringResource(id = R.string.quick_settings)
                     )
                     MyTextSwitch(
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
+                        onCheckedChange = { vm.onHideScreenLockChange(it) },
+                        checked = uiState.hideScreenLock,
                         text = stringResource(id = R.string.lock_screen)
                     )
                     MyTextSwitch(
-                        onCheckedChange = { /*TODO*/ },
-                        checked = false,
+                        onCheckedChange = { vm.onHideHomeScreenChange(it) },
+                        checked = uiState.hideHomeScreen,
                         text = stringResource(id = R.string.launcher)
                     )
                 }

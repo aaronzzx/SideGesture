@@ -2,7 +2,6 @@ package com.aaron.sidegesture.ui.screen.advancedsettings
 
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
-import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -21,18 +20,78 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         loadData()
     }
 
+    fun onFitSoftKeyboardChange(value: Boolean) {
+        updateUiState {
+            it.copy(fitSoftKeyboard = value)
+        }
+        saveSettings()
+    }
+
+    fun onHideLandscapeChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideLandscape = value)
+        }
+        saveSettings()
+    }
+
+    fun onHideQuickPanelChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideQuickPanel = value)
+        }
+        saveSettings()
+    }
+
+    fun onHideScreenLockChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideScreenLock = value)
+        }
+        saveSettings()
+    }
+
+    fun onHideHomeScreenChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideHomeScreen = value)
+        }
+        saveSettings()
+    }
+
+    private fun saveSettings() {
+        viewModelScope.launch {
+            DataStoreHolder.advancedSettings.updateData {
+                val uiState = uiState
+                it.copy(
+                    fitSoftKeyboard = uiState.fitSoftKeyboard,
+                    hideLandscape = uiState.hideLandscape,
+                    hideQuickPanel = uiState.hideQuickPanel,
+                    hideScreenLock = uiState.hideScreenLock,
+                    hideHomeScreen = uiState.hideHomeScreen
+                )
+            }
+        }
+    }
+
     private fun loadData() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.data.collectLatest { item ->
                 updateUiState {
-                    it.copy(advancedSettings = item)
+                    it.copy(
+                        fitSoftKeyboard = item.fitSoftKeyboard,
+                        hideLandscape = item.hideLandscape,
+                        hideQuickPanel = item.hideQuickPanel,
+                        hideScreenLock = item.hideScreenLock,
+                        hideHomeScreen = item.hideHomeScreen
+                    )
                 }
             }
         }
     }
 
     data class UiState(
-        val advancedSettings: AdvancedSettings = AdvancedSettings()
+        val fitSoftKeyboard: Boolean = true,
+        val hideLandscape: Boolean = false,
+        val hideQuickPanel: Boolean = false,
+        val hideScreenLock: Boolean = false,
+        val hideHomeScreen: Boolean = false
     )
 
     sealed interface UiEvent
