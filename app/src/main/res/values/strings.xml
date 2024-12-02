@@ -106,7 +106,7 @@
     <string name="action_volume_up">音量增加键</string>
     <string name="action_volume_down">音量减小键</string>
     <string name="action_mute">静音开关</string>
-    <string name="action_play_pause_song">播放/暂停歌曲</string>
+    <string name="action_play_pause_song">播放/暂停歌曲(12.0+)</string>
     <string name="action_last_song">上一首</string>
     <string name="action_next_song">下一首</string>
     <string name="action_previous_app">上一个应用程序</string>
@@ -117,11 +117,11 @@
     <string name="action_lock_screen">锁屏(9.0+)</string>
     <string name="action_kill_app">关闭应用程序</string>
     <string name="action_flashlight">手电筒</string>
-    <string name="action_split_screen">应用分屏</string>
+    <string name="action_split_screen">应用分屏(7.0+)</string>
     <string name="action_popup_screen">应用小窗</string>
     <string name="action_assist_app">辅助应用程序</string>
     <string name="action_search">搜索查找</string>
-    <string name="action_screenshot">截屏</string>
+    <string name="action_screenshot">截屏(9.0+)</string>
     <string name="action_record_screen">录屏</string>
     <string name="action_show_hide_nav_bar">显示/隐藏导航条</string>
     <string name="action_pull_screen_down">下拉屏幕</string>

@@ -3,7 +3,14 @@ package com.aaron.sidegesture
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_KEYCODE_HEADSETHOOK
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_POWER_DIALOG
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
 import android.content.Intent
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
@@ -60,13 +67,68 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
             GlobalActions.HOME -> {
                 performGlobalAction(GLOBAL_ACTION_HOME)
             }
+            GlobalActions.RECENT -> {
+                performGlobalAction(GLOBAL_ACTION_RECENTS)
+            }
+            GlobalActions.VOLUME_UP -> {
+            }
+            GlobalActions.VOLUME_DOWN -> {
+            }
+            GlobalActions.MUTE -> {
+            }
+            GlobalActions.PLAY_PAUSE_SONG -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    performGlobalAction(GLOBAL_ACTION_KEYCODE_HEADSETHOOK)
+                }
+            }
+            GlobalActions.LAST_SONG -> {
+            }
+            GlobalActions.NEXT_SONG -> {
+            }
+            GlobalActions.PREVIOUS_APP -> {
+                previousApp()
+            }
+            GlobalActions.OPEN_NOTIFICATION_PANEL -> {
+                performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+            }
+            GlobalActions.OPEN_QUICK_PANEL -> {
+                performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+            }
             GlobalActions.LOCK_SCREEN -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
                 }
             }
-            GlobalActions.PREVIOUS_APP -> {
-                previousApp()
+            GlobalActions.KILL_APP -> {
+            }
+            GlobalActions.FLASHLIGHT -> {
+            }
+            GlobalActions.SPLIT_SCREEN -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    performGlobalAction(GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN)
+                }
+            }
+            GlobalActions.POPUP_SCREEN -> {
+            }
+            GlobalActions.ASSIST_APP -> {
+            }
+            GlobalActions.SCREENSHOT -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT)
+                }
+            }
+            GlobalActions.POWER_BUTTON -> {
+                performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)
+            }
+            GlobalActions.AUTO_ROTATE -> {
+            }
+            GlobalActions.INVERSE_COLOR -> {
+            }
+            GlobalActions.QUICK_APP_PANEL -> {
+            }
+            GlobalActions.QUICK_TOOLS -> {
+            }
+            GlobalActions.HIDE_GESTURE_BUTTON -> {
             }
             GlobalActions.WECHAT_SCAN -> {
                 gotoWechatScan()

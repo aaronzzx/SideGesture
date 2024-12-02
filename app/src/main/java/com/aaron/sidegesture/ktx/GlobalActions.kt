@@ -6,13 +6,13 @@ import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assistant
+import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.InvertColors
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.ScreenLockPortrait
@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Screenshot
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Splitscreen
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material.icons.filled.VolumeOff
@@ -40,7 +41,7 @@ fun Context.actionText(action: String, emptyIfNone: Boolean = true): String = wh
     GlobalActions.BACK -> getString(R.string.action_back)
     GlobalActions.HOME -> getString(R.string.action_home)
     GlobalActions.RECENT -> getString(R.string.action_recent)
-    GlobalActions.MENU -> getString(R.string.action_menu)
+//    GlobalActions.MENU -> getString(R.string.action_menu)
 //    GlobalActions.SEARCH_IN_APP -> getString(R.string.action_search_in_app)
     GlobalActions.VOLUME_UP -> getString(R.string.action_volume_up)
     GlobalActions.VOLUME_DOWN -> getString(R.string.action_volume_down)
@@ -56,8 +57,8 @@ fun Context.actionText(action: String, emptyIfNone: Boolean = true): String = wh
     GlobalActions.LOCK_SCREEN -> getString(R.string.action_lock_screen)
     GlobalActions.KILL_APP -> getString(R.string.action_kill_app)
     GlobalActions.FLASHLIGHT -> getString(R.string.action_flashlight)
-//    GlobalActions.SPLIT_SCREEN -> getString(R.string.action_split_screen)
-//    GlobalActions.POPUP_SCREEN -> getString(R.string.action_popup_screen)
+    GlobalActions.SPLIT_SCREEN -> getString(R.string.action_split_screen)
+    GlobalActions.POPUP_SCREEN -> getString(R.string.action_popup_screen)
     GlobalActions.ASSIST_APP -> getString(R.string.action_assist_app)
 //    GlobalActions.SEARCH -> getString(R.string.action_search)
     GlobalActions.SCREENSHOT -> getString(R.string.action_screenshot)
@@ -89,7 +90,7 @@ fun actionText(action: String, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.BACK -> stringResource(R.string.action_back)
     GlobalActions.HOME -> stringResource(R.string.action_home)
     GlobalActions.RECENT -> stringResource(R.string.action_recent)
-    GlobalActions.MENU -> stringResource(R.string.action_menu)
+//    GlobalActions.MENU -> stringResource(R.string.action_menu)
 //    GlobalActions.SEARCH_IN_APP -> stringResource(R.string.action_search_in_app)
     GlobalActions.VOLUME_UP -> stringResource(R.string.action_volume_up)
     GlobalActions.VOLUME_DOWN -> stringResource(R.string.action_volume_down)
@@ -105,8 +106,8 @@ fun actionText(action: String, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.LOCK_SCREEN -> stringResource(R.string.action_lock_screen)
     GlobalActions.KILL_APP -> stringResource(R.string.action_kill_app)
     GlobalActions.FLASHLIGHT -> stringResource(R.string.action_flashlight)
-//    GlobalActions.SPLIT_SCREEN -> stringResource(R.string.action_split_screen)
-//    GlobalActions.POPUP_SCREEN -> stringResource(R.string.action_popup_screen)
+    GlobalActions.SPLIT_SCREEN -> stringResource(R.string.action_split_screen)
+    GlobalActions.POPUP_SCREEN -> stringResource(R.string.action_popup_screen)
     GlobalActions.ASSIST_APP -> stringResource(R.string.action_assist_app)
 //    GlobalActions.SEARCH -> stringResource(R.string.action_search)
     GlobalActions.SCREENSHOT -> stringResource(R.string.action_screenshot)
@@ -138,7 +139,7 @@ fun actionIcon(action: String): Any? = when (action) {
     GlobalActions.BACK -> Icons.Default.ArrowBack
     GlobalActions.HOME -> Icons.Default.Home
     GlobalActions.RECENT -> Icons.Default.ViewCarousel
-    GlobalActions.MENU -> Icons.Default.Menu
+//    GlobalActions.MENU -> Icons.Default.Menu
 //    GlobalActions.SEARCH_IN_APP -> Icons.Default.Search
     GlobalActions.VOLUME_UP -> Icons.Default.VolumeUp
     GlobalActions.VOLUME_DOWN -> Icons.Default.VolumeDown
@@ -153,8 +154,8 @@ fun actionIcon(action: String): Any? = when (action) {
     GlobalActions.LOCK_SCREEN -> Icons.Default.ScreenLockPortrait
     GlobalActions.KILL_APP -> Icons.Default.Close
     GlobalActions.FLASHLIGHT -> Icons.Default.FlashlightOn
-//    GlobalActions.SPLIT_SCREEN -> Icons.Default.Splitscreen
-//    GlobalActions.POPUP_SCREEN -> Icons.Default.Window
+    GlobalActions.SPLIT_SCREEN -> Icons.Default.Splitscreen
+    GlobalActions.POPUP_SCREEN -> Icons.Default.BrandingWatermark
     GlobalActions.ASSIST_APP -> Icons.Default.Assistant
 //    GlobalActions.SEARCH -> Icons.Default.Search
     GlobalActions.SCREENSHOT -> Icons.Default.Screenshot
