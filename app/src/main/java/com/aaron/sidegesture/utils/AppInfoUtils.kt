@@ -24,7 +24,7 @@ object AppInfoUtils {
             val activityInfo = resolveInfo.activityInfo
             val packageName = activityInfo?.packageName
             if (packageName.isNullOrEmpty()) continue
-            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
+            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.MATCH_ALL)
             val item = AppInfo(
                 packageName = packageName,
                 label = activityInfo.loadLabel(packageManager).toString(),
