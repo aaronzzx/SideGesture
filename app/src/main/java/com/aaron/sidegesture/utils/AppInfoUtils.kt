@@ -1,7 +1,9 @@
 package com.aaron.sidegesture.utils
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import com.aaron.sidegesture.entity.AppInfo
 
 /**
@@ -13,17 +15,21 @@ object AppInfoUtils {
     fun getInstalledPackages(context: Context): List<AppInfo> {
         val list = mutableListOf<AppInfo>()
         val packageManager = context.packageManager
-        val apps = packageManager.getInstalledPackages(0)
-        for (info in apps) {
-            val pkgName = info.applicationInfo?.packageName ?: ""
-            if (packageManager.getLaunchIntentForPackage(pkgName) == null) {
-                continue
-            }
+        val intent = Intent().apply {
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val activities = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+        for (resolveInfo in activities) {
+            val activityInfo = resolveInfo.activityInfo
+            val packageName = activityInfo?.packageName
+            if (packageName.isNullOrEmpty()) continue
+            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
             val item = AppInfo(
-                packageName = pkgName,
-                label = info.applicationInfo?.loadLabel(packageManager)?.toString() ?: "",
-                icon = info.applicationInfo?.loadIcon(packageManager),
-                isUserApp = info.applicationInfo?.flags?.let {
+                packageName = packageName,
+                label = activityInfo.loadLabel(packageManager).toString(),
+                icon = activityInfo.loadIcon(packageManager),
+                isUserApp = packageInfo.applicationInfo?.flags?.let {
                     (it and ApplicationInfo.FLAG_SYSTEM) == 0
                 } ?: true
             )
