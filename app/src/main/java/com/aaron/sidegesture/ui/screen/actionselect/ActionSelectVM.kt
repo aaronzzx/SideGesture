@@ -159,11 +159,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             TriggerDirection.Down -> gestureActions.down
                         }
                         updateUiState {
-                            val sortedActions = when (it.selectSingle) {
+                            val selectedActions = when (it.selectSingle) {
                                 true -> actions.values.take(1)
                                 else -> actions.values
                             }
-                            val newSelectedItem = it.selectedItem.copy(actions = sortedActions)
+                            val newSelectedItem = it.selectedItem.copy(actions = selectedActions)
                             it.copy(selectedItem = newSelectedItem)
                         }
                         assembleData()
@@ -219,7 +219,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     }
                     val newActions = when (uiState.selectSingle) {
                         true -> Actions.create(selectedActions.lastOrNull() ?: GlobalActions.NONE)
-                        else -> Actions.create(*selectedActions.sorted().toTypedArray())
+                        else -> Actions.create(*selectedActions.toTypedArray())
                     }
                     val newGestureActions = when (actionSelect.direction) {
                         TriggerDirection.Center -> gestureActions.copy(center = newActions)
