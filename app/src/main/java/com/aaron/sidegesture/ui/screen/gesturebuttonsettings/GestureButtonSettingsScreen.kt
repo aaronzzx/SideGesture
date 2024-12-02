@@ -216,7 +216,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Center,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.slideActions.center.actionTextCompose
+                                secondaryText = gestureButton.slideActions.center.actionTextCompose()
                             )
                             MyGestureSettings(
                                 onClick = {
@@ -225,7 +225,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Up,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.slideActions.up.actionTextCompose
+                                secondaryText = gestureButton.slideActions.up.actionTextCompose()
                             )
                             MyGestureSettings(
                                 onClick = {
@@ -234,7 +234,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Down,
                                 isLongSlide = false,
-                                secondaryText = gestureButton.slideActions.down.actionTextCompose
+                                secondaryText = gestureButton.slideActions.down.actionTextCompose()
                             )
                         }
 
@@ -249,7 +249,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Center,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longSlideActions.center.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.center.actionTextCompose()
                             )
                             MyGestureSettings(
                                 onClick = {
@@ -258,7 +258,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Up,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longSlideActions.up.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.up.actionTextCompose()
                             )
                             MyGestureSettings(
                                 onClick = {
@@ -267,7 +267,7 @@ fun GestureButtonSettingsScreen(
                                 gestureButton = gestureButton,
                                 direction = Down,
                                 isLongSlide = true,
-                                secondaryText = gestureButton.longSlideActions.down.actionTextCompose
+                                secondaryText = gestureButton.longSlideActions.down.actionTextCompose()
                             )
                         }
 

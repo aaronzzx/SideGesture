@@ -6,7 +6,7 @@ package com.aaron.sidegesture.constant
  */
 object GlobalActions {
 
-    const val NONE = "0"
+    const val NONE = ""
     const val BACK = "1"
     const val HOME = "2"
     const val RECENT = "3"

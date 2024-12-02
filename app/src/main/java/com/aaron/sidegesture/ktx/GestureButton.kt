@@ -15,7 +15,8 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
  * @since 2024/11/18
  */
 
-val GestureButton.buttonTextCompose: String @Composable get() {
+@Composable
+fun GestureButton.buttonTextCompose(): String {
     if (position == LEFT) {
         return stringResource(id = R.string.left_gesture_button)
     } else if (position == RIGHT) {
@@ -24,28 +25,20 @@ val GestureButton.buttonTextCompose: String @Composable get() {
     return ""
 }
 
-val GestureButton.actionText: String get() {
+@Composable
+fun GestureButton.actionTextCompose(): String {
     var text = ""
-    val slideActionText = slideActions.actionText
+    val slideActionText = slideActions.actionTextCompose()
     if (slideActionText.isNotEmpty()) {
         text += slideActionText
     }
-    val longSlideActionText = longSlideActions.actionText
+    val longSlideActionText = longSlideActions.actionTextCompose()
     if (longSlideActionText.isNotEmpty()) {
-        text += ",$longSlideActionText"
-    }
-    return text
-}
-
-val GestureButton.actionTextCompose: String @Composable get() {
-    var text = ""
-    val slideActionText = slideActions.actionTextCompose
-    if (slideActionText.isNotEmpty()) {
-        text += slideActionText
-    }
-    val longSlideActionText = longSlideActions.actionTextCompose
-    if (longSlideActionText.isNotEmpty()) {
-        text += ",$longSlideActionText"
+        text += if (text.isEmpty()) {
+            longSlideActionText
+        } else {
+            ",$longSlideActionText"
+        }
     }
     return text
 }

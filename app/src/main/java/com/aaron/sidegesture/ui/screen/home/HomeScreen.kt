@@ -251,9 +251,9 @@ fun HomeScreen(
                                     onTextClick = { onNavToGestureButtonSettings(button) },
                                     onCheckedChange = { vm.onGestureButtonEnabledChange(button, it) },
                                     checked = button.enabled,
-                                    text = button.buttonTextCompose,
+                                    text = button.buttonTextCompose(),
                                     secondaryText = run {
-                                        val expected = button.actionTextCompose
+                                        val expected = button.actionTextCompose()
                                         if (expected.isNotEmpty()) {
                                             return@run expected
                                         }

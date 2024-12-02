@@ -13,51 +13,48 @@ import com.aaron.sidegesture.entity.GestureActions
  * @since 2024/11/18
  */
 
-val GestureActions.actionText: String get() {
+@Composable
+fun GestureActions.actionTextCompose(): String {
     var text = ""
-    if (center.actionText.isNotEmpty()) {
-        text += center.actionText
+    val centerText = center.actionTextCompose(true)
+    if (centerText.isNotEmpty()) {
+        text += centerText
     }
-    if (up.actionText.isNotEmpty()) {
-        text += ",${up.actionText}"
-    }
-    if (down.actionText.isNotEmpty()) {
-        text += ",${up.actionText}"
-    }
-    return text
-}
-
-val GestureActions.actionTextCompose: String @Composable get() {
-    var text = ""
-    if (center.actionTextCompose.isNotEmpty()) {
-        text += center.actionTextCompose
-    }
-    if (up.actionTextCompose.isNotEmpty()) {
-        text += ",${up.actionTextCompose}"
-    }
-    if (down.actionTextCompose.isNotEmpty()) {
-        text += ",${up.actionTextCompose}"
-    }
-    return text
-}
-
-val Actions.actionText: String get() {
-    if (values.isEmpty()) {
-        return App.getContext().actionText(value)
-    }
-    return values.joinToString(separator = ",") {
-        App.getContext().actionText(it)
-    }
-}
-
-val Actions.actionTextCompose: String @Composable get() {
-    if (values.isEmpty()) {
-        return actionText(value)
-    }
-    return remember(values) {
-        values.joinToString(separator = ",") {
-            App.getContext().actionText(it)
+    val upText = up.actionTextCompose(true)
+    if (upText.isNotEmpty()) {
+        text += if (text.isEmpty()) {
+            upText
+        } else {
+            ",$upText"
         }
+    }
+    val downText = down.actionTextCompose(true)
+    if (downText.isNotEmpty()) {
+        text += if (text.isEmpty()) {
+            downText
+        } else {
+            ",$downText"
+        }
+    }
+    return text
+}
+
+@Composable
+fun Actions.actionTextCompose(emptyIfNone: Boolean = false): String {
+    if (!isLongActions) {
+        return actionText(value, emptyIfNone)
+    }
+    return remember(values, emptyIfNone) {
+        if (values.isEmpty()) {
+            return@remember App.getContext().actionText(GlobalActions.NONE, emptyIfNone)
+        }
+        values
+            .filter {
+                it.isNotEmpty() && it != GlobalActions.NONE
+            }
+            .joinToString(separator = ",") {
+                App.getContext().actionText(it, emptyIfNone)
+            }
     }
 }
 

@@ -106,7 +106,7 @@
     <string name="action_next_song">下一首</string>
     <string name="action_previous_app">上一个应用程序</string>
     <string name="action_app_screen">应用程序屏幕</string>
-    <string name="action_web_forward">前进（网络浏览器）</string>
+    <string name="action_web_forward">前进(网络浏览器)</string>
     <string name="action_open_notification_panel">打开通知面板</string>
     <string name="action_open_quick_panel">打开快捷面板</string>
     <string name="action_lock_screen">锁屏(9.0+)</string>

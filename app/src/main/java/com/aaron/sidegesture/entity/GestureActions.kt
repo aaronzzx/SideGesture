@@ -42,6 +42,9 @@ data class Actions(private val actionValue: String = GlobalActions.NONE) {
         if (actionValue.contains(",")) {
             return@run actionValue.split(",")
         }
+        if (actionValue.isEmpty()) {
+            return@run emptyList()
+        }
         listOf(actionValue)
     }
 
