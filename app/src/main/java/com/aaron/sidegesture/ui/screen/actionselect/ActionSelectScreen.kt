@@ -303,7 +303,7 @@ private fun ActionItem(
 
         Text(
             modifier = Modifier
-                .padding(start = IconTextPadding, end = ItemPadding)
+                .padding(start = ItemPadding, end = ItemPadding)
                 .weight(1f),
             text = actionText(action = action, emptyIfNone = false),
             maxLines = 1,

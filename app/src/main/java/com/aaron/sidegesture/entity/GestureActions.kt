@@ -25,12 +25,12 @@ data class Actions(private val actionValue: String = GlobalActions.NONE) {
     companion object {
         val NONE = Actions()
 
-        fun single(action: String): Actions {
-            return Actions(action)
-        }
-
-        fun multiple(vararg actions: String): Actions {
-            return Actions(actions.joinToString(","))
+        fun create(vararg action: String): Actions {
+            if (action.size > 1) {
+                return Actions(action.joinToString(","))
+            }
+            val act = action.firstOrNull() ?: GlobalActions.NONE
+            return Actions(act)
         }
     }
 
@@ -42,7 +42,7 @@ data class Actions(private val actionValue: String = GlobalActions.NONE) {
         if (actionValue.contains(",")) {
             return@run actionValue.split(",")
         }
-        if (actionValue.isEmpty()) {
+        if (actionValue.isEmpty() || actionValue == GlobalActions.NONE) {
             return@run emptyList()
         }
         listOf(actionValue)

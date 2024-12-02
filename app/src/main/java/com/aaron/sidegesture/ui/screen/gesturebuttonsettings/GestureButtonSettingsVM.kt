@@ -63,9 +63,9 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         if (index == -1) return
         viewModelScope.launch {
             val newActions = when (actionDialogDirection) {
-                Center -> button.slideActions.copy(center = Actions.single(action))
-                Up -> button.slideActions.copy(up = Actions.single(action))
-                Down -> button.slideActions.copy(down = Actions.single(action))
+                Center -> button.slideActions.copy(center = Actions.create(action))
+                Up -> button.slideActions.copy(up = Actions.create(action))
+                Down -> button.slideActions.copy(down = Actions.create(action))
             }
             val newButton = button.copy(slideActions = newActions)
             val newList = uiState.gestureButtons.toMutableList().apply {
@@ -110,9 +110,9 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         viewModelScope.launch {
             val sortedActions = actions.sorted()
             val newActions = when (actionDialogDirection) {
-                Center -> button.longSlideActions.copy(center = Actions.multiple(*sortedActions.toTypedArray()))
-                Up -> button.longSlideActions.copy(up = Actions.multiple(*sortedActions.toTypedArray()))
-                Down -> button.longSlideActions.copy(down = Actions.multiple(*sortedActions.toTypedArray()))
+                Center -> button.longSlideActions.copy(center = Actions.create(*sortedActions.toTypedArray()))
+                Up -> button.longSlideActions.copy(up = Actions.create(*sortedActions.toTypedArray()))
+                Down -> button.longSlideActions.copy(down = Actions.create(*sortedActions.toTypedArray()))
             }
             val newButton = button.copy(longSlideActions = newActions)
             val newList = uiState.gestureButtons.toMutableList().apply {

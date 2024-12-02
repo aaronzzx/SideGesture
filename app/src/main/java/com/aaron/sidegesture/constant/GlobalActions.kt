@@ -7,7 +7,7 @@ package com.aaron.sidegesture.constant
 object GlobalActions {
 
     /** 无 */
-    const val NONE = ""
+    const val NONE = "0"
     /** 返回键 */
     const val BACK = "1"
     /** 主页键 */

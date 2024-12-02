@@ -47,18 +47,18 @@ data class GestureButton(
                 start = 0.0f,
                 end = 1.0f,
                 slideActions = GestureActions(
-                    up = Actions.single(GlobalActions.LOCK_SCREEN),
-                    center = Actions.single(GlobalActions.BACK)
+                    up = Actions.create(GlobalActions.LOCK_SCREEN),
+                    center = Actions.create(GlobalActions.BACK)
                 ),
                 longSlideActions = GestureActions(
-                    up = Actions.multiple(
+                    up = Actions.create(
                         GlobalActions.WECHAT_SCAN,
                         GlobalActions.WECHAT_PAY,
                         GlobalActions.HOME,
                         GlobalActions.ALIPAY_SCAN,
                         GlobalActions.ALIPAY_PAY
                     ),
-                    center = Actions.single(GlobalActions.PREVIOUS_APP)
+                    center = Actions.create(GlobalActions.PREVIOUS_APP)
                 )
             ),
             GestureButton(
@@ -67,18 +67,18 @@ data class GestureButton(
                 start = 0.0f,
                 end = 1.0f,
                 slideActions = GestureActions(
-                    up = Actions.single(GlobalActions.LOCK_SCREEN),
-                    center = Actions.single(GlobalActions.BACK)
+                    up = Actions.create(GlobalActions.LOCK_SCREEN),
+                    center = Actions.create(GlobalActions.BACK)
                 ),
                 longSlideActions = GestureActions(
-                    up = Actions.multiple(
+                    up = Actions.create(
                         GlobalActions.WECHAT_SCAN,
                         GlobalActions.WECHAT_PAY,
                         GlobalActions.HOME,
                         GlobalActions.ALIPAY_SCAN,
                         GlobalActions.ALIPAY_PAY
                     ),
-                    center = Actions.single(GlobalActions.PREVIOUS_APP)
+                    center = Actions.create(GlobalActions.PREVIOUS_APP)
                 )
             )
         )

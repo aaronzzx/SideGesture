@@ -7,5 +7,5 @@ package com.aaron.sidegesture.constant
 
 enum class TriggerDirection {
 
-    Up, Center, Down
+    Center, Up, Down
 }
