@@ -39,10 +39,10 @@ import coil.imageLoader
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
-import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -87,7 +87,11 @@ fun AppBlacklistScreen(
             vm.updateAppInfos()
         }
         LaunchedEffect(permissionState) {
-            permissionState.launchPermissionRequest()
+            if (uiState.needRequestGetAppPermission) {
+                permissionState.launchPermissionRequest()
+            } else {
+                vm.updateAppInfos()
+            }
         }
         val snackbarHostState = remember { SnackbarHostState() }
         Scaffold(
@@ -112,7 +116,7 @@ fun AppBlacklistScreen(
             }
         ) { contentPadding ->
             Box(modifier = Modifier.padding(contentPadding)) {
-                if (permissionState.status.isGranted) {
+                if (!uiState.needRequestGetAppPermission || permissionState.status.isGranted) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = ScrollBottomPadding)
@@ -170,7 +174,7 @@ fun AppBlacklistScreen(
 private fun AppBlacklistItem(
     onSelect: (Boolean) -> Unit,
     selected: Boolean,
-    appInfo: UiState.AppInfo
+    appInfo: AppInfo
 ) {
     Row(
         modifier = Modifier

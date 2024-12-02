@@ -1,14 +1,14 @@
 package com.aaron.sidegesture.ui.screen.appblacklist
 
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
+import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
+import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -64,11 +64,11 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
     fun updateAppInfos() {
         viewModelScope.launch {
             val appInfos = withContext(Dispatchers.IO) {
-                getInstalledPackages(App.getContext())
+                AppInfoUtils.getInstalledPackages(App.getContext())
             }
             updateUiState {
-                val selectedList = mutableListOf<UiState.AppInfo>()
-                val unselectedList = mutableListOf<UiState.AppInfo>()
+                val selectedList = mutableListOf<AppInfo>()
+                val unselectedList = mutableListOf<AppInfo>()
                 appInfos.forEach { info ->
                     if (info.packageName in it.excludeApps) {
                         selectedList.add(info)
@@ -95,37 +95,13 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    private fun getInstalledPackages(context: Context): List<UiState.AppInfo> {
-        val list = mutableListOf<UiState.AppInfo>()
-        val intent = Intent().apply {
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
-        val packageManager = context.packageManager
-        val apps = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        for (info in apps) {
-            val item = UiState.AppInfo(
-                packageName = info.activityInfo?.packageName ?: "",
-                label = info.loadLabel(packageManager).toString(),
-                icon = info.loadIcon(packageManager)
-            )
-            list.add(item)
-        }
-        return list
-    }
-
     data class UiState(
         val selectedAppInfos: List<AppInfo> = emptyList(),
         val unselectedAppInfos: List<AppInfo> = emptyList(),
         val excludeApps: List<String> = emptyList(),
-        val showResetWarningDialog: Boolean = false
-    ) {
-        data class AppInfo(
-            val packageName: String,
-            val label: String,
-            val icon: Any?
-        )
-    }
+        val showResetWarningDialog: Boolean = false,
+        val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    )
 
     sealed interface UiEvent
 }

@@ -43,6 +43,7 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalActions.NONE
+import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
@@ -62,6 +63,7 @@ import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ktx.whenPosition
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelect
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
@@ -93,6 +95,7 @@ data class GestureButtonSettings(
 @Composable
 fun GestureButtonSettingsScreen(
     onBack: () -> Unit,
+    onNavToActionSelect: (ActionSelect) -> Unit,
     vm: GestureButtonSettingsVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
@@ -154,7 +157,7 @@ fun GestureButtonSettingsScreen(
                 onDismissRequest = { vm.hideActionDialog() },
                 onSelected = { vm.onActionSelect(it) },
                 selected = uiState.actionDialog.second,
-                actions = GlobalActions.ALL
+                actions = GlobalActions.all
             )
         }
         if (uiState.longActionDialog.first) {
@@ -163,7 +166,7 @@ fun GestureButtonSettingsScreen(
                 onConfirm = { vm.onLongActionConfirm(it) },
                 onSelected = { vm.onLongActionSelect(it) },
                 selected = uiState.longActionDialog.second,
-                actions = GlobalActions.ALL
+                actions = GlobalActions.all
             )
         }
 
@@ -209,9 +212,19 @@ fun GestureButtonSettingsScreen(
                 if (gestureButton != null) {
                     MyColumn {
                         MySection(title = stringResource(id = R.string.slide_action)) {
+                            val navToActionSelect: (TriggerDirection) -> Unit = {
+                                val actionSelect = ActionSelect(
+                                    gestureButtonId = gestureButton.id,
+                                    position = gestureButton.position,
+                                    direction = it,
+                                    isLongSlide = false
+                                )
+                                onNavToActionSelect(actionSelect)
+                            }
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showActionDialog(Center, gestureButton.slideActions.center)
+//                                    vm.showActionDialog(Center, gestureButton.slideActions.center)
+                                    navToActionSelect(Center)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Center,
@@ -220,7 +233,8 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showActionDialog(Up, gestureButton.slideActions.up)
+//                                    vm.showActionDialog(Up, gestureButton.slideActions.up)
+                                    navToActionSelect(Up)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Up,
@@ -229,7 +243,8 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showActionDialog(Down, gestureButton.slideActions.down)
+//                                    vm.showActionDialog(Down, gestureButton.slideActions.down)
+                                    navToActionSelect(Down)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Down,
@@ -242,9 +257,19 @@ fun GestureButtonSettingsScreen(
                             modifier = Modifier.padding(top = SectionPadding),
                             title = stringResource(id = R.string.long_slide_action)
                         ) {
+                            val navToActionSelect: (TriggerDirection) -> Unit = {
+                                val actionSelect = ActionSelect(
+                                    gestureButtonId = gestureButton.id,
+                                    position = gestureButton.position,
+                                    direction = it,
+                                    isLongSlide = true
+                                )
+                                onNavToActionSelect(actionSelect)
+                            }
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showLongActionDialog(Center, gestureButton.longSlideActions.center)
+//                                    vm.showLongActionDialog(Center, gestureButton.longSlideActions.center)
+                                    navToActionSelect(Center)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Center,
@@ -253,7 +278,8 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showLongActionDialog(Up, gestureButton.longSlideActions.up)
+//                                    vm.showLongActionDialog(Up, gestureButton.longSlideActions.up)
+                                    navToActionSelect(Up)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Up,
@@ -262,7 +288,8 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-                                    vm.showLongActionDialog(Down, gestureButton.longSlideActions.down)
+//                                    vm.showLongActionDialog(Down, gestureButton.longSlideActions.down)
+                                    navToActionSelect(Down)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Down,
@@ -502,7 +529,7 @@ private fun LongActionDialog(
                         modifier = Modifier
                             .graphicsLayer {
                                 alpha = if (isItemDisabled) {
-                                    0.36f
+                                    GlobalSettings.DisabledAlpha
                                 } else {
                                     1f
                                 }

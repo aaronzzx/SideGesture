@@ -25,6 +25,7 @@ object GlobalSettings {
     const val MinVibrationDurationMs = 5L
     const val MaxVibrationDurationMs = 1000L
     const val GestureButtonColorAlpha = 0.2f
+    const val DisabledAlpha = 0.36f
 
     @Composable
     fun getPredefinedVibrationEffectText(effect: Int): String {

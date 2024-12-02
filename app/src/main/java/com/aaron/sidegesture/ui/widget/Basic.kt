@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
+import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.DividerHeight
@@ -458,4 +459,4 @@ fun MyTextSwitch(
     }
 }
 
-private const val DISABLED_ALPHA = 0.36f
+private const val DISABLED_ALPHA = GlobalSettings.DisabledAlpha

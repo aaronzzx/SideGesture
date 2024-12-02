@@ -25,6 +25,8 @@ import androidx.navigation.compose.rememberNavController
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelect
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklist
@@ -103,10 +105,16 @@ fun SideGestureApp() {
                     GestureAnglesScreen(onBack = { navController.navigateUp() })
                 }
                 myComposable<GestureButtonSettings> {
-                    GestureButtonSettingsScreen(onBack = { navController.navigateUp() })
+                    GestureButtonSettingsScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToActionSelect = { navController.navigate(it) }
+                    )
                 }
                 myComposable<AppBlacklist> {
                     AppBlacklistScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<ActionSelect> {
+                    ActionSelectScreen(onBack = { navController.navigateUp() })
                 }
             }
         }
