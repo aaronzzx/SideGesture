@@ -8,8 +8,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.text.TextUtils
+import com.aaron.sidegesture.R
+import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.AppUtils
-import com.blankj.utilcode.util.ToastUtils
 
 
 /**
@@ -18,19 +19,15 @@ import com.blankj.utilcode.util.ToastUtils
  */
 
 fun Context.gotoWechat() {
-    val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
-    if (intent != null &&
-        packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null
-    ) {
-        try {
-            startActivity(intent)
-        } catch (exception: ActivityNotFoundException) {
-            // TODO: hardcode
-            ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
-        }
-    } else {
-        // TODO: hardcode
-        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+    val intent = Intent().apply {
+        setAction("com.tencent.mm.action.BIZSHORTCUT")
+        addCategory(Intent.CATEGORY_DEFAULT)
+        setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    try {
+        startActivity(intent)
+    } catch (exception: ActivityNotFoundException) {
+        showToast(R.string.goto_wechat_failed)
     }
 }
 
@@ -45,32 +42,11 @@ fun Context.gotoWechatScan() {
         try {
             startActivity(intent)
         } catch (exception: ActivityNotFoundException) {
-            // TODO: hardcode
-            ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+            showToast(R.string.goto_wechat_failed)
         }
     } else {
-        // TODO: hardcode
-        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
+        showToast(R.string.goto_wechat_failed)
     }
-}
-
-fun Context.gotoWechatPayCode() {
-    // 可能需要无障碍识别界面元素来跳转
-//    val cmd = "am start -n com.tencent.mm/com.tencent.mm.plugin.offline.ui.WalletOfflineCoinPurseUI"
-//    ShellUtils.execCmd(cmd, false)
-//    try {
-//        //利用Intent打开微信
-//        val uri = Uri.parse("weixin://wxapppay/?action=scan")
-//        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//        }
-//        startActivity(intent)
-//    } catch (e: Exception) {
-//        e.printStackTrace()
-//        //若无法正常跳转，在此进行错误处理
-//        // TODO: hardcode
-//        ToastUtils.showShort("无法跳转到微信，请检查您是否安装了微信！")
-//    }
 }
 
 fun Context.gotoAlipayScan() {
@@ -84,8 +60,7 @@ fun Context.gotoAlipayScan() {
         }
         startActivity(intent)
     } catch (e: Exception) {
-        //若无法正常跳转，在此进行错误处理
-        ToastUtils.showShort("无法跳转到支付宝，请检查您是否安装了支付宝！")
+        showToast(R.string.goto_alipay_failed)
     }
 }
 
@@ -100,8 +75,7 @@ fun Context.gotoAlipayPayCode() {
         }
         startActivity(intent)
     } catch (e: Exception) {
-        //若无法正常跳转，在此进行错误处理
-        ToastUtils.showShort("无法跳转到支付宝，请检查您是否安装了支付宝！")
+        showToast(R.string.goto_alipay_failed)
     }
 }
 

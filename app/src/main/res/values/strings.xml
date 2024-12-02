@@ -94,6 +94,8 @@
     <string name="gesture_button_color">触钮颜色</string>
     <string name="gesture_button_align">对齐触钮</string>
     <string name="gesture_button_align_hint">两侧保持相同尺寸和位置</string>
+    <string name="goto_wechat_failed">无法跳转到微信，请检查您是否安装了微信！</string>
+    <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝！</string>
 
     <string name="action_none">无</string>
     <string name="action_back">返回键</string>
