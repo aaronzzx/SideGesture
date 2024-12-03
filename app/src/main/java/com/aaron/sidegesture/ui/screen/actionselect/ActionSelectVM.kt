@@ -13,10 +13,12 @@ import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -89,7 +91,20 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 AppInfoUtils.getInstalledPackages(App.getContext())
             }
             updateUiState {
-                it.copy(apps = appInfos)
+                if (it.selectSingle) {
+                    return@updateUiState it.copy(apps = appInfos)
+                }
+                val list1 = mutableListOf<AppInfo>()
+                val list2 = mutableListOf<AppInfo>()
+                appInfos.forEach { appInfo ->
+                    if (it.selectedItem.isSelected(appInfo)) {
+                        list1.add(appInfo)
+                    } else {
+                        list2.add(appInfo)
+                    }
+                }
+                val finalList = list1 + list2
+                it.copy(apps = finalList)
             }
         }
     }
@@ -145,10 +160,14 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         }
                         updateUiState {
                             val selectedActions = when (it.selectSingle) {
-                                true -> actions.take(1)
+                                true -> emptyList()
                                 else -> actions
                             }
-                            val newSelectedItem = it.selectedItem.copy(actions = selectedActions)
+                            val selectedApps = selectedActions.mapNotNull { action -> action.appInfo }
+                            val newSelectedItem = it.selectedItem.copy(
+                                actions = selectedActions,
+                                apps = selectedApps
+                            )
                             it.copy(selectedItem = newSelectedItem)
                         }
                         assembleData()
@@ -196,13 +215,21 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 if (button != null) {
                     val selectedItem = uiState.selectedItem
                     val selectedActions = selectedItem.actions
+                    val selectedApps = selectedItem.apps.map { app ->
+                        Action(
+                            value = GlobalActions.EXTRA_LAUNCH_APP,
+                            data = JsonHelper.encodeToString(app)
+                        )
+                    }
+                    // 会把用户选择的顺序打乱
+                    val selectedList = selectedActions + selectedApps
+                    val newActions = when (uiState.selectSingle) {
+                        true -> selectedList.takeLast(1)
+                        else -> selectedList
+                    }
                     val gestureActions = when (actionSelect.isLongSlide) {
                         true -> button.longSlideActions
                         else -> button.slideActions
-                    }
-                    val newActions = when (uiState.selectSingle) {
-                        true -> selectedActions.takeLast(1)
-                        else -> selectedActions
                     }
                     val newGestureActions = when (actionSelect.direction) {
                         TriggerDirection.Center -> gestureActions.copy(center = newActions)

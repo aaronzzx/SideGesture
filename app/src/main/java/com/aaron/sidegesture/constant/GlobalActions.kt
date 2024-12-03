@@ -99,6 +99,9 @@ object GlobalActions {
     /** 支付宝付款码 */
     const val ALIPAY_PAY = "44"
 
+    /** 启动应用 */
+    const val EXTRA_LAUNCH_APP = "101"
+
     val all = Action.toList(
         NONE, BACK, HOME, RECENT, /*MENU,*/ /*SEARCH_IN_APP,*/ VOLUME_UP, VOLUME_DOWN, MUTE, PLAY_PAUSE_SONG,
         LAST_SONG, NEXT_SONG, PREVIOUS_APP, /*APP_SCREEN,*/ /*WEB_FORWARD,*/ OPEN_NOTIFICATION_PANEL,

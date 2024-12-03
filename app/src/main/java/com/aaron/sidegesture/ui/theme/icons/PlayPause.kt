@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * @since 2024/12/2
  */
 
+@Suppress("UnusedReceiverParameter")
 val Icons.Filled.PlayPause: ImageVector
     get() {
         if (_playPause != null) {

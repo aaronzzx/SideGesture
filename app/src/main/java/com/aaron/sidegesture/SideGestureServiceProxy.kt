@@ -16,6 +16,7 @@ import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechat
@@ -158,6 +159,18 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
             }
             GlobalActions.ALIPAY_PAY -> {
                 gotoAlipayPayCode()
+            }
+            GlobalActions.EXTRA_LAUNCH_APP -> {
+                val appInfo = action.appInfo
+                if (appInfo != null) {
+                    val intent = Intent().apply {
+                        setClassName(appInfo.packageName, appInfo.className)
+                        setAction(Intent.ACTION_MAIN)
+                        addCategory(Intent.CATEGORY_LAUNCHER)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+                }
             }
         }
     }

@@ -83,6 +83,7 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
     GlobalActions.WECHAT_PAY -> getString(R.string.action_wechat_pay_simulate_click)
     GlobalActions.ALIPAY_SCAN -> getString(R.string.action_alipay_scan)
     GlobalActions.ALIPAY_PAY -> getString(R.string.action_alipay_pay)
+    GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.label ?: ""
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -132,6 +133,7 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.WECHAT_PAY -> stringResource(R.string.action_wechat_pay_simulate_click)
     GlobalActions.ALIPAY_SCAN -> stringResource(R.string.action_alipay_scan)
     GlobalActions.ALIPAY_PAY -> stringResource(R.string.action_alipay_pay)
+    GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.label ?: ""
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -180,5 +182,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.WECHAT_PAY -> R.drawable.wechat_paycode
     GlobalActions.ALIPAY_SCAN -> R.drawable.alipay_scan
     GlobalActions.ALIPAY_PAY -> R.drawable.alipay_paycode
+    GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.icon
     else -> null
 }

@@ -6,12 +6,21 @@ import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureActions
+import com.aaron.sidegesture.utils.JsonHelper
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+val Action.appInfo: AppInfo? get() {
+    if (value == GlobalActions.EXTRA_LAUNCH_APP) {
+        return JsonHelper.decodeFromString<AppInfo>(data)
+    }
+    return null
+}
 
 @Composable
 fun GestureActions.actionTextCompose(): String {
