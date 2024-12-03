@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.TriggerDirection
-import com.aaron.sidegesture.entity.Actions
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.GestureActions
 
 /**
@@ -40,17 +40,15 @@ fun GestureActions.actionTextCompose(): String {
 }
 
 @Composable
-fun Actions.actionTextCompose(emptyIfNone: Boolean = false): String {
-    if (!isLongActions) {
+fun List<Action>.actionTextCompose(emptyIfNone: Boolean = false): String {
+    if (size <= 1) {
+        val value = firstOrNull() ?: Action.NONE
         return actionText(value, emptyIfNone)
     }
-    return remember(values, emptyIfNone) {
-        if (values.isEmpty()) {
-            return@remember App.getContext().actionText(GlobalActions.NONE, emptyIfNone)
-        }
-        values
+    return remember(this, emptyIfNone) {
+        this
             .filter {
-                it.isNotEmpty() && it != GlobalActions.NONE
+                it.value.isNotEmpty() && it.value != GlobalActions.NONE
             }
             .joinToString(separator = ",") {
                 App.getContext().actionText(it, emptyIfNone)
@@ -58,19 +56,10 @@ fun Actions.actionTextCompose(emptyIfNone: Boolean = false): String {
     }
 }
 
-fun GestureActions.actionsBy(direction: TriggerDirection): Actions {
+fun GestureActions.actionsBy(direction: TriggerDirection): List<Action> {
     return when (direction) {
         TriggerDirection.Up -> up
         TriggerDirection.Center -> center
         TriggerDirection.Down -> down
     }
-}
-
-fun Actions.isEmpty(): Boolean {
-    val value = value
-    return value.isEmpty() || value == GlobalActions.NONE
-}
-
-fun Actions.isNotEmpty(): Boolean {
-    return !isEmpty()
 }

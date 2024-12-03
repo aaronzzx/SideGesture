@@ -10,7 +10,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
-import com.aaron.sidegesture.entity.Actions
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
@@ -47,7 +47,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             if (uiState.selectSingle) {
                 saveSettings()
             }
-        } else if (obj is String) {
+        } else if (obj is Action) {
             selectAction(obj, selected)
             if (uiState.selectSingle) {
                 saveSettings()
@@ -67,7 +67,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
-    private fun selectAction(action: String, selected: Boolean) {
+    private fun selectAction(action: Action, selected: Boolean) {
         updateUiState {
             val list = it.selectedItem.actions.toMutableList()
             if (selected) {
@@ -145,8 +145,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         }
                         updateUiState {
                             val selectedActions = when (it.selectSingle) {
-                                true -> actions.values.take(1)
-                                else -> actions.values
+                                true -> actions.take(1)
+                                else -> actions
                             }
                             val newSelectedItem = it.selectedItem.copy(actions = selectedActions)
                             it.copy(selectedItem = newSelectedItem)
@@ -163,12 +163,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 return@updateUiState it.copy(actions = GlobalActions.all)
             }
             val globalActions = GlobalActions.allWithoutNone
-            val list1 = mutableListOf<String>()
-            val list2 = mutableListOf<String>()
+            val list1 = mutableListOf<Action>()
+            val list2 = mutableListOf<Action>()
             globalActions.forEach { action ->
-                if (it.selectedItem.isSelected(action) ||
-                    action == GlobalActions.NONE
-                ) {
+                if (it.selectedItem.isSelected(action) || action == Action.NONE) {
                     list1.add(action)
                 } else {
                     list2.add(action)
@@ -203,8 +201,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         else -> button.slideActions
                     }
                     val newActions = when (uiState.selectSingle) {
-                        true -> Actions.create(selectedActions.lastOrNull() ?: GlobalActions.NONE)
-                        else -> Actions.create(*selectedActions.toTypedArray())
+                        true -> selectedActions.takeLast(1)
+                        else -> selectedActions
                     }
                     val newGestureActions = when (actionSelect.direction) {
                         TriggerDirection.Center -> gestureActions.copy(center = newActions)
@@ -235,13 +233,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
-        val actions: List<String> = emptyList(),
+        val actions: List<Action> = emptyList(),
         val apps: List<AppInfo> = emptyList(),
         val selectedItem: SelectItem = SelectItem(),
         val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     ) {
         data class SelectItem(
-            val actions: List<String> = emptyList(),
+            val actions: List<Action> = emptyList(),
             val apps: List<AppInfo> = emptyList()
         ) {
             val size: Int get() = actions.size + apps.size

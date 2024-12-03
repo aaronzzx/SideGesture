@@ -17,15 +17,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.util.fastForEach
-import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
 import com.aaron.sidegesture.constant.TriggerDirection.Up
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
-import com.aaron.sidegesture.entity.Actions
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton
@@ -34,7 +33,6 @@ import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
-import com.aaron.sidegesture.ktx.isNotEmpty
 import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.utils.DragGestureHandler
@@ -52,7 +50,7 @@ import kotlin.math.hypot
 
 @Composable
 fun SideGestureContainer(
-    onAction: (String) -> Unit,
+    onAction: (Action) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
     drawButtonBounds: Boolean = false,
@@ -77,11 +75,11 @@ fun SideGestureContainer(
             val actions = sideGestureState.onDrag(dragAmount)
             if (actions != null) {
                 val button = sideGestureState.button
-                if (actions.isLongActions && button != null) {
-                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions.values)
+                if (button != null && actions.size > 1) {
+                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions)
                     sideGestureState.cancel()
                 } else if (actions.isNotEmpty()) {
-                    curOnAction(actions.value)
+                    curOnAction(actions.first())
                     sideGestureState.cancel()
                 }
             } else {
@@ -196,10 +194,10 @@ class SideGestureState(
     }
 
     /**
-     * @return 返回null表示不识别任何手势，[Actions.NONE]表示还没触发动作，
-     * [Actions.isLongActions]表示触发长动作，否则表示触发一个动作
+     * @return 返回null表示不识别任何手势，emptyList()表示还没触发动作，
+     * 长列表表示触发长动作，否则表示触发一个动作
      */
-    fun onDrag(dragAmount: Offset): Actions? {
+    fun onDrag(dragAmount: Offset): List<Action>? {
         finger += dragAmount
         // 理论上能到这里button不应该为空
         val button = button ?: return null
@@ -244,14 +242,14 @@ class SideGestureState(
             longSlideFirstTriggerMs = 0L
         }
 
-        return Actions.NONE
+        return emptyList()
     }
 
-    fun onDragEnd(): String {
+    fun onDragEnd(): Action {
         val button = checkNotNull(button)
         val longPressDelayMs = button.longSlideTriggerDelayMs
         val triggerDirection = triggerDirection
-        var returnAction = GlobalActions.NONE
+        var returnAction = Action.NONE
         if (!button.longSlideTriggerImmediately &&
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longSlideFirstTriggerMs >= longPressDelayMs
@@ -260,13 +258,19 @@ class SideGestureState(
                 button.vibrations.tryVibrateForLongPress()
             }
             val actions = button.longSlideActions.actionsBy(triggerDirection)
-            returnAction = actions.value
+            val action = actions.firstOrNull()
+            if (action != null) {
+                returnAction = action
+            }
         } else if (canDistanceTrigger(button, false)) {
             if (!button.vibrations.vibrateImmediately) {
                 button.vibrations.tryVibrateForPress()
             }
             val actions = button.slideActions.actionsBy(triggerDirection)
-            returnAction = actions.value
+            val action = actions.firstOrNull()
+            if (action != null) {
+                returnAction = action
+            }
         }
         reset()
         return returnAction
@@ -368,13 +372,13 @@ abstract class QuickStartState {
         private set
     var finger: Offset by mutableStateOf(Offset.Unspecified)
         private set
-    var actions: List<String> by mutableStateOf(emptyList())
+    var actions: List<Action> by mutableStateOf(emptyList())
         private set
     var position: Position by mutableStateOf(Position.Left)
         private set
-    private val pendingActions: MutableMap<Int, String> = mutableMapOf()
+    private val pendingActions: MutableMap<Int, Action> = mutableMapOf()
 
-    fun onDragStart(position: Position, offset: Offset, actions: List<String>) {
+    fun onDragStart(position: Position, offset: Offset, actions: List<Action>) {
         visible = true
         this.position = position
         this.origin = offset
@@ -386,11 +390,11 @@ abstract class QuickStartState {
         finger += dragAmount
     }
 
-    fun onDragEnd(): String {
+    fun onDragEnd(): Action {
         val pendingActions = pendingActions
         val action = pendingActions.values.find {
-            it != GlobalActions.NONE
-        } ?: GlobalActions.NONE
+            it != Action.NONE
+        } ?: Action.NONE
         reset()
         return action
     }
@@ -399,11 +403,11 @@ abstract class QuickStartState {
         reset()
     }
 
-    fun isSelected(action: String): Boolean {
+    fun isSelected(action: Action): Boolean {
         return pendingActions.values.find { it == action } != null
     }
 
-    fun select(index: Int, action: String) {
+    fun select(index: Int, action: Action) {
         pendingActions[index] = action
     }
 

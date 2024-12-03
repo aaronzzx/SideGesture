@@ -3,7 +3,6 @@ package com.aaron.sidegesture.entity
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GlobalActions
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 /**
  * @author aaronzzxup@gmail.com
@@ -13,46 +12,22 @@ import kotlinx.serialization.Transient
 @Serializable
 @Keep
 data class GestureActions(
-    val up: Actions = Actions(),
-    val center: Actions = Actions(),
-    val down: Actions = Actions()
+    val center: List<Action> = emptyList(),
+    val up: List<Action> = emptyList(),
+    val down: List<Action> = emptyList()
 )
 
 @Serializable
 @Keep
-data class Actions(private val actionValue: String = GlobalActions.NONE) {
-
+data class Action(
+    val value: String = GlobalActions.NONE,
+    val data: String = ""
+) {
     companion object {
-        val NONE = Actions()
+        val NONE = Action(value = GlobalActions.NONE, data = "")
 
-        fun create(vararg action: String): Actions {
-            if (action.size > 1) {
-                return Actions(action.joinToString(","))
-            }
-            val act = action.firstOrNull() ?: GlobalActions.NONE
-            return Actions(act)
+        fun toList(vararg value: String): List<Action> {
+            return value.map { Action(it) }
         }
-    }
-
-    val isLongActions: Boolean = actionValue.contains(",")
-
-    @Transient
-    val values: List<String> = run {
-        val actionValue = actionValue
-        if (actionValue.contains(",")) {
-            return@run actionValue.split(",")
-        }
-        if (actionValue.isEmpty() || actionValue == GlobalActions.NONE) {
-            return@run emptyList()
-        }
-        listOf(actionValue)
-    }
-
-    @Transient
-    val value: String = run {
-        if (values.isNotEmpty()) {
-            return@run values[0]
-        }
-        actionValue
     }
 }

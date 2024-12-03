@@ -15,6 +15,7 @@ import android.content.Intent
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechat
@@ -55,12 +56,12 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
         }
     }
 
-    fun onAction(action: String) {
+    fun onAction(action: Action) {
         host.onAction(action)
     }
 
-    private fun AccessibilityService.onAction(action: String) {
-        when (action) {
+    private fun AccessibilityService.onAction(action: Action) {
+        when (action.value) {
             GlobalActions.BACK -> {
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }

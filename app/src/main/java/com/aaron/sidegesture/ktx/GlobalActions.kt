@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ui.theme.icons.PlayPause
 
 /**
@@ -37,7 +38,7 @@ import com.aaron.sidegesture.ui.theme.icons.PlayPause
  * @since 2024/11/29
  */
 
-fun Context.actionText(action: String, emptyIfNone: Boolean = true): String = when (action) {
+fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = when (action.value) {
     GlobalActions.BACK -> getString(R.string.action_back)
     GlobalActions.HOME -> getString(R.string.action_home)
     GlobalActions.RECENT -> getString(R.string.action_recent)
@@ -86,7 +87,7 @@ fun Context.actionText(action: String, emptyIfNone: Boolean = true): String = wh
 }
 
 @Composable
-fun actionText(action: String, emptyIfNone: Boolean = true): String = when (action) {
+fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (action.value) {
     GlobalActions.BACK -> stringResource(R.string.action_back)
     GlobalActions.HOME -> stringResource(R.string.action_home)
     GlobalActions.RECENT -> stringResource(R.string.action_recent)
@@ -135,7 +136,7 @@ fun actionText(action: String, emptyIfNone: Boolean = true): String = when (acti
 }
 
 @Composable
-fun actionIcon(action: String): Any? = when (action) {
+fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.BACK -> Icons.Default.ArrowBack
     GlobalActions.HOME -> Icons.Default.Home
     GlobalActions.RECENT -> Icons.Default.ViewCarousel

@@ -1,5 +1,7 @@
 package com.aaron.sidegesture.constant
 
+import com.aaron.sidegesture.entity.Action
+
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/21
@@ -97,7 +99,7 @@ object GlobalActions {
     /** 支付宝付款码 */
     const val ALIPAY_PAY = "44"
 
-    val all = listOf(
+    val all = Action.toList(
         NONE, BACK, HOME, RECENT, /*MENU,*/ /*SEARCH_IN_APP,*/ VOLUME_UP, VOLUME_DOWN, MUTE, PLAY_PAUSE_SONG,
         LAST_SONG, NEXT_SONG, PREVIOUS_APP, /*APP_SCREEN,*/ /*WEB_FORWARD,*/ OPEN_NOTIFICATION_PANEL,
         OPEN_QUICK_PANEL, LOCK_SCREEN, KILL_APP, FLASHLIGHT, SPLIT_SCREEN, POPUP_SCREEN, ASSIST_APP,
@@ -106,7 +108,7 @@ object GlobalActions {
         /*TASK_SWITCHER,*/ QUICK_TOOLS, /*FLOAT_BALL,*/ HIDE_GESTURE_BUTTON, WECHAT_SCAN, WECHAT_PAY, ALIPAY_SCAN, ALIPAY_PAY
     )
 
-    val allWithoutNone = listOf(
+    val allWithoutNone = Action.toList(
         BACK, HOME, RECENT, /*MENU,*/ /*SEARCH_IN_APP,*/ VOLUME_UP, VOLUME_DOWN, MUTE, PLAY_PAUSE_SONG,
         LAST_SONG, NEXT_SONG, PREVIOUS_APP, /*APP_SCREEN,*/ /*WEB_FORWARD,*/ OPEN_NOTIFICATION_PANEL,
         OPEN_QUICK_PANEL, LOCK_SCREEN, KILL_APP, FLASHLIGHT, SPLIT_SCREEN, POPUP_SCREEN, ASSIST_APP,

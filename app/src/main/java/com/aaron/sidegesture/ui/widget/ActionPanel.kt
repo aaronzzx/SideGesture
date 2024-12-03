@@ -51,6 +51,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.constant.Position
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.Vibrations
@@ -171,7 +172,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 } else {
                                     if (actionPanelState.isSelected(action)) {
                                         launch { selectAnim.animateTo(1f) }
-                                        actionPanelState.select(index, GlobalActions.NONE)
+                                        actionPanelState.select(index, Action.NONE)
                                     }
                                 }
                             }
@@ -203,11 +204,13 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             }
                             .matchParentSize()
                             .clipToBackground(
-                                color = when (action) {
+                                color = when (action.value) {
                                     GlobalActions.WECHAT_SCAN,
                                     GlobalActions.WECHAT_PAY -> WechatColor
+
                                     GlobalActions.ALIPAY_SCAN,
                                     GlobalActions.ALIPAY_PAY -> AlipayColor
+
                                     else -> MaterialTheme.colorScheme.primary
                                 },
                                 shape = CircleShape
@@ -222,18 +225,22 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 colorFilter = ColorFilter.tint(Color.White)
                             )
                         } else {
+                            val isWechatAlipay = remember(actionIcon) {
+                                actionIcon == R.drawable.wechat_scan ||
+                                        actionIcon == R.drawable.wechat_paycode ||
+                                        actionIcon == R.drawable.alipay_scan ||
+                                        actionIcon == R.drawable.alipay_paycode
+                            }
                             AsyncImage(
                                 modifier = Modifier.let {
-                                    val needPadding = actionIcon == R.drawable.wechat_scan ||
-                                            actionIcon == R.drawable.wechat_paycode ||
-                                            actionIcon == R.drawable.alipay_scan ||
-                                            actionIcon == R.drawable.alipay_paycode
-                                    if (!needPadding) it else it.padding(12.dp)
+                                    if (!isWechatAlipay) it else it.padding(12.dp)
                                 },
                                 model = actionIcon,
                                 contentDescription = null,
                                 imageLoader = LocalContext.current.imageLoader,
-                                colorFilter = ColorFilter.tint(Color.White)
+                                colorFilter = if (!isWechatAlipay) null else {
+                                    ColorFilter.tint(Color.White)
+                                }
                             )
                         }
                     }

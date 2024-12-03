@@ -53,6 +53,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.actionIcon
@@ -207,8 +208,8 @@ fun ActionSelectScreen(
 
 @Composable
 private fun ActionPage(
-    onSelect: (String, Boolean) -> Unit,
-    actions: List<String>,
+    onSelect: (Action, Boolean) -> Unit,
+    actions: List<Action>,
     selectedItem: SelectItem,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
@@ -220,7 +221,7 @@ private fun ActionPage(
     ) {
         items(
             items = actions,
-            key = { it }
+            key = { it.value }
         ) { item ->
             ActionItem(
                 action = item,
@@ -241,7 +242,7 @@ private fun ActionPage(
 private fun ActionItem(
     onSelect: (Boolean) -> Unit,
     selected: Boolean,
-    action: String,
+    action: Action,
     selectSingle: Boolean,
     enabled: Boolean = true
 ) {
