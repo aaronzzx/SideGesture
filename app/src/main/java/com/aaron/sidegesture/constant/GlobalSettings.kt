@@ -3,7 +3,6 @@ package com.aaron.sidegesture.constant
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ktx.whenVibrationEffect
 import com.blankj.utilcode.util.ConvertUtils
 
 /**
@@ -22,20 +21,19 @@ object GlobalSettings {
     const val MaxGestureButtonStart = MaxGestureButtonLength - MinGestureButtonLength
     const val MinLongPressTriggerDelayMs = 100L
     const val MaxLongPressTriggerDelayMs = 2000L
-    const val MinVibrationDurationMs = 5L
+    const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 1000L
     const val GestureButtonColorAlpha = 0.2f
     const val DisabledAlpha = 0.36f
     const val DimAlpha = 0.5f
 
     @Composable
-    fun getPredefinedVibrationEffectText(effect: Int): String {
-        return whenVibrationEffect(
-            onNone = { stringResource(id = R.string.custom) },
-            onTick = { stringResource(id = R.string.vibration_tick) },
-            onClick = { stringResource(id = R.string.vibration_click) },
-            onHeavyClick = { stringResource(id = R.string.vibration_heavy_click) },
-            effect = effect
-        )
+    fun getPredefinedVibrationEffectText(effect: VibrationEffects): String {
+        return when (effect) {
+            VibrationEffects.None -> stringResource(id = R.string.custom)
+            VibrationEffects.Tick -> stringResource(id = R.string.vibration_tick)
+            VibrationEffects.Click -> stringResource(id = R.string.vibration_click)
+            VibrationEffects.HeavyClick -> stringResource(id = R.string.vibration_heavy_click)
+        }
     }
 }

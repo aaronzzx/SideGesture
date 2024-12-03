@@ -48,17 +48,14 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureAngle
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
-import com.aaron.sidegesture.ktx.checkPositionValid
 import com.aaron.sidegesture.ktx.copyNew
 import com.aaron.sidegesture.ktx.getArcDegrees
 import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
-import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
@@ -126,31 +123,28 @@ fun GestureAnglesScreen(
             Icon(
                 modifier = Modifier
                     .align(
-                        alignment = whenPosition(
-                            onLeft = { Alignment.CenterEnd },
-                            onRight = { Alignment.CenterStart },
-                            position = uiState.position
-                        )
+                        alignment = when (uiState.position) {
+                            Position.Left -> Alignment.CenterEnd
+                            Position.Right -> Alignment.CenterStart
+                        }
                     )
                     .padding(horizontal = ItemPadding)
                     .size(MinInteractiveSize)
                     .graphicsLayer {
-                        rotationZ = whenPosition(
-                            onLeft = { 0f },
-                            onRight = { 180f },
-                            position = uiState.position
-                        )
+                        rotationZ = when (uiState.position) {
+                            Position.Left -> 0f
+                            Position.Right -> 180f
+                        }
                     }
                     .clipToBackground(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                         shape = CircleShape
                     )
                     .onClick(enableRipple = false) {
-                        val newPosition = whenPosition(
-                            onLeft = { RIGHT },
-                            onRight = { LEFT },
-                            position = uiState.position
-                        )
+                        val newPosition = when (uiState.position) {
+                            Position.Left -> Position.Right
+                            Position.Right -> Position.Left
+                        }
                         vm.switchPosition(newPosition)
                     },
                 imageVector = Icons.Default.KeyboardArrowRight,
@@ -166,11 +160,10 @@ private fun AdjustAngle(
     onAngleChange: (GestureAngle) -> Unit,
     angle: GestureAngle,
     modifier: Modifier = Modifier,
-    position: Int = LEFT,
+    position: Position = Position.Left,
     color: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
 ) {
-    checkPositionValid(position)
     val lineWidth = 6.dp
     val dragHandleRadius = 20.dp
     var circleRadius by remember { mutableFloatStateOf(0f) }
@@ -217,11 +210,10 @@ private fun AdjustAngle(
                             return@onDrag
                         }
                         val _property = property ?: return@onDrag
-                        val x = whenPosition(
-                            onLeft = { dragOffset.x },
-                            onRight = { circleCenter.x - dragOffset.x },
-                            position = curPosition
-                        )
+                        val x = when (curPosition) {
+                            Position.Left -> dragOffset.x
+                            Position.Right -> circleCenter.x - dragOffset.x
+                        }
                         val y = circleCenter.y - dragOffset.y
                         val tanVal = x / y
                         val radians = atan(tanVal)
@@ -251,8 +243,8 @@ private fun AdjustAngle(
     ) {
         val radius = size.minDimension / 2f
         val myCenter = when (position) {
-            LEFT -> center.copy(x = 0f)
-            else -> center.copy(x = size.width)
+            Position.Left -> center.copy(x = 0f)
+            Position.Right -> center.copy(x = size.width)
         }
         circleRadius = radius
         circleCenter = myCenter
@@ -301,37 +293,32 @@ private fun AdjustAngle(
             )
             val displayArcDegree = "${arcDegree.roundToInt()}"
             val hint = when (index) {
-                1 -> whenPosition(
-                    onLeft = { context.getString(R.string.gesture_to_right_top) },
-                    onRight = { context.getString(R.string.gesture_to_left_top) },
-                    position = position
-                )
-                2 -> whenPosition(
-                    onLeft = { context.getString(R.string.gesture_to_right) },
-                    onRight = { context.getString(R.string.gesture_to_left) },
-                    position = position
-                )
-                3 -> whenPosition(
-                    onLeft = { context.getString(R.string.gesture_to_right_bottom) },
-                    onRight = { context.getString(R.string.gesture_to_left_bottom) },
-                    position = position
-                )
+                1 -> when (position) {
+                    Position.Left -> context.getString(R.string.gesture_to_right_top)
+                    Position.Right -> context.getString(R.string.gesture_to_left_top)
+                }
+                2 -> when (position) {
+                    Position.Left -> context.getString(R.string.gesture_to_right)
+                    Position.Right -> context.getString(R.string.gesture_to_left)
+                }
+                3 -> when (position) {
+                    Position.Left -> context.getString(R.string.gesture_to_right_bottom)
+                    Position.Right -> context.getString(R.string.gesture_to_left_bottom)
+                }
                 else -> ""
             }
-            val displayText = whenPosition(
-                onLeft = { "$hint $displayArcDegree" },
-                onRight = { "$displayArcDegree $hint" },
-                position = position
-            )
+            val displayText = when (position) {
+                Position.Left -> "$hint $displayArcDegree"
+                Position.Right -> "$displayArcDegree $hint"
+            }
             drawText(
                 textMeasurer = textMeasurer,
                 text = displayText,
                 topLeft = Offset(
-                    x = whenPosition(
-                        onLeft = { textX - textMeasurer.measure(displayText).size.width / 2f },
-                        onRight = { textX - textMeasurer.measure(displayText).size.width },
-                        position = position
-                    ),
+                    x = when (position) {
+                        Position.Left -> textX - textMeasurer.measure(displayText).size.width / 2f
+                        Position.Right -> textX - textMeasurer.measure(displayText).size.width
+                    },
                     y = textY - textMeasurer.measure(displayText).size.height / 2f
                 ),
                 maxLines = 1,
@@ -355,7 +342,7 @@ private fun AdjustAngle(
 }
 
 private fun calcXY(
-    position: Int,
+    position: Position,
     center: Offset,
     radius: Float,
     degree: Float
@@ -369,8 +356,8 @@ private fun calcXY(
     val x = radius * sin
     val y = sqrt(radius.pow(2) - x.pow(2))
     val finalX = when (position) {
-        LEFT -> center.x + x.toFloat()
-        else -> center.x - x.toFloat()
+        Position.Left -> center.x + x.toFloat()
+        Position.Right -> center.x - x.toFloat()
     }
     val finalY = when (degree > 90f) {
         true -> center.y + y.toFloat()

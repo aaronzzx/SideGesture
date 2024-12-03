@@ -3,10 +3,9 @@ package com.aaron.sidegesture.ui.screen.gestureangles
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureAngles
-import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -34,7 +33,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun switchPosition(position: Int) {
+    fun switchPosition(position: Position) {
         updateUiState {
             it.copy(position = position, angle = getGestureAngle(position))
         }
@@ -42,11 +41,10 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun updateGestureAngle(angle: GestureAngle) {
         updateUiState {
-            whenPosition(
-                onLeft = { leftAngle = angle },
-                onRight = { rightAngle = angle },
-                position = it.position
-            )
+            when (it.position) {
+                Position.Left -> leftAngle = angle
+                Position.Right -> rightAngle = angle
+            }
             it.copy(angle = angle)
         }
     }
@@ -63,11 +61,10 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = whenPosition(
-                                    onLeft = { leftAngle },
-                                    onRight = { rightAngle },
-                                    position = gestureButton.position
-                                )
+                                angle = when (gestureButton.position) {
+                                    Position.Left -> leftAngle
+                                    Position.Right -> rightAngle
+                                }
                             )
                             set(index, newButton)
                         }
@@ -109,17 +106,16 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    private fun getGestureAngle(position: Int): GestureAngle {
-        return whenPosition(
-            onLeft = { leftAngle },
-            onRight = { rightAngle },
-            position = position
-        )
+    private fun getGestureAngle(position: Position): GestureAngle {
+        return when (position) {
+            Position.Left -> leftAngle
+            Position.Right -> rightAngle
+        }
     }
 
     data class UiState(
         val angle: GestureAngle = GestureAngle(),
-        val position: Int = GestureButton.LEFT,
+        val position: Position = Position.Left,
         val showResetWarningDialog: Boolean = false
     )
 

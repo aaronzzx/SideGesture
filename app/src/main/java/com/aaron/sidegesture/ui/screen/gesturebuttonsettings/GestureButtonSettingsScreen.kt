@@ -41,7 +41,6 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalActions.NONE
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
@@ -51,18 +50,16 @@ import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonWidth
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonStart
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonWidth
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
 import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
-import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelect
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -89,7 +86,7 @@ import kotlinx.serialization.Serializable
 @Keep
 data class GestureButtonSettings(
     val buttonId: String,
-    val position: Int
+    val position: Position
 )
 
 @Composable
@@ -152,33 +149,16 @@ fun GestureButtonSettingsScreen(
                 }
             )
         }
-        if (uiState.actionDialog.first) {
-            ActionDialog(
-                onDismissRequest = { vm.hideActionDialog() },
-                onSelected = { vm.onActionSelect(it) },
-                selected = uiState.actionDialog.second,
-                actions = GlobalActions.all
-            )
-        }
-        if (uiState.longActionDialog.first) {
-            LongActionDialog(
-                onDismissRequest = { vm.hideLongActionDialog() },
-                onConfirm = { vm.onLongActionConfirm(it) },
-                onSelected = { vm.onLongActionSelect(it) },
-                selected = uiState.longActionDialog.second,
-                actions = GlobalActions.all
-            )
-        }
 
         Box {
             Column {
                 TopBar(
                     onBack = onBack,
                     title = uiState.gestureButton.let {
-                        when (it?.position) {
-                            LEFT -> stringResource(id = R.string.left_gesture_button)
-                            RIGHT -> stringResource(id = R.string.right_gesture_button)
-                            else -> ""
+                        if (it == null) return@let ""
+                        when (it.position) {
+                            Position.Left -> stringResource(id = R.string.left_gesture_button)
+                            Position.Right -> stringResource(id = R.string.right_gesture_button)
                         }
                     },
                     postfixTitle = {
@@ -223,7 +203,6 @@ fun GestureButtonSettingsScreen(
                             }
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showActionDialog(Center, gestureButton.slideActions.center)
                                     navToActionSelect(Center)
                                 },
                                 gestureButton = gestureButton,
@@ -233,7 +212,6 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showActionDialog(Up, gestureButton.slideActions.up)
                                     navToActionSelect(Up)
                                 },
                                 gestureButton = gestureButton,
@@ -243,7 +221,6 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showActionDialog(Down, gestureButton.slideActions.down)
                                     navToActionSelect(Down)
                                 },
                                 gestureButton = gestureButton,
@@ -268,7 +245,6 @@ fun GestureButtonSettingsScreen(
                             }
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showLongActionDialog(Center, gestureButton.longSlideActions.center)
                                     navToActionSelect(Center)
                                 },
                                 gestureButton = gestureButton,
@@ -278,7 +254,6 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showLongActionDialog(Up, gestureButton.longSlideActions.up)
                                     navToActionSelect(Up)
                                 },
                                 gestureButton = gestureButton,
@@ -288,7 +263,6 @@ fun GestureButtonSettingsScreen(
                             )
                             MyGestureSettings(
                                 onClick = {
-//                                    vm.showLongActionDialog(Down, gestureButton.longSlideActions.down)
                                     navToActionSelect(Down)
                                 },
                                 gestureButton = gestureButton,
@@ -390,21 +364,18 @@ private fun MyGestureSettings(
     MyTextButton(
         onClick = onClick,
         text = when (direction) {
-            Center -> whenPosition(
-                onLeft = { stringResource(id = R.string.slide_to_right) },
-                onRight = { stringResource(id = R.string.slide_to_left) },
-                position = gestureButton.position
-            )
-            Up -> whenPosition(
-                onLeft = { stringResource(id = R.string.slide_to_top_right) },
-                onRight = { stringResource(id = R.string.slide_to_top_left) },
-                position = gestureButton.position
-            )
-            Down -> whenPosition(
-                onLeft = { stringResource(id = R.string.slide_to_bottom_right) },
-                onRight = { stringResource(id = R.string.slide_to_bottom_left) },
-                position = gestureButton.position
-            )
+            Center -> when (gestureButton.position) {
+                Position.Left -> stringResource(id = R.string.slide_to_right)
+                Position.Right -> stringResource(id = R.string.slide_to_left)
+            }
+            Up -> when (gestureButton.position) {
+                Position.Left -> stringResource(id = R.string.slide_to_top_right)
+                Position.Right -> stringResource(id = R.string.slide_to_top_left)
+            }
+            Down -> when (gestureButton.position) {
+                Position.Left -> stringResource(id = R.string.slide_to_bottom_right)
+                Position.Right -> stringResource(id = R.string.slide_to_bottom_left)
+            }
         },
         secondaryText = run {
             if (secondaryText.isNotEmpty()) {
@@ -420,9 +391,18 @@ private fun MyGestureSettings(
                     .graphicsLayer {
                         val position = gestureButton.position
                         rotationZ = when (direction) {
-                            Up -> if (position == LEFT) -45f else -135f
-                            Center -> if (position == LEFT) 0f else 180f
-                            Down -> if (position == LEFT) 45f else 135f
+                            Up -> when (position) {
+                                Position.Left -> -45f
+                                Position.Right -> -135f
+                            }
+                            Center -> when (position) {
+                                Position.Left -> 0f
+                                Position.Right -> 180f
+                            }
+                            Down -> when (position) {
+                                Position.Left -> 45f
+                                Position.Right -> 135f
+                            }
                         }
                     }
                     .size(20.dp)

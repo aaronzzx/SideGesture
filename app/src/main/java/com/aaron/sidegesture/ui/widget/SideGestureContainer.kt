@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.util.fastForEach
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
@@ -29,7 +29,6 @@ import com.aaron.sidegesture.entity.Actions
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
@@ -344,9 +343,9 @@ class SideGestureState(
     private fun calcDirection(button: GestureButton): TriggerDirection? {
         val origin = origin
         val finger = finger
-        val x = when (button.position == LEFT) {
-            true -> finger.x
-            else -> origin.x - finger.x
+        val x = when (button.position) {
+            Position.Left -> finger.x
+            Position.Right -> origin.x - finger.x
         }
         val tanVal = x / abs(finger.y - origin.y)
         val radians = atan(tanVal)
@@ -371,11 +370,11 @@ abstract class QuickStartState {
         private set
     var actions: List<String> by mutableStateOf(emptyList())
         private set
-    var position: Int by mutableIntStateOf(LEFT)
+    var position: Position by mutableStateOf(Position.Left)
         private set
     private val pendingActions: MutableMap<Int, String> = mutableMapOf()
 
-    fun onDragStart(position: Int, offset: Offset, actions: List<String>) {
+    fun onDragStart(position: Position, offset: Offset, actions: List<String>) {
         visible = true
         this.position = position
         this.origin = offset

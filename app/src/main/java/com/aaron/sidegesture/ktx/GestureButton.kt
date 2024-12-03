@@ -6,9 +6,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 
 /**
  * @author aaronzzxup@gmail.com
@@ -17,12 +16,10 @@ import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 
 @Composable
 fun GestureButton.buttonTextCompose(): String {
-    if (position == LEFT) {
-        return stringResource(id = R.string.left_gesture_button)
-    } else if (position == RIGHT) {
-        return stringResource(id = R.string.right_gesture_button)
+    return when (position) {
+        Position.Left -> stringResource(id = R.string.left_gesture_button)
+        Position.Right -> stringResource(id = R.string.right_gesture_button)
     }
-    return ""
 }
 
 @Composable
@@ -54,10 +51,9 @@ fun GestureButton.contains(offset: Offset): Boolean {
 
 fun GestureButton.bounds(): Rect {
     val y = rootSize.height * start
-    val topLeft = if (position == LEFT) {
-        Offset(0f, y)
-    } else {
-        Offset((rootSize.width - width).toFloat(), y)
+    val topLeft = when (position) {
+        Position.Left -> Offset(0f, y)
+        Position.Right -> Offset((rootSize.width - width).toFloat(), y)
     }
     val boundsSize = Size(width.toFloat(), rootSize.height * fraction)
     return Rect(topLeft, boundsSize)

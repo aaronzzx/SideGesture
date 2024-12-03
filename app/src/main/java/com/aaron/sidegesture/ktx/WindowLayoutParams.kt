@@ -6,6 +6,7 @@ import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.ui.unit.IntSize
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureButton
 import com.blankj.utilcode.util.ScreenUtils
 
@@ -26,10 +27,9 @@ fun WindowManager.LayoutParams.updateGestureButton(button: GestureButton) {
     height = (windowHeight * button.fraction).toInt()
     y = (windowHeight * button.start).toInt()
     @SuppressLint("RtlHardcoded")
-    gravity = if (button.position == GestureButton.LEFT) {
-        Gravity.LEFT or Gravity.TOP
-    } else {
-        Gravity.RIGHT or Gravity.TOP
+    gravity = when (button.position) {
+        Position.Left -> Gravity.LEFT or Gravity.TOP
+        Position.Right -> Gravity.RIGHT or Gravity.TOP
     }
 }
 

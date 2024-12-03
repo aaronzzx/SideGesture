@@ -8,11 +8,11 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Actions
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.ktx.whenPosition
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -97,21 +97,18 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     private fun createTitle(): String {
         val context = App.getContext()
         val str1 = when (actionSelect.direction) {
-            TriggerDirection.Center -> whenPosition(
-                onLeft = { context.getString(R.string.slide_to_right) },
-                onRight = { context.getString(R.string.slide_to_left) },
-                position = actionSelect.position
-            )
-            TriggerDirection.Up -> whenPosition(
-                onLeft = { context.getString(R.string.slide_to_top_right) },
-                onRight = { context.getString(R.string.slide_to_top_left) },
-                position = actionSelect.position
-            )
-            TriggerDirection.Down -> whenPosition(
-                onLeft = { context.getString(R.string.slide_to_bottom_right) },
-                onRight = { context.getString(R.string.slide_to_bottom_left) },
-                position = actionSelect.position
-            )
+            TriggerDirection.Center -> when (actionSelect.position) {
+                Position.Left -> context.getString(R.string.slide_to_right)
+                Position.Right -> context.getString(R.string.slide_to_left)
+            }
+            TriggerDirection.Up -> when (actionSelect.position) {
+                Position.Left -> context.getString(R.string.slide_to_top_right)
+                Position.Right -> context.getString(R.string.slide_to_top_left)
+            }
+            TriggerDirection.Down -> when (actionSelect.position) {
+                Position.Left -> context.getString(R.string.slide_to_bottom_right)
+                Position.Right -> context.getString(R.string.slide_to_bottom_left)
+            }
         }
         val str2 = when (actionSelect.isLongSlide) {
             true -> context.getString(R.string.slider_long)

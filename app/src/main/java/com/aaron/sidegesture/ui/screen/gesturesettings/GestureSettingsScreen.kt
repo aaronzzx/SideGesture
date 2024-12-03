@@ -39,7 +39,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinLongPressTriggerDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
-import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.constant.VibrationEffects
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
@@ -201,10 +201,10 @@ fun GestureSettingsScreen(
                                         onDismissRequest = { vm.showPredefinedVibrationDropdown(false) }
                                     ) {
                                         listOf(
-                                            Vibrations.EFFECT_TICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_TICK),
-                                            Vibrations.EFFECT_CLICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_CLICK),
-                                            Vibrations.EFFECT_HEAVY_CLICK to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_HEAVY_CLICK),
-                                            Vibrations.EFFECT_NONE to getPredefinedVibrationEffectText(effect = Vibrations.EFFECT_NONE)
+                                            VibrationEffects.Tick to getPredefinedVibrationEffectText(effect = VibrationEffects.Tick),
+                                            VibrationEffects.Click to getPredefinedVibrationEffectText(effect = VibrationEffects.Click),
+                                            VibrationEffects.HeavyClick to getPredefinedVibrationEffectText(effect = VibrationEffects.HeavyClick),
+                                            VibrationEffects.None to getPredefinedVibrationEffectText(effect = VibrationEffects.None)
                                         ).fastForEach { (effectValue, text) ->
                                             key(effectValue) {
                                                 DropdownMenuItem(
@@ -222,7 +222,7 @@ fun GestureSettingsScreen(
                                 }
                             }
                             MyTextSlider(
-                                enabled = uiState.vibrations.predefinedEffect == Vibrations.EFFECT_NONE,
+                                enabled = uiState.vibrations.predefinedEffect == VibrationEffects.None,
                                 value = uiState.vibrations.customVibrationMs.toFloat(),
                                 onValueChange = { vm.onCustomVibrationMsChange(it) },
                                 onValueChangeFinished = { vm.saveSettings() },

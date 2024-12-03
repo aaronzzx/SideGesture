@@ -51,6 +51,7 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
@@ -88,7 +89,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ActionSelect(
     val gestureButtonId: String,
-    val position: Int,
+    val position: Position,
     val direction: TriggerDirection,
     val isLongSlide: Boolean
 )

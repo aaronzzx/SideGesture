@@ -18,12 +18,11 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.toPx
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.constant.TriggerDirection.Center
 import com.aaron.sidegesture.constant.TriggerDirection.Down
 import com.aaron.sidegesture.constant.TriggerDirection.Up
 import com.aaron.sidegesture.entity.AnimationStyle
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
-import com.aaron.sidegesture.entity.GestureButton.Companion.RIGHT
 import com.aaron.sidegesture.entity.WaveStyle
 
 /**
@@ -74,9 +73,9 @@ private fun WaveGestureAnimation(
             return@Canvas
         }
         val button = sideGestureState.button ?: return@Canvas
-        if (button.position == LEFT && fingerX < 0f) {
+        if (button.position == Position.Left && fingerX < 0f) {
             return@Canvas
-        } else if (button.position == RIGHT && fingerX > 0f) {
+        } else if (button.position == Position.Right && fingerX > 0f) {
             return@Canvas
         }
 
@@ -89,19 +88,19 @@ private fun WaveGestureAnimation(
         )
         bezierPath.also {
             it.reset()
-            val moveToX = when (button.position == LEFT) {
-                true -> 0f
-                else -> size.width
+            val moveToX = when (button.position) {
+                Position.Left -> 0f
+                Position.Right -> size.width
             }
-            val safeFingerX = when (button.position == LEFT) {
-                true -> fingerX.coerceAtMost(bezierMaxWidth)
-                else -> (size.width + fingerX).coerceAtLeast(size.width - bezierMaxWidth)
+            val safeFingerX = when (button.position) {
+                Position.Left -> fingerX.coerceAtMost(bezierMaxWidth)
+                Position.Right -> (size.width + fingerX).coerceAtLeast(size.width - bezierMaxWidth)
             }
             it.moveTo(moveToX, safeOriginY - halfBezierLength)
             it.cubicTo(
-                x1 = when (button.position == LEFT) {
-                    true -> -1f
-                    else -> size.width + 1f
+                x1 = when (button.position) {
+                    Position.Left -> -1f
+                    Position.Right -> size.width + 1f
                 },
                 y1 = safeOriginY - halfBezierLength / 2.5f - offsetY,
                 x2 = safeFingerX,
@@ -112,22 +111,22 @@ private fun WaveGestureAnimation(
             it.cubicTo(
                 x1 = safeFingerX,
                 y1 = safeOriginY + halfBezierLength / 2.5f - offsetY,
-                x2 = when (button.position == LEFT) {
-                    true -> 0f
-                    else -> size.width
+                x2 = when (button.position) {
+                    Position.Left -> 0f
+                    Position.Right -> size.width
                 },
                 y2 = safeOriginY + halfBezierLength / 2.5f - offsetY,
-                x3 = when (button.position == LEFT) {
-                    true -> -1f
-                    else -> size.width + 1f
+                x3 = when (button.position) {
+                    Position.Left -> -1f
+                    Position.Right -> size.width + 1f
                 },
                 y3 = safeOriginY + halfBezierLength
             )
 
             if (animationStyle.strokeWidth > 0) {
-                val offset = when (button.position == LEFT) {
-                    true -> Offset(-animationStyle.strokeWidth.toFloat(), 0f)
-                    else -> Offset(animationStyle.strokeWidth.toFloat(), 0f)
+                val offset = when (button.position) {
+                    Position.Left -> Offset(-animationStyle.strokeWidth.toFloat(), 0f)
+                    Position.Right -> Offset(animationStyle.strokeWidth.toFloat(), 0f)
                 }
                 it.translate(offset)
             }
@@ -146,20 +145,26 @@ private fun WaveGestureAnimation(
         val bezierBounds = bezierPath.getBounds().translate(Offset(0f, -offsetY))
         // 默认图标
         val defaultIcon = when (button.position) {
-            LEFT -> arrowForward
-            else -> arrowBack
+            Position.Left -> arrowForward
+            Position.Right -> arrowBack
         }
         defaultIcon.run {
             val degree = when (sideGestureState.triggerDirection) {
-                Up -> if (button.position == LEFT) -45f else 45f
+                Up -> when (button.position) {
+                    Position.Left -> -45f
+                    Position.Right -> 45f
+                }
                 Center -> 0f
-                Down -> if (button.position == LEFT) 45f else -45f
+                Down -> when (button.position) {
+                    Position.Left -> 45f
+                    Position.Right -> -45f
+                }
             }
             rotate(degree, pivot = bezierBounds.center) {
                 val radius = bezierBounds.width * 0.6f
                 val left = when (button.position) {
-                    LEFT -> bezierBounds.width * 0.2f - animationStyle.strokeWidth
-                    else -> size.width - bezierBounds.width * 0.8f + animationStyle.strokeWidth
+                    Position.Left -> bezierBounds.width * 0.2f - animationStyle.strokeWidth
+                    Position.Right -> size.width - bezierBounds.width * 0.8f + animationStyle.strokeWidth
                 }
                 val top = bezierBounds.top + bezierBounds.height / 2f - radius / 2f
                 translate(left = left, top = top) {

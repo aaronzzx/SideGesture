@@ -50,9 +50,9 @@ import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
+import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
-import com.aaron.sidegesture.entity.GestureButton.Companion.LEFT
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.toIntOffset
@@ -143,7 +143,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                         val radians = Math.toRadians(angDeg)
                         val dy = hypot * cos(radians)
                         val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
-                            if (actionPanelState.position == LEFT) value else -value
+                            when (actionPanelState.position) {
+                                Position.Left -> value
+                                Position.Right -> -value
+                            }
                         }
                         Offset(x = dx.toFloat(), y = dy.toFloat())
                     }

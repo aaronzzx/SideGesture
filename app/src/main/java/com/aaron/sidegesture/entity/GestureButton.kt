@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
+import com.aaron.sidegesture.constant.Position
 import com.blankj.utilcode.util.ColorUtils
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
@@ -18,7 +19,7 @@ import kotlinx.serialization.Serializable
 @Keep
 data class GestureButton(
     val id: String,
-    val position: Int,
+    val position: Position,
     val enabled: Boolean = true,
     val start: Float = 0.0f,
     val end: Float = 0.1f,
@@ -35,53 +36,52 @@ data class GestureButton(
 ) : Comparable<GestureButton> {
 
     companion object {
-        const val LEFT = 1
-        const val RIGHT = 2
+        private const val ID_DEFAULT = "1"
 
-        private const val ID = "1"
-
-        val Defaults = listOf(
-            GestureButton(
-                id = ID,
-                position = LEFT,
-                start = 0.0f,
-                end = 1.0f,
-                slideActions = GestureActions(
-                    up = Actions.create(GlobalActions.LOCK_SCREEN),
-                    center = Actions.create(GlobalActions.BACK)
-                ),
-                longSlideActions = GestureActions(
-                    up = Actions.create(
-                        GlobalActions.WECHAT_SCAN,
-                        GlobalActions.WECHAT_PAY,
-                        GlobalActions.HOME,
-                        GlobalActions.ALIPAY_SCAN,
-                        GlobalActions.ALIPAY_PAY
+        val Defaults: List<GestureButton> = run {
+            listOf(
+                GestureButton(
+                    id = ID_DEFAULT,
+                    position = Position.Left,
+                    start = 0.0f,
+                    end = 1.0f,
+                    slideActions = GestureActions(
+                        up = Actions.create(GlobalActions.LOCK_SCREEN),
+                        center = Actions.create(GlobalActions.BACK)
                     ),
-                    center = Actions.create(GlobalActions.PREVIOUS_APP)
-                )
-            ),
-            GestureButton(
-                id = ID,
-                position = RIGHT,
-                start = 0.0f,
-                end = 1.0f,
-                slideActions = GestureActions(
-                    up = Actions.create(GlobalActions.LOCK_SCREEN),
-                    center = Actions.create(GlobalActions.BACK)
+                    longSlideActions = GestureActions(
+                        up = Actions.create(
+                            GlobalActions.WECHAT_SCAN,
+                            GlobalActions.WECHAT_PAY,
+                            GlobalActions.HOME,
+                            GlobalActions.ALIPAY_SCAN,
+                            GlobalActions.ALIPAY_PAY
+                        ),
+                        center = Actions.create(GlobalActions.PREVIOUS_APP)
+                    )
                 ),
-                longSlideActions = GestureActions(
-                    up = Actions.create(
-                        GlobalActions.WECHAT_SCAN,
-                        GlobalActions.WECHAT_PAY,
-                        GlobalActions.HOME,
-                        GlobalActions.ALIPAY_SCAN,
-                        GlobalActions.ALIPAY_PAY
+                GestureButton(
+                    id = ID_DEFAULT,
+                    position = Position.Right,
+                    start = 0.0f,
+                    end = 1.0f,
+                    slideActions = GestureActions(
+                        up = Actions.create(GlobalActions.LOCK_SCREEN),
+                        center = Actions.create(GlobalActions.BACK)
                     ),
-                    center = Actions.create(GlobalActions.PREVIOUS_APP)
+                    longSlideActions = GestureActions(
+                        up = Actions.create(
+                            GlobalActions.WECHAT_SCAN,
+                            GlobalActions.WECHAT_PAY,
+                            GlobalActions.HOME,
+                            GlobalActions.ALIPAY_SCAN,
+                            GlobalActions.ALIPAY_PAY
+                        ),
+                        center = Actions.create(GlobalActions.PREVIOUS_APP)
+                    )
                 )
             )
-        )
+        }
 
         fun createPair(): List<GestureButton> {
             val id = SystemClock.uptimeMillis().toString()
@@ -89,19 +89,19 @@ data class GestureButton(
             val color = Color(colorInt).copy(alpha = GestureButtonColorAlpha).toArgb()
             val b1 = GestureButton(
                 id = id,
-                position = LEFT,
+                position = Position.Left,
                 color = color
             )
             val b2 = GestureButton(
                 id = id,
-                position = RIGHT,
+                position = Position.Right,
                 color = color
             )
             return listOf(b1, b2)
         }
     }
 
-    val isDefault: Boolean = id == ID
+    val isDefault: Boolean = id == ID_DEFAULT
 
     override fun compareTo(other: GestureButton): Int {
         val idCompared = id.compareTo(other.id)
