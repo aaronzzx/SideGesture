@@ -2,7 +2,6 @@ package com.aaron.sidegesture.utils
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import com.aaron.sidegesture.entity.AppInfo
 
@@ -24,14 +23,9 @@ object AppInfoUtils {
             val activityInfo = resolveInfo.activityInfo
             val packageName = activityInfo?.packageName
             if (packageName.isNullOrEmpty()) continue
-            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.MATCH_ALL)
             val item = AppInfo(
                 packageName = packageName,
-                label = activityInfo.loadLabel(packageManager).toString(),
-                icon = activityInfo.loadIcon(packageManager),
-                isUserApp = packageInfo.applicationInfo?.flags?.let {
-                    (it and ApplicationInfo.FLAG_SYSTEM) == 0
-                } ?: true
+                label = activityInfo.loadLabel(packageManager).toString()
             )
             list.add(item)
         }

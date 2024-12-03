@@ -58,6 +58,7 @@ import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
+import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectItem
 import com.aaron.sidegesture.ui.theme.AlipayColor
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
