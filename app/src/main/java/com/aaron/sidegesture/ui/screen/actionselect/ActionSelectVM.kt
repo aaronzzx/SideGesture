@@ -89,19 +89,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 AppInfoUtils.getInstalledPackages(App.getContext())
             }
             updateUiState {
-                val thirdApps = mutableListOf<AppInfo>()
-                val systemApps = mutableListOf<AppInfo>()
-                appInfos.forEach { info ->
-                    if (info.isUserApp) {
-                        thirdApps.add(info)
-                    } else {
-                        systemApps.add(info)
-                    }
-                }
-                it.copy(
-                    systemApps = systemApps,
-                    userApps = thirdApps
-                )
+                it.copy(apps = appInfos)
             }
         }
     }
@@ -251,8 +239,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val title: String = "",
         val selectSingle: Boolean = true,
         val actions: List<String> = emptyList(),
-        val userApps: List<AppInfo> = emptyList(),
-        val systemApps: List<AppInfo> = emptyList(),
+        val apps: List<AppInfo> = emptyList(),
         val selectedItem: SelectItem = SelectItem(),
         val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     ) {

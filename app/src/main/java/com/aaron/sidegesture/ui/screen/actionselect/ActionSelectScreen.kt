@@ -141,8 +141,7 @@ fun ActionSelectScreen(
                             Text(
                                 text = when (tabIndex) {
                                     PAGE_ACTION -> stringResource(id = R.string.tab_action)
-                                    PAGE_USER_APPS -> stringResource(id = R.string.tab_user_app)
-                                    PAGE_SYSTEM_APPS -> stringResource(id = R.string.tab_system_app)
+                                    PAGE_APPS -> stringResource(id = R.string.tab_apps)
                                     else -> error("Unknown tabIndex: $tabIndex")
                                 }
                             )
@@ -157,7 +156,7 @@ fun ActionSelectScreen(
                     var init = true
                     snapshotFlow { pagerState.currentPage }
                         .drop(1)
-                        .filter { init && (it == PAGE_USER_APPS || it == PAGE_SYSTEM_APPS) }
+                        .filter { init && it == PAGE_APPS }
                         .collectLatest {
                             if (uiState.needRequestGetAppPermission) {
                                 permissionState.launchPermissionRequest()
@@ -183,24 +182,10 @@ fun ActionSelectScreen(
                                 }
                             )
                         }
-                        PAGE_USER_APPS -> {
+                        PAGE_APPS -> {
                             AppPage(
                                 modifier = Modifier.fillMaxSize(),
-                                appInfos = uiState.userApps,
-                                selectedItem = uiState.selectedItem,
-                                snackbarHostState = snackbarHostState,
-                                permissionState = permissionState,
-                                selectSingle = uiState.selectSingle,
-                                needRequestGetAppPermission = uiState.needRequestGetAppPermission,
-                                onSelect = { appInfo, selected ->
-                                    vm.select(appInfo, selected)
-                                }
-                            )
-                        }
-                        PAGE_SYSTEM_APPS -> {
-                            AppPage(
-                                modifier = Modifier.fillMaxSize(),
-                                appInfos = uiState.systemApps,
+                                appInfos = uiState.apps,
                                 selectedItem = uiState.selectedItem,
                                 snackbarHostState = snackbarHostState,
                                 permissionState = permissionState,
@@ -452,7 +437,6 @@ private fun AppItem(
 private const val MAX_SELECT_COUNT = 5
 
 private const val PAGE_ACTION = 0
-private const val PAGE_USER_APPS = 1
-private const val PAGE_SYSTEM_APPS = 2
+private const val PAGE_APPS = 1
 
-private val PAGES = listOf(PAGE_ACTION, PAGE_USER_APPS, PAGE_SYSTEM_APPS)
+private val PAGES = listOf(PAGE_ACTION, PAGE_APPS)

@@ -73,6 +73,7 @@
     <string name="request_get_apps_permission_rationale">将前往获取应用列表权限</string>
     <string name="goto_enable_settings">去开启</string>
     <string name="tab_action">动作</string>
+    <string name="tab_apps">应用程序</string>
     <string name="tab_user_app">用户应用</string>
     <string name="tab_system_app">系统应用</string>
 
