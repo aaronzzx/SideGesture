@@ -11,5 +11,6 @@ import kotlinx.serialization.Serializable
 @Keep
 data class AppInfo(
     val packageName: String,
+    val className: String,
     val label: String
 )

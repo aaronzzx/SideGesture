@@ -25,6 +25,7 @@ object AppInfoUtils {
             if (packageName.isNullOrEmpty()) continue
             val item = AppInfo(
                 packageName = packageName,
+                className = activityInfo.name,
                 label = activityInfo.loadLabel(packageManager).toString()
             )
             list.add(item)

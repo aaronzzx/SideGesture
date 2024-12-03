@@ -1,6 +1,6 @@
 package com.aaron.sidegesture.ktx
 
-import android.content.pm.PackageManager
+import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -14,10 +14,9 @@ import com.aaron.sidegesture.entity.AppInfo
 
 val AppInfo.icon: Drawable? @Composable get() {
     val pkgManager = LocalContext.current.packageManager
-    return remember(packageName) {
+    return remember(this) {
         try {
-            val pkgInfo = pkgManager.getPackageInfo(packageName, PackageManager.MATCH_ALL)
-            pkgInfo.applicationInfo?.loadIcon(pkgManager)
+            pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
         } catch (ignored: Exception) {
             null
         }
