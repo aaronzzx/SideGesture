@@ -61,7 +61,7 @@ import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectItem
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
 import com.aaron.sidegesture.ui.theme.AlipayColor
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
@@ -178,7 +178,7 @@ fun ActionSelectScreen(
                             ActionPage(
                                 modifier = Modifier.fillMaxSize(),
                                 actions = uiState.actions,
-                                selectedItem = uiState.selectedItem,
+                                selectedRecord = uiState.selectedRecord,
                                 selectSingle = uiState.selectSingle,
                                 onSelect = { action, selected ->
                                     vm.select(action, selected)
@@ -189,7 +189,7 @@ fun ActionSelectScreen(
                             AppPage(
                                 modifier = Modifier.fillMaxSize(),
                                 appInfos = uiState.apps,
-                                selectedItem = uiState.selectedItem,
+                                selectedRecord = uiState.selectedRecord,
                                 snackbarHostState = snackbarHostState,
                                 permissionState = permissionState,
                                 selectSingle = uiState.selectSingle,
@@ -210,7 +210,7 @@ fun ActionSelectScreen(
 private fun ActionPage(
     onSelect: (Action, Boolean) -> Unit,
     actions: List<Action>,
-    selectedItem: SelectItem,
+    selectedRecord: SelectedRecord,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
     maxSelectCount: Int = MAX_SELECT_COUNT
@@ -225,10 +225,10 @@ private fun ActionPage(
         ) { item ->
             ActionItem(
                 action = item,
-                selected = selectedItem.isSelected(item),
+                selected = selectedRecord.isSelected(item),
                 selectSingle = selectSingle,
                 enabled = run {
-                    !(selectedItem.size >= maxSelectCount && !selectedItem.isSelected(item))
+                    !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
                 },
                 onSelect = { selected ->
                     onSelect(item, selected)
@@ -313,7 +313,7 @@ private fun ActionItem(
 private fun AppPage(
     onSelect: (AppInfo, Boolean) -> Unit,
     appInfos: List<AppInfo>,
-    selectedItem: SelectItem,
+    selectedRecord: SelectedRecord,
     snackbarHostState: SnackbarHostState,
     permissionState: PermissionState,
     selectSingle: Boolean,
@@ -333,10 +333,10 @@ private fun AppPage(
                 ) { item ->
                     AppItem(
                         appInfo = item,
-                        selected = selectedItem.isSelected(item),
+                        selected = selectedRecord.isSelected(item),
                         selectSingle = selectSingle,
                         enabled = run {
-                            !(selectedItem.size >= maxSelectCount && !selectedItem.isSelected(item))
+                            !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
                         },
                         onSelect = { selected ->
                             onSelect(item, selected)

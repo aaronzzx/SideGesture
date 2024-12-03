@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
 import android.os.Build
+import android.os.SystemClock
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -59,25 +60,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun selectAppInfo(appInfo: AppInfo, selected: Boolean) {
         updateUiState {
-            val list = it.selectedItem.apps.toMutableList()
-            if (selected) {
-                list.add(appInfo)
-            } else {
-                list.remove(appInfo)
-            }
-            it.copy(selectedItem = it.selectedItem.copy(apps = list))
+            it.copy(selectedRecord = it.selectedRecord.selectAppInfo(appInfo, selected))
         }
     }
 
     private fun selectAction(action: Action, selected: Boolean) {
         updateUiState {
-            val list = it.selectedItem.actions.toMutableList()
-            if (selected) {
-                list.add(action)
-            } else {
-                list.remove(action)
-            }
-            it.copy(selectedItem = it.selectedItem.copy(actions = list))
+            it.copy(selectedRecord = it.selectedRecord.selectAction(action, selected))
         }
     }
 
@@ -97,7 +86,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 val list1 = mutableListOf<AppInfo>()
                 val list2 = mutableListOf<AppInfo>()
                 appInfos.forEach { appInfo ->
-                    if (it.selectedItem.isSelected(appInfo)) {
+                    if (it.selectedRecord.isSelected(appInfo)) {
                         list1.add(appInfo)
                     } else {
                         list2.add(appInfo)
@@ -163,12 +152,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                                 true -> emptyList()
                                 else -> actions
                             }
-                            val selectedApps = selectedActions.mapNotNull { action -> action.appInfo }
-                            val newSelectedItem = it.selectedItem.copy(
-                                actions = selectedActions,
-                                apps = selectedApps
-                            )
-                            it.copy(selectedItem = newSelectedItem)
+                            val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
+                            it.copy(selectedRecord = newSelectedRecord)
                         }
                         assembleData()
                     }
@@ -185,7 +170,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             val list1 = mutableListOf<Action>()
             val list2 = mutableListOf<Action>()
             globalActions.forEach { action ->
-                if (it.selectedItem.isSelected(action) || action == Action.NONE) {
+                if (it.selectedRecord.isSelected(action) || action == Action.NONE) {
                     list1.add(action)
                 } else {
                     list2.add(action)
@@ -213,16 +198,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     }
                 }
                 if (button != null) {
-                    val selectedItem = uiState.selectedItem
-                    val selectedActions = selectedItem.actions
-                    val selectedApps = selectedItem.apps.map { app ->
-                        Action(
-                            value = GlobalActions.EXTRA_LAUNCH_APP,
-                            data = JsonHelper.encodeToString(app)
-                        )
+                    val selectedRecord = uiState.selectedRecord
+                    val selectedList = selectedRecord.selectedList.map { obj ->
+                        if (obj !is AppInfo) obj as Action else {
+                            val data = JsonHelper.encodeToString(obj)
+                            Action(value = GlobalActions.EXTRA_LAUNCH_APP, data = data)
+                        }
                     }
-                    // 会把用户选择的顺序打乱
-                    val selectedList = selectedActions + selectedApps
                     val newActions = when (uiState.selectSingle) {
                         true -> selectedList.takeLast(1)
                         else -> selectedList
@@ -262,20 +244,59 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val selectSingle: Boolean = true,
         val actions: List<Action> = emptyList(),
         val apps: List<AppInfo> = emptyList(),
-        val selectedItem: SelectItem = SelectItem(),
+        val selectedRecord: SelectedRecord = SelectedRecord(),
         val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     ) {
-        data class SelectItem(
-            val actions: List<Action> = emptyList(),
-            val apps: List<AppInfo> = emptyList()
-        ) {
-            val size: Int get() = actions.size + apps.size
+        data class SelectedRecord(private val map: Map<Any, Long> = emptyMap()) {
+
+            val selectedList: List<Any> = run {
+                map.toList().sortedBy { it.second }.map { it.first }
+            }
+
+            val size: Int get() = selectedList.size
+
+            fun selectAll(actions: List<Action>): SelectedRecord {
+                val newMap = map.toMutableMap().apply {
+                    actions.forEach { action ->
+                        val appInfo = action.appInfo
+                        if (appInfo != null) {
+                            put(appInfo, timeMillis())
+                        } else {
+                            put(action, timeMillis())
+                        }
+                    }
+                }
+                return this.copy(map = newMap)
+            }
+
+            fun selectAction(action: Action, selected: Boolean): SelectedRecord {
+                val newMap = map.toMutableMap().apply {
+                    if (selected) {
+                        put(action, timeMillis())
+                    } else {
+                        remove(action)
+                    }
+                }
+                return this.copy(map = newMap)
+            }
+
+            fun selectAppInfo(app: AppInfo, selected: Boolean): SelectedRecord {
+                val newMap = map.toMutableMap().apply {
+                    if (selected) {
+                        put(app, timeMillis())
+                    } else {
+                        remove(app)
+                    }
+                }
+                return this.copy(map = newMap)
+            }
 
             fun isSelected(obj: Any): Boolean {
-                if (obj is AppInfo) {
-                    return obj in apps
-                }
-                return obj in actions
+                return obj in map.keys
+            }
+
+            private fun timeMillis(): Long {
+                return SystemClock.uptimeMillis()
             }
         }
     }
