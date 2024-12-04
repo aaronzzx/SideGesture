@@ -39,6 +39,8 @@ import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
 import com.aaron.sidegesture.ui.screen.home.Home
 import com.aaron.sidegesture.ui.screen.home.HomeScreen
+import com.aaron.sidegesture.ui.screen.iconresize.IconResize
+import com.aaron.sidegesture.ui.screen.iconresize.IconResizeScreen
 import com.aaron.sidegesture.ui.screen.unlock.Unlock
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
@@ -114,7 +116,13 @@ fun SideGestureApp() {
                     AppBlacklistScreen(onBack = { navController.navigateUp() })
                 }
                 myComposable<ActionSelect> {
-                    ActionSelectScreen(onBack = { navController.navigateUp() })
+                    ActionSelectScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToIconResize = { navController.navigate(IconResize(it)) }
+                    )
+                }
+                myComposable<IconResize>(typeMap = IconResize.typeMap) {
+                    IconResizeScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

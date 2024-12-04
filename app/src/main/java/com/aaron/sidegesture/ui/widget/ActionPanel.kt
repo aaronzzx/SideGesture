@@ -56,6 +56,7 @@ import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.actionIcon
+import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.ui.theme.AlipayColor
@@ -211,6 +212,8 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                     GlobalActions.ALIPAY_SCAN,
                                     GlobalActions.ALIPAY_PAY -> AlipayColor
 
+                                    GlobalActions.EXTRA_LAUNCH_APP -> Color.Transparent
+
                                     else -> MaterialTheme.colorScheme.primary
                                 },
                                 shape = CircleShape
@@ -232,9 +235,17 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                         actionIcon == R.drawable.alipay_paycode
                             }
                             AsyncImage(
-                                modifier = Modifier.let {
-                                    if (!isWechatAlipay) it else it.padding(12.dp)
-                                },
+                                modifier = Modifier
+                                    .let {
+                                        if (!isWechatAlipay) it else it.padding(12.dp)
+                                    }
+                                    .graphicsLayer {
+                                        val appInfo = action.appInfo
+                                        if (appInfo != null) {
+                                            scaleX = appInfo.iconScale
+                                            scaleY = appInfo.iconScale
+                                        }
+                                    },
                                 model = actionIcon,
                                 contentDescription = null,
                                 imageLoader = LocalContext.current.imageLoader,

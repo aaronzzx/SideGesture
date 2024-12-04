@@ -61,6 +61,7 @@ import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
 import com.aaron.sidegesture.ui.theme.AlipayColor
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
@@ -99,9 +100,17 @@ data class ActionSelect(
 @Composable
 fun ActionSelectScreen(
     onBack: () -> Unit,
+    onNavToIconResize: (List<AppInfo>) -> Unit,
     vm: ActionSelectVM = viewModel()
 ) {
-    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = { event ->
+            when (event) {
+                is UiEvent.GotoIconResize -> onNavToIconResize(event.appInfos)
+            }
+        }
+    ) { uiState ->
         val snackbarHostState = remember { SnackbarHostState() }
         Scaffold(
             topBar = {

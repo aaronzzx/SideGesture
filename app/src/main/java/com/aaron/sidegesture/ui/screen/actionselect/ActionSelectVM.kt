@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
 import android.os.Build
-import android.os.SystemClock
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -14,7 +13,9 @@ import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.appInfo
+import com.aaron.sidegesture.ktx.subscribeEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -39,7 +40,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         selectSingle = !actionSelect.isLongSlide
     )
 
+    private val eventHandler = EventHandler()
+
     init {
+        eventHandler.init()
         loadData()
     }
 
@@ -71,7 +75,15 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun done() {
-        saveSettings()
+        val appInfos = uiState
+            .selectedRecord
+            .list
+            .filterIsInstance<AppInfo>()
+        if (appInfos.isNotEmpty()) {
+            sendUiEvent(UiEvent.GotoIconResize(appInfos))
+        } else {
+            saveSettings()
+        }
     }
 
     fun updateAppInfos() {
@@ -86,8 +98,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 val list1 = mutableListOf<AppInfo>()
                 val list2 = mutableListOf<AppInfo>()
                 appInfos.forEach { appInfo ->
-                    if (it.selectedRecord.isSelected(appInfo)) {
-                        list1.add(appInfo)
+                    val cache = it.selectedRecord.getAppInfo(appInfo)
+                    if (cache != null) {
+                        list1.add(cache)
                     } else {
                         list2.add(appInfo)
                     }
@@ -199,7 +212,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 }
                 if (button != null) {
                     val selectedRecord = uiState.selectedRecord
-                    val selectedList = selectedRecord.selectedList.map { obj ->
+                    val selectedList = selectedRecord.list.map { obj ->
                         if (obj !is AppInfo) obj as Action else {
                             val data = JsonHelper.encodeToString(obj)
                             Action(value = GlobalActions.EXTRA_LAUNCH_APP, data = data)
@@ -239,6 +252,30 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    private inner class EventHandler {
+
+        fun init() {
+            subscribeEvent(IconResizeEvent::class) { event ->
+                val resizedAppInfos = event.appInfos
+                updateUiState {
+                    val selectedList = it.selectedRecord.list.toMutableList()
+                    resizedAppInfos.forEach { appInfo ->
+                        val index = selectedList.indexOfFirst { obj ->
+                            obj is AppInfo &&
+                                    obj.packageName == appInfo.packageName &&
+                                    obj.className == appInfo.className
+                        }
+                        if (index != -1) {
+                            selectedList[index] = appInfo
+                        }
+                    }
+                    it.copy(selectedRecord = UiState.SelectedRecord(selectedList))
+                }
+                saveSettings()
+            }
+        }
+    }
+
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
@@ -247,59 +284,68 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val selectedRecord: SelectedRecord = SelectedRecord(),
         val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     ) {
-        data class SelectedRecord(private val map: Map<Any, Long> = emptyMap()) {
+        data class SelectedRecord(val list: List<Any> = emptyList()) {
 
-            val selectedList: List<Any> = run {
-                map.toList().sortedBy { it.second }.map { it.first }
-            }
-
-            val size: Int get() = selectedList.size
+            val size: Int get() = list.size
 
             fun selectAll(actions: List<Action>): SelectedRecord {
-                val newMap = map.toMutableMap().apply {
+                val newList = list.toMutableList().apply {
                     actions.forEach { action ->
                         val appInfo = action.appInfo
                         if (appInfo != null) {
-                            put(appInfo, timeMillis())
+                            add(appInfo)
                         } else {
-                            put(action, timeMillis())
+                            add(action)
                         }
                     }
                 }
-                return this.copy(map = newMap)
+                return this.copy(list = newList)
             }
 
             fun selectAction(action: Action, selected: Boolean): SelectedRecord {
-                val newMap = map.toMutableMap().apply {
+                val newList = list.toMutableList().apply {
                     if (selected) {
-                        put(action, timeMillis())
+                        add(action)
                     } else {
                         remove(action)
                     }
                 }
-                return this.copy(map = newMap)
+                return this.copy(list = newList)
             }
 
             fun selectAppInfo(app: AppInfo, selected: Boolean): SelectedRecord {
-                val newMap = map.toMutableMap().apply {
+                val newList = list.toMutableList().apply {
                     if (selected) {
-                        put(app, timeMillis())
+                        add(app)
                     } else {
                         remove(app)
                     }
                 }
-                return this.copy(map = newMap)
+                return this.copy(list = newList)
             }
 
             fun isSelected(obj: Any): Boolean {
-                return obj in map.keys
+                if (obj is AppInfo) {
+                    return list.find {
+                        it is AppInfo &&
+                                it.packageName == obj.packageName &&
+                                it.className == obj.className
+                    } != null
+                }
+                return obj in list
             }
 
-            private fun timeMillis(): Long {
-                return SystemClock.uptimeMillis()
+            fun getAppInfo(appInfo: AppInfo): AppInfo? {
+                return list.find {
+                    it is AppInfo &&
+                            it.packageName == appInfo.packageName &&
+                            it.className == appInfo.className
+                } as? AppInfo
             }
         }
     }
 
-    sealed interface UiEvent
+    sealed interface UiEvent {
+        data class GotoIconResize(val appInfos: List<AppInfo>) : UiEvent
+    }
 }
