@@ -8,6 +8,7 @@ import androidx.core.os.postDelayed
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.ui.widget.showComposeToast
 import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.ProcessUtils
 import com.blankj.utilcode.util.ToastUtils
 
 /**
@@ -34,8 +35,7 @@ fun showToastDelay(@StringRes resId: Int, continueBlock: () -> Unit) {
 }
 
 fun showToast(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
-    val isPopBackgroundEnabled = PopBackgroundPermissionUtil.hasPopupBackgroundPermission(App.getContext())
-    if (isPopBackgroundEnabled) {
+    if (canShowToast()) {
         if (!init) {
             init()
         }
@@ -51,8 +51,7 @@ fun showToast(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = nu
 }
 
 fun showToast(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
-    val isPopBackgroundEnabled = PopBackgroundPermissionUtil.hasPopupBackgroundPermission(App.getContext())
-    if (isPopBackgroundEnabled) {
+    if (canShowToast()) {
         if (!init) {
             init()
         }
@@ -65,6 +64,11 @@ fun showToast(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Un
             continueBlock()
         }
     }
+}
+
+private fun canShowToast(): Boolean {
+    return ProcessUtils.isMainProcess() ||
+            PopBackgroundPermissionUtil.hasPopupBackgroundPermission(App.getContext())
 }
 
 private fun init() {

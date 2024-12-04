@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
  */
 
 @Composable
-fun Toast(modifier: Modifier = Modifier) {
+fun ComposeToast(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
         val context = LocalContext.current
         val snackbarHostState = remember { SnackbarHostState() }

@@ -10,7 +10,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.aaron.sidegesture.ui.widget.Toast
+import com.aaron.sidegesture.ui.widget.ComposeToast
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -53,6 +53,6 @@ fun SideGestureTheme(
         typography = Typography
     ) {
         content()
-        Toast()
+        ComposeToast()
     }
 }
