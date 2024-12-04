@@ -1,15 +1,19 @@
 package com.aaron.sidegesture.ktx
 
 import android.accessibilityservice.AccessibilityService
+import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.net.Uri
 import android.provider.Settings
 import android.text.TextUtils
+import android.view.KeyEvent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.utils.showToast
+import com.aaron.sidegesture.utils.showToastDelay
 import com.blankj.utilcode.util.AppUtils
 
 
@@ -17,6 +21,44 @@ import com.blankj.utilcode.util.AppUtils
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+fun Context.volumeUp() {
+    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI)
+}
+
+fun Context.volumeDown() {
+    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI)
+}
+
+fun Context.toggleMute() {
+    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    if (!notificationManager.isNotificationPolicyAccessGranted) {
+        showToastDelay(R.string.will_goto_request_notification_policy_access_permission) {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        }
+        return
+    }
+    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    val ringerMode = audioManager.ringerMode
+    val newRingerMode = when (ringerMode) {
+        AudioManager.RINGER_MODE_SILENT -> AudioManager.RINGER_MODE_NORMAL
+        else -> AudioManager.RINGER_MODE_SILENT
+    }
+    audioManager.ringerMode = newRingerMode
+}
+
+fun Context.dispatchMediaKeyEvent(keycode: Int) {
+    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    val down = KeyEvent(KeyEvent.ACTION_DOWN, keycode)
+    audioManager.dispatchMediaKeyEvent(down)
+    val up = KeyEvent(KeyEvent.ACTION_UP, keycode)
+    audioManager.dispatchMediaKeyEvent(up)
+}
 
 fun Context.gotoWechat() {
     val intent = Intent().apply {

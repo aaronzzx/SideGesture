@@ -13,9 +13,23 @@ import com.blankj.utilcode.util.ToastUtils
  * @since 2024/11/23
  */
 
+private const val DELAYED_MILLIS = 2000L
+
 private var init = false
 
 private val handler = Handler(Looper.getMainLooper())
+
+fun showToastDelay(text: String, continueBlock: () -> Unit) {
+    showToast(text, DELAYED_MILLIS) {
+        continueBlock()
+    }
+}
+
+fun showToastDelay(@StringRes resId: Int, continueBlock: () -> Unit) {
+    showToast(resId, DELAYED_MILLIS) {
+        continueBlock()
+    }
+}
 
 fun showToast(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
     if (!init) {

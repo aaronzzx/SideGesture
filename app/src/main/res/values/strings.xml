@@ -5,7 +5,8 @@
     <string name="delete">删除</string>
     <string name="initial_settings">初始设置</string>
     <string name="gesture_switch">手势开关</string>
-    <string name="system_overlay">悬浮窗</string>
+    <string name="system_overlay">在其他应用上层显示</string>
+    <string name="popup_background">后台弹出界面</string>
     <string name="accessibility_service">无障碍服务</string>
     <string name="global_settings">全局设置</string>
     <string name="advanced_settings">高级设置</string>
@@ -73,6 +74,7 @@
     <string name="gesture_button_size_max">已达到最大触钮数量</string>
     <string name="request_get_apps_permission">获取应用列表</string>
     <string name="request_get_apps_permission_rationale">将前往获取应用列表权限</string>
+    <string name="will_goto_request_notification_policy_access_permission">将前往获取“免打扰”权限</string>
     <string name="goto_enable_settings">去开启</string>
     <string name="tab_action">动作</string>
     <string name="tab_apps">应用程序</string>
@@ -108,8 +110,8 @@
     <string name="action_recent">最近任务键</string>
     <string name="action_menu">菜单键</string>
     <string name="action_search_in_app">在应用程序中搜索</string>
-    <string name="action_volume_up">音量增加键</string>
-    <string name="action_volume_down">音量减小键</string>
+    <string name="action_volume_up">音量增加</string>
+    <string name="action_volume_down">音量减小</string>
     <string name="action_mute">静音开关</string>
     <string name="action_play_pause_song">播放/暂停(12.0+)</string>
     <string name="action_last_song">上一首</string>

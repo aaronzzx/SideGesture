@@ -68,6 +68,7 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.utils.SystemAlertWindow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -194,6 +195,13 @@ fun HomeScreen(
                             },
                             checked = uiState.isDrawOverlayEnabled,
                             text = stringResource(id = R.string.system_overlay)
+                        )
+                        MyTextSwitch(
+                            onCheckedChange = {
+                                SystemAlertWindow.start(context)
+                            },
+                            checked = uiState.isPopBackgroundEnabled,
+                            text = stringResource(id = R.string.popup_background)
                         )
                         MyTextSwitch(
                             onCheckedChange = {

@@ -3,7 +3,6 @@ package com.aaron.sidegesture
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME
-import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_KEYCODE_HEADSETHOOK
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_POWER_DIALOG
@@ -13,14 +12,19 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCRE
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
 import android.content.Intent
 import android.os.Build
+import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.appInfo
+import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ktx.toggleMute
+import com.aaron.sidegesture.ktx.volumeDown
+import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
@@ -34,7 +38,7 @@ import kotlinx.coroutines.launch
  * @author aaronzzxup@gmail.com
  * @since 2024/11/21
  */
-class SideGestureServiceProxy(private val host: AccessibilityService) {
+class SideGestureServiceProxy(private val host: SideGestureService) {
 
     private var prevPackageName: String? = null
     private var currPackageName: String? = null
@@ -61,7 +65,7 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
         host.onAction(action)
     }
 
-    private fun AccessibilityService.onAction(action: Action) {
+    private fun SideGestureService.onAction(action: Action) {
         when (action.value) {
             GlobalActions.BACK -> {
                 performGlobalAction(GLOBAL_ACTION_BACK)
@@ -73,19 +77,22 @@ class SideGestureServiceProxy(private val host: AccessibilityService) {
                 performGlobalAction(GLOBAL_ACTION_RECENTS)
             }
             GlobalActions.VOLUME_UP -> {
+                volumeUp()
             }
             GlobalActions.VOLUME_DOWN -> {
+                volumeDown()
             }
             GlobalActions.MUTE -> {
+                toggleMute()
             }
             GlobalActions.PLAY_PAUSE_SONG -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    performGlobalAction(GLOBAL_ACTION_KEYCODE_HEADSETHOOK)
-                }
+                dispatchMediaKeyEvent(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
             }
             GlobalActions.LAST_SONG -> {
+                dispatchMediaKeyEvent(KeyEvent.KEYCODE_MEDIA_PREVIOUS)
             }
             GlobalActions.NEXT_SONG -> {
+                dispatchMediaKeyEvent(KeyEvent.KEYCODE_MEDIA_NEXT)
             }
             GlobalActions.PREVIOUS_APP -> {
                 previousApp()

@@ -10,6 +10,7 @@ import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.PopBackgroundPermissionUtil
 import com.blankj.utilcode.util.PermissionUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -94,10 +95,13 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder.initialSettings.data.collectLatest { item ->
                 val app = App.getContext()
                 val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
+                val isDrawOverlayEnabled = PermissionUtils.isGrantedDrawOverlays()
+                val isPopBackgroundEnabled = PopBackgroundPermissionUtil.hasPopupBackgroundPermission(app)
                 updateUiState {
                     it.copy(
                         isAccessibilityEnabled = isAccessibilityEnabled,
-                        isDrawOverlayEnabled = PermissionUtils.isGrantedDrawOverlays(),
+                        isDrawOverlayEnabled = isDrawOverlayEnabled,
+                        isPopBackgroundEnabled = isPopBackgroundEnabled,
                         isGestureEnabled = item.gestureEnabled
                     )
                 }
@@ -141,6 +145,7 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         val isGestureEnabled: Boolean = false,
         val isAccessibilityEnabled: Boolean = false,
         val isDrawOverlayEnabled: Boolean = false,
+        val isPopBackgroundEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,
         val showMoreMenu: Boolean = false,
         val showResetWarningDialog: Boolean = false
