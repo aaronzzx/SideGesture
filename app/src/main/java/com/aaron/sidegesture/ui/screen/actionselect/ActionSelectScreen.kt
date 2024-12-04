@@ -71,6 +71,7 @@ import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinIconSize
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
+import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.theme.WechatColor
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -308,7 +309,7 @@ private fun ActionItem(
         )
         if (!selectSingle) {
             Checkbox(
-                modifier = Modifier.padding(end = 4.dp),
+                modifier = Modifier.padding(end = TopBarPaddingExtra),
                 enabled = enabled,
                 checked = selected,
                 onCheckedChange = onSelect
@@ -437,7 +438,7 @@ private fun AppItem(
         }
         if (!selectSingle) {
             Checkbox(
-                modifier = Modifier.padding(end = 4.dp),
+                modifier = Modifier.padding(end = TopBarPaddingExtra),
                 enabled = enabled,
                 checked = selected,
                 onCheckedChange = onSelect

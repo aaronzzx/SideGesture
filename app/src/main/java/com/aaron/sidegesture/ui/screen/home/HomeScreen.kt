@@ -38,8 +38,6 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -56,7 +54,6 @@ import com.aaron.sidegesture.ktx.buttonTextCompose
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoOverlaySettings
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
-import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -143,7 +140,7 @@ fun HomeScreen(
                         DropdownMenu(
                             containerColor = MaterialTheme.colorScheme.surface,
                             shape = MaterialTheme.shapes.medium,
-                            offset = DpOffset(-EdgeMenuPadding, 0.dp),
+//                            offset = DpOffset(-EdgeMenuPadding, 0.dp),
                             expanded = uiState.showMoreMenu,
                             onDismissRequest = { vm.showMoreMenu(false) }
                         ) {
