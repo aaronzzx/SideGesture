@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
@@ -27,7 +26,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -39,6 +45,7 @@ import coil.compose.AsyncImage
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.AppInfo.Companion.DEFAULT_SCALE
 import com.aaron.sidegesture.entity.AppInfo.Companion.MAX_SCALE
@@ -129,7 +136,19 @@ fun IconResizeScreen(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(250.dp)
-                    .clip(CircleShape),
+                    .drawWithCache {
+                        val bounds = Rect(Offset.Zero, size)
+                        val path = Path().apply {
+                            addOval(bounds)
+                        }
+                        onDrawWithContent {
+                            drawContent()
+                            clipPath(path = path, clipOp = ClipOp.Difference) {
+                                drawRect(color = Color.Black.copy(DimAlpha))
+                            }
+                        }
+                    }
+                    .clip(RectangleShape),
                 contentAlignment = Alignment.Center
             ) {
                 LazyVerticalGrid(
