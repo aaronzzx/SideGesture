@@ -113,7 +113,7 @@
     <string name="action_volume_up">音量增加</string>
     <string name="action_volume_down">音量减小</string>
     <string name="action_mute">静音开关</string>
-    <string name="action_play_pause_song">播放/暂停(12.0+)</string>
+    <string name="action_play_pause_song">播放/暂停</string>
     <string name="action_last_song">上一首</string>
     <string name="action_next_song">下一首</string>
     <string name="action_previous_app">上一个应用程序</string>
@@ -146,7 +146,7 @@
     <string name="action_float_ball">悬浮球</string>
     <string name="action_hide_gesture_button">隐藏触钮</string>
     <string name="action_wechat_scan">微信扫一扫</string>
-    <string name="action_wechat_pay_simulate_click">微信付款码(模拟点击7.0+)</string>
+    <string name="action_wechat_pay_simulate_click">微信付款码(7.0+ 模拟点击)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>
     <string name="action_alipay_pay">支付宝付款码</string>
 </resources>

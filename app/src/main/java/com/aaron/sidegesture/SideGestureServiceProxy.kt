@@ -1,5 +1,6 @@
 package com.aaron.sidegesture
 
+import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME
@@ -28,6 +29,8 @@ import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.FlashlightUtils
+import com.blankj.utilcode.util.PermissionUtils
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -42,6 +45,10 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
 
     private var prevPackageName: String? = null
     private var currPackageName: String? = null
+
+    fun onDestroy() {
+        FlashlightUtils.destroy()
+    }
 
     fun onAccessibilityEvent(event: AccessibilityEvent?) {
         host.apply {
@@ -108,18 +115,40 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
                 }
             }
-            GlobalActions.KILL_APP -> {
-            }
             GlobalActions.FLASHLIGHT -> {
+                if (FlashlightUtils.isFlashlightEnable()) {
+                    if (PermissionUtils.isGranted(Manifest.permission.CAMERA)) {
+                        FlashlightUtils.setFlashlightStatus(!FlashlightUtils.isFlashlightOn())
+                    } else {
+                        PermissionUtils
+                            .permission(Manifest.permission.CAMERA)
+                            .callback(object : PermissionUtils.SimpleCallback {
+                                override fun onGranted() {
+                                    FlashlightUtils.setFlashlightStatus(!FlashlightUtils.isFlashlightOn())
+                                }
+
+                                override fun onDenied() {
+                                }
+                            })
+                            .request()
+                    }
+                }
             }
             GlobalActions.SPLIT_SCREEN -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     performGlobalAction(GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN)
                 }
             }
-            GlobalActions.POPUP_SCREEN -> {
-            }
             GlobalActions.ASSIST_APP -> {
+                try {
+                    val intent = Intent().apply {
+                        Intent.ACTION_ASSIST
+                        setAction(Intent.ACTION_ASSIST)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+                } catch (ignored: Exception) {
+                }
             }
             GlobalActions.SCREENSHOT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

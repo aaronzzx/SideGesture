@@ -55,6 +55,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onInterrupt() {
+        proxy.onDestroy()
         coroutineScope.cancel()
     }
 

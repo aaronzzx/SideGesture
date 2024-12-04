@@ -6,8 +6,6 @@ import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assistant
-import androidx.compose.material.icons.filled.BrandingWatermark
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Handyman
@@ -56,10 +54,10 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
     GlobalActions.OPEN_NOTIFICATION_PANEL -> getString(R.string.action_open_notification_panel)
     GlobalActions.OPEN_QUICK_PANEL -> getString(R.string.action_open_quick_panel)
     GlobalActions.LOCK_SCREEN -> getString(R.string.action_lock_screen)
-    GlobalActions.KILL_APP -> getString(R.string.action_kill_app)
+//    GlobalActions.KILL_APP -> getString(R.string.action_kill_app)
     GlobalActions.FLASHLIGHT -> getString(R.string.action_flashlight)
     GlobalActions.SPLIT_SCREEN -> getString(R.string.action_split_screen)
-    GlobalActions.POPUP_SCREEN -> getString(R.string.action_popup_screen)
+//    GlobalActions.POPUP_SCREEN -> getString(R.string.action_popup_screen)
     GlobalActions.ASSIST_APP -> getString(R.string.action_assist_app)
 //    GlobalActions.SEARCH -> getString(R.string.action_search)
     GlobalActions.SCREENSHOT -> getString(R.string.action_screenshot)
@@ -106,10 +104,10 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.OPEN_NOTIFICATION_PANEL -> stringResource(R.string.action_open_notification_panel)
     GlobalActions.OPEN_QUICK_PANEL -> stringResource(R.string.action_open_quick_panel)
     GlobalActions.LOCK_SCREEN -> stringResource(R.string.action_lock_screen)
-    GlobalActions.KILL_APP -> stringResource(R.string.action_kill_app)
+//    GlobalActions.KILL_APP -> stringResource(R.string.action_kill_app)
     GlobalActions.FLASHLIGHT -> stringResource(R.string.action_flashlight)
     GlobalActions.SPLIT_SCREEN -> stringResource(R.string.action_split_screen)
-    GlobalActions.POPUP_SCREEN -> stringResource(R.string.action_popup_screen)
+//    GlobalActions.POPUP_SCREEN -> stringResource(R.string.action_popup_screen)
     GlobalActions.ASSIST_APP -> stringResource(R.string.action_assist_app)
 //    GlobalActions.SEARCH -> stringResource(R.string.action_search)
     GlobalActions.SCREENSHOT -> stringResource(R.string.action_screenshot)
@@ -155,10 +153,10 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.OPEN_NOTIFICATION_PANEL -> Icons.Default.Notifications
     GlobalActions.OPEN_QUICK_PANEL -> Icons.Default.Settings
     GlobalActions.LOCK_SCREEN -> Icons.Default.ScreenLockPortrait
-    GlobalActions.KILL_APP -> Icons.Default.Close
+//    GlobalActions.KILL_APP -> Icons.Default.Close
     GlobalActions.FLASHLIGHT -> Icons.Default.FlashlightOn
     GlobalActions.SPLIT_SCREEN -> Icons.Default.Splitscreen
-    GlobalActions.POPUP_SCREEN -> Icons.Default.BrandingWatermark
+//    GlobalActions.POPUP_SCREEN -> Icons.Default.BrandingWatermark
     GlobalActions.ASSIST_APP -> Icons.Default.Assistant
 //    GlobalActions.SEARCH -> Icons.Default.Search
     GlobalActions.SCREENSHOT -> Icons.Default.Screenshot
