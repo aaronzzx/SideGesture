@@ -78,6 +78,10 @@
     <string name="tab_apps">应用程序</string>
     <string name="tab_user_app">用户应用</string>
     <string name="tab_system_app">系统应用</string>
+    <string name="delete_gesture_button">删除触钮</string>
+    <string name="delete_gesture_button_hint">将会同步删除对侧触钮，是否继续？</string>
+    <string name="goto_wechat_failed">无法跳转到微信，请检查您是否安装了微信！</string>
+    <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝！</string>
 
     <string name="gesture_to_right_top">👆</string>
     <string name="gesture_to_right">👉</string>
@@ -97,19 +101,17 @@
     <string name="gesture_button_color">触钮颜色</string>
     <string name="gesture_button_align">对齐触钮</string>
     <string name="gesture_button_align_hint">两侧保持相同尺寸和位置</string>
-    <string name="goto_wechat_failed">无法跳转到微信，请检查您是否安装了微信！</string>
-    <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝！</string>
 
     <string name="action_none">无</string>
     <string name="action_back">返回键</string>
-    <string name="action_home">主屏幕键</string>
+    <string name="action_home">主页键</string>
     <string name="action_recent">最近任务键</string>
     <string name="action_menu">菜单键</string>
     <string name="action_search_in_app">在应用程序中搜索</string>
     <string name="action_volume_up">音量增加键</string>
     <string name="action_volume_down">音量减小键</string>
     <string name="action_mute">静音开关</string>
-    <string name="action_play_pause_song">播放/暂停歌曲(12.0+)</string>
+    <string name="action_play_pause_song">播放/暂停(12.0+)</string>
     <string name="action_last_song">上一首</string>
     <string name="action_next_song">下一首</string>
     <string name="action_previous_app">上一个应用程序</string>
@@ -122,7 +124,7 @@
     <string name="action_flashlight">手电筒</string>
     <string name="action_split_screen">应用分屏(7.0+)</string>
     <string name="action_popup_screen">应用小窗</string>
-    <string name="action_assist_app">辅助应用程序</string>
+    <string name="action_assist_app">语音助手</string>
     <string name="action_search">搜索查找</string>
     <string name="action_screenshot">截屏(9.0+)</string>
     <string name="action_record_screen">录屏</string>
@@ -142,9 +144,7 @@
     <string name="action_float_ball">悬浮球</string>
     <string name="action_hide_gesture_button">隐藏触钮</string>
     <string name="action_wechat_scan">微信扫一扫</string>
-    <string name="action_wechat_pay_simulate_click">微信付款码(模拟点击)</string>
+    <string name="action_wechat_pay_simulate_click">微信付款码(模拟点击7.0+)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>
     <string name="action_alipay_pay">支付宝付款码</string>
-    <string name="delete_gesture_button">删除触钮</string>
-    <string name="delete_gesture_button_hint">将会同步删除对侧触钮，是否继续？</string>
 </resources>

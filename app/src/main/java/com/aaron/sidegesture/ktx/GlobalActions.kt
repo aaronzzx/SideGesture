@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Splitscreen
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.VolumeDown
-import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -146,7 +146,7 @@ fun actionIcon(action: Action): Any? = when (action.value) {
 //    GlobalActions.SEARCH_IN_APP -> Icons.Default.Search
     GlobalActions.VOLUME_UP -> Icons.Default.VolumeUp
     GlobalActions.VOLUME_DOWN -> Icons.Default.VolumeDown
-    GlobalActions.MUTE -> Icons.Default.VolumeOff
+    GlobalActions.MUTE -> Icons.Default.VolumeMute
     GlobalActions.PLAY_PAUSE_SONG -> Icons.Default.PlayPause
     GlobalActions.LAST_SONG -> Icons.Default.SkipPrevious
     GlobalActions.NEXT_SONG -> Icons.Default.SkipNext
