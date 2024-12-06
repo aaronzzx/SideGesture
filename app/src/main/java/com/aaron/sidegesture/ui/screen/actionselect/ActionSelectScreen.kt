@@ -67,6 +67,7 @@ import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.Selec
 import com.aaron.sidegesture.ui.theme.AlipayColor
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
+import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinIconSize
@@ -272,7 +273,7 @@ private fun ActionItem(
             .onClick(enabled = enabled) {
                 onSelect(!selected)
             }
-            .padding(vertical = ContentPaddingVertical),
+            .padding(vertical = ContentPaddingVerticalWithSection),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current

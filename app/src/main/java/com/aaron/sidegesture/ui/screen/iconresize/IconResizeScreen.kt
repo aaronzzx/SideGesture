@@ -64,7 +64,7 @@ import com.aaron.sidegesture.entity.AppInfo.Companion.MIN_SCALE
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.serializableType
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
+import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -121,7 +121,7 @@ fun IconResizeScreen(
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(
-                        vertical = ContentPaddingVertical,
+                        vertical = ContentPaddingVerticalWithSection,
                         horizontal = ContentPaddingHorizontal * 2
                     ),
                     horizontalArrangement = Arrangement.spacedBy(ContentPaddingHorizontal)

@@ -53,7 +53,7 @@ import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
+import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.DividerHeight
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -141,7 +141,7 @@ fun MyExpandableColumn(
                     }
                     .padding(
                         horizontal = ContentPaddingHorizontal,
-                        vertical = ContentPaddingVertical
+                        vertical = ContentPaddingVerticalWithSection
                     ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ItemPadding)
@@ -196,7 +196,7 @@ fun MyTextSlider(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = MinItemHeightNoSecondary)
-            .padding(vertical = ContentPaddingVertical),
+            .padding(vertical = ContentPaddingVerticalWithSection),
         verticalArrangement = Arrangement.spacedBy(IconTextPadding)
     ) {
         Text(
@@ -321,7 +321,7 @@ fun MyTextButton(
             .onSingleClick(enabled = enabled) {
                 onClick()
             }
-            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVertical),
+            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVerticalWithSection),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {
@@ -397,7 +397,7 @@ fun MyTextSwitch(
                     onCheckedChange(!checked)
                 }
             }
-            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVertical),
+            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVerticalWithSection),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {

@@ -42,7 +42,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffec
 import com.aaron.sidegesture.constant.VibrationEffects
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
+import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -170,7 +170,7 @@ fun GestureSettingsScreen(
                                     }
                                     .padding(
                                         horizontal = ContentPaddingHorizontal,
-                                        vertical = ContentPaddingVertical
+                                        vertical = ContentPaddingVerticalWithSection
                                     ),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(ItemPadding)
