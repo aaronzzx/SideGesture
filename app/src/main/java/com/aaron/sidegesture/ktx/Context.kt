@@ -35,7 +35,7 @@ fun Context.volumeDown() {
 fun Context.toggleMute() {
     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     if (!notificationManager.isNotificationPolicyAccessGranted) {
-        showToastDelay(R.string.will_goto_request_notification_policy_access_permission) {
+        showToastDelay(R.string.goto_grant_notification_policy_access_permission) {
             val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }

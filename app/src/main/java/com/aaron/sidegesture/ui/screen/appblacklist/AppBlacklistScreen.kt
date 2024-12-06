@@ -149,7 +149,7 @@ fun AppBlacklistScreen(
                                 if (permissionState.status.deniedForever) {
                                     coroutineScope.launch {
                                         val result = snackbarHostState.showSnackbar(
-                                            message = context.getString(R.string.request_get_apps_permission_rationale),
+                                            message = context.getString(R.string.goto_grant_get_apps_permission),
                                             actionLabel = context.getString(R.string.goto_enable_settings),
                                             withDismissAction = true
                                         )

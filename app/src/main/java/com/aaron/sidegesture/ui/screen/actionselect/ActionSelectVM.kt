@@ -176,13 +176,14 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun assembleData() {
         updateUiState {
+            val allActions = GlobalActions.all
             if (it.selectSingle) {
-                return@updateUiState it.copy(actions = GlobalActions.all)
+                return@updateUiState it.copy(actions = allActions)
             }
-            val globalActions = GlobalActions.allWithoutNone
+            val allWithoutNone = allActions.toMutableList().apply { removeAt(0) }
             val list1 = mutableListOf<Action>()
             val list2 = mutableListOf<Action>()
-            globalActions.forEach { action ->
+            allWithoutNone.forEach { action ->
                 if (it.selectedRecord.isSelected(action) || action == Action.NONE) {
                     list1.add(action)
                 } else {

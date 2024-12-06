@@ -21,12 +21,14 @@ import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
 import com.aaron.sidegesture.ktx.gotoAlipayScan
+import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.utils.AccessibilityUtils
+import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.FlashlightUtils
@@ -122,14 +124,14 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     } else {
                         PermissionUtils
                             .permission(Manifest.permission.CAMERA)
-                            .callback(object : PermissionUtils.SimpleCallback {
-                                override fun onGranted() {
+                            .callback { isAllGranted, granted, deniedForever, denied ->
+                                if (isAllGranted) {
                                     FlashlightUtils.setFlashlightStatus(!FlashlightUtils.isFlashlightOn())
+                                } else if (deniedForever.isNotEmpty()) {
+                                    showToast(R.string.goto_grant_camera_permission)
+                                    gotoAppDetailSettings()
                                 }
-
-                                override fun onDenied() {
-                                }
-                            })
+                            }
                             .request()
                     }
                 }
@@ -157,16 +159,6 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.POWER_BUTTON -> {
                 performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)
-            }
-            GlobalActions.AUTO_ROTATE -> {
-            }
-            GlobalActions.INVERSE_COLOR -> {
-            }
-            GlobalActions.QUICK_APP_PANEL -> {
-            }
-            GlobalActions.QUICK_TOOLS -> {
-            }
-            GlobalActions.HIDE_GESTURE_BUTTON -> {
             }
             GlobalActions.WECHAT_SCAN -> {
                 gotoWechatScan()
