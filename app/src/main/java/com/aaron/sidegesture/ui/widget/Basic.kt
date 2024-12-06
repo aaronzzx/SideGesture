@@ -252,8 +252,9 @@ fun MySlider(
     onValueChangeFinished: (() -> Unit)? = null,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = SliderDefaults.colors()
+    val colors = SliderDefaults.colors(thumbColor = colorScheme.primaryContainer)
     Slider(
         modifier = modifier,
         enabled = enabled,
@@ -266,13 +267,15 @@ fun MySlider(
         thumb = {
             SliderDefaults.Thumb(
                 modifier = Modifier
-                    .requiredSize(16.dp)
+                    .requiredSize(20.dp)
                     .drawWithContent {
                         drawContent()
-                        drawCircle(
-                            color = Color.White,
-                            radius = 5.dp.toPx()
-                        )
+                        if (enabled) {
+                            drawCircle(
+                                color = colorScheme.primary,
+                                radius = 8.dp.toPx()
+                            )
+                        }
                     },
                 interactionSource = interactionSource,
                 colors = colors,
@@ -281,11 +284,8 @@ fun MySlider(
         },
         track = { sliderState ->
             SliderDefaults.Track(
-                modifier = Modifier.height(10.dp),
-                colors = colors.copy(
-                    activeTrackColor = colors.activeTrackColor.copy(alpha = 0.9f),
-                    disabledActiveTrackColor = colors.disabledActiveTrackColor.copy(alpha = 0.28f)
-                ),
+                modifier = Modifier.height(8.dp),
+                colors = colors,
                 enabled = enabled,
                 sliderState = sliderState,
                 thumbTrackGapSize = 0.dp
