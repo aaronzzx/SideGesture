@@ -1,6 +1,10 @@
 package com.aaron.sidegesture.ui.screen.iconresize
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -10,18 +14,25 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,15 +130,43 @@ fun IconResizeScreen(
                         items = uiState.appInfos,
                         key = { _, item -> "${item.packageName}/${item.className}/${item.label}" }
                     ) { index, item ->
-                        AsyncImage(
+                        BadgedBox(
                             modifier = Modifier
                                 .size(MinInteractiveSize)
                                 .onClick(enableRipple = false) {
                                     vm.onIndexChange(index)
                                 },
-                            model = item.icon,
-                            contentDescription = null
-                        )
+                            badge = {
+                                val curScaleFactors by rememberUpdatedState(newValue = uiState.scaleFactors)
+                                val visible by remember(index) {
+                                    derivedStateOf {
+                                        val scale = curScaleFactors[index]
+                                        scale != null && scale != DEFAULT_SCALE
+                                    }
+                                }
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = visible,
+                                    enter = fadeIn() + scaleIn(),
+                                    exit = fadeOut() + scaleOut()
+                                ) {
+                                    Badge(
+                                        modifier = Modifier.requiredSize(16.dp),
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = null
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier.matchParentSize(),
+                                model = item.icon,
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             }

@@ -17,18 +17,20 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
 
     private val iconResize: IconResize = IconResize.toRoute(savedStateHandle)
 
-    override val initialState: UiState = UiState(
-        appInfos = iconResize.appInfos,
-        scaleFactors = run {
-            val map = mutableMapOf<Int, Float>()
-            val appInfos = iconResize.appInfos
-            for (index in appInfos.indices) {
-                val appInfo = appInfos[index]
-                map[index] = appInfo.iconScale
+    override val initialState: UiState = run {
+        val appInfos = iconResize.appInfos.sortedBy { it.iconScale }
+        UiState(
+            appInfos = appInfos,
+            scaleFactors = run {
+                val map = mutableMapOf<Int, Float>()
+                for (index in appInfos.indices) {
+                    val appInfo = appInfos[index]
+                    map[index] = appInfo.iconScale
+                }
+                map
             }
-            map
-        }
-    )
+        )
+    }
 
     fun showResetWarningDialog(show: Boolean) {
         updateUiState {
