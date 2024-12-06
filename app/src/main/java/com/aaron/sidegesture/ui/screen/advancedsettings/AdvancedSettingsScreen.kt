@@ -64,11 +64,17 @@ fun AdvancedSettingsScreen(
 //                    )
 //                }
                 MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+//                    MyTextSwitch(
+//                        onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
+//                        checked = uiState.fitSoftKeyboard,
+//                        text = stringResource(id = R.string.fit_soft_keyboard),
+//                        secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
+//                    )
                     MyTextSwitch(
-                        onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
-                        checked = uiState.fitSoftKeyboard,
-                        text = stringResource(id = R.string.fit_soft_keyboard),
-                        secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
+                        onCheckedChange = { vm.onExcludeFromRecentsChange(it) },
+                        checked = uiState.excludeFromRecents,
+                        text = stringResource(id = R.string.exclude_from_recents),
+                        secondaryText = stringResource(id = R.string.exclude_from_recents_hint)
                     )
                 }
                 MySection(
@@ -80,11 +86,11 @@ fun AdvancedSettingsScreen(
                         checked = uiState.hideLandscape,
                         text = stringResource(id = R.string.landscape)
                     )
-                    MyTextSwitch(
-                        onCheckedChange = { vm.onHideQuickPanelChange(it) },
-                        checked = uiState.hideQuickPanel,
-                        text = stringResource(id = R.string.quick_settings)
-                    )
+//                    MyTextSwitch(
+//                        onCheckedChange = { vm.onHideQuickPanelChange(it) },
+//                        checked = uiState.hideQuickPanel,
+//                        text = stringResource(id = R.string.quick_settings)
+//                    )
                     MyTextSwitch(
                         onCheckedChange = { vm.onHideScreenLockChange(it) },
                         checked = uiState.hideScreenLock,

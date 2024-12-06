@@ -19,5 +19,6 @@ data class AdvancedSettings(
     val hideLandscape: Boolean = false,
     val hideQuickPanel: Boolean = false,
     val hideScreenLock: Boolean = false,
-    val hideHomeScreen: Boolean = false
+    val hideHomeScreen: Boolean = false,
+    val excludeFromRecents: Boolean = false
 )

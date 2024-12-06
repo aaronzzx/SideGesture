@@ -27,6 +27,13 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onExcludeFromRecentsChange(value: Boolean) {
+        updateUiState {
+            it.copy(excludeFromRecents = value)
+        }
+        saveSettings()
+    }
+
     fun onHideLandscapeChange(value: Boolean) {
         updateUiState {
             it.copy(hideLandscape = value)
@@ -64,7 +71,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     hideLandscape = uiState.hideLandscape,
                     hideQuickPanel = uiState.hideQuickPanel,
                     hideScreenLock = uiState.hideScreenLock,
-                    hideHomeScreen = uiState.hideHomeScreen
+                    hideHomeScreen = uiState.hideHomeScreen,
+                    excludeFromRecents = uiState.excludeFromRecents
                 )
             }
         }
@@ -79,7 +87,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         hideLandscape = item.hideLandscape,
                         hideQuickPanel = item.hideQuickPanel,
                         hideScreenLock = item.hideScreenLock,
-                        hideHomeScreen = item.hideHomeScreen
+                        hideHomeScreen = item.hideHomeScreen,
+                        excludeFromRecents = item.excludeFromRecents
                     )
                 }
             }
@@ -91,7 +100,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val hideLandscape: Boolean = false,
         val hideQuickPanel: Boolean = false,
         val hideScreenLock: Boolean = false,
-        val hideHomeScreen: Boolean = false
+        val hideHomeScreen: Boolean = false,
+        val excludeFromRecents: Boolean = false
     )
 
     sealed interface UiEvent

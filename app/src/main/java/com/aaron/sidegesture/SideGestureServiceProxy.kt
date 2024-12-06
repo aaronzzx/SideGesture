@@ -36,8 +36,6 @@ import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.FlashlightUtils
 import com.blankj.utilcode.util.PermissionUtils
 import com.blankj.utilcode.util.ScreenUtils
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -164,8 +162,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.WECHAT_PAY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    @OptIn(DelicateCoroutinesApi::class)
-                    GlobalScope.launch {
+                    coroutineScope.launch {
                         gotoWechat()
                         delay(500)
                         val screenWidth = ScreenUtils.getScreenWidth()

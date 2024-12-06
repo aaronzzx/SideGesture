@@ -52,7 +52,6 @@ import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.buttonTextCompose
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
-import com.aaron.sidegesture.ktx.gotoOverlaySettings
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
@@ -65,7 +64,6 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.aaron.sidegesture.utils.SystemAlertWindow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -179,27 +177,27 @@ fun HomeScreen(
 
                 MyColumn(scrollState = scrollState) {
                     MySection(title = stringResource(id = R.string.initial_settings)) {
-                        MyTextSwitch(
-                            onCheckedChange = {
-                                vm.onAppGestureEnabledChange(it)
-                            },
-                            checked = uiState.isGestureEnabled,
-                            text = stringResource(id = R.string.gesture_switch)
-                        )
-                        MyTextSwitch(
-                            onCheckedChange = {
-                                context.gotoOverlaySettings()
-                            },
-                            checked = uiState.isDrawOverlayEnabled,
-                            text = stringResource(id = R.string.system_overlay)
-                        )
-                        MyTextSwitch(
-                            onCheckedChange = {
-                                SystemAlertWindow.start(context)
-                            },
-                            checked = uiState.isPopBackgroundEnabled,
-                            text = stringResource(id = R.string.popup_background)
-                        )
+//                        MyTextSwitch(
+//                            onCheckedChange = {
+//                                vm.onAppGestureEnabledChange(it)
+//                            },
+//                            checked = uiState.isGestureEnabled,
+//                            text = stringResource(id = R.string.gesture_switch)
+//                        )
+//                        MyTextSwitch(
+//                            onCheckedChange = {
+//                                context.gotoOverlaySettings()
+//                            },
+//                            checked = uiState.isDrawOverlayEnabled,
+//                            text = stringResource(id = R.string.system_overlay)
+//                        )
+//                        MyTextSwitch(
+//                            onCheckedChange = {
+//                                SystemAlertWindow.start(context)
+//                            },
+//                            checked = uiState.isPopBackgroundEnabled,
+//                            text = stringResource(id = R.string.popup_background)
+//                        )
                         MyTextSwitch(
                             onCheckedChange = {
                                 context.gotoAccessibilitySettings()

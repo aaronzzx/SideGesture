@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 val TopBarPaddingExtra = 8.dp
 val RootPadding = 12.dp
 val ContentPaddingHorizontal = RootPadding
-val ContentPaddingVertical = ContentPaddingHorizontal / 2
+val ContentPaddingVertical = ContentPaddingHorizontal
 val ItemPadding = 16.dp
 val IconTextPadding = 8.dp
 val SectionTitlePadding = 8.dp

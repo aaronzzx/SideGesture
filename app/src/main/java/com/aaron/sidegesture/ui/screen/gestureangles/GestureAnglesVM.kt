@@ -74,6 +74,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }.invokeOnCompletion { ex ->
             if (ex == null) {
                 toast(R.string.save_success)
+                finish()
             } else {
                 toast(R.string.save_failure)
             }
@@ -82,8 +83,26 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun reset() {
         viewModelScope.launch {
-            DataStoreHolder.gestureSettings.updateData {
-                it.copy(angles = GestureAngles())
+            val angles = GestureAngles()
+            launch {
+                DataStoreHolder.gestureSettings.updateData {
+                    it.copy(angles = angles)
+                }
+            }
+            launch {
+                DataStoreHolder.gestureButtons.updateData {
+                    it.toMutableList().apply {
+                        forEachIndexed { index, gestureButton ->
+                            val newButton = gestureButton.copy(
+                                angle = when (gestureButton.position) {
+                                    Position.Left -> angles.left
+                                    Position.Right -> angles.right
+                                }
+                            )
+                            set(index, newButton)
+                        }
+                    }
+                }
             }
         }.invokeOnCompletion { ex ->
             if (ex == null) {

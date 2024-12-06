@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">OK Gesture</string>
     <string name="home_title">OK Gesture</string>
+    <string name="accessibility_description">辅助服务用于模拟返回、主页、等按键操作，实现侧滑手势的各种自定义操控，不会收集任何数据。</string>
     <string name="more">更多</string>
     <string name="delete">删除</string>
     <string name="initial_settings">初始设置</string>
@@ -30,6 +31,8 @@
     <string name="action_panel_style">动作面板风格</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
     <string name="fit_soft_keyboard_hint">抬高覆盖在键盘上的手势触钮</string>
+    <string name="exclude_from_recents">在近期任务列表中隐藏</string>
+    <string name="exclude_from_recents_hint">隐藏后部分机型可能会被清理后台，可尝试将后台卡片上锁后再开启</string>
     <string name="hide_gesture_button">隐藏触钮</string>
     <string name="landscape">横屏模式</string>
     <string name="quick_settings">快捷面板</string>

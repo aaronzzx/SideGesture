@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
@@ -118,22 +119,27 @@ fun AppBlacklistScreen(
         ) { contentPadding ->
             Box(modifier = Modifier.padding(contentPadding)) {
                 if (!uiState.needRequestGetAppPermission || permissionState.status.isGranted) {
-                    LazyColumn(
+                    LoadingComponent(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+                        component = vm.loadingComponent
                     ) {
-                        arrayOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).forEach { list ->
-                            items(
-                                items = list,
-                                key = { "${it.label}-${it.packageName}" }
-                            ) { item ->
-                                AppBlacklistItem(
-                                    appInfo = item,
-                                    selected = item.packageName in uiState.excludeApps,
-                                    onSelect = { selected ->
-                                        vm.selectApp(item.packageName, selected)
-                                    }
-                                )
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+                        ) {
+                            arrayOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).forEach { list ->
+                                items(
+                                    items = list,
+                                    key = { "${it.label}-${it.packageName}" }
+                                ) { item ->
+                                    AppBlacklistItem(
+                                        appInfo = item,
+                                        selected = item.packageName in uiState.excludeApps,
+                                        onSelect = { selected ->
+                                            vm.selectApp(item.packageName, selected)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

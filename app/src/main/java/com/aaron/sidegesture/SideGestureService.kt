@@ -1,5 +1,10 @@
 package com.aaron.sidegesture
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.view.View
 import android.view.WindowManager
@@ -11,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
+import com.aaron.sidegesture.ktx.setFlags
 import com.aaron.sidegesture.ktx.updateGestureButton
 import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
@@ -40,7 +47,10 @@ class SideGestureService : ComponentAccessibilityService() {
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
 
-    private val coroutineScope = MainScope()
+    private var advancedSettings: AdvancedSettings = AdvancedSettings()
+    private var isNowInLockScreenPage = false
+
+    val coroutineScope = MainScope()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -52,6 +62,9 @@ class SideGestureService : ComponentAccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         proxy.onAccessibilityEvent(event)
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            updateGestureButtons()
+        }
     }
 
     override fun onInterrupt() {
@@ -82,14 +95,39 @@ class SideGestureService : ComponentAccessibilityService() {
         }
 
         coroutineScope.launch(Dispatchers.Main.immediate) {
-            DataStoreHolder.gestureButtons.data.collectLatest { buttons ->
-                val buttonViews = buttonViews
-                if (buttonViews != null) {
-                    removeWindows(buttonViews)
+            launch {
+                DataStoreHolder.gestureButtons.data.collectLatest { buttons ->
+                    val buttonViews = buttonViews
+                    if (buttonViews != null) {
+                        removeWindows(buttonViews)
+                    }
+                    this@SideGestureService.buttonViews = attachGestureButtons(buttons)
+                    updateGestureButtons()
                 }
-                this@SideGestureService.buttonViews = attachGestureButtons(buttons)
+            }
+            launch {
+                DataStoreHolder.advancedSettings.data.collectLatest { item ->
+                    advancedSettings = item
+                    updateGestureButtons()
+                }
             }
         }
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                    isNowInLockScreenPage = true
+                } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
+                    isNowInLockScreenPage = false
+                }
+                updateGestureButtons()
+            }
+        }
+        val intentFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(receiver, intentFilter)
     }
 
     private fun updateLayout() {
@@ -100,13 +138,44 @@ class SideGestureService : ComponentAccessibilityService() {
             }
             updateLayout(mainView, lp)
         }
+        updateGestureButtons()
+    }
+
+    private fun updateGestureButtons() {
         val buttonViews = buttonViews
         buttonViews?.forEach { view ->
             val button = view.tag as? GestureButton ?: return
             val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
                 updateGestureButton(button)
+
+                val advancedSettings = advancedSettings
+                if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
+                    setFlags(false)
+                } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
+                    setFlags(false)
+                } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
+                    setFlags(false)
+                } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
+                    setFlags(false)
+                } else {
+                    setFlags(true)
+                }
             }
             updateLayout(view, lp)
         }
+    }
+
+    private fun getCurrentPackageName(): String {
+        return rootInActiveWindow?.packageName?.toString() ?: ""
+    }
+
+    private fun nowInLauncher(): Boolean {
+        val pkgName = getCurrentPackageName()
+        val launcherIntent = Intent().apply {
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_HOME)
+        }
+        val resolves = packageManager.queryIntentActivities(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+        return resolves.any { it.activityInfo?.packageName == pkgName }
     }
 }

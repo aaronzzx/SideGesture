@@ -47,6 +47,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
@@ -196,18 +197,23 @@ fun ActionSelectScreen(
                             )
                         }
                         PAGE_APPS -> {
-                            AppPage(
+                            LoadingComponent(
                                 modifier = Modifier.fillMaxSize(),
-                                appInfos = uiState.apps,
-                                selectedRecord = uiState.selectedRecord,
-                                snackbarHostState = snackbarHostState,
-                                permissionState = permissionState,
-                                selectSingle = uiState.selectSingle,
-                                needRequestGetAppPermission = uiState.needRequestGetAppPermission,
-                                onSelect = { appInfo, selected ->
-                                    vm.select(appInfo, selected)
-                                }
-                            )
+                                component = vm.loadingComponent
+                            ) {
+                                AppPage(
+                                    modifier = Modifier.fillMaxSize(),
+                                    appInfos = uiState.apps,
+                                    selectedRecord = uiState.selectedRecord,
+                                    snackbarHostState = snackbarHostState,
+                                    permissionState = permissionState,
+                                    selectSingle = uiState.selectSingle,
+                                    needRequestGetAppPermission = uiState.needRequestGetAppPermission,
+                                    onSelect = { appInfo, selected ->
+                                        vm.select(appInfo, selected)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
