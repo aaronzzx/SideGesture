@@ -21,6 +21,33 @@ import com.blankj.utilcode.util.AppUtils
  * @since 2024/11/18
  */
 
+fun Context.launchAssist() {
+    try {
+        val intent = Intent().apply {
+            Intent.ACTION_ASSIST
+            setAction(Intent.ACTION_ASSIST)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    } catch (ignored: Exception) {
+        showToast(R.string.launch_assist_failed)
+    }
+}
+
+fun Context.launchApp(packageName: String, className: String) {
+    try {
+        val intent = Intent().apply {
+            setClassName(packageName, className)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    } catch (ignored: ActivityNotFoundException) {
+        showToast(R.string.launch_app_failed)
+    }
+}
+
 fun Context.volumeUp() {
     val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI)

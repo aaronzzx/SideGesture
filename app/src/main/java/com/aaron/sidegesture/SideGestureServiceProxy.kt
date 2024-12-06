@@ -24,6 +24,8 @@ import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ktx.launchApp
+import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
@@ -119,14 +121,19 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.FLASHLIGHT -> {
                 if (FlashlightUtils.isFlashlightEnable()) {
+                    val block = {
+                        val isFlashlightOn = FlashlightUtils.isFlashlightOn()
+                        FlashlightUtils.setFlashlightStatus(!isFlashlightOn)
+                        FlashlightUtils.destroy()
+                    }
                     if (PermissionUtils.isGranted(Manifest.permission.CAMERA)) {
-                        FlashlightUtils.setFlashlightStatus(!FlashlightUtils.isFlashlightOn())
+                        block()
                     } else {
                         PermissionUtils
                             .permission(Manifest.permission.CAMERA)
                             .callback { isAllGranted, granted, deniedForever, denied ->
                                 if (isAllGranted) {
-                                    FlashlightUtils.setFlashlightStatus(!FlashlightUtils.isFlashlightOn())
+                                    block()
                                 } else if (deniedForever.isNotEmpty()) {
                                     showToast(R.string.goto_grant_camera_permission)
                                     gotoAppDetailSettings()
@@ -134,6 +141,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                             }
                             .request()
                     }
+                } else {
+                    showToast(R.string.turn_on_flashlight_failed)
                 }
             }
             GlobalActions.SPLIT_SCREEN -> {
@@ -142,15 +151,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.ASSIST_APP -> {
-                try {
-                    val intent = Intent().apply {
-                        Intent.ACTION_ASSIST
-                        setAction(Intent.ACTION_ASSIST)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    startActivity(intent)
-                } catch (ignored: Exception) {
-                }
+                launchAssist()
             }
             GlobalActions.SCREENSHOT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -191,13 +192,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.EXTRA_LAUNCH_APP -> {
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    val intent = Intent().apply {
-                        setClassName(appInfo.packageName, appInfo.className)
-                        setAction(Intent.ACTION_MAIN)
-                        addCategory(Intent.CATEGORY_LAUNCHER)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    startActivity(intent)
+                    launchApp(appInfo.packageName, appInfo.className)
                 }
             }
         }
