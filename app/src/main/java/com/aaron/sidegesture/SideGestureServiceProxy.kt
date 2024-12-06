@@ -50,10 +50,6 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
     private var prevPackageName: String? = null
     private var currPackageName: String? = null
 
-    fun onDestroy() {
-        FlashlightUtils.destroy()
-    }
-
     fun onAccessibilityEvent(event: AccessibilityEvent?) {
         host.apply {
             when(event?.eventType){
@@ -124,7 +120,9 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     val block = {
                         val isFlashlightOn = FlashlightUtils.isFlashlightOn()
                         FlashlightUtils.setFlashlightStatus(!isFlashlightOn)
-                        FlashlightUtils.destroy()
+                        if (!isFlashlightOn) {
+                            FlashlightUtils.destroy()
+                        }
                     }
                     if (PermissionUtils.isGranted(Manifest.permission.CAMERA)) {
                         block()
