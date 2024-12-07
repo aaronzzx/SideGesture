@@ -175,7 +175,11 @@ class SideGestureService : ComponentAccessibilityService() {
             setAction(Intent.ACTION_MAIN)
             addCategory(Intent.CATEGORY_HOME)
         }
-        val resolves = packageManager.queryIntentActivities(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+        val resolves = packageManager
+            .queryIntentActivities(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            .filter {
+                packageManager.getLaunchIntentForPackage(it.activityInfo.packageName ?: "") == null
+            }
         return resolves.any { it.activityInfo?.packageName == pkgName }
     }
 }
