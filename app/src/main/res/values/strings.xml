@@ -93,8 +93,9 @@
     <string name="gesture_button_size_max">已达到最大触钮数量</string>
     <string name="request_get_apps_permission">获取应用列表</string>
     <string name="goto_grant_get_apps_permission">开启“获取应用列表权限”</string>
-    <string name="goto_grant_notification_policy_access_permission">请手动开启“免打扰权限”</string>
-    <string name="goto_grant_camera_permission">请手动开启“相机权限”</string>
+    <string name="goto_grant_notification_policy_access_permission">请手动开启“免打扰权限”以使用静音开关</string>
+    <string name="grant_camera_permission">请开启“相机权限”以使用手电筒</string>
+    <string name="goto_grant_camera_permission">请手动开启“相机权限”以使用手电筒</string>
     <string name="goto_enable_settings">去开启</string>
     <string name="tab_action">动作</string>
     <string name="tab_apps">应用程序</string>
@@ -106,7 +107,8 @@
     <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝。</string>
     <string name="launch_app_failed">无法启动应用，请检查您是否已安装。</string>
     <string name="launch_assist_failed">无法启动语音助手，请检查您是否已安装。</string>
-    <string name="turn_on_flashlight_failed">无法启用手电筒，请检查设备是否支持。</string>
+    <string name="flashlight_failed">无法使用手电筒，请检查设备是否支持。</string>
+    <string name="os_version_too_low">系统版本不支持</string>
 
     <string name="gesture_to_right_top">👆</string>
     <string name="gesture_to_right">👉</string>

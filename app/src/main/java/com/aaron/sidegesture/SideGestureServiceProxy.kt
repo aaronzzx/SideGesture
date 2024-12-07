@@ -111,6 +111,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.LOCK_SCREEN -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+                } else {
+                    showToast(R.string.os_version_too_low)
                 }
             }
             GlobalActions.FLASHLIGHT -> {
@@ -125,6 +127,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     if (PermissionUtils.isGranted(Manifest.permission.CAMERA)) {
                         block()
                     } else {
+                        showToast(R.string.grant_camera_permission)
                         PermissionUtils
                             .permission(Manifest.permission.CAMERA)
                             .callback { isAllGranted, granted, deniedForever, denied ->
@@ -138,12 +141,14 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                             .request()
                     }
                 } else {
-                    showToast(R.string.turn_on_flashlight_failed)
+                    showToast(R.string.flashlight_failed)
                 }
             }
             GlobalActions.SPLIT_SCREEN -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     performGlobalAction(GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN)
+                } else {
+                    showToast(R.string.os_version_too_low)
                 }
             }
             GlobalActions.ASSIST_APP -> {
@@ -152,6 +157,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.SCREENSHOT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT)
+                } else {
+                    showToast(R.string.os_version_too_low)
                 }
             }
             GlobalActions.POWER_BUTTON -> {
@@ -176,6 +183,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
                         AccessibilityUtils.click(this@onAction, x, y)
                     }
+                } else {
+                    showToast(R.string.os_version_too_low)
                 }
             }
             GlobalActions.ALIPAY_SCAN -> {
