@@ -48,8 +48,8 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureAngle
+import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.copyNew
 import com.aaron.sidegesture.ktx.getArcDegrees
@@ -60,7 +60,6 @@ import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
-import kotlinx.serialization.Serializable
 import kotlin.math.atan
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -72,9 +71,6 @@ import kotlin.reflect.KProperty0
  * @author aaronzzxup@gmail.com
  * @since 2024/11/26
  */
-
-@Serializable
-data object GestureAngles
 
 @Composable
 fun GestureAnglesScreen(

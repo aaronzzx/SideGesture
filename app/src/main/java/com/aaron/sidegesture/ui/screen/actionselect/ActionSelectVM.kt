@@ -8,11 +8,12 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.Position
-import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.subscribeEvent

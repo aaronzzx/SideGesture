@@ -39,7 +39,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinLongPressTriggerDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
-import com.aaron.sidegesture.constant.VibrationEffects
+import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
@@ -53,15 +53,11 @@ import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/23
  */
-
-@Serializable
-data object GestureSettings
 
 @Composable
 fun GestureSettingsScreen(

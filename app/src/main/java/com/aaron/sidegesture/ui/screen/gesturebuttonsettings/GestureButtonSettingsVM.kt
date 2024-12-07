@@ -8,8 +8,8 @@ import androidx.navigation.toRoute
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
-import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.GestureButtonSettings
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiState
@@ -28,8 +28,6 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     override val initialState: UiState = UiState(gestureButtonSettings)
 
     val colorPickerDialog = ColorPickerDialog()
-
-    private var actionDialogDirection: TriggerDirection? = null
 
     init {
         loadData()

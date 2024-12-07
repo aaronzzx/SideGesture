@@ -3,6 +3,8 @@ package com.aaron.sidegesture.constant
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.entity.DayNightMode
+import com.aaron.sidegesture.entity.VibrationEffects
 import com.blankj.utilcode.util.ConvertUtils
 
 /**

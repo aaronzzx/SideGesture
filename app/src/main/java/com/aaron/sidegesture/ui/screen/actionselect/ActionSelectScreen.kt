@@ -52,8 +52,6 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
-import com.aaron.sidegesture.constant.Position
-import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
@@ -84,20 +82,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/12/2
  */
-
-@Serializable
-data class ActionSelect(
-    val gestureButtonId: String,
-    val position: Position,
-    val direction: TriggerDirection,
-    val isLongSlide: Boolean
-)
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

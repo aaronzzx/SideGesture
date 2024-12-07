@@ -49,45 +49,26 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.toRoute
 import coil.compose.AsyncImage
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
-import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.AppInfo.Companion.DEFAULT_SCALE
 import com.aaron.sidegesture.entity.AppInfo.Companion.MAX_SCALE
 import com.aaron.sidegesture.entity.AppInfo.Companion.MIN_SCALE
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.serializableType
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
-import kotlinx.serialization.Serializable
-import kotlin.reflect.typeOf
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/12/4
  */
-
-@Serializable
-data class IconResize(
-    val appInfos: List<AppInfo>
-) {
-    companion object {
-        val typeMap = mapOf(typeOf<List<AppInfo>>() to serializableType<List<AppInfo>>())
-
-        fun toRoute(savedStateHandle: SavedStateHandle): IconResize {
-            return savedStateHandle.toRoute(typeMap)
-        }
-    }
-}
 
 @Composable
 fun IconResizeScreen(

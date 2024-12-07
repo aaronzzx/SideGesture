@@ -3,9 +3,9 @@ package com.aaron.sidegesture.ui.screen.gestureangles
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureAngle
 import com.aaron.sidegesture.entity.GestureAngles
+import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder

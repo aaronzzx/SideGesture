@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.gesturebuttonsettings
 
-import androidx.annotation.Keep
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -39,16 +38,16 @@ import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonWidth
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonStart
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonWidth
-import com.aaron.sidegesture.constant.Position
-import com.aaron.sidegesture.constant.TriggerDirection
-import com.aaron.sidegesture.constant.TriggerDirection.Center
-import com.aaron.sidegesture.constant.TriggerDirection.Down
-import com.aaron.sidegesture.constant.TriggerDirection.Up
+import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.TriggerDirection
+import com.aaron.sidegesture.entity.TriggerDirection.Center
+import com.aaron.sidegesture.entity.TriggerDirection.Down
+import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.fraction
-import com.aaron.sidegesture.ui.screen.actionselect.ActionSelect
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -62,19 +61,11 @@ import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/28
  */
-
-@Serializable
-@Keep
-data class GestureButtonSettings(
-    val buttonId: String,
-    val position: Position
-)
 
 @Composable
 fun GestureButtonSettingsScreen(

@@ -1,10 +1,12 @@
-package com.aaron.sidegesture.constant
+package com.aaron.sidegesture.entity
+
+import androidx.annotation.Keep
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/21
  */
-
+@Keep
 enum class TriggerDirection {
 
     Center, Up, Down

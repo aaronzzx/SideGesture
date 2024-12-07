@@ -6,8 +6,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
 
 /**
  * @author aaronzzxup@gmail.com

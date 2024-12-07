@@ -22,26 +22,26 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aaron.sidegesture.entity.About
+import com.aaron.sidegesture.entity.ActionSelect
+import com.aaron.sidegesture.entity.AdjustGestureAngles
+import com.aaron.sidegesture.entity.AdvancedSettings
+import com.aaron.sidegesture.entity.AppBlacklist
+import com.aaron.sidegesture.entity.GestureButtonSettings
+import com.aaron.sidegesture.entity.GestureSettings
+import com.aaron.sidegesture.entity.Home
+import com.aaron.sidegesture.entity.IconResize
+import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.ktx.LocalNavController
-import com.aaron.sidegesture.ui.screen.about.About
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
-import com.aaron.sidegesture.ui.screen.actionselect.ActionSelect
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
-import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettings
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
-import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklist
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
-import com.aaron.sidegesture.ui.screen.gestureangles.GestureAngles
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesScreen
-import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettings
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsScreen
-import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
-import com.aaron.sidegesture.ui.screen.home.Home
 import com.aaron.sidegesture.ui.screen.home.HomeScreen
-import com.aaron.sidegesture.ui.screen.iconresize.IconResize
 import com.aaron.sidegesture.ui.screen.iconresize.IconResizeScreen
-import com.aaron.sidegesture.ui.screen.unlock.Unlock
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import kotlin.reflect.KType
@@ -99,11 +99,11 @@ fun SideGestureApp() {
                 }
                 myComposable<GestureSettings> {
                     GestureSettingsScreen(
-                        onNavToGestureAngles = { navController.navigate(GestureAngles) },
+                        onNavToGestureAngles = { navController.navigate(AdjustGestureAngles) },
                         onBack = { navController.navigateUp() }
                     )
                 }
-                myComposable<GestureAngles> {
+                myComposable<AdjustGestureAngles> {
                     GestureAnglesScreen(onBack = { navController.navigateUp() })
                 }
                 myComposable<GestureButtonSettings> {

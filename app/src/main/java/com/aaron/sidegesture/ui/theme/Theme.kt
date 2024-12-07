@@ -4,7 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.aaron.sidegesture.constant.DayNightMode
+import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.ui.widget.ComposeToast

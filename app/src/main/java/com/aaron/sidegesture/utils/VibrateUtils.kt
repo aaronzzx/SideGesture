@@ -7,7 +7,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.annotation.RequiresPermission
-import com.aaron.sidegesture.constant.VibrationEffects
+import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.entity.Vibrations
 
 /**

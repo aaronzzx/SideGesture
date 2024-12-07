@@ -24,8 +24,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.DayNightMode
 import com.aaron.sidegesture.constant.GlobalSettings.getDayNightModeText
+import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -36,15 +36,11 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/23
  */
-
-@Serializable
-data object AdvancedSettings
 
 @Composable
 fun AdvancedSettingsScreen(

@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class com.aaron.sidegesture.entity.** { *; }
+
+# 有了verbose这句话，混淆后就会生成映射文件
+# 包含有类名->混淆后类名的映射关系
+# 然后使用printmapping指定映射文件的名称
+-verbose
+-printmapping proguardMapping.txt
+
+#抛出异常时保留源文件和代码行号
+-keepattributes SourceFile,LineNumberTable

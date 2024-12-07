@@ -6,8 +6,8 @@ import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.ui.unit.IntSize
-import com.aaron.sidegesture.constant.Position
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
 import com.blankj.utilcode.util.ScreenUtils
 
 /**

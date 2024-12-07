@@ -29,15 +29,11 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.AboutUtils
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/23
  */
-
-@Serializable
-data object About
 
 @Composable
 fun AboutScreen(

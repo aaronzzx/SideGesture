@@ -3,7 +3,7 @@ package com.aaron.sidegesture.ui.screen.advancedsettings
 import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
-import com.aaron.sidegesture.constant.DayNightMode
+import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder

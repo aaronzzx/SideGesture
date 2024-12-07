@@ -1,9 +1,9 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
-import com.aaron.sidegesture.constant.DayNightMode
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
+import com.aaron.sidegesture.entity.DayNightMode
 import kotlinx.serialization.Serializable
 
 /**

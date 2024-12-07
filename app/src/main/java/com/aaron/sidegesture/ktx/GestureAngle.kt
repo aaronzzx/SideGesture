@@ -1,7 +1,7 @@
 package com.aaron.sidegesture.ktx
 
-import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.GestureAngle
+import com.aaron.sidegesture.entity.TriggerDirection
 import kotlin.reflect.KProperty0
 
 /**

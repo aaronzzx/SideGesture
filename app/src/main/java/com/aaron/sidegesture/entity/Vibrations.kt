@@ -2,7 +2,6 @@ package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GlobalSettings
-import com.aaron.sidegesture.constant.VibrationEffects
 import kotlinx.serialization.Serializable
 
 /**

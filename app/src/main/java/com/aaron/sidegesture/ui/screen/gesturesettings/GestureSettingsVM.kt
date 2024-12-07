@@ -2,7 +2,7 @@ package com.aaron.sidegesture.ui.screen.gesturesettings
 
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
-import com.aaron.sidegesture.constant.VibrationEffects
+import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent

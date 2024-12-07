@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.AppInfo.Companion.DEFAULT_SCALE
+import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ui.screen.iconresize.IconResizeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.iconresize.IconResizeVM.UiState

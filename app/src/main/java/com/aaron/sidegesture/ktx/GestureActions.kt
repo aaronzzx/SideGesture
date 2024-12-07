@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.TriggerDirection
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureActions
+import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.utils.JsonHelper
 
 /**

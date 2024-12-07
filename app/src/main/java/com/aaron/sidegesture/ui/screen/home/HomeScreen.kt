@@ -66,15 +66,11 @@ import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.AboutUtils
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/22
  */
-
-@Serializable
-data object Home
 
 @Composable
 fun HomeScreen(

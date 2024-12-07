@@ -57,15 +57,11 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/12/1
  */
-
-@Serializable
-data object AppBlacklist
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

@@ -7,15 +7,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ui.widget.TopBar
-import kotlinx.serialization.Serializable
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/23
  */
-
-@Serializable
-data object Unlock
 
 @Composable
 fun UnlockScreen(
