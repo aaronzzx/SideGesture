@@ -116,9 +116,9 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.FLASHLIGHT -> {
                 if (FlashlightUtils.isFlashlightEnable()) {
                     val block = {
-                        val isFlashlightOn = FlashlightUtils.isFlashlightOn()
-                        FlashlightUtils.setFlashlightStatus(!isFlashlightOn)
-                        if (!isFlashlightOn) {
+                        val turnOn = !FlashlightUtils.isFlashlightOn()
+                        FlashlightUtils.setFlashlightStatus(turnOn)
+                        if (!turnOn) {
                             FlashlightUtils.destroy()
                         }
                     }
