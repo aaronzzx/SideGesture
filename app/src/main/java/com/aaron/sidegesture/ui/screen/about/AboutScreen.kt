@@ -61,6 +61,7 @@ fun AboutScreen(
                     )
                     Text(
                         text = uiState.appName,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.W900)
                     )
                     Text(
