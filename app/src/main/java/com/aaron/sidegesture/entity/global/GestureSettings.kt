@@ -17,7 +17,7 @@ data class GestureSettings(
     val slideTriggerDistance: Int = ConvertUtils.dp2px(30f),
     val longSlideTriggerImmediately: Boolean = true,
     val longSlideTriggerDistance: Int = ConvertUtils.dp2px(100f),
-    val longSlideTriggerDelayMs: Long = 100L,
+    val longSlideTriggerDelayMs: Long = 0L,
     val isCustomVibration: Boolean = false,
     val vibrations: Vibrations = Vibrations()
 )

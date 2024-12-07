@@ -15,8 +15,10 @@ object GlobalSettings {
 
     val MinGestureButtonWidth = ConvertUtils.dp2px(1f)
     val MaxGestureButtonWidth = ConvertUtils.dp2px(60f)
-    val MinTriggerDistance = ConvertUtils.dp2px(10f)
-    val MaxTriggerDistance = ConvertUtils.dp2px(200f)
+    val MinSlideTriggerDistance = ConvertUtils.dp2px(24f)
+    val MaxSlideTriggerDistance = ConvertUtils.dp2px(60f)
+    val MinLongSlideTriggerDistance = ConvertUtils.dp2px(80f)
+    val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(200f)
     const val MinGestureButtonLength = 0.1f
     const val MaxGestureButtonLength = 1f
     const val MinGestureButtonStart = 0f

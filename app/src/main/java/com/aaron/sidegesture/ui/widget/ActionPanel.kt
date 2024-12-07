@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -41,6 +42,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEachIndexed
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -116,21 +118,37 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
 ) {
     val itemSize = actionPanelStyle.itemSize.toDp()
     val hypot = itemSize.toPx() * 2f
+    var size by remember { mutableStateOf(Size.Zero) }
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
+                .onGloballyPositioned {
+                    size = it.size.toSize()
+                }
                 .matchParentSize()
                 .background(color = Color.Black.copy(DimAlpha))
         )
 
         Box(
             Modifier
-                .run graphicsLayer@{
+                .run {
                     val origin = remember(actionPanelState) { actionPanelState.origin }
                     graphicsLayer {
-                        val offset = itemSize.toPx() / 2f
-                        translationX = origin.x - offset
-                        translationY = origin.y - offset
+                        if (size.isEmpty()) return@graphicsLayer
+                        val itemSizeHalf = itemSize.toPx() / 2f
+                        val ox = origin.x.let {
+                            when (actionPanelState.position) {
+                                Position.Left -> it.coerceAtMost(size.width / 2f)
+                                Position.Right -> it.coerceAtLeast(size.width / 2f)
+                            }
+                        }
+                        val offsetY = itemSize.toPx() * 3f
+                        val oy = origin.y.coerceIn(
+                            minimumValue = offsetY,
+                            maximumValue = size.height - offsetY
+                        )
+                        translationX = ox - itemSizeHalf
+                        translationY = oy - itemSizeHalf
                     }
                 }
                 .size(itemSize)

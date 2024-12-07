@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -33,10 +34,12 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.MaxLongPressTriggerDelayMs
-import com.aaron.sidegesture.constant.GlobalSettings.MaxTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MaxLongSlideTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MaxSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MaxVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinLongPressTriggerDelayMs
-import com.aaron.sidegesture.constant.GlobalSettings.MinTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MinLongSlideTriggerDistance
+import com.aaron.sidegesture.constant.GlobalSettings.MinSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
 import com.aaron.sidegesture.entity.VibrationEffects
@@ -105,7 +108,7 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
-                        valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
+                        valueRange = MinSlideTriggerDistance.toFloat()..MaxSlideTriggerDistance.toFloat()
                     )
                 }
                 MySection(
@@ -124,8 +127,14 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
-                        valueRange = MinTriggerDistance.toFloat()..MaxTriggerDistance.toFloat()
+                        valueRange = MinLongSlideTriggerDistance.toFloat()..MaxLongSlideTriggerDistance.toFloat()
                     )
+                    Log.d("zzx", """
+                        .
+                        longSlideTriggerDelayMs: ${uiState.longSlideTriggerDelayMs.toFloat()}
+                        MinLongPressTriggerDelayMs: ${MinLongPressTriggerDelayMs.toFloat()}
+                        MaxLongPressTriggerDelayMs: ${MaxLongPressTriggerDelayMs.toFloat()}
+                    """.trimIndent())
                     MyTextSlider(
                         value = uiState.longSlideTriggerDelayMs.toFloat(),
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },

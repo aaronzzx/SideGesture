@@ -29,7 +29,7 @@ data class GestureButton(
     val slideTriggerDistance: Int = ConvertUtils.dp2px(30f),
     val longSlideTriggerDistance: Int = ConvertUtils.dp2px(100f),
     val longSlideTriggerImmediately: Boolean = true,
-    val longSlideTriggerDelayMs: Long = 100L,
+    val longSlideTriggerDelayMs: Long = 0L,
     val vibrations: Vibrations = Vibrations(),
     val color: Int = 0
 ) : Comparable<GestureButton> {
@@ -44,40 +44,14 @@ data class GestureButton(
                     position = Position.Left,
                     start = 0.0f,
                     end = 1.0f,
-                    slideActions = GestureActions(
-                        up = Action.toList(GlobalActions.LOCK_SCREEN),
-                        center = Action.toList(GlobalActions.BACK)
-                    ),
-                    longSlideActions = GestureActions(
-                        up = Action.toList(
-                            GlobalActions.WECHAT_SCAN,
-                            GlobalActions.WECHAT_PAY,
-                            GlobalActions.HOME,
-                            GlobalActions.ALIPAY_SCAN,
-                            GlobalActions.ALIPAY_PAY
-                        ),
-                        center = Action.toList(GlobalActions.PREVIOUS_APP)
-                    )
+                    slideActions = GestureActions(center = Action.toList(GlobalActions.BACK))
                 ),
                 GestureButton(
                     id = ID_DEFAULT,
                     position = Position.Right,
                     start = 0.0f,
                     end = 1.0f,
-                    slideActions = GestureActions(
-                        up = Action.toList(GlobalActions.LOCK_SCREEN),
-                        center = Action.toList(GlobalActions.BACK)
-                    ),
-                    longSlideActions = GestureActions(
-                        up = Action.toList(
-                            GlobalActions.WECHAT_SCAN,
-                            GlobalActions.WECHAT_PAY,
-                            GlobalActions.HOME,
-                            GlobalActions.ALIPAY_SCAN,
-                            GlobalActions.ALIPAY_PAY
-                        ),
-                        center = Action.toList(GlobalActions.PREVIOUS_APP)
-                    )
+                    slideActions = GestureActions(center = Action.toList(GlobalActions.BACK))
                 )
             )
         }
