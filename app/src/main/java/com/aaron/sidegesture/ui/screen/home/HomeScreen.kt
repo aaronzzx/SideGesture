@@ -38,6 +38,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -122,7 +123,7 @@ fun HomeScreen(
                 TopBar(
                     onBack = { },
                     title = stringResource(id = R.string.home_title),
-                    titleStyle = MaterialTheme.typography.headlineMedium,
+                    titleStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.W900),
                     showBackIcon = false,
                     actions = {
                         IconButton(onClick = { vm.showMoreMenu(true) }) {

@@ -12,7 +12,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aaron.okgesture"
+        applicationId = "gulu.gulugulu"
         minSdk = 23
         targetSdk = 35
         versionCode = 10000
@@ -46,7 +46,7 @@ android {
         debug {
             applicationIdSuffix = ".dev"
             isMinifyEnabled = false
-            val appName = "DEV Gesture"
+            val appName = "gulugulu+"
             resValue("string", "app_name", appName)
             resValue("string", "home_title", appName)
             proguardFiles(
