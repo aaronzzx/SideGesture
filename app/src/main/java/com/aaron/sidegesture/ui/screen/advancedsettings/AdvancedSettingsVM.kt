@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ui.screen.advancedsettings
 
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
+import com.aaron.sidegesture.constant.DayNightMode
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -18,6 +19,12 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     init {
         loadData()
+    }
+
+    fun showDayNightModeDropdownMenu(show: Boolean) {
+        updateUiState {
+            it.copy(showDayNightModeDropdownMenu = show)
+        }
     }
 
     fun onFitSoftKeyboardChange(value: Boolean) {
@@ -62,6 +69,20 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onDynamicColorChange(value: Boolean) {
+        updateUiState {
+            it.copy(dynamicColor = value)
+        }
+        saveSettings()
+    }
+
+    fun onDayNightModeChange(dayNightMode: DayNightMode) {
+        updateUiState {
+            it.copy(dayNightMode = dayNightMode)
+        }
+        saveSettings()
+    }
+
     private fun saveSettings() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.updateData {
@@ -72,7 +93,9 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     hideQuickPanel = uiState.hideQuickPanel,
                     hideScreenLock = uiState.hideScreenLock,
                     hideHomeScreen = uiState.hideHomeScreen,
-                    excludeFromRecents = uiState.excludeFromRecents
+                    excludeFromRecents = uiState.excludeFromRecents,
+                    dynamicColor = uiState.dynamicColor,
+                    dayNightMode = uiState.dayNightMode
                 )
             }
         }
@@ -88,7 +111,9 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         hideQuickPanel = item.hideQuickPanel,
                         hideScreenLock = item.hideScreenLock,
                         hideHomeScreen = item.hideHomeScreen,
-                        excludeFromRecents = item.excludeFromRecents
+                        excludeFromRecents = item.excludeFromRecents,
+                        dynamicColor = item.dynamicColor,
+                        dayNightMode = item.dayNightMode
                     )
                 }
             }
@@ -101,7 +126,10 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val hideQuickPanel: Boolean = false,
         val hideScreenLock: Boolean = false,
         val hideHomeScreen: Boolean = false,
-        val excludeFromRecents: Boolean = false
+        val excludeFromRecents: Boolean = false,
+        val dynamicColor: Boolean = true,
+        val dayNightMode: DayNightMode = DayNightMode.Auto,
+        val showDayNightModeDropdownMenu: Boolean = false
     )
 
     sealed interface UiEvent

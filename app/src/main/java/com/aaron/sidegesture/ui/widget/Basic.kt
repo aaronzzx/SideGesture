@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -303,7 +304,11 @@ fun MyTextButton(
     enabled: Boolean = true,
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
-    prefix: (@Composable () -> Unit)? = null
+    prefix: (@Composable () -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = ContentPaddingHorizontal,
+        vertical = ContentPaddingVerticalWithSection
+    )
 ) {
     Row(
         modifier = modifier
@@ -322,7 +327,7 @@ fun MyTextButton(
             .onSingleClick(enabled = enabled) {
                 onClick()
             }
-            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVerticalWithSection),
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {
@@ -375,7 +380,11 @@ fun MyTextSwitch(
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
     markColor: Color = Color.Unspecified,
-    mainSecondaryTextPadding: Boolean = true
+    mainSecondaryTextPadding: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = ContentPaddingHorizontal,
+        vertical = ContentPaddingVerticalWithSection
+    )
 ) {
     Row(
         modifier = modifier
@@ -398,7 +407,7 @@ fun MyTextSwitch(
                     onCheckedChange(!checked)
                 }
             }
-            .padding(horizontal = ContentPaddingHorizontal, vertical = ContentPaddingVerticalWithSection),
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ItemPadding)
     ) {

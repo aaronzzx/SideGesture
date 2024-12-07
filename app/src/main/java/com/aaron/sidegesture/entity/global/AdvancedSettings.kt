@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.DayNightMode
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import kotlinx.serialization.Serializable
@@ -20,5 +21,7 @@ data class AdvancedSettings(
     val hideQuickPanel: Boolean = false,
     val hideScreenLock: Boolean = false,
     val hideHomeScreen: Boolean = false,
-    val excludeFromRecents: Boolean = false
+    val excludeFromRecents: Boolean = false,
+    val dynamicColor: Boolean = true,
+    val dayNightMode: DayNightMode = DayNightMode.Auto
 )

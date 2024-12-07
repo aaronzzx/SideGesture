@@ -36,4 +36,13 @@ object GlobalSettings {
             VibrationEffects.HeavyClick -> stringResource(id = R.string.vibration_heavy_click)
         }
     }
+
+    @Composable
+    fun getDayNightModeText(dayNightMode: DayNightMode): String {
+        return when (dayNightMode) {
+            DayNightMode.Auto -> stringResource(id = R.string.day_night_mode_auto)
+            DayNightMode.Day -> stringResource(id = R.string.day_night_mode_day)
+            DayNightMode.Night -> stringResource(id = R.string.day_night_mode_night)
+        }
+    }
 }
