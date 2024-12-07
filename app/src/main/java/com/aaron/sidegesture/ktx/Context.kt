@@ -24,7 +24,6 @@ import com.blankj.utilcode.util.AppUtils
 fun Context.launchAssist() {
     try {
         val intent = Intent().apply {
-            Intent.ACTION_ASSIST
             setAction(Intent.ACTION_ASSIST)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }

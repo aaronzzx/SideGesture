@@ -264,7 +264,7 @@ fun GestureButtonSettingsScreen(
                                 onValueChange = { vm.onGestureButtonLengthChange(it) },
                                 onValueChangeFinished = { vm.saveSettings() },
                                 text = stringResource(id = R.string.gesture_button_length),
-                                sliderValueHint = stringResource(id = R.string.slider_small) to stringResource(id = R.string.slider_large),
+                                sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                                 valueRange = MinGestureButtonLength..MaxGestureButtonLength
                             )
                             MyTextSlider(
