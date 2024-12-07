@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -13,18 +15,40 @@ android {
         applicationId = "com.aaron.okgesture"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 10000
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
     }
-
+    signingConfigs {
+        val properties = Properties()
+        val inputStream = project.rootProject.file("local.properties").inputStream()
+        properties.load(inputStream)
+        register("release") {
+            storeFile = file(properties.getProperty("STORE_FILE_NAME"))
+            storePassword = properties.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = properties.getProperty("STORE_ALIAS")
+            keyPassword = properties.getProperty("KEY_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            applicationIdSuffix = ".dev"
+            isMinifyEnabled = false
+            val appName = "DEV Gesture"
+            resValue("string", "app_name", appName)
+            resValue("string", "home_title", appName)
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,6 +67,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {

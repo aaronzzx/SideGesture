@@ -64,6 +64,7 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.utils.AboutUtils
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -144,21 +145,31 @@ fun HomeScreen(
                         ) {
                             DropdownMenuItem(
                                 onClick = {
-                                    vm.showMoreMenu(false) {
-                                        onNavToUnlock()
-                                    }
-                                },
-                                text = {
-                                    Text(text = stringResource(id = R.string.unlock_advanced_feature))
-                                }
-                            )
-                            DropdownMenuItem(
-                                onClick = {
                                     vm.showMoreMenu(false)
                                     vm.showResetWarningDialog(true)
                                 },
                                 text = {
                                     Text(text = stringResource(id = R.string.reset_default_settings),)
+                                }
+                            )
+//                            DropdownMenuItem(
+//                                onClick = {
+//                                    vm.showMoreMenu(false) {
+//                                        onNavToUnlock()
+//                                    }
+//                                },
+//                                text = {
+//                                    Text(text = stringResource(id = R.string.unlock_advanced_feature))
+//                                }
+//                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    vm.showMoreMenu(false) {
+                                        AboutUtils.checkUpgrade(context)
+                                    }
+                                },
+                                text = {
+                                    Text(text = stringResource(id = R.string.check_update))
                                 }
                             )
                             DropdownMenuItem(
