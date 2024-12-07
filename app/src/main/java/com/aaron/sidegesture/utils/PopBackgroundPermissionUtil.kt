@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 
 object PopBackgroundPermissionUtil {
 
@@ -73,10 +72,6 @@ object PopBackgroundPermissionUtil {
                     context.packageName
                 )
             ) as Int
-            Log.d(
-                TAG,
-                "PopBackgroundPermissionUtil checkHwPermission result:" + (AppOpsManager.MODE_ALLOWED == result)
-            )
             return AppOpsManager.MODE_ALLOWED == result
         } catch (e: Exception) {
             //ignore
@@ -98,10 +93,6 @@ object PopBackgroundPermissionUtil {
                 android.os.Process.myUid(),
                 context.packageName
             ) as Int
-            Log.d(
-                TAG,
-                "PopBackgroundPermissionUtil checkXmPermission result:" + (AppOpsManager.MODE_ALLOWED == result)
-            )
             return result == AppOpsManager.MODE_ALLOWED
         } catch (e: Exception) {
             //ignore
@@ -125,10 +116,6 @@ object PopBackgroundPermissionUtil {
         } catch (exception: Exception) {
             //ignore
         }
-        Log.d(
-            TAG,
-            "PopBackgroundPermissionUtil checkVivoPermission result:" + (AppOpsManager.MODE_ALLOWED == result)
-        )
         return result == AppOpsManager.MODE_ALLOWED
     }
 

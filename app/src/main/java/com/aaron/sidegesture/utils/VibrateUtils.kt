@@ -25,19 +25,21 @@ object VibrateUtils {
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val level = vibrations.predefinedEffect
-            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                when (level) {
-                    VibrationEffects.None -> VibrationEffect.createOneShot(vibrations.customVibrationMs, 255)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                vibrations.predefinedEffect != VibrationEffects.None
+            ) {
+                val effect = when (vibrations.predefinedEffect) {
                     VibrationEffects.Tick -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
                     VibrationEffects.Click -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                    VibrationEffects.HeavyClick -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+                    VibrationEffects.HeavyClick -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                    VibrationEffects.None -> error("Stub!")
                 }
-            } else {
-                VibrationEffect.createOneShot(vibrations.customVibrationMs, 255)
+                vibrator.vibrate(effect)
+            } else if (vibrations.customVibrationMs > 0) {
+                val effect = VibrationEffect.createOneShot(vibrations.customVibrationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+                vibrator.vibrate(effect)
             }
-            vibrator.vibrate(effect)
-        } else {
+        } else if (vibrations.customVibrationMs > 0) {
             vibrator.vibrate(vibrations.customVibrationMs)
         }
     }

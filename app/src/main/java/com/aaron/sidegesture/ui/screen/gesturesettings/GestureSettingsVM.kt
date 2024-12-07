@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
+import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.entity.VibrationEffects
@@ -138,6 +139,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val longSlideTriggerImmediately: Boolean = true,
         val longSlideTriggerDistance: Float = 0f,
         val longSlideTriggerDelayMs: Long = 0L,
+        val canShowPredefinedVibration: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
         val isCustomVibration: Boolean = false,
         val vibrations: Vibrations = Vibrations(),
         val showPredefinedVibrationDropdown: Boolean = false

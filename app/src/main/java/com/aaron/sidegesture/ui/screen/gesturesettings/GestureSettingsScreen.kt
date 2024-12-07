@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -129,12 +128,6 @@ fun GestureSettingsScreen(
                         sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                         valueRange = MinLongSlideTriggerDistance.toFloat()..MaxLongSlideTriggerDistance.toFloat()
                     )
-                    Log.d("zzx", """
-                        .
-                        longSlideTriggerDelayMs: ${uiState.longSlideTriggerDelayMs.toFloat()}
-                        MinLongPressTriggerDelayMs: ${MinLongPressTriggerDelayMs.toFloat()}
-                        MaxLongPressTriggerDelayMs: ${MaxLongPressTriggerDelayMs.toFloat()}
-                    """.trimIndent())
                     MyTextSlider(
                         value = uiState.longSlideTriggerDelayMs.toFloat(),
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
@@ -154,88 +147,99 @@ fun GestureSettingsScreen(
                         text = stringResource(id = R.string.vibrate_immediately),
                         secondaryText = stringResource(id = R.string.vibrate_immediately_hint)
                     )
-                    MyTextSwitch(
-                        onCheckedChange = { vm.onCustomVibrationChange(it) },
-                        checked = uiState.isCustomVibration,
-                        text = stringResource(id = R.string.custom_vibration),
-                        secondaryText = stringResource(id = R.string.custom_vibration_hint)
-                    )
-                    AnimatedVisibility(
-                        visible = uiState.isCustomVibration,
-                        enter = expandVertically(),
-                        exit = shrinkVertically()
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = MinItemHeightNoSecondary)
-                                    .onSingleClick {
-                                        vm.showPredefinedVibrationDropdown(true)
-                                    }
-                                    .padding(
-                                        horizontal = ContentPaddingHorizontal,
-                                        vertical = ContentPaddingVerticalWithSection
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(ItemPadding)
-                            ) {
-                                Text(
-                                    modifier = Modifier.weight(1f),
-                                    text = stringResource(id = R.string.predefined_style),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1
-                                )
-                                Box {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = getPredefinedVibrationEffectText(effect = uiState.vibrations.predefinedEffect),
-                                            color = MaterialTheme.colorScheme.primary,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            maxLines = 1
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = stringResource(id = R.string.vibration_style)
-                                        )
-                                    }
-                                    DropdownMenu(
-                                        containerColor = MaterialTheme.colorScheme.surface,
-                                        shape = MaterialTheme.shapes.medium,
-                                        expanded = uiState.showPredefinedVibrationDropdown,
-                                        onDismissRequest = { vm.showPredefinedVibrationDropdown(false) }
-                                    ) {
-                                        listOf(
-                                            VibrationEffects.Tick to getPredefinedVibrationEffectText(effect = VibrationEffects.Tick),
-                                            VibrationEffects.Click to getPredefinedVibrationEffectText(effect = VibrationEffects.Click),
-                                            VibrationEffects.HeavyClick to getPredefinedVibrationEffectText(effect = VibrationEffects.HeavyClick),
-                                            VibrationEffects.None to getPredefinedVibrationEffectText(effect = VibrationEffects.None)
-                                        ).fastForEach { (effectValue, text) ->
-                                            key(effectValue) {
-                                                DropdownMenuItem(
-                                                    onClick = {
-                                                        vm.updatePredefinedVibration(effectValue)
-                                                        vm.showPredefinedVibrationDropdown(false)
-                                                    },
-                                                    text = {
-                                                        Text(text = text)
-                                                    }
-                                                )
+                    if (uiState.canShowPredefinedVibration) {
+                        MyTextSwitch(
+                            onCheckedChange = { vm.onCustomVibrationChange(it) },
+                            checked = uiState.isCustomVibration,
+                            text = stringResource(id = R.string.custom_vibration),
+                            secondaryText = stringResource(id = R.string.custom_vibration_hint)
+                        )
+                        AnimatedVisibility(
+                            visible = uiState.isCustomVibration,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = MinItemHeightNoSecondary)
+                                        .onSingleClick {
+                                            vm.showPredefinedVibrationDropdown(true)
+                                        }
+                                        .padding(
+                                            horizontal = ContentPaddingHorizontal,
+                                            vertical = ContentPaddingVerticalWithSection
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                                ) {
+                                    Text(
+                                        modifier = Modifier.weight(1f),
+                                        text = stringResource(id = R.string.predefined_style),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1
+                                    )
+                                    Box {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = getPredefinedVibrationEffectText(effect = uiState.vibrations.predefinedEffect),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                maxLines = 1
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowDropDown,
+                                                contentDescription = stringResource(id = R.string.vibration_style)
+                                            )
+                                        }
+                                        DropdownMenu(
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            shape = MaterialTheme.shapes.medium,
+                                            expanded = uiState.showPredefinedVibrationDropdown,
+                                            onDismissRequest = { vm.showPredefinedVibrationDropdown(false) }
+                                        ) {
+                                            listOf(
+                                                VibrationEffects.Tick to getPredefinedVibrationEffectText(effect = VibrationEffects.Tick),
+                                                VibrationEffects.Click to getPredefinedVibrationEffectText(effect = VibrationEffects.Click),
+                                                VibrationEffects.HeavyClick to getPredefinedVibrationEffectText(effect = VibrationEffects.HeavyClick),
+                                                VibrationEffects.None to getPredefinedVibrationEffectText(effect = VibrationEffects.None)
+                                            ).fastForEach { (effectValue, text) ->
+                                                key(effectValue) {
+                                                    DropdownMenuItem(
+                                                        onClick = {
+                                                            vm.updatePredefinedVibration(effectValue)
+                                                            vm.showPredefinedVibrationDropdown(false)
+                                                        },
+                                                        text = {
+                                                            Text(text = text)
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                MyTextSlider(
+                                    enabled = uiState.vibrations.predefinedEffect == VibrationEffects.None,
+                                    value = uiState.vibrations.customVibrationMs.toFloat(),
+                                    onValueChange = { vm.onCustomVibrationMsChange(it) },
+                                    onValueChangeFinished = { vm.saveSettings() },
+                                    text = stringResource(id = R.string.vibration_strength),
+                                    sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
+                                    valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
+                                )
                             }
-                            MyTextSlider(
-                                enabled = uiState.vibrations.predefinedEffect == VibrationEffects.None,
-                                value = uiState.vibrations.customVibrationMs.toFloat(),
-                                onValueChange = { vm.onCustomVibrationMsChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
-                                text = stringResource(id = R.string.vibration_strength),
-                                sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
-                                valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
-                            )
                         }
+                    } else {
+                        MyTextSlider(
+                            value = uiState.vibrations.customVibrationMs.toFloat(),
+                            onValueChange = { vm.onCustomVibrationMsChange(it) },
+                            onValueChangeFinished = { vm.saveSettings() },
+                            text = stringResource(id = R.string.vibration_strength),
+                            sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
+                            valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
+                        )
                     }
                 }
             }
