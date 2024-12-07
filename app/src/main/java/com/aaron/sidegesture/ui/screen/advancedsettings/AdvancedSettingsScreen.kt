@@ -126,12 +126,14 @@ fun AdvancedSettingsScreen(
                         text = stringResource(id = R.string.exclude_from_recents),
                         secondaryText = stringResource(id = R.string.exclude_from_recents_hint)
                     )
-                    MyTextSwitch(
-                        onCheckedChange = { vm.onDynamicColorChange(it) },
-                        checked = uiState.dynamicColor,
-                        text = stringResource(id = R.string.dynamic_color),
-                        secondaryText = stringResource(id = R.string.dynamic_color_hint)
-                    )
+                    if (uiState.showDynamicColorOption) {
+                        MyTextSwitch(
+                            onCheckedChange = { vm.onDynamicColorChange(it) },
+                            checked = uiState.dynamicColor,
+                            text = stringResource(id = R.string.dynamic_color),
+                            secondaryText = stringResource(id = R.string.dynamic_color_hint)
+                        )
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

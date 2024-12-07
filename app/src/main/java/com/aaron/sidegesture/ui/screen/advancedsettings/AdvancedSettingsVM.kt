@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.advancedsettings
 
+import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.constant.DayNightMode
@@ -127,8 +128,9 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val hideScreenLock: Boolean = false,
         val hideHomeScreen: Boolean = false,
         val excludeFromRecents: Boolean = false,
-        val dynamicColor: Boolean = true,
+        val dynamicColor: Boolean = false,
         val dayNightMode: DayNightMode = DayNightMode.Auto,
+        val showDynamicColorOption: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
         val showDayNightModeDropdownMenu: Boolean = false
     )
 

@@ -22,6 +22,6 @@ data class AdvancedSettings(
     val hideScreenLock: Boolean = false,
     val hideHomeScreen: Boolean = false,
     val excludeFromRecents: Boolean = false,
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
     val dayNightMode: DayNightMode = DayNightMode.Auto
 )
