@@ -255,7 +255,7 @@ fun MySlider(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = SliderDefaults.colors(thumbColor = colorScheme.inversePrimary)
+    val colors = SliderDefaults.colors(thumbColor = colorScheme.primary)
     Slider(
         modifier = modifier,
         enabled = enabled,
