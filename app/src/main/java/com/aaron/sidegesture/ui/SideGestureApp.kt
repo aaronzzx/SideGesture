@@ -163,7 +163,7 @@ private inline fun <reified T : Any> NavGraphBuilder.myComposable(
         popExitTransition = popExitTransition,
         sizeTransform = sizeTransform
     ) { navBackStackEntry ->
-        Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.background)) {
+        Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.surface)) {
             content(navBackStackEntry)
         }
     }

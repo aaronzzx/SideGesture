@@ -110,7 +110,8 @@ fun MySection(
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainer
         ) {
             Column {
                 content()
@@ -129,7 +130,8 @@ fun MyExpandableColumn(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column {
             Row(
@@ -180,7 +182,6 @@ fun MyExpandableColumn(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTextSlider(
     value: Float,
@@ -254,7 +255,7 @@ fun MySlider(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = SliderDefaults.colors(thumbColor = colorScheme.primaryContainer)
+    val colors = SliderDefaults.colors(thumbColor = colorScheme.inversePrimary)
     Slider(
         modifier = modifier,
         enabled = enabled,
@@ -272,8 +273,8 @@ fun MySlider(
                         drawContent()
                         if (enabled) {
                             drawCircle(
-                                color = colorScheme.primary,
-                                radius = 8.dp.toPx()
+                                color = colorScheme.onPrimary,
+                                radius = 7.dp.toPx()
                             )
                         }
                     },

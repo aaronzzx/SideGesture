@@ -56,11 +56,11 @@ import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.actionIcon
+import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
-import com.aaron.sidegesture.ui.theme.AlipayColor
-import com.aaron.sidegesture.ui.theme.WechatColor
+import com.aaron.sidegesture.ktx.wechatColor
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.cos
@@ -207,10 +207,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             .clipToBackground(
                                 color = when (action.value) {
                                     GlobalActions.WECHAT_SCAN,
-                                    GlobalActions.WECHAT_PAY -> WechatColor
+                                    GlobalActions.WECHAT_PAY -> MaterialTheme.colorScheme.wechatColor
 
                                     GlobalActions.ALIPAY_SCAN,
-                                    GlobalActions.ALIPAY_PAY -> AlipayColor
+                                    GlobalActions.ALIPAY_PAY -> MaterialTheme.colorScheme.alipayColor
 
                                     GlobalActions.EXTRA_LAUNCH_APP -> Color.Transparent
 

@@ -59,12 +59,13 @@ import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
+import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
-import com.aaron.sidegesture.ui.theme.AlipayColor
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
@@ -74,7 +75,6 @@ import com.aaron.sidegesture.ui.theme.MinIconSize
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
-import com.aaron.sidegesture.ui.theme.WechatColor
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -297,9 +297,9 @@ private fun ActionItem(
                     contentScale = ContentScale.Crop,
                     colorFilter = when (icon) {
                         R.drawable.wechat_scan,
-                        R.drawable.wechat_paycode -> ColorFilter.tint(WechatColor)
+                        R.drawable.wechat_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.wechatColor)
                         R.drawable.alipay_scan,
-                        R.drawable.alipay_paycode -> ColorFilter.tint(AlipayColor)
+                        R.drawable.alipay_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.alipayColor)
                         else -> null
                     }
                 )

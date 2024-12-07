@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 
 /**
@@ -32,12 +34,12 @@ fun TopBar(
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     showBackIcon: Boolean = true,
-    titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
+    titleStyle: TextStyle = LocalTextStyle.current.copy(fontSize = 18.sp),
     postfixTitle: (@Composable () -> Unit)? = null
 ) {
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
