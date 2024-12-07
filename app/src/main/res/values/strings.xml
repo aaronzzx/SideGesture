@@ -49,7 +49,7 @@
     <string name="lock_screen">锁屏界面</string>
     <string name="launcher">系统桌面</string>
     <string name="dynamic_color">动态配色</string>
-    <string name="dynamic_color_hint">从用户壁纸中派生自定义颜色</string>
+    <string name="dynamic_color_hint">从桌面壁纸中派生颜色</string>
     <string name="day_night_mode">夜间模式</string>
     <string name="day_night_mode_auto">跟随系统</string>
     <string name="day_night_mode_day">日间模式</string>
