@@ -16,6 +16,7 @@ import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.appInfo
+import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ktx.subscribeEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
@@ -90,7 +91,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     fun updateAppInfos() {
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {
-                AppInfoUtils.getInstalledPackages(App.getContext())
+                coerceTimeMillis(500) {
+                    AppInfoUtils.getInstalledPackages(App.getContext())
+                }
             }
             updateUiState {
                 if (it.selectSingle) {

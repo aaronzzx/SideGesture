@@ -6,6 +6,7 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -64,7 +65,9 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
     fun updateAppInfos() {
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {
-                AppInfoUtils.getInstalledPackages(App.getContext())
+                coerceTimeMillis(500) {
+                    AppInfoUtils.getInstalledPackages(App.getContext())
+                }
             }
             updateUiState {
                 val selectedList = mutableListOf<AppInfo>()
