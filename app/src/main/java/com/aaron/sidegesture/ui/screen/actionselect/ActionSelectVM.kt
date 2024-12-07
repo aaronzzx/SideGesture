@@ -17,6 +17,7 @@ import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.subscribeEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
@@ -77,12 +78,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun done() {
-        val appInfos = uiState
+        val packageNames = uiState
             .selectedRecord
             .list
             .filterIsInstance<AppInfo>()
-        if (appInfos.isNotEmpty()) {
-            sendUiEvent(UiEvent.GotoIconResize(appInfos))
+            .map { it.qualifiedName }
+        if (packageNames.isNotEmpty()) {
+            sendUiEvent(UiEvent.GotoIconResize(packageNames))
         } else {
             saveSettings()
         }
@@ -351,6 +353,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     sealed interface UiEvent {
-        data class GotoIconResize(val appInfos: List<AppInfo>) : UiEvent
+        data class GotoIconResize(val qualifiedNames: List<String>) : UiEvent
     }
 }

@@ -121,7 +121,7 @@ fun SideGestureApp() {
                         onNavToIconResize = { navController.navigate(IconResize(it)) }
                     )
                 }
-                myComposable<IconResize>(typeMap = IconResize.typeMap) {
+                myComposable<IconResize> {
                     IconResizeScreen(onBack = { navController.navigateUp() })
                 }
             }

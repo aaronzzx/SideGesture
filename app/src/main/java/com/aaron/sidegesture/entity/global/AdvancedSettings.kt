@@ -23,5 +23,6 @@ data class AdvancedSettings(
     val hideHomeScreen: Boolean = false,
     val excludeFromRecents: Boolean = false,
     val dynamicColor: Boolean = false,
-    val dayNightMode: DayNightMode = DayNightMode.Auto
+    val dayNightMode: DayNightMode = DayNightMode.Auto,
+    val clipApps: Map<String, Float> = emptyMap()
 )

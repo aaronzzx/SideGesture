@@ -13,6 +13,8 @@ import com.aaron.sidegesture.entity.AppInfo
  * @since 2024/12/3
  */
 
+val AppInfo.qualifiedName: String get() = "$packageName/$className"
+
 val AppInfo.icon: Drawable? @Composable get() {
     val pkgManager = LocalContext.current.packageManager
     return remember(this) {

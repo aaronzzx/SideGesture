@@ -59,6 +59,7 @@ import com.aaron.sidegesture.entity.AppInfo.Companion.DEFAULT_SCALE
 import com.aaron.sidegesture.entity.AppInfo.Companion.MAX_SCALE
 import com.aaron.sidegesture.entity.AppInfo.Companion.MIN_SCALE
 import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
@@ -109,7 +110,7 @@ fun IconResizeScreen(
                 ) {
                     itemsIndexed(
                         items = uiState.appInfos,
-                        key = { _, item -> "${item.packageName}/${item.className}/${item.label}" }
+                        key = { _, item -> item.qualifiedName }
                     ) { index, item ->
                         BadgedBox(
                             modifier = Modifier

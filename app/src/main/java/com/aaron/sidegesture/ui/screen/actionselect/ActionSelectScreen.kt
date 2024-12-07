@@ -92,14 +92,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun ActionSelectScreen(
     onBack: () -> Unit,
-    onNavToIconResize: (List<AppInfo>) -> Unit,
+    onNavToIconResize: (List<String>) -> Unit,
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
             when (event) {
-                is UiEvent.GotoIconResize -> onNavToIconResize(event.appInfos)
+                is UiEvent.GotoIconResize -> onNavToIconResize(event.qualifiedNames)
             }
         }
     ) { uiState ->
