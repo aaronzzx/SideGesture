@@ -118,6 +118,11 @@ class SideGestureService : ComponentAccessibilityService() {
                 }
             }
             launch {
+                DataStoreHolder.initialSettings.data.collectLatest {
+                    updateGestureButtons()
+                }
+            }
+            launch {
                 DataStoreHolder.advancedSettings.data.collectLatest {
                     updateGestureButtons()
                 }
@@ -177,17 +182,22 @@ class SideGestureService : ComponentAccessibilityService() {
                 val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
                     updateGestureButton(button)
 
-                    val advancedSettings = DataStoreHolder.advancedSettings.data.first()
-                    if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
-                        setFlags(false)
-                    } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
-                        setFlags(false)
-                    } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
-                        setFlags(false)
-                    } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
+                    val initialSettings = DataStoreHolder.initialSettings.data.first()
+                    if (!initialSettings.gestureEnabled) {
                         setFlags(false)
                     } else {
-                        setFlags(true)
+                        val advancedSettings = DataStoreHolder.advancedSettings.data.first()
+                        if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
+                            setFlags(false)
+                        } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
+                            setFlags(false)
+                        } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
+                            setFlags(false)
+                        } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
+                            setFlags(false)
+                        } else {
+                            setFlags(button.enabled)
+                        }
                     }
                 }
                 updateLayout(view, lp)

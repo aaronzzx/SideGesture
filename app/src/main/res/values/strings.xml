@@ -9,6 +9,7 @@
     <string name="gesture_switch">手势开关</string>
     <string name="system_overlay">在其他应用上层显示</string>
     <string name="popup_background">后台弹出界面</string>
+    <string name="please_enable_accessibility_service_first">请先启用无障碍服务</string>
     <string name="accessibility_service">无障碍服务</string>
     <string name="global_settings">全局设置</string>
     <string name="advanced_settings">高级设置</string>

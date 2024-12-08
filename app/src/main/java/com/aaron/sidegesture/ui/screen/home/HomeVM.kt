@@ -13,6 +13,7 @@ import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -69,6 +70,10 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     fun onAppGestureEnabledChange(enabled: Boolean) {
+        if (!uiState.isAccessibilityEnabled) {
+            toast(R.string.please_enable_accessibility_service_first)
+            return
+        }
         updateUiState {
             it.copy(isGestureEnabled = enabled)
         }
@@ -92,10 +97,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     fun updatePermissionState() {
         viewModelScope.launch {
             val app = App.getContext()
+            val isGestureEnabled = DataStoreHolder.initialSettings.data.first().gestureEnabled
             val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
             val isIgnoringBatteryOptimizations = app.isIgnoringBatteryOptimizations()
             updateUiState {
                 it.copy(
+                    isGestureEnabled = isAccessibilityEnabled && isGestureEnabled,
                     isAccessibilityEnabled = isAccessibilityEnabled,
                     isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations
                 )

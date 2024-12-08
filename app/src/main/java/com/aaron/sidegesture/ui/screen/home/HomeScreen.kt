@@ -190,13 +190,13 @@ fun HomeScreen(
 
                 MyColumn(scrollState = scrollState) {
                     MySection(title = stringResource(id = R.string.initial_settings)) {
-//                        MyTextSwitch(
-//                            onCheckedChange = {
-//                                vm.onAppGestureEnabledChange(it)
-//                            },
-//                            checked = uiState.isGestureEnabled,
-//                            text = stringResource(id = R.string.gesture_switch)
-//                        )
+                        MyTextSwitch(
+                            onCheckedChange = {
+                                vm.onAppGestureEnabledChange(it)
+                            },
+                            checked = uiState.isGestureEnabled,
+                            text = stringResource(id = R.string.gesture_switch)
+                        )
 //                        MyTextSwitch(
 //                            onCheckedChange = {
 //                                context.gotoOverlaySettings()

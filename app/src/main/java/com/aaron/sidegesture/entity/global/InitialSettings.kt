@@ -10,6 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class InitialSettings(
-    val gestureEnabled: Boolean = false,
+    val gestureEnabled: Boolean = true,
     val unlocked: Boolean = false
 )

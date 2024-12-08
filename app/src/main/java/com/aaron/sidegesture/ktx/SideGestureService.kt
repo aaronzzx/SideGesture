@@ -71,7 +71,7 @@ fun SideGestureService.attachGestureButtons(buttons: Collection<GestureButton>):
 fun SideGestureService.attachGestureButton(button: GestureButton): View {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
-        setBasic(true)
+        setBasic(button.enabled)
         updateGestureButton(button)
     }
     @SuppressLint("ClickableViewAccessibility")
