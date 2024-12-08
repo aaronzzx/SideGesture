@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -40,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -54,7 +54,6 @@ class SideGestureService : ComponentAccessibilityService() {
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
 
-    private var advancedSettings: AdvancedSettings = AdvancedSettings()
     private var isNowInLockScreenPage = false
 
     val coroutineScope = MainScope()
@@ -119,8 +118,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 }
             }
             launch {
-                DataStoreHolder.advancedSettings.data.collectLatest { item ->
-                    advancedSettings = item
+                DataStoreHolder.advancedSettings.data.collectLatest {
                     updateGestureButtons()
                 }
             }
@@ -172,26 +170,28 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     private fun updateGestureButtons() {
-        val buttonViews = buttonViews
-        buttonViews?.forEach { view ->
-            val button = view.tag as? GestureButton ?: return
-            val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
-                updateGestureButton(button)
+        coroutineScope.launch {
+            val buttonViews = buttonViews
+            buttonViews?.forEach { view ->
+                val button = view.tag as? GestureButton ?: return@forEach
+                val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
+                    updateGestureButton(button)
 
-                val advancedSettings = advancedSettings
-                if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
-                    setFlags(false)
-                } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
-                    setFlags(false)
-                } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
-                    setFlags(false)
-                } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
-                    setFlags(false)
-                } else {
-                    setFlags(true)
+                    val advancedSettings = DataStoreHolder.advancedSettings.data.first()
+                    if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
+                        setFlags(false)
+                    } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
+                        setFlags(false)
+                    } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
+                        setFlags(false)
+                    } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
+                        setFlags(false)
+                    } else {
+                        setFlags(true)
+                    }
                 }
+                updateLayout(view, lp)
             }
-            updateLayout(view, lp)
         }
     }
 
