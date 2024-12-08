@@ -65,7 +65,11 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(500) {
-                    AppInfoUtils.getInstalledPackages(App.getContext())
+                    AppInfoUtils
+                        .getInstalledPackages(App.getContext())
+                        .filter {
+                            it.packageName != App.getContext().packageName
+                        }
                 }
             }
             updateUiState {

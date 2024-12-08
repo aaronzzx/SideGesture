@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -118,14 +119,15 @@ class SideGestureService : ComponentAccessibilityService() {
                 }
             }
             launch {
-                DataStoreHolder.initialSettings.data.collectLatest {
-                    updateGestureButtons()
-                }
-            }
-            launch {
-                DataStoreHolder.advancedSettings.data.collectLatest {
-                    updateGestureButtons()
-                }
+                DataStoreHolder
+                    .initialSettings
+                    .data
+                    .distinctUntilChangedBy {
+                        it.gestureEnabled
+                    }
+                    .collectLatest {
+                        updateGestureButtons()
+                    }
             }
         }
 
