@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aaron.compose.ktx.clipToBackground
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
@@ -62,9 +62,12 @@ fun ComposeToast(modifier: Modifier = Modifier) {
                 .padding(bottom = 100.dp),
             hostState = snackbarHostState
         ) { snackbarData ->
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            Box(
+                modifier = Modifier
+                    .clipToBackground(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = CircleShape
+                    )
             ) {
                 Text(
                     modifier = Modifier.padding(
