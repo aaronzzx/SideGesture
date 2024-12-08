@@ -110,9 +110,9 @@
     <string name="flashlight_failed">无法使用手电筒，请检查设备是否支持。</string>
     <string name="os_version_too_low">系统版本不支持</string>
     <string name="ignoring_battery_optimizations">电池优化</string>
-    <string name="ignoring_battery_optimizations_hint">防止低电量或开启了省电模式导致应用被杀</string>
+    <string name="ignoring_battery_optimizations_hint">应用需要后台运行以维持正常工作</string>
     <string name="launch_self_permission">应用自启动</string>
-    <string name="launch_self_permission_hint">允许应用后台运行，防止息屏或系统清理内存导致被杀</string>
+    <string name="launch_self_permission_hint">配合电池优化选项提高后台留存能力</string>
     <string name="please_enable_launch_self_permission_by_yourself">请手动前往开启自启动权限</string>
     <string name="please_enable_ignoring_battery_optimizations_by_yourself">请手动前往启用电池优化白名单</string>
 
