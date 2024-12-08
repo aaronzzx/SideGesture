@@ -19,6 +19,8 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
@@ -28,6 +30,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.getDayNightModeText
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
+import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -165,6 +168,7 @@ fun AdvancedSettingsScreen(
                             }
                             DropdownMenu(
                                 containerColor = MaterialTheme.colorScheme.surface,
+                                offset = DpOffset(x = -EdgeMenuPadding, y = 0.dp),
                                 shape = MaterialTheme.shapes.medium,
                                 expanded = uiState.showDayNightModeDropdownMenu,
                                 onDismissRequest = { vm.showDayNightModeDropdownMenu(false) }

@@ -39,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -59,6 +61,7 @@ import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MyExpandableColumn
@@ -138,7 +141,7 @@ fun HomeScreen(
                         DropdownMenu(
                             containerColor = MaterialTheme.colorScheme.surface,
                             shape = MaterialTheme.shapes.medium,
-//                            offset = DpOffset(-EdgeMenuPadding, 0.dp),
+                            offset = DpOffset(-(TopBarPaddingExtra / 2), 0.dp),
                             expanded = uiState.showMoreMenu,
                             onDismissRequest = { vm.showMoreMenu(false) }
                         ) {
