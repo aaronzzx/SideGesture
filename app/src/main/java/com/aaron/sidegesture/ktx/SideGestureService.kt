@@ -44,11 +44,6 @@ suspend fun SideGestureService.takeScreenshot(): Bitmap? = suspendCancellableCor
     })
 }
 
-fun SideGestureService.updateLayout(view: View, lp: WindowManager.LayoutParams) {
-    val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
-    wm.updateViewLayout(view, lp)
-}
-
 fun SideGestureService.attachComposeOverlay(content: @Composable () -> Unit): ComposeView {
     val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
     val lp = WindowManager.LayoutParams().apply {
@@ -89,6 +84,14 @@ fun SideGestureService.attachGestureButton(button: GestureButton): View {
     }
     wm.addView(view, lp)
     return view
+}
+
+fun SideGestureService.updateLayout(view: View, lp: WindowManager.LayoutParams) {
+    try {
+        val wm = ContextCompat.getSystemService(this, WindowManager::class.java)!!
+        wm.updateViewLayout(view, lp)
+    } catch (ignored: Exception) {
+    }
 }
 
 fun SideGestureService.removeWindows(views: Collection<View>) {
