@@ -12,11 +12,17 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.global.AdvancedSettings
+import com.aaron.sidegesture.event.WallpaperChangedEvent
+import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.removeWindow
@@ -28,6 +34,7 @@ import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.ui.widget.SideGestureContainer
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.Events
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -77,19 +84,25 @@ class SideGestureService : ComponentAccessibilityService() {
             removeWindow(mainView)
         }
         this.mainView = attachComposeOverlay {
-            SideGestureTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    val buttons by DataStoreHolder
-                        .gestureButtons
-                        .data
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-                    SideGestureContainer(
-                        modifier = Modifier.matchParentSize(),
-                        buttons = buttons,
-                        onAction = { action ->
-                            proxy.onAction(action)
-                        }
-                    )
+            var key by remember { mutableStateOf(Any()) }
+            SubscribeEvent(eventClass = WallpaperChangedEvent::class) {
+                key = Any()
+            }
+            key(key) {
+                SideGestureTheme {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        val buttons by DataStoreHolder
+                            .gestureButtons
+                            .data
+                            .collectAsStateWithLifecycle(initialValue = emptyList())
+                        SideGestureContainer(
+                            modifier = Modifier.matchParentSize(),
+                            buttons = buttons,
+                            onAction = { action ->
+                                proxy.onAction(action)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -113,6 +126,11 @@ class SideGestureService : ComponentAccessibilityService() {
             }
         }
 
+        registerScreenLockReceiver()
+        registerWallpaperChangedReceiver()
+    }
+
+    private fun registerScreenLockReceiver() {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action == Intent.ACTION_SCREEN_ON) {
@@ -126,6 +144,18 @@ class SideGestureService : ComponentAccessibilityService() {
         val intentFilter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(receiver, intentFilter)
+    }
+
+    private fun registerWallpaperChangedReceiver() {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                Events.post(WallpaperChangedEvent())
+            }
+        }
+        val intentFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_WALLPAPER_CHANGED)
         }
         registerReceiver(receiver, intentFilter)
     }
