@@ -36,6 +36,7 @@ import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.FlashlightUtils
 import com.blankj.utilcode.util.PermissionUtils
 import com.blankj.utilcode.util.ScreenUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -118,10 +119,14 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.FLASHLIGHT -> {
                 if (FlashlightUtils.isFlashlightEnable()) {
                     val block = {
-                        val turnOn = !FlashlightUtils.isFlashlightOn()
-                        FlashlightUtils.setFlashlightStatus(turnOn)
-                        if (!turnOn) {
-                            FlashlightUtils.destroy()
+                        coroutineScope.launch(Dispatchers.Default) {
+                            val turnOn = !FlashlightUtils.isFlashlightOn()
+                            if (turnOn) {
+                                FlashlightUtils.setFlashlightStatus(true)
+                            } else {
+                                FlashlightUtils.setFlashlightStatus(false)
+                                FlashlightUtils.destroy()
+                            }
                         }
                     }
                     if (PermissionUtils.isGranted(Manifest.permission.CAMERA)) {
