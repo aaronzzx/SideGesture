@@ -7,6 +7,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
+import com.aaron.sidegesture.ktx.isIgnoringBatteryOptimizations
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -92,8 +93,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         viewModelScope.launch {
             val app = App.getContext()
             val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
+            val isIgnoringBatteryOptimizations = app.isIgnoringBatteryOptimizations()
             updateUiState {
-                it.copy(isAccessibilityEnabled = isAccessibilityEnabled)
+                it.copy(
+                    isAccessibilityEnabled = isAccessibilityEnabled,
+                    isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations
+                )
             }
         }
     }
@@ -133,6 +138,7 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         val gestureButtons: List<GestureButton> = emptyList(),
         val isGestureEnabled: Boolean = false,
         val isAccessibilityEnabled: Boolean = false,
+        val isIgnoringBatteryOptimizations: Boolean = false,
         val isDrawOverlayEnabled: Boolean = false,
         val isPopBackgroundEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,

@@ -53,6 +53,7 @@ import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.buttonTextCompose
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
+import com.aaron.sidegesture.ktx.gotoIgnoreBatteryOptimizations
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
@@ -66,6 +67,7 @@ import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.AboutUtils
+import com.aaron.sidegesture.utils.KeepAliveHelper
 import kotlinx.coroutines.launch
 
 /**
@@ -212,6 +214,21 @@ fun HomeScreen(
                             },
                             checked = uiState.isAccessibilityEnabled,
                             text = stringResource(id = R.string.accessibility_service)
+                        )
+                        MyTextSwitch(
+                            onCheckedChange = {
+                                context.gotoIgnoreBatteryOptimizations()
+                            },
+                            checked = uiState.isIgnoringBatteryOptimizations,
+                            text = stringResource(id = R.string.ignoring_battery_optimizations),
+                            secondaryText = stringResource(id = R.string.ignoring_battery_optimizations_hint)
+                        )
+                        MyTextButton(
+                            onClick = {
+                                KeepAliveHelper.gotoSettings(context)
+                            },
+                            text = stringResource(id = R.string.launch_self_permission),
+                            secondaryText = stringResource(id = R.string.launch_self_permission_hint)
                         )
                     }
 

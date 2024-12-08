@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.Uri
+import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.KeyEvent
@@ -20,6 +21,23 @@ import com.blankj.utilcode.util.AppUtils
  * @author aaronzzxup@gmail.com
  * @since 2024/11/18
  */
+
+fun Context.gotoIgnoreBatteryOptimizations() {
+    try {
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = Uri.parse("package:$packageName")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    } catch (ignored: Exception) {
+        showToast(R.string.please_enable_ignoring_battery_optimizations_by_yourself)
+    }
+}
+
+fun Context.isIgnoringBatteryOptimizations(): Boolean {
+    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+    return pm.isIgnoringBatteryOptimizations(packageName)
+}
 
 fun Context.launchAssist() {
     try {
