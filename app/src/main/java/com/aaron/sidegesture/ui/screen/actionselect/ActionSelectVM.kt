@@ -267,9 +267,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     val selectedList = it.selectedRecord.list.toMutableList()
                     resizedAppInfos.forEach { appInfo ->
                         val index = selectedList.indexOfFirst { obj ->
-                            obj is AppInfo &&
-                                    obj.packageName == appInfo.packageName &&
-                                    obj.className == appInfo.className
+                            obj is AppInfo && obj.qualifiedName == appInfo.qualifiedName
                         }
                         if (index != -1) {
                             selectedList[index] = appInfo
@@ -332,9 +330,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             fun isSelected(obj: Any): Boolean {
                 if (obj is AppInfo) {
                     return list.find {
-                        it is AppInfo &&
-                                it.packageName == obj.packageName &&
-                                it.className == obj.className
+                        it is AppInfo && it.qualifiedName == obj.qualifiedName
                     } != null
                 }
                 return obj in list
@@ -342,9 +338,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
             fun getAppInfo(appInfo: AppInfo): AppInfo? {
                 return list.find {
-                    it is AppInfo &&
-                            it.packageName == appInfo.packageName &&
-                            it.className == appInfo.className
+                    it is AppInfo && it.qualifiedName == appInfo.qualifiedName
                 } as? AppInfo
             }
         }

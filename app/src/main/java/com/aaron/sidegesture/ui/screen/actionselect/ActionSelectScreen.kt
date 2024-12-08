@@ -63,6 +63,7 @@ import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
@@ -335,7 +336,7 @@ private fun AppPage(
             ) {
                 items(
                     items = appInfos,
-                    key = { "${it.label}-${it.packageName}" }
+                    key = { it.qualifiedName }
                 ) { item ->
                     AppItem(
                         appInfo = item,

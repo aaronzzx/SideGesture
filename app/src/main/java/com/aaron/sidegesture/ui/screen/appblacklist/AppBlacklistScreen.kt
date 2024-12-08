@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -46,6 +47,7 @@ import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -125,16 +127,16 @@ fun AppBlacklistScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = ScrollBottomPadding)
                         ) {
-                            arrayOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).forEach { list ->
+                            listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
                                 items(
                                     items = list,
-                                    key = { "${it.label}-${it.packageName}" }
+                                    key = { it.qualifiedName }
                                 ) { item ->
                                     AppBlacklistItem(
                                         appInfo = item,
-                                        selected = item.packageName in uiState.excludeApps,
+                                        selected = item.qualifiedName in uiState.excludeApps,
                                         onSelect = { selected ->
-                                            vm.selectApp(item.packageName, selected)
+                                            vm.selectApp(item.qualifiedName, selected)
                                         }
                                     )
                                 }

@@ -6,6 +6,7 @@ import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -33,14 +34,14 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun selectApp(packageName: String, selected: Boolean) {
+    fun selectApp(qualifiedName: String, selected: Boolean) {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.updateData {
                 val mutableList = it.excludeApps.toMutableList()
                 if (selected) {
-                    mutableList.add(packageName)
+                    mutableList.add(qualifiedName)
                 } else {
-                    mutableList.remove(packageName)
+                    mutableList.remove(qualifiedName)
                 }
                 it.copy(excludeApps = mutableList)
             }
@@ -68,6 +69,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
                     AppInfoUtils
                         .getInstalledPackages(App.getContext())
                         .filter {
+                            // 排除自己
                             it.packageName != App.getContext().packageName
                         }
                 }
@@ -76,7 +78,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
                 val selectedList = mutableListOf<AppInfo>()
                 val unselectedList = mutableListOf<AppInfo>()
                 appInfos.forEach { info ->
-                    if (info.packageName in it.excludeApps) {
+                    if (info.qualifiedName in it.excludeApps) {
                         selectedList.add(info)
                     } else {
                         unselectedList.add(info)
