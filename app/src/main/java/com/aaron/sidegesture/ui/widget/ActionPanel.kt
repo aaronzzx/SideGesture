@@ -243,7 +243,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             Image(
                                 imageVector = actionIcon,
                                 contentDescription = null,
-                                colorFilter = ColorFilter.tint(Color.White)
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
                             )
                         } else {
                             val isWechatAlipay = remember(actionIcon) {
