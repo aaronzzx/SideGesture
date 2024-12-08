@@ -22,15 +22,17 @@ import com.blankj.utilcode.util.AppUtils
  * @since 2024/11/18
  */
 
-fun Context.gotoIgnoreBatteryOptimizations() {
-    try {
+fun Context.gotoIgnoreBatteryOptimizations(): Boolean {
+    return try {
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
             data = Uri.parse("package:$packageName")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
+        true
     } catch (ignored: Exception) {
         showToast(R.string.please_enable_ignoring_battery_optimizations_by_yourself)
+        false
     }
 }
 
@@ -39,20 +41,22 @@ fun Context.isIgnoringBatteryOptimizations(): Boolean {
     return pm.isIgnoringBatteryOptimizations(packageName)
 }
 
-fun Context.launchAssist() {
-    try {
+fun Context.launchAssist(): Boolean {
+    return try {
         val intent = Intent().apply {
             setAction(Intent.ACTION_ASSIST)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
+        true
     } catch (ignored: Exception) {
         showToast(R.string.launch_assist_failed)
+        false
     }
 }
 
-fun Context.launchApp(packageName: String, className: String) {
-    try {
+fun Context.launchApp(packageName: String, className: String): Boolean {
+    return try {
         val intent = Intent().apply {
             setClassName(packageName, className)
             setAction(Intent.ACTION_MAIN)
@@ -60,8 +64,10 @@ fun Context.launchApp(packageName: String, className: String) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
+        true
     } catch (ignored: ActivityNotFoundException) {
         showToast(R.string.launch_app_failed)
+        false
     }
 }
 
@@ -102,22 +108,24 @@ fun Context.dispatchMediaKeyEvent(keycode: Int) {
     audioManager.dispatchMediaKeyEvent(up)
 }
 
-fun Context.gotoWechat() {
-    val intent = Intent().apply {
-        setAction("com.tencent.mm.action.BIZSHORTCUT")
-        addCategory(Intent.CATEGORY_DEFAULT)
-        setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-    try {
+fun Context.gotoWechat(): Boolean {
+    return try {
+        val intent = Intent().apply {
+            setAction("com.tencent.mm.action.BIZSHORTCUT")
+            addCategory(Intent.CATEGORY_DEFAULT)
+            setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         startActivity(intent)
+        true
     } catch (exception: ActivityNotFoundException) {
         showToast(R.string.goto_wechat_failed)
+        false
     }
 }
 
-fun Context.gotoWechatScan() {
+fun Context.gotoWechatScan(): Boolean {
     val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
-    if (intent != null &&
+    return if (intent != null &&
         packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null
     ) {
         intent.putExtra("LauncherUI.From.Scaner.Shortcut", true)
@@ -125,16 +133,19 @@ fun Context.gotoWechatScan() {
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             startActivity(intent)
+            true
         } catch (exception: ActivityNotFoundException) {
             showToast(R.string.goto_wechat_failed)
+            false
         }
     } else {
         showToast(R.string.goto_wechat_failed)
+        false
     }
 }
 
-fun Context.gotoAlipayScan() {
-    try {
+fun Context.gotoAlipayScan(): Boolean {
+    return try {
         //利用Intent打开支付宝
         //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
         //alipayqr://platformapi/startapp?saId=20000056
@@ -143,13 +154,15 @@ fun Context.gotoAlipayScan() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         startActivity(intent)
+        true
     } catch (e: Exception) {
         showToast(R.string.goto_alipay_failed)
+        false
     }
 }
 
-fun Context.gotoAlipayPayCode() {
-    try {
+fun Context.gotoAlipayPayCode(): Boolean {
+    return try {
         //利用Intent打开支付宝
         //支付宝跳过开启动画打开扫码和付款码的url scheme分别是alipayqr://platformapi/startapp?saId=10000007和
         //alipayqr://platformapi/startapp?saId=20000056
@@ -158,8 +171,10 @@ fun Context.gotoAlipayPayCode() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         startActivity(intent)
+        true
     } catch (e: Exception) {
         showToast(R.string.goto_alipay_failed)
+        false
     }
 }
 
@@ -177,7 +192,12 @@ fun Context.gotoOverlaySettings() {
     val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
         data = Uri.parse("package:${packageName}")
     }
-    startActivity(intent)
+    try {
+        startActivity(intent)
+    } catch (ignored: Exception) {
+        intent.action = Settings.ACTION_SETTINGS
+        startActivity(intent)
+    }
 }
 
 fun Context.gotoAppDetailSettings() {

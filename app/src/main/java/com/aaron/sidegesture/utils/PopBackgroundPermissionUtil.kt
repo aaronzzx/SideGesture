@@ -4,12 +4,10 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.net.Uri
 import android.os.Binder
-import android.os.Build
 import android.provider.Settings
+import com.blankj.utilcode.util.RomUtils
 
 object PopBackgroundPermissionUtil {
-
-    private const val TAG = "PopPermissionUtil"
 
     private const val HW_OP_CODE_POPUP_BACKGROUND_WINDOW = 100000
     private const val XM_OP_CODE_POPUP_BACKGROUND_WINDOW = 10021
@@ -18,39 +16,16 @@ object PopBackgroundPermissionUtil {
      * 是否有后台弹出页面权限
      */
     fun hasPopupBackgroundPermission(context: Context): Boolean {
-        if (isHuawei()) {
+        if (RomUtils.isHuawei()) {
             return checkHwPermission(context)
         }
-        if (isXiaoMi()) {
+        if (RomUtils.isXiaomi()) {
             return checkXmPermission(context)
         }
-        if (isVivo()) {
+        if (RomUtils.isVivo()) {
             checkVivoPermission(context)
         }
-        if (isOppo()) {
-            return Settings.canDrawOverlays(context)
-        }
-        return true
-    }
-
-    fun isHuawei(): Boolean {
-        return checkManufacturer("huawei")
-    }
-
-    fun isXiaoMi(): Boolean {
-        return checkManufacturer("xiaomi")
-    }
-
-    fun isOppo(): Boolean {
-        return checkManufacturer("oppo")
-    }
-
-    fun isVivo(): Boolean {
-        return checkManufacturer("vivo")
-    }
-
-    private fun checkManufacturer(manufacturer: String): Boolean {
-        return manufacturer.equals(Build.MANUFACTURER, true)
+        return Settings.canDrawOverlays(context)
     }
 
     private fun checkHwPermission(context: Context): Boolean {

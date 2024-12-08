@@ -106,7 +106,7 @@
     <string name="goto_wechat_failed">无法跳转到微信，请检查您是否安装了微信。</string>
     <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝。</string>
     <string name="launch_app_failed">无法启动应用，请检查您是否已安装。</string>
-    <string name="launch_assist_failed">无法启动语音助手，请检查您是否已安装。</string>
+    <string name="launch_assist_failed">无法启动系统助手，请检查您是否已安装。</string>
     <string name="flashlight_failed">无法使用手电筒，请检查设备是否支持。</string>
     <string name="os_version_too_low">系统版本不支持</string>
     <string name="ignoring_battery_optimizations">电池优化</string>
@@ -157,7 +157,7 @@
     <string name="action_flashlight">手电筒</string>
     <string name="action_split_screen">应用分屏(7.0+)</string>
     <string name="action_popup_screen">应用小窗</string>
-    <string name="action_assist_app">语音助手</string>
+    <string name="action_assist_app">系统助手</string>
     <string name="action_search">搜索查找</string>
     <string name="action_screenshot">截屏(9.0+)</string>
     <string name="action_record_screen">录屏</string>

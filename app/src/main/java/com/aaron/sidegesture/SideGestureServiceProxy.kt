@@ -169,19 +169,20 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.WECHAT_PAY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    coroutineScope.launch {
-                        gotoWechat()
-                        delay(500)
-                        val screenWidth = ScreenUtils.getScreenWidth()
-                        val statusBarHeight = BarUtils.getStatusBarHeight()
-                        val radius = ConvertUtils.dp2px(12f)
-                        var x = screenWidth - ConvertUtils.dp2px(14f) - radius
-                        var y = statusBarHeight + ConvertUtils.dp2px(10f) + radius
-                        AccessibilityUtils.click(this@onAction, x, y)
-                        delay(500)
-                        x = screenWidth - ConvertUtils.dp2px(60f) - radius
-                        y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
-                        AccessibilityUtils.click(this@onAction, x, y)
+                    if (gotoWechat()) {
+                        coroutineScope.launch {
+                            delay(500)
+                            val screenWidth = ScreenUtils.getScreenWidth()
+                            val statusBarHeight = BarUtils.getStatusBarHeight()
+                            val radius = ConvertUtils.dp2px(12f)
+                            var x = screenWidth - ConvertUtils.dp2px(14f) - radius
+                            var y = statusBarHeight + ConvertUtils.dp2px(10f) + radius
+                            AccessibilityUtils.click(this@onAction, x, y)
+                            delay(500)
+                            x = screenWidth - ConvertUtils.dp2px(60f) - radius
+                            y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
+                            AccessibilityUtils.click(this@onAction, x, y)
+                        }
                     }
                 } else {
                     showToast(R.string.os_version_too_low)

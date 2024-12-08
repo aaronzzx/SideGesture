@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -61,14 +62,18 @@ fun ComposeToast(modifier: Modifier = Modifier) {
                 .padding(bottom = 100.dp),
             hostState = snackbarHostState
         ) { snackbarData ->
-            Surface(shape = CircleShape) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
                 Text(
                     modifier = Modifier.padding(
                         vertical = 8.dp,
                         horizontal = 16.dp
                     ),
                     text = snackbarData.visuals.message,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
