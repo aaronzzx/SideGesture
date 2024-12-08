@@ -38,12 +38,14 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
+import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -85,7 +87,7 @@ fun AppBlacklistScreen(
             vm.updateAppInfos()
         }
         LaunchedEffect(permissionState) {
-            if (uiState.needRequestGetAppPermission) {
+            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
                 permissionState.launchPermissionRequest()
             } else {
                 vm.updateAppInfos()
@@ -114,7 +116,7 @@ fun AppBlacklistScreen(
             }
         ) { contentPadding ->
             Box(modifier = Modifier.padding(contentPadding)) {
-                if (!uiState.needRequestGetAppPermission || permissionState.status.isGranted) {
+                if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
                     LoadingComponent(
                         modifier = Modifier.fillMaxSize(),
                         component = vm.loadingComponent

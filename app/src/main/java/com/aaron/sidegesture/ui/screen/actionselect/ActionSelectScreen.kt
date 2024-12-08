@@ -50,6 +50,7 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
+import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
@@ -61,6 +62,7 @@ import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
@@ -162,7 +164,7 @@ fun ActionSelectScreen(
                         .drop(1)
                         .filter { init && it == PAGE_APPS }
                         .collectLatest {
-                            if (uiState.needRequestGetAppPermission) {
+                            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
                                 permissionState.launchPermissionRequest()
                             } else {
                                 vm.updateAppInfos()
@@ -192,16 +194,15 @@ fun ActionSelectScreen(
                                 component = vm.loadingComponent
                             ) {
                                 AppPage(
-                                    modifier = Modifier.fillMaxSize(),
+                                    onSelect = { appInfo, selected ->
+                                        vm.select(appInfo, selected)
+                                    },
                                     appInfos = uiState.apps,
                                     selectedRecord = uiState.selectedRecord,
                                     snackbarHostState = snackbarHostState,
                                     permissionState = permissionState,
                                     selectSingle = uiState.selectSingle,
-                                    needRequestGetAppPermission = uiState.needRequestGetAppPermission,
-                                    onSelect = { appInfo, selected ->
-                                        vm.select(appInfo, selected)
-                                    }
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
                         }
@@ -323,12 +324,11 @@ private fun AppPage(
     snackbarHostState: SnackbarHostState,
     permissionState: PermissionState,
     selectSingle: Boolean,
-    needRequestGetAppPermission: Boolean,
     modifier: Modifier = Modifier,
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     Box(modifier = modifier) {
-        if (!needRequestGetAppPermission || permissionState.status.isGranted) {
+        if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = ScrollBottomPadding)

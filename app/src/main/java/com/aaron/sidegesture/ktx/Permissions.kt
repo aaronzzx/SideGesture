@@ -18,6 +18,9 @@ val PermissionStatus.deniedForever: Boolean
     get() = this is PermissionStatus.Denied && !shouldShowRationale
 
 fun Context.isGetInstalledAppsPermissionGranted(): Boolean {
+    if (!supportGetInstalledAppsPermission(this)) {
+        return true
+    }
     return ContextCompat.checkSelfPermission(
         this,
         PERMISSION_GET_INSTALLED_APPS
@@ -29,3 +32,15 @@ fun Activity.shouldShowRationale(permission: String): Boolean {
 }
 
 const val PERMISSION_GET_INSTALLED_APPS = "com.android.permission.GET_INSTALLED_APPS"
+
+/**
+ * 是否支持com.android.permission.GET_INSTALLED_APPS权限
+ */
+private fun supportGetInstalledAppsPermission(context: Context): Boolean {
+    val permissionInfo = try {
+        context.packageManager.getPermissionInfo("com.android.permission.GET_INSTALLED_APPS", 0)
+    } catch (e: Exception) {
+        null
+    }
+    return permissionInfo != null
+}

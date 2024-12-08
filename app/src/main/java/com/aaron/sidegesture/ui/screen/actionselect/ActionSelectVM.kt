@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
-import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -288,8 +287,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val selectSingle: Boolean = true,
         val actions: List<Action> = emptyList(),
         val apps: List<AppInfo> = emptyList(),
-        val selectedRecord: SelectedRecord = SelectedRecord(),
-        val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val selectedRecord: SelectedRecord = SelectedRecord()
     ) {
         data class SelectedRecord(val list: List<Any> = emptyList()) {
 

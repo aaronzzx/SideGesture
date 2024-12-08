@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.appblacklist
 
-import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
@@ -102,8 +101,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         val selectedAppInfos: List<AppInfo> = emptyList(),
         val unselectedAppInfos: List<AppInfo> = emptyList(),
         val excludeApps: List<String> = emptyList(),
-        val showResetWarningDialog: Boolean = false,
-        val needRequestGetAppPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val showResetWarningDialog: Boolean = false
     )
 
     sealed interface UiEvent
