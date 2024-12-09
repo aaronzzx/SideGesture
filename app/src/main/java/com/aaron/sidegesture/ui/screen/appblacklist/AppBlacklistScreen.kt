@@ -105,7 +105,7 @@ fun AppBlacklistScreen(
                     onBack = onBack,
                     title = stringResource(id = R.string.exclude_app),
                     actions = {
-                        if (permissionState.status.isGranted) {
+                        if (App.getContext().isGetInstalledAppsPermissionGranted()) {
                             IconButton(onClick = { vm.showResetWarningDialog(true) }) {
                                 Icon(
                                     imageVector = Icons.Default.Restore,
