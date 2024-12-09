@@ -53,20 +53,18 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
-import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
-import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
@@ -83,7 +81,6 @@ import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -159,16 +156,18 @@ fun ActionSelectScreen(
                     }
                 }
 
-                val permissionState = rememberPermissionState(PERMISSION_GET_INSTALLED_APPS) {
-                    vm.updateAppInfos()
+                val permissionState = rememberGetInstalledAppsPermissionState { granted ->
+                    if (granted) {
+                        vm.updateAppInfos()
+                    }
                 }
-                LaunchedEffect(pagerState, permissionState) {
+                LaunchedEffect(vm, pagerState, permissionState) {
                     var init = true
                     snapshotFlow { pagerState.currentPage }
                         .drop(1)
                         .filter { init && it == PAGE_APPS }
                         .collectLatest {
-                            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
+                            if (!permissionState.status.isGranted) {
                                 permissionState.launchPermissionRequest()
                             } else {
                                 vm.updateAppInfos()
@@ -350,7 +349,7 @@ private fun AppPage(
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     Box(modifier = modifier) {
-        if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
+        if (permissionState.status.isGranted) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = contentPadding

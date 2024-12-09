@@ -43,15 +43,13 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
-import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
-import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -63,7 +61,6 @@ import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
 /**
@@ -89,11 +86,13 @@ fun AppBlacklistScreen(
             )
         }
 
-        val permissionState = rememberPermissionState(PERMISSION_GET_INSTALLED_APPS) {
-            vm.updateAppInfos()
+        val permissionState = rememberGetInstalledAppsPermissionState { granted ->
+            if (granted) {
+                vm.updateAppInfos()
+            }
         }
-        LaunchedEffect(permissionState) {
-            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
+        LaunchedEffect(vm, permissionState) {
+            if (!permissionState.status.isGranted) {
                 permissionState.launchPermissionRequest()
             } else {
                 vm.updateAppInfos()
@@ -106,7 +105,7 @@ fun AppBlacklistScreen(
                     onBack = onBack,
                     title = stringResource(id = R.string.exclude_app),
                     actions = {
-                        if (App.getContext().isGetInstalledAppsPermissionGranted()) {
+                        if (permissionState.status.isGranted) {
                             IconButton(onClick = { vm.showResetWarningDialog(true) }) {
                                 Icon(
                                     imageVector = Icons.Default.Restore,
@@ -127,7 +126,7 @@ fun AppBlacklistScreen(
                 SnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
+            if (permissionState.status.isGranted) {
                 LoadingComponent(
                     modifier = Modifier.fillMaxSize(),
                     component = vm.loadingComponent
