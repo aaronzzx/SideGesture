@@ -101,18 +101,26 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    private fun arrangeAppInfos(appInfos: List<AppInfo>) {
-        updateUiState {
-            val selectedList = mutableListOf<AppInfo>()
-            val unselectedList = mutableListOf<AppInfo>()
+    private suspend fun arrangeAppInfos(appInfos: List<AppInfo>) {
+        val selectedList = mutableListOf<AppInfo>()
+        val unselectedList = mutableListOf<AppInfo>()
+        val excludeApps = uiState.excludeApps.toMutableList()
+        withContext(Dispatchers.Default) {
+            excludeApps.apply {
+                val qualifiedNames = appInfos.map { app -> app.qualifiedName }
+                removeAll { qualifiedName -> qualifiedName !in qualifiedNames }
+            }
             appInfos.forEach { info ->
-                if (info.qualifiedName in it.excludeApps) {
+                if (info.qualifiedName in excludeApps) {
                     selectedList.add(info)
                 } else {
                     unselectedList.add(info)
                 }
             }
+        }
+        updateUiState {
             it.copy(
+                excludeApps = excludeApps,
                 selectedAppInfos = selectedList,
                 unselectedAppInfos = unselectedList
             )

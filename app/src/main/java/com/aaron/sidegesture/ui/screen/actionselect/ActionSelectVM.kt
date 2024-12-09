@@ -77,13 +77,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun done() {
-        val packageNames = uiState
+        val qualifiedNames = uiState
             .selectedRecord
             .list
             .filterIsInstance<AppInfo>()
             .map { it.qualifiedName }
-        if (packageNames.isNotEmpty()) {
-            sendUiEvent(UiEvent.GotoIconResize(packageNames))
+        if (qualifiedNames.isNotEmpty()) {
+            sendUiEvent(UiEvent.GotoIconResize(qualifiedNames))
         } else {
             saveSettings()
         }
@@ -96,22 +96,51 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     AppInfoUtils.getInstalledPackages(App.getContext())
                 }
             }
-            updateUiState {
-                if (it.selectSingle) {
-                    return@updateUiState it.copy(apps = appInfos)
+            if (uiState.selectSingle) {
+                updateUiState {
+                    it.copy(apps = appInfos)
                 }
+                return@launchWithLoading
+            }
+            val selectedRecord = withContext(Dispatchers.Default) {
+                uiState.selectedRecord.let { selectedRecord ->
+                    // 检查是否有被卸载的，然后从选中中移除
+                    val uninstalledList = mutableListOf<AppInfo>()
+                    selectedRecord
+                        .list
+                        .filterIsInstance<AppInfo>()
+                        .forEach { selectedApp ->
+                            val uninstalled = !appInfos.any { app ->
+                                selectedApp.qualifiedName == app.qualifiedName
+                            }
+                            if (uninstalled) {
+                                uninstalledList.add(selectedApp)
+                            }
+                        }
+                    selectedRecord.removeAllAppInfos(uninstalledList)
+                }
+            }
+            val finalList = withContext(Dispatchers.Default) {
                 val list1 = mutableListOf<AppInfo>()
                 val list2 = mutableListOf<AppInfo>()
+                val selectedAppInfos = selectedRecord.list.filterIsInstance<AppInfo>()
                 appInfos.forEach { appInfo ->
-                    val cache = it.selectedRecord.getAppInfo(appInfo)
+                    val cache = selectedAppInfos.find { app ->
+                        app.qualifiedName == appInfo.qualifiedName
+                    }
                     if (cache != null) {
-                        list1.add(cache)
+                        list1.add(appInfo.copy(iconScale = cache.iconScale))
                     } else {
                         list2.add(appInfo)
                     }
                 }
-                val finalList = list1 + list2
-                it.copy(apps = finalList)
+                list1 + list2
+            }
+            updateUiState {
+                it.copy(
+                    apps = finalList,
+                    selectedRecord = selectedRecord
+                )
             }
         }
     }
@@ -327,6 +356,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 return this.copy(list = newList)
             }
 
+            fun removeAllAppInfos(list: List<AppInfo>): SelectedRecord {
+                val newList = this.list.toMutableList().apply {
+                    removeAll(list)
+                }
+                return this.copy(list = newList)
+            }
+
             fun isSelected(obj: Any): Boolean {
                 if (obj is AppInfo) {
                     return list.find {
@@ -334,12 +370,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     } != null
                 }
                 return obj in list
-            }
-
-            fun getAppInfo(appInfo: AppInfo): AppInfo? {
-                return list.find {
-                    it is AppInfo && it.qualifiedName == appInfo.qualifiedName
-                } as? AppInfo
             }
         }
     }
