@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -110,6 +111,12 @@ fun AppBlacklistScreen(
                                 Icon(
                                     imageVector = Icons.Default.Restore,
                                     contentDescription = "Reset"
+                                )
+                            }
+                            IconButton(onClick = { vm.done() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Done,
+                                    contentDescription = "Done"
                                 )
                             }
                         }
