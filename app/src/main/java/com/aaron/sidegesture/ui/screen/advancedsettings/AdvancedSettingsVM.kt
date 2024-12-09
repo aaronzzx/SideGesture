@@ -22,6 +22,13 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         loadData()
     }
 
+    fun onShowAnimation(showAnimation: Boolean) {
+        updateUiState {
+            it.copy(showAnimation = showAnimation)
+        }
+        saveSettings()
+    }
+
     fun showDayNightModeDropdownMenu(show: Boolean) {
         updateUiState {
             it.copy(showDayNightModeDropdownMenu = show)
@@ -89,6 +96,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder.advancedSettings.updateData {
                 val uiState = uiState
                 it.copy(
+                    animationStyles = it.animationStyles.copy(isAnimationEnabled = uiState.showAnimation),
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
                     hideLandscape = uiState.hideLandscape,
                     hideQuickPanel = uiState.hideQuickPanel,
@@ -107,6 +115,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder.advancedSettings.data.collectLatest { item ->
                 updateUiState {
                     it.copy(
+                        showAnimation = item.animationStyles.isAnimationEnabled,
                         fitSoftKeyboard = item.fitSoftKeyboard,
                         hideLandscape = item.hideLandscape,
                         hideQuickPanel = item.hideQuickPanel,
@@ -122,6 +131,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     data class UiState(
+        val showAnimation: Boolean = false,
         val fitSoftKeyboard: Boolean = true,
         val hideLandscape: Boolean = false,
         val hideQuickPanel: Boolean = false,

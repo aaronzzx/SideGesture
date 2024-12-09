@@ -14,7 +14,8 @@ import kotlinx.serialization.Transient
 @Keep
 data class AnimationStyles(
     val type: Int = TYPE_WAVE,
-    val json: String = ""
+    val json: String = "",
+    val isAnimationEnabled: Boolean = true
 ) {
     companion object {
         const val TYPE_WAVE = 1

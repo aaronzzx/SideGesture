@@ -54,7 +54,7 @@ fun SideGestureContainer(
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
     drawButtonBounds: Boolean = false,
-    animationStyle: AnimationStyle = WaveStyle(),
+    animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -133,11 +133,13 @@ fun SideGestureContainer(
             vibrations = sideGestureState.button?.vibrations
         )
 
-        GestureAnimation(
-            modifier = Modifier.matchParentSize(),
-            animationStyle = animationStyle,
-            sideGestureState = sideGestureState
-        )
+        if (animationStyle != null) {
+            GestureAnimation(
+                modifier = Modifier.matchParentSize(),
+                animationStyle = animationStyle,
+                sideGestureState = sideGestureState
+            )
+        }
     }
 }
 

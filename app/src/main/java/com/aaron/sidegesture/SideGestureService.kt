@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
+import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
@@ -41,6 +42,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -95,9 +97,18 @@ class SideGestureService : ComponentAccessibilityService() {
                             .gestureButtons
                             .data
                             .collectAsStateWithLifecycle(initialValue = emptyList())
+                        val animationStyles by DataStoreHolder
+                            .advancedSettings
+                            .data
+                            .map { it.animationStyles }
+                            .collectAsStateWithLifecycle(initialValue = AnimationStyles())
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = buttons,
+                            animationStyle = when (animationStyles.isAnimationEnabled) {
+                                true -> animationStyles.value
+                                else -> null
+                            },
                             onAction = { action ->
                                 proxy.onAction(action)
                             }
