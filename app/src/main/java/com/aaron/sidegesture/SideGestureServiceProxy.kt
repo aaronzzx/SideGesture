@@ -24,7 +24,7 @@ import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
-import com.aaron.sidegesture.ktx.launchApp
+import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
@@ -202,7 +202,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.EXTRA_LAUNCH_APP -> {
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    launchApp(appInfo.packageName, appInfo.className)
+                    launchAppInfo(appInfo)
                 }
             }
         }

@@ -16,7 +16,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEachIndexed
 import coil.compose.AsyncImage
@@ -197,6 +195,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             }
                     }
 
+                    val actionIcon = actionIcon(action = action)
                     Box(
                         modifier = Modifier
                             .onGloballyPositioned {
@@ -230,7 +229,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                     GlobalActions.ALIPAY_SCAN,
                                     GlobalActions.ALIPAY_PAY -> MaterialTheme.colorScheme.alipayColor
 
-                                    GlobalActions.EXTRA_LAUNCH_APP -> Color.Transparent
+                                    GlobalActions.EXTRA_LAUNCH_APP -> when (actionIcon is ImageVector) {
+                                        true -> MaterialTheme.colorScheme.primary
+                                        else -> Color.Transparent
+                                    }
 
                                     else -> MaterialTheme.colorScheme.primary
                                 },
@@ -238,7 +240,6 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        val actionIcon = actionIcon(action = action)
                         if (actionIcon is ImageVector) {
                             Image(
                                 imageVector = actionIcon,
@@ -254,14 +255,16 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             }
                             AsyncImage(
                                 modifier = Modifier
-                                    .let {
-                                        if (!isWechatAlipay) it else it.padding(12.dp)
-                                    }
                                     .graphicsLayer {
-                                        val appInfo = action.appInfo
-                                        if (appInfo != null) {
-                                            scaleX = appInfo.iconScale
-                                            scaleY = appInfo.iconScale
+                                        if (isWechatAlipay) {
+                                            scaleX = 0.5f
+                                            scaleY = 0.5f
+                                        } else {
+                                            val appInfo = action.appInfo
+                                            if (appInfo != null) {
+                                                scaleX = appInfo.iconScale
+                                                scaleY = appInfo.iconScale
+                                            }
                                         }
                                     },
                                 model = actionIcon,
