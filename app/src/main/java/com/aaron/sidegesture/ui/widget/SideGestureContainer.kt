@@ -315,9 +315,17 @@ class SideGestureState(
         val originY = origin.y
         val fingerX = finger.x
         val fingerY = finger.y
+        val slideDistanceX = when (button.position) {
+            Position.Left -> fingerX - originX
+            Position.Right -> originX - fingerX
+        }
+        // 解决左侧触钮往左滑右侧触钮往右滑还能触发的问题
+        if (slideDistanceX < 0) {
+            return false
+        }
         val triggerDirection = triggerDirection
         if (triggerDirection == Center) {
-            val distance = abs(fingerX - originX)
+            val distance = slideDistanceX
             if (isLongPress) {
                 return distance >= button.longSlideTriggerDistance &&
                         longSlideAction.center.isNotEmpty()
@@ -325,7 +333,7 @@ class SideGestureState(
             return distance >= button.slideTriggerDistance &&
                     slideAction.center.isNotEmpty()
         } else if (triggerDirection == Up || triggerDirection == Down) {
-            val edge1 = abs(fingerX - originX)
+            val edge1 = slideDistanceX
             val edge2 = abs(fingerY - originY)
             val edge3 = hypot(edge1, edge2)
             if (isLongPress) {
@@ -345,11 +353,13 @@ class SideGestureState(
     }
 
     private fun calcDirection(button: GestureButton): TriggerDirection? {
+        val buttonBounds = button.bounds()
         val origin = origin
         val finger = finger
+        // 解决右侧触钮不灵敏的问题
         val x = when (button.position) {
-            Position.Left -> finger.x
-            Position.Right -> origin.x - finger.x
+            Position.Left -> finger.x - buttonBounds.left
+            Position.Right -> buttonBounds.right - finger.x
         }
         val tanVal = x / abs(finger.y - origin.y)
         val radians = atan(tanVal)
