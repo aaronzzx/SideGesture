@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.fastForEach
@@ -117,59 +120,65 @@ fun AppBlacklistScreen(
                 SnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            Box(modifier = Modifier.padding(contentPadding)) {
-                if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
-                    LoadingComponent(
+            if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
+                LoadingComponent(
+                    modifier = Modifier.fillMaxSize(),
+                    component = vm.loadingComponent
+                ) {
+                    LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        component = vm.loadingComponent
+                        contentPadding = run {
+                            val direction = LocalLayoutDirection.current
+                            PaddingValues(
+                                start = contentPadding.calculateStartPadding(direction),
+                                top = contentPadding.calculateTopPadding(),
+                                end = contentPadding.calculateEndPadding(direction),
+                                bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                            )
+                        }
                     ) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = ScrollBottomPadding)
-                        ) {
-                            listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
-                                items(
-                                    items = list,
-                                    key = { it.qualifiedName }
-                                ) { item ->
-                                    AppBlacklistItem(
-                                        appInfo = item,
-                                        selected = item.qualifiedName in uiState.excludeApps,
-                                        onSelect = { selected ->
-                                            vm.selectApp(item.qualifiedName, selected)
-                                        }
-                                    )
-                                }
+                        listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
+                            items(
+                                items = list,
+                                key = { it.qualifiedName }
+                            ) { item ->
+                                AppBlacklistItem(
+                                    appInfo = item,
+                                    selected = item.qualifiedName in uiState.excludeApps,
+                                    onSelect = { selected ->
+                                        vm.selectApp(item.qualifiedName, selected)
+                                    }
+                                )
                             }
                         }
                     }
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val context = LocalContext.current
-                        val coroutineScope = rememberCoroutineScope()
-                        TextButton(
-                            onClick = {
-                                if (permissionState.status.deniedForever) {
-                                    coroutineScope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = context.getString(R.string.goto_grant_get_apps_permission),
-                                            actionLabel = context.getString(R.string.goto_enable_settings),
-                                            withDismissAction = true
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            context.gotoAppDetailSettings()
-                                        }
+                }
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val context = LocalContext.current
+                    val coroutineScope = rememberCoroutineScope()
+                    TextButton(
+                        onClick = {
+                            if (permissionState.status.deniedForever) {
+                                coroutineScope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = context.getString(R.string.goto_grant_get_apps_permission),
+                                        actionLabel = context.getString(R.string.goto_enable_settings),
+                                        withDismissAction = true
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        context.gotoAppDetailSettings()
                                     }
-                                } else {
-                                    permissionState.launchPermissionRequest()
                                 }
+                            } else {
+                                permissionState.launchPermissionRequest()
                             }
-                        ) {
-                            Text(text = stringResource(id = R.string.request_get_apps_permission))
                         }
+                    ) {
+                        Text(text = stringResource(id = R.string.request_get_apps_permission))
                     }
                 }
             }

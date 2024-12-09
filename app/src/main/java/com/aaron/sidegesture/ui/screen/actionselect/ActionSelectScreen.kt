@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -125,7 +128,7 @@ fun ActionSelectScreen(
                 SnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            Column(modifier = Modifier.padding(contentPadding)) {
+            Column(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
                 val pagerState = rememberPagerState { PAGES.size }
                 val coroutineScope = rememberCoroutineScope()
                 TabRow(
@@ -181,6 +184,14 @@ fun ActionSelectScreen(
                         PAGE_ACTION -> {
                             ActionPage(
                                 modifier = Modifier.fillMaxSize(),
+                                contentPadding = run {
+                                    val direction = LocalLayoutDirection.current
+                                    PaddingValues(
+                                        start = contentPadding.calculateStartPadding(direction),
+                                        end = contentPadding.calculateEndPadding(direction),
+                                        bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                    )
+                                },
                                 actions = uiState.actions,
                                 selectedRecord = uiState.selectedRecord,
                                 selectSingle = uiState.selectSingle,
@@ -195,6 +206,15 @@ fun ActionSelectScreen(
                                 component = vm.loadingComponent
                             ) {
                                 AppPage(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = run {
+                                        val direction = LocalLayoutDirection.current
+                                        PaddingValues(
+                                            start = contentPadding.calculateStartPadding(direction),
+                                            end = contentPadding.calculateEndPadding(direction),
+                                            bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                        )
+                                    },
                                     onSelect = { appInfo, selected ->
                                         vm.select(appInfo, selected)
                                     },
@@ -202,8 +222,7 @@ fun ActionSelectScreen(
                                     selectedRecord = uiState.selectedRecord,
                                     snackbarHostState = snackbarHostState,
                                     permissionState = permissionState,
-                                    selectSingle = uiState.selectSingle,
-                                    modifier = Modifier.fillMaxSize()
+                                    selectSingle = uiState.selectSingle
                                 )
                             }
                         }
@@ -221,11 +240,12 @@ private fun ActionPage(
     selectedRecord: SelectedRecord,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+        contentPadding = contentPadding
     ) {
         items(
             items = actions,
@@ -326,13 +346,14 @@ private fun AppPage(
     permissionState: PermissionState,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     Box(modifier = modifier) {
         if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+                contentPadding = contentPadding
             ) {
                 items(
                     items = appInfos,
