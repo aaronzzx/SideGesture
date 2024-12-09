@@ -161,7 +161,10 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.SCREENSHOT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT)
+                    coroutineScope.launch {
+                        delay(500)
+                        performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT)
+                    }
                 } else {
                     showToast(R.string.os_version_too_low)
                 }
