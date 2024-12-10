@@ -26,6 +26,7 @@ import com.aaron.compose.ktx.clipToBackground
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -52,7 +53,11 @@ fun ComposeToast(modifier: Modifier = Modifier) {
                     true -> context.getString(toastData.resId)
                     else -> toastData.text
                 }
-                snackbarHostState.showSnackbar(text)
+                launch {
+                    snackbarHostState.showSnackbar(text)
+                }
+                delay(toastData.duration)
+                snackbarHostState.currentSnackbarData?.dismiss()
             }
         }
 
@@ -97,7 +102,8 @@ fun showComposeToast(text: String) {
 
 private class ToastData(
     @StringRes val resId: Int = 0,
-    val text: String = ""
+    val text: String = "",
+    val duration: Long = TOAST_SHORT
 ) {
     companion object {
         val None = ToastData()
@@ -105,5 +111,8 @@ private class ToastData(
 
     val isEmpty: Boolean = resId == 0 && text.isEmpty()
 }
+
+private const val TOAST_SHORT = 2000L
+private const val TOAST_LONG = 3500L
 
 private val channel = Channel<ToastData>()
