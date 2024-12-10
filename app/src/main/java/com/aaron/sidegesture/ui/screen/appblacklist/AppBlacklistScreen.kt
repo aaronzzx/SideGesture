@@ -126,65 +126,66 @@ fun AppBlacklistScreen(
                 SnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            if (permissionState.status.isGranted) {
-                LoadingComponent(
-                    modifier = Modifier.fillMaxSize(),
-                    component = vm.loadingComponent
-                ) {
-                    LazyColumn(
+            Box(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
+                if (permissionState.status.isGranted) {
+                    LoadingComponent(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = run {
-                            val direction = LocalLayoutDirection.current
-                            PaddingValues(
-                                start = contentPadding.calculateStartPadding(direction),
-                                top = contentPadding.calculateTopPadding(),
-                                end = contentPadding.calculateEndPadding(direction),
-                                bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
-                            )
-                        }
+                        component = vm.loadingComponent
                     ) {
-                        listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
-                            items(
-                                items = list,
-                                key = { it.qualifiedName }
-                            ) { item ->
-                                AppBlacklistItem(
-                                    appInfo = item,
-                                    selected = item.qualifiedName in uiState.excludeApps,
-                                    onSelect = { selected ->
-                                        vm.selectApp(item.qualifiedName, selected)
-                                    }
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = run {
+                                val direction = LocalLayoutDirection.current
+                                PaddingValues(
+                                    start = contentPadding.calculateStartPadding(direction),
+                                    end = contentPadding.calculateEndPadding(direction),
+                                    bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
                                 )
+                            }
+                        ) {
+                            listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
+                                items(
+                                    items = list,
+                                    key = { it.qualifiedName }
+                                ) { item ->
+                                    AppBlacklistItem(
+                                        appInfo = item,
+                                        selected = item.qualifiedName in uiState.excludeApps,
+                                        onSelect = { selected ->
+                                            vm.selectApp(item.qualifiedName, selected)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val context = LocalContext.current
-                    val coroutineScope = rememberCoroutineScope()
-                    TextButton(
-                        onClick = {
-                            if (permissionState.status.deniedForever) {
-                                coroutineScope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = context.getString(R.string.goto_grant_get_apps_permission),
-                                        actionLabel = context.getString(R.string.goto_enable_settings),
-                                        withDismissAction = true
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        context.gotoAppDetailSettings()
-                                    }
-                                }
-                            } else {
-                                permissionState.launchPermissionRequest()
-                            }
-                        }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(text = stringResource(id = R.string.request_get_apps_permission))
+                        val context = LocalContext.current
+                        val coroutineScope = rememberCoroutineScope()
+                        TextButton(
+                            onClick = {
+                                if (permissionState.status.deniedForever) {
+                                    coroutineScope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = context.getString(R.string.goto_grant_get_apps_permission),
+                                            actionLabel = context.getString(R.string.goto_enable_settings),
+                                            withDismissAction = true
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            context.gotoAppDetailSettings()
+                                        }
+                                    }
+                                } else {
+                                    permissionState.launchPermissionRequest()
+                                }
+                            }
+                        ) {
+                            Text(text = stringResource(id = R.string.request_get_apps_permission))
+                        }
                     }
                 }
             }
