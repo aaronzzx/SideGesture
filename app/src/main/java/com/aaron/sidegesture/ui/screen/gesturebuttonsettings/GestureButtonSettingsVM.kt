@@ -6,11 +6,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.aaron.compose.base.BaseComposeVM
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
+import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButtonSettings
-import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -72,36 +70,11 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         }
     }
 
-    fun onGestureButtonLengthChange(fraction: Float) {
-        updateUiState {
-            val l = it.gestureButtons.toMutableList().also { list ->
-                list.forEachIndexed { index, b ->
-                    if (b.id != gestureButtonSettings.buttonId) {
-                        return@forEachIndexed
-                    }
-                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
-                        list[index] = b.let {
-                            val start = b.start
-                            val end = b.end
-                            val newEnd = start + fraction
-                            if (newEnd > MaxGestureButtonLength) {
-                                val residue = newEnd - MaxGestureButtonLength
-                                val newStart = end - b.fraction - residue
-                                return@let b.copy(start = newStart, end = newEnd)
-                            }
-                            b.copy(start = start, end = newEnd)
-                        }
-                    }
-                }
-            }
-            it.copy(
-                gestureButtons = l,
-                isGestureButtonAdjusting = true
-            )
+    fun onGestureButtonPositionChange(start: Float, end: Float) {
+        val fraction = end - start
+        if (fraction < MinGestureButtonLength) {
+            return
         }
-    }
-
-    fun onGestureButtonLocationChange(value: Float) {
         updateUiState {
             val l = it.gestureButtons.toMutableList().also { list ->
                 list.forEachIndexed { index, b ->
@@ -109,19 +82,12 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                         return@forEachIndexed
                     }
                     if (b.position == gestureButtonSettings.position || it.alignRegion) {
-                        list[index] = b.let {
-                            var startValue = MaxGestureButtonStart - value
-                            val fraction = b.fraction
-                            var end = startValue + fraction
-                            if (end >= MaxGestureButtonLength) {
-                                end = MaxGestureButtonLength
-                                startValue = end - fraction
-                            }
-                            b.copy(start = startValue, end = end)
-                        }
+                        list[index] = b.copy(
+                            start = start,
+                            end = end
+                        )
                     }
                 }
-
             }
             it.copy(
                 gestureButtons = l,

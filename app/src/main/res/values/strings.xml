@@ -65,6 +65,8 @@
     <string name="slider_long">长</string>
     <string name="slider_low">低</string>
     <string name="slider_high">高</string>
+    <string name="slider_top">上</string>
+    <string name="slider_bottom">下</string>
     <string name="long_slide_action">长距离滑动</string>
     <string name="long_slide_trigger_immediately">立即触发</string>
     <string name="long_slide_trigger_immediately_hint">识别到手势立即触发</string>
@@ -133,6 +135,7 @@
     <string name="gesture_button_width">触钮宽度</string>
     <string name="gesture_button_length">触钮长度</string>
     <string name="gesture_button_location">触钮位置</string>
+    <string name="gesture_button_size">触钮尺寸</string>
     <string name="gesture_button_color">触钮颜色</string>
     <string name="gesture_button_align">对齐触钮</string>
     <string name="gesture_button_align_hint">两侧保持相同尺寸和位置</string>

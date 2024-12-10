@@ -32,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -244,6 +245,67 @@ fun MyTextSlider(
     }
 }
 
+@Composable
+fun MyTextRangeSlider(
+    value: ClosedFloatingPointRange<Float>,
+    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    sliderValueHint: Pair<String, String>? = null,
+    onValueChangeFinished: (() -> Unit)? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = MinItemHeightNoSecondary)
+            .padding(vertical = ContentPaddingVerticalWithSection),
+        verticalArrangement = Arrangement.spacedBy(IconTextPadding)
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(horizontal = ContentPaddingHorizontal)
+                .width(IntrinsicSize.Max),
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1
+        )
+        if (sliderValueHint != null) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = ContentPaddingHorizontal)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    text = sliderValueHint.first,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1
+                )
+                Text(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    text = sliderValueHint.second,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1
+                )
+            }
+        }
+        MyRangeSlider(
+            modifier = Modifier
+                .padding(horizontal = ContentPaddingHorizontal - 6.dp)
+                .height(30.dp),
+            enabled = enabled,
+            value = value,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
+            valueRange = valueRange
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MySlider(
@@ -290,6 +352,66 @@ fun MySlider(
                 colors = colors,
                 enabled = enabled,
                 sliderState = sliderState,
+                thumbTrackGapSize = 0.dp
+            )
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyRangeSlider(
+    value: ClosedFloatingPointRange<Float>,
+    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val startInteractionSource = remember { MutableInteractionSource() }
+    val endInteractionSource = remember { MutableInteractionSource() }
+    val colors = SliderDefaults.colors(thumbColor = colorScheme.primary)
+    val thumb: @Composable (MutableInteractionSource) -> Unit = { interactionSource ->
+        SliderDefaults.Thumb(
+            modifier = Modifier
+                .requiredSize(20.dp)
+                .drawWithContent {
+                    drawContent()
+                    if (enabled) {
+                        drawCircle(
+                            color = colorScheme.onPrimary,
+                            radius = 7.dp.toPx()
+                        )
+                    }
+                },
+            interactionSource = interactionSource,
+            colors = colors,
+            enabled = enabled
+        )
+    }
+    RangeSlider(
+        modifier = modifier,
+        enabled = enabled,
+        value = value,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+        startInteractionSource = startInteractionSource,
+        endInteractionSource = endInteractionSource,
+        colors = colors,
+        valueRange = valueRange,
+        startThumb = {
+            thumb(startInteractionSource)
+        },
+        endThumb = {
+            thumb(endInteractionSource)
+        },
+        track = { sliderState ->
+            SliderDefaults.Track(
+                modifier = Modifier.height(8.dp),
+                colors = colors,
+                enabled = enabled,
+                rangeSliderState = sliderState,
                 thumbTrackGapSize = 0.dp
             )
         }

@@ -32,11 +32,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
+import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonPosition
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonWidth
-import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
-import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonStart
+import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonPosition
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonWidth
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.GestureButton
@@ -47,7 +45,6 @@ import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
-import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -56,6 +53,7 @@ import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextRangeSlider
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -256,21 +254,13 @@ fun GestureButtonSettingsScreen(
                                 sliderValueHint = stringResource(id = R.string.slider_small) to stringResource(id = R.string.slider_large),
                                 valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat()
                             )
-                            MyTextSlider(
-                                value = gestureButton.fraction,
-                                onValueChange = { vm.onGestureButtonLengthChange(it) },
+                            MyTextRangeSlider(
+                                value = gestureButton.start..gestureButton.end,
+                                onValueChange = { vm.onGestureButtonPositionChange(it.start, it.endInclusive) },
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
-                                sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
-                                valueRange = MinGestureButtonLength..MaxGestureButtonLength
-                            )
-                            MyTextSlider(
-                                value = MaxGestureButtonStart - gestureButton.start,
-                                onValueChange = { vm.onGestureButtonLocationChange(it) },
-                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
-                                text = stringResource(id = R.string.gesture_button_location),
-                                sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
-                                valueRange = MinGestureButtonStart..MaxGestureButtonStart
+                                sliderValueHint = stringResource(id = R.string.slider_top) to stringResource(id = R.string.slider_bottom),
+                                valueRange = MinGestureButtonPosition..MaxGestureButtonPosition
                             )
                             MyTextSwitch(
                                 onCheckedChange = { vm.onGestureButtonAlignChange(it) },
