@@ -65,7 +65,10 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                     }
                 }
             }
-            it.copy(gestureButtons = l)
+            it.copy(
+                gestureButtons = l,
+                isGestureButtonAdjusting = true
+            )
         }
         saveSettings()
     }
@@ -92,7 +95,10 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                     }
                 }
             }
-            it.copy(gestureButtons = l)
+            it.copy(
+                gestureButtons = l,
+                isGestureButtonAdjusting = true
+            )
         }
     }
 
@@ -118,7 +124,16 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 }
 
             }
-            it.copy(gestureButtons = l)
+            it.copy(
+                gestureButtons = l,
+                isGestureButtonAdjusting = true
+            )
+        }
+    }
+
+    fun onGestureButtonAdjustFinish() {
+        updateUiState {
+            it.copy(isGestureButtonAdjusting = false)
         }
     }
 
@@ -220,7 +235,8 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         val gestureButtons: List<GestureButton> = emptyList(),
         val alignRegion: Boolean = true,
         val showDeleteWarningDialog: Boolean = false,
-        val colorPickerDialog: Pair<Boolean, Color> = Pair(false, Color.Red.copy(alpha = 0.1f))
+        val colorPickerDialog: Pair<Boolean, Color> = Pair(false, Color.Transparent),
+        val isGestureButtonAdjusting: Boolean = false
     ) {
         val gestureButton: GestureButton? = gestureButtons.find {
             it.id == gestureButtonSettings.buttonId &&

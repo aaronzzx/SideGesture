@@ -293,7 +293,7 @@ fun HomeScreen(
                                     secondaryTextColor = MaterialTheme.colorScheme.primary,
                                     markColor = when (button.isDefault) {
                                         true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                        else -> Color(button.color)
+                                        else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
                                     }
                                 )
                             }
@@ -331,8 +331,8 @@ fun HomeScreen(
                                 val bounds = button.bounds()
                                 drawRect(
                                     color = when (button.isDefault) {
-                                        true -> colorScheme.primary.copy(GestureButtonColorAlpha)
-                                        else -> Color(button.color)
+                                        true -> colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                                        else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
                                     },
                                     topLeft = bounds.topLeft,
                                     size = bounds.size

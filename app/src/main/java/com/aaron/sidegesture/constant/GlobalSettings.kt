@@ -27,7 +27,7 @@ object GlobalSettings {
     const val MaxLongPressTriggerDelayMs = 2000L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
-    const val GestureButtonColorAlpha = 0.2f
+    const val GestureButtonColorAlpha = 0.36f
     const val DisabledAlpha = 0.36f
     const val DimAlpha = 0.5f
 

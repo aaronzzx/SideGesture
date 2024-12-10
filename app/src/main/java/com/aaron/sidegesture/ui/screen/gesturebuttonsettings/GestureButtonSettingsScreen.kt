@@ -94,15 +94,12 @@ fun GestureButtonSettingsScreen(
                     val colorController = rememberColorPickerController()
                     HsvColorPicker(
                         modifier = Modifier
-                            .graphicsLayer {
-                                alpha = 0.5f
-                            }
                             .fillMaxWidth()
                             .aspectRatio(1f),
                         initialColor = color,
                         controller = colorController,
                         onColorChanged = { colorEnvelope ->
-                            vm.colorPickerDialog.onColorChange(colorEnvelope.color.copy(alpha = 0.2f))
+                            vm.colorPickerDialog.onColorChange(colorEnvelope.color)
                         }
                     )
                 },
@@ -148,7 +145,7 @@ fun GestureButtonSettingsScreen(
                                     .background(
                                         color = when (uiState.gestureButton.isDefault) {
                                             true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(uiState.gestureButton.color)
+                                            else -> Color(uiState.gestureButton.color).copy(alpha = GestureButtonColorAlpha)
                                         },
                                         shape = CircleShape
                                     )
@@ -254,7 +251,7 @@ fun GestureButtonSettingsScreen(
                             MyTextSlider(
                                 value = gestureButton.width.toFloat(),
                                 onValueChange = { vm.onGestureButtonWidthChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
+                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_width),
                                 sliderValueHint = stringResource(id = R.string.slider_small) to stringResource(id = R.string.slider_large),
                                 valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat()
@@ -262,7 +259,7 @@ fun GestureButtonSettingsScreen(
                             MyTextSlider(
                                 value = gestureButton.fraction,
                                 onValueChange = { vm.onGestureButtonLengthChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
+                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
                                 sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
                                 valueRange = MinGestureButtonLength..MaxGestureButtonLength
@@ -270,7 +267,7 @@ fun GestureButtonSettingsScreen(
                             MyTextSlider(
                                 value = MaxGestureButtonStart - gestureButton.start,
                                 onValueChange = { vm.onGestureButtonLocationChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
+                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_location),
                                 sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
                                 valueRange = MinGestureButtonStart..MaxGestureButtonStart
@@ -316,10 +313,16 @@ fun GestureButtonSettingsScreen(
                     .drawBehind {
                         uiState.gestureButtons.fastForEach { button ->
                             val bounds = button.bounds()
+                            val color = when (button.isDefault) {
+                                true -> colorScheme.primary
+                                else -> Color(button.color)
+                            }
+                            val highlight = uiState.isGestureButtonAdjusting &&
+                                    button.id == uiState.gestureButton?.id
                             drawRect(
-                                color = when (button.isDefault) {
-                                    true -> colorScheme.primary.copy(GestureButtonColorAlpha)
-                                    else -> Color(button.color)
+                                color = when (highlight) {
+                                    true -> color
+                                    else -> color.copy(alpha = GestureButtonColorAlpha)
                                 },
                                 topLeft = bounds.topLeft,
                                 size = bounds.size
