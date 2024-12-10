@@ -70,7 +70,6 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 isGestureButtonAdjusting = true
             )
         }
-        saveSettings()
     }
 
     fun onGestureButtonLengthChange(fraction: Float) {
@@ -135,6 +134,7 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         updateUiState {
             it.copy(isGestureButtonAdjusting = false)
         }
+        saveSettings()
     }
 
     fun onGestureButtonAlignChange(value: Boolean) {
