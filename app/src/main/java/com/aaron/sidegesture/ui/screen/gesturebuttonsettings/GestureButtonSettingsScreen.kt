@@ -153,7 +153,7 @@ fun GestureButtonSettingsScreen(
                         }
                     },
                     actions = {
-                        if (uiState.gestureButton?.isDefault != true) {
+                        if (uiState.gestureButton != null && !uiState.gestureButton.isDefault) {
                             IconButton(onClick = { vm.showDeleteWarningDialog(true) }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,

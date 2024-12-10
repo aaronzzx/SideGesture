@@ -39,6 +39,8 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                     addAll(GestureButton.createPair())
                 }
             }
+            delay(50)
+            sendUiEvent(UiEvent.ScrollToBottom)
         }
     }
 
@@ -60,12 +62,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Float = Float.NaN) {
+    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Int = Int.MAX_VALUE) {
         updateUiState {
             it.copy(isGestureButtonListExpanded = expanded)
         }
-        if (expanded) {
-            sendUiEvent(UiEvent.ScrollEvent(scrollOffset))
+        if (expanded && scrollOffset != Int.MAX_VALUE) {
+            sendUiEvent(UiEvent.ScrollToEvent(scrollOffset))
         }
     }
 
@@ -155,6 +157,7 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     sealed interface UiEvent {
 
-        data class ScrollEvent(val offsetY: Float) : UiEvent
+        data object ScrollToBottom : UiEvent
+        data class ScrollToEvent(val offsetY: Int) : UiEvent
     }
 }

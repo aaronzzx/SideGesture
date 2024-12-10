@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,9 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -71,7 +69,6 @@ import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.AboutUtils
 import com.aaron.sidegesture.utils.KeepAliveHelper
-import kotlinx.coroutines.launch
 
 /**
  * @author aaronzzxup@gmail.com
@@ -87,21 +84,22 @@ fun HomeScreen(
     onNavToGestureButtonSettings: (GestureButton) -> Unit,
     vm: HomeVM = viewModel()
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
             when (event) {
-                is UiEvent.ScrollEvent -> {
-                    coroutineScope.launch {
-                        if (!event.offsetY.isNaN()) {
-                            scrollState.animateScrollBy(
-                                value = event.offsetY,
-                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                            )
-                        }
-                    }
+                is UiEvent.ScrollToBottom -> {
+                    scrollState.animateScrollTo(
+                        value = scrollState.maxValue,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    )
+                }
+                is UiEvent.ScrollToEvent -> {
+                    scrollState.animateScrollTo(
+                        value = event.offsetY,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    )
                 }
             }
         }
@@ -251,18 +249,14 @@ fun HomeScreen(
                         )
                     }
 
-                    var gestureButtonListOffset by rememberSaveable {
-                        mutableFloatStateOf(Float.NaN)
-                    }
+                    var gestureButtonListOffset by remember { mutableIntStateOf(Int.MAX_VALUE) }
                     val density = LocalDensity.current
                     MyExpandableColumn(
                         modifier = Modifier
                             .onGloballyPositioned {
-                                if (gestureButtonListOffset.isNaN()) {
-                                    density.run {
-                                        val position = it.positionInParent()
-                                        gestureButtonListOffset = position.y + RootPadding.toPx()
-                                    }
+                                density.run {
+                                    val position = it.positionInParent()
+                                    gestureButtonListOffset = (position.y + RootPadding.toPx()).toInt()
                                 }
                             }
                             .padding(top = SectionPaddingNoTitle),
