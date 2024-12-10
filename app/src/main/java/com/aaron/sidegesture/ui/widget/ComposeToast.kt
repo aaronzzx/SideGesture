@@ -92,16 +92,28 @@ fun ComposeToast(modifier: Modifier = Modifier) {
     }
 }
 
-fun showComposeToast(@StringRes resId: Int) {
+fun showComposeToast(@StringRes resId: Int, duration: ToastDuration = ToastDuration.Short) {
     GlobalScope.launch {
-        channel.send(ToastData(resId = resId))
+        channel.send(ToastData(resId = resId, duration = getTimeMillis(duration)))
     }
 }
 
-fun showComposeToast(text: String) {
+fun showComposeToast(text: String, duration: ToastDuration = ToastDuration.Short) {
     GlobalScope.launch {
-        channel.send(ToastData(text = text))
+        channel.send(ToastData(text = text, duration = getTimeMillis(duration)))
     }
+}
+
+private fun getTimeMillis(duration: ToastDuration): Long {
+    return when (duration) {
+        ToastDuration.Short -> TOAST_SHORT
+        ToastDuration.Long -> TOAST_LONG
+    }
+}
+
+enum class ToastDuration {
+
+    Short, Long
 }
 
 private class ToastData(

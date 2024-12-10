@@ -1,16 +1,32 @@
 package com.aaron.sidegesture.ui.screen.home
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.global.Backup
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ktx.isIgnoringBatteryOptimizations
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.DataStoreHolder.advancedSettings
+import com.aaron.sidegesture.utils.DataStoreHolder.gestureButtons
+import com.aaron.sidegesture.utils.DataStoreHolder.gestureSettings
+import com.aaron.sidegesture.utils.DataStoreHolder.initialSettings
+import com.aaron.sidegesture.utils.JsonHelper
+import com.aaron.sidegesture.utils.showToastLong
+import com.blankj.utilcode.util.EncodeUtils
+import com.blankj.utilcode.util.TimeUtils
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -26,6 +42,76 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     init {
         loadData()
+    }
+
+    fun backup(context: Context, uri: Uri) {
+        viewModelScope.launchWithLoading(
+            Dispatchers.IO + CoroutineExceptionHandler { _, _ ->
+                toast(R.string.backup_failed)
+            },
+            cancelable = false
+        ) {
+            val backup = Backup(
+                initialSettings = async { initialSettings.data.first() }.await(),
+                advancedSettings = async { advancedSettings.data.first() }.await(),
+                gestureSettings = async { gestureSettings.data.first() }.await(),
+                gestureButtons = async { gestureButtons.data.first() }.await(),
+                timestamp = System.currentTimeMillis()
+            )
+            val json = JsonHelper.encodeToString(backup)
+            val encoded = EncodeUtils.base64Encode(json.toByteArray())
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(encoded)
+                outputStream.flush()
+            }
+            toast(R.string.backup_success)
+        }
+    }
+
+    fun restore(context: Context, uri: Uri) {
+        viewModelScope.launchWithLoading(
+            Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
+                ex.printStackTrace()
+                toast(R.string.restore_failed)
+            },
+            cancelable = false
+        ) {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val input = inputStream.readBytes()
+                val decoded = EncodeUtils.base64Decode(input)
+                val backup = JsonHelper.decodeFromString<Backup>(String(decoded))
+                coroutineScope {
+                    listOf(
+                        async {
+                            initialSettings.updateData {
+                                backup.initialSettings ?: it
+                            }
+                        },
+                        async {
+                            advancedSettings.updateData {
+                                backup.advancedSettings ?: it
+                            }
+                        },
+                        async {
+                            gestureSettings.updateData {
+                                backup.gestureSettings ?: it
+                            }
+                        },
+                        async {
+                            gestureButtons.updateData {
+                                backup.gestureButtons ?: it
+                            }
+                        }
+                    ).awaitAll()
+                }
+                if (backup.timestamp != null) {
+                    val date = TimeUtils.millis2String(backup.timestamp, "yyyy/MM/dd HH:mm:ss")
+                    showToastLong(context.getString(R.string.restore_success_with_date, date))
+                } else {
+                    toast(R.string.restore_success)
+                }
+            }
+        }
     }
 
     fun addGestureButton() {

@@ -33,6 +33,13 @@
     <string name="feedback_email">邮件反馈</string>
     <string name="feedback_coolapk">酷安反馈</string>
     <string name="feedback_email_headline">请尽可能描述清楚您的问题或建议，不要删除或修改以下设备信息。</string>
+    <string name="backup">导出配置</string>
+    <string name="restore">导入配置</string>
+    <string name="backup_success">导出成功</string>
+    <string name="backup_failed">导出失败</string>
+    <string name="restore_success">导入成功</string>
+    <string name="restore_success_with_date">导入成功，配置创建时间为：%1$s</string>
+    <string name="restore_failed">导入失败</string>
     <string name="check_update">检查更新</string>
     <string name="app_settings">应用设置</string>
     <string name="gesture_button_list">触钮集合</string>

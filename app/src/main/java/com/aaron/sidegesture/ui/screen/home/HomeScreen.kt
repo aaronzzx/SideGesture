@@ -1,5 +1,8 @@
 package com.aaron.sidegesture.ui.screen.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -67,7 +70,6 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.aaron.sidegesture.utils.AboutUtils
 import com.aaron.sidegesture.utils.KeepAliveHelper
 
 /**
@@ -123,6 +125,18 @@ fun HomeScreen(
 
         Box {
             Column {
+                val createFileLauncher = rememberLauncherForActivityResult(
+                    contract = CreateDocument("text/plain")
+                ) { uri ->
+                    uri ?: return@rememberLauncherForActivityResult
+                    vm.backup(context, uri)
+                }
+                val getFileLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.GetContent()
+                ) { uri ->
+                    uri ?: return@rememberLauncherForActivityResult
+                    vm.restore(context, uri)
+                }
                 TopBar(
                     onBack = { },
                     title = stringResource(id = R.string.home_title),
@@ -165,11 +179,22 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 onClick = {
                                     vm.showMoreMenu(false) {
-                                        AboutUtils.checkUpgrade(context)
+                                        val name = "gulugulu-${System.currentTimeMillis()}"
+                                        createFileLauncher.launch(name)
                                     }
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.check_update))
+                                    Text(text = stringResource(id = R.string.backup))
+                                }
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    vm.showMoreMenu(false) {
+                                        getFileLauncher.launch("text/plain")
+                                    }
+                                },
+                                text = {
+                                    Text(text = stringResource(id = R.string.restore))
                                 }
                             )
                             DropdownMenuItem(
@@ -256,7 +281,8 @@ fun HomeScreen(
                             .onGloballyPositioned {
                                 density.run {
                                     val position = it.positionInParent()
-                                    gestureButtonListOffset = (position.y + RootPadding.toPx()).toInt()
+                                    gestureButtonListOffset =
+                                        (position.y + RootPadding.toPx()).toInt()
                                 }
                             }
                             .padding(top = SectionPaddingNoTitle),
