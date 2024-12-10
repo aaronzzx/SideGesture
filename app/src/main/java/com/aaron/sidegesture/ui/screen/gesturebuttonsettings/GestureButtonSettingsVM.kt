@@ -140,24 +140,27 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     fun onGestureButtonAlignChange(value: Boolean) {
         updateUiState {
             val button = it.gestureButton
-            val list = if (!value || button == null) it.gestureButtons else {
+            val list = if (button == null) it.gestureButtons else {
                 it.gestureButtons.toMutableList().apply {
                     forEachIndexed { index, b ->
                         if (button.id == b.id) {
-                            val newB = b.copy(
-                                width = button.width,
-                                start = button.start,
-                                end = button.end
-                            )
-                            set(index, newB)
+                            if (value) {
+                                val newB = b.copy(
+                                    width = button.width,
+                                    start = button.start,
+                                    end = button.end,
+                                    alignRegion = true
+                                )
+                                set(index, newB)
+                            } else {
+                                val newB = b.copy(alignRegion = false)
+                                set(index, newB)
+                            }
                         }
                     }
                 }
             }
-            it.copy(
-                gestureButtons = list,
-                alignRegion = value
-            )
+            it.copy(gestureButtons = list)
         }
         saveSettings()
     }
@@ -217,13 +220,7 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 updateUiState {
                     it.copy(
                         gestureButtons = items,
-                        alignRegion = button != null && items.filter { b ->
-                            b.id == gestureButtonSettings.buttonId
-                        }.all { b ->
-                            b.width == button.width &&
-                                    b.start == button.start &&
-                                    b.end == button.end
-                        }
+                        alignRegion = button?.alignRegion ?: true
                     )
                 }
             }

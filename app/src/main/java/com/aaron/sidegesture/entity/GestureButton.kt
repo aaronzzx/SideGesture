@@ -31,7 +31,8 @@ data class GestureButton(
     val longSlideTriggerImmediately: Boolean = true,
     val longSlideTriggerDelayMs: Long = 0L,
     val vibrations: Vibrations = Vibrations(),
-    val color: Int = 0
+    val color: Int = 0,
+    val alignRegion: Boolean = true
 ) : Comparable<GestureButton> {
 
     companion object {
