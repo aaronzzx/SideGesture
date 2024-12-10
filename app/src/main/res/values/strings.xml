@@ -38,7 +38,7 @@
     <string name="backup_success">导出成功</string>
     <string name="backup_failed">导出失败</string>
     <string name="restore_success">导入成功</string>
-    <string name="restore_success_with_date">导入成功(%1$s)</string>
+    <string name="restore_success_with_date">导入成功(来源：%1$s)</string>
     <string name="restore_failed">导入失败</string>
     <string name="check_update">检查更新</string>
     <string name="app_settings">应用设置</string>
@@ -48,7 +48,7 @@
     <string name="animation_style">动画风格</string>
     <string name="action_panel_style">动作面板风格</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
-    <string name="fit_soft_keyboard_hint">抬高键盘上方的触钮，不干扰输入。</string>
+    <string name="fit_soft_keyboard_hint">自动抬高所有触钮，不干扰输入。</string>
     <string name="exclude_from_recents">在最近任务列表中隐藏</string>
     <string name="exclude_from_recents_hint">隐藏后部分机型可能会被清理后台，可尝试将后台卡片上锁后再开启</string>
     <string name="hide_gesture_button">隐藏触钮</string>
