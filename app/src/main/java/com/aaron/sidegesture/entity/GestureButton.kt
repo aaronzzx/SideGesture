@@ -5,7 +5,6 @@ import androidx.annotation.Keep
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.blankj.utilcode.util.ColorUtils
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
@@ -60,7 +59,7 @@ data class GestureButton(
         fun createPair(): List<GestureButton> {
             val id = SystemClock.uptimeMillis().toString()
             val colorInt = ColorUtils.getRandomColor(false)
-            val color = Color(colorInt).copy(alpha = GestureButtonColorAlpha).toArgb()
+            val color = Color(colorInt).toArgb()
             val b1 = GestureButton(
                 id = id,
                 position = Position.Left,
