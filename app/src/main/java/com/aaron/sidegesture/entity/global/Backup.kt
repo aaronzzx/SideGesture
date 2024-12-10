@@ -15,5 +15,6 @@ data class Backup(
     val advancedSettings: AdvancedSettings? = null,
     val gestureSettings: GestureSettings? = null,
     val gestureButtons: List<GestureButton>? = null,
-    val timestamp: Long? = null
+    val timestamp: Long? = null,
+    val version: String? = null
 )

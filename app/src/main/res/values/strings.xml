@@ -38,7 +38,7 @@
     <string name="backup_success">导出成功</string>
     <string name="backup_failed">导出失败</string>
     <string name="restore_success">导入成功</string>
-    <string name="restore_success_with_date">导入成功，配置创建时间为：%1$s</string>
+    <string name="restore_success_with_date">导入成功(%1$s)</string>
     <string name="restore_failed">导入失败</string>
     <string name="check_update">检查更新</string>
     <string name="app_settings">应用设置</string>

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
@@ -56,7 +57,8 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                 advancedSettings = async { advancedSettings.data.first() }.await(),
                 gestureSettings = async { gestureSettings.data.first() }.await(),
                 gestureButtons = async { gestureButtons.data.first() }.await(),
-                timestamp = System.currentTimeMillis()
+                timestamp = System.currentTimeMillis(),
+                version = BuildConfig.VERSION_NAME
             )
             val json = JsonHelper.encodeToString(backup)
             val encoded = EncodeUtils.base64Encode(json.toByteArray())
@@ -104,9 +106,21 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                         }
                     ).awaitAll()
                 }
-                if (backup.timestamp != null) {
-                    val date = TimeUtils.millis2String(backup.timestamp, "yyyy/MM/dd HH:mm:ss")
-                    showToastLong(context.getString(R.string.restore_success_with_date, date))
+                var postfix = ""
+                val version = backup.version?.let {
+                    "v$it"
+                }
+                val date = backup.timestamp?.let {
+                    TimeUtils.millis2String(backup.timestamp, "yyyy/MM/dd HH:mm:ss")
+                }
+                if (version != null) {
+                    postfix += version
+                }
+                if (date != null) {
+                    postfix += "-$date"
+                }
+                if (postfix.isNotBlank()) {
+                    showToastLong(context.getString(R.string.restore_success_with_date, postfix))
                 } else {
                     toast(R.string.restore_success)
                 }
