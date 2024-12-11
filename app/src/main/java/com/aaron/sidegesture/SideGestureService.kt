@@ -162,7 +162,7 @@ class SideGestureService : ComponentAccessibilityService() {
     private fun registerScreenLockReceiver() {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                     isNowInLockScreenPage = true
                 } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
                     isNowInLockScreenPage = false
@@ -171,7 +171,7 @@ class SideGestureService : ComponentAccessibilityService() {
             }
         }
         val intentFilter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_USER_PRESENT)
         }
         registerReceiver(receiver, intentFilter)
