@@ -83,8 +83,8 @@ fun GestureAnglesScreen(
                 onDismissRequest = {
                     vm.showResetWarningDialog(false)
                 },
-                title = stringResource(id = R.string.reset_default_settings),
-                text = stringResource(id = R.string.reset_gesture_angles_warning),
+                title = stringResource(id = R.string.reset_default_settings_warning),
+                text = stringResource(id = R.string.reset_gesture_angles_warning_desc),
                 onConfirmClick = { vm.reset() }
             )
         }

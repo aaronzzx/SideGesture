@@ -78,8 +78,8 @@ fun GestureButtonSettingsScreen(
         if (uiState.showDeleteWarningDialog) {
             MyAlertDialog(
                 onDismissRequest = { vm.showDeleteWarningDialog(false) },
-                title = stringResource(id = R.string.delete_gesture_button),
-                text = stringResource(id = R.string.delete_gesture_button_hint),
+                title = stringResource(id = R.string.delete_gesture_button_warning),
+                text = stringResource(id = R.string.delete_gesture_button_warning_desc),
                 onConfirmClick = { vm.deleteGestureButton() }
             )
         }

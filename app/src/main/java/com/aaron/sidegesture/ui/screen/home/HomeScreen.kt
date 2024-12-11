@@ -115,8 +115,8 @@ fun HomeScreen(
             MyAlertDialog(
                 onDismissRequest = { vm.showResetWarningDialog(false) },
                 onConfirmClick = { vm.reset() },
-                title = stringResource(id = R.string.reset_default_settings),
-                text = stringResource(id = R.string.reset_default_settings_hint)
+                title = stringResource(id = R.string.reset_default_settings_warning),
+                text = stringResource(id = R.string.reset_default_settings_warning_desc)
             )
         }
 
@@ -187,7 +187,7 @@ fun HomeScreen(
                                     vm.showResetWarningDialog(true)
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.reset_default_settings),)
+                                    Text(text = stringResource(id = R.string.reset_default_settings_warning),)
                                 }
                             )
 //                            DropdownMenuItem(

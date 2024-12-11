@@ -80,8 +80,8 @@ fun AppBlacklistScreen(
                 onDismissRequest = {
                     vm.showResetWarningDialog(false)
                 },
-                title = stringResource(id = R.string.reset_default_settings),
-                text = stringResource(id = R.string.reset_exclude_apps_warning),
+                title = stringResource(id = R.string.reset_default_settings_warning),
+                text = stringResource(id = R.string.reset_exclude_apps_warning_desc),
                 onConfirmClick = { vm.reset() }
             )
         }
