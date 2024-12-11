@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -71,6 +74,7 @@ import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.KeepAliveHelper
+import com.blankj.utilcode.util.TimeUtils
 
 /**
  * @author aaronzzxup@gmail.com
@@ -87,6 +91,7 @@ fun HomeScreen(
     vm: HomeVM = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
@@ -115,7 +120,38 @@ fun HomeScreen(
             )
         }
 
-        val context = LocalContext.current
+        val createFileLauncher = rememberLauncherForActivityResult(
+            contract = CreateDocument("text/plain")
+        ) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            vm.backup(context, uri)
+        }
+        val getFileLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            vm.restore(context, uri)
+        }
+        if (uiState.showBackupRestoreDialog) {
+            BackupRestoreDialog(
+                onDismissRequest = {
+                    vm.showBackupRestoreDialog(false)
+                },
+                onBackupRequest = {
+                    vm.showBackupRestoreDialog(false)
+                    val appName = context.getString(context.applicationInfo.labelRes)
+                    val timestamp = System.currentTimeMillis()
+                    val date = TimeUtils.millis2String(timestamp, "yyyy/MM/dd HH:mm:ss")
+                    val fileName = "$appName-$date"
+                    createFileLauncher.launch(fileName)
+                },
+                onRestoreRequest = {
+                    vm.showBackupRestoreDialog(false)
+                    getFileLauncher.launch("text/plain")
+                }
+            )
+        }
+
         val lifecycleOwner = LocalLifecycleOwner.current
         LaunchedEffect(key1 = lifecycleOwner) {
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -125,18 +161,6 @@ fun HomeScreen(
 
         Box {
             Column {
-                val createFileLauncher = rememberLauncherForActivityResult(
-                    contract = CreateDocument("text/plain")
-                ) { uri ->
-                    uri ?: return@rememberLauncherForActivityResult
-                    vm.backup(context, uri)
-                }
-                val getFileLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.GetContent()
-                ) { uri ->
-                    uri ?: return@rememberLauncherForActivityResult
-                    vm.restore(context, uri)
-                }
                 TopBar(
                     onBack = { },
                     title = stringResource(id = R.string.home_title),
@@ -179,22 +203,11 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 onClick = {
                                     vm.showMoreMenu(false) {
-                                        val name = "gulugulu-${System.currentTimeMillis()}"
-                                        createFileLauncher.launch(name)
+                                        vm.showBackupRestoreDialog(true)
                                     }
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.backup))
-                                }
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    vm.showMoreMenu(false) {
-                                        getFileLauncher.launch("text/plain")
-                                    }
-                                },
-                                text = {
-                                    Text(text = stringResource(id = R.string.restore))
+                                    Text(text = stringResource(id = R.string.backup_restore))
                                 }
                             )
                             DropdownMenuItem(
@@ -360,6 +373,38 @@ fun HomeScreen(
                             }
                         }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackupRestoreDialog(
+    onDismissRequest: () -> Unit,
+    onBackupRequest: () -> Unit,
+    onRestoreRequest: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AlertDialogDefaults.shape,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                MySection {
+                    MyTextButton(
+                        onClick = onBackupRequest,
+                        text = stringResource(id = R.string.backup),
+                        secondaryText = stringResource(id = R.string.backup_hint)
+                    )
+                }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextButton(
+                        onClick = onRestoreRequest,
+                        text = stringResource(id = R.string.restore),
+                        secondaryText = stringResource(id = R.string.restore_hint)
+                    )
+                }
             }
         }
     }

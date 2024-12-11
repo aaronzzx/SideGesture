@@ -20,9 +20,7 @@ import com.aaron.sidegesture.utils.DataStoreHolder.gestureButtons
 import com.aaron.sidegesture.utils.DataStoreHolder.gestureSettings
 import com.aaron.sidegesture.utils.DataStoreHolder.initialSettings
 import com.aaron.sidegesture.utils.JsonHelper
-import com.aaron.sidegesture.utils.showToastLong
 import com.blankj.utilcode.util.EncodeUtils
-import com.blankj.utilcode.util.TimeUtils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -106,24 +104,7 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                         }
                     ).awaitAll()
                 }
-                var postfix = ""
-                val version = backup.version?.let {
-                    "v$it"
-                }
-                val date = backup.timestamp?.let {
-                    TimeUtils.millis2String(backup.timestamp, "yyyy/MM/dd HH:mm:ss")
-                }
-                if (version != null) {
-                    postfix += version
-                }
-                if (date != null) {
-                    postfix += "-$date"
-                }
-                if (postfix.isNotBlank()) {
-                    showToastLong(context.getString(R.string.restore_success_with_date, postfix))
-                } else {
-                    toast(R.string.restore_success)
-                }
+                toast(R.string.restore_success)
             }
         }
     }
@@ -147,6 +128,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     fun showResetWarningDialog(show: Boolean) {
         updateUiState {
             it.copy(showResetWarningDialog = show)
+        }
+    }
+
+    fun showBackupRestoreDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showBackupRestoreDialog = show)
         }
     }
 
@@ -252,7 +239,8 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         val isPopBackgroundEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,
         val showMoreMenu: Boolean = false,
-        val showResetWarningDialog: Boolean = false
+        val showResetWarningDialog: Boolean = false,
+        val showBackupRestoreDialog: Boolean = false
     )
 
     sealed interface UiEvent {
