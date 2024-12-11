@@ -28,6 +28,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
@@ -305,7 +308,11 @@ fun GestureButtonSettingsScreen(
                             val bounds = button.bounds()
                             val color = when (button.isDefault) {
                                 true -> colorScheme.primary
-                                else -> Color(button.color)
+                                else -> Color(
+                                    red = button.color.red,
+                                    green = button.color.green,
+                                    blue = button.color.blue
+                                )
                             }
                             val highlight = uiState.isGestureButtonAdjusting &&
                                     button.id == uiState.gestureButton?.id
