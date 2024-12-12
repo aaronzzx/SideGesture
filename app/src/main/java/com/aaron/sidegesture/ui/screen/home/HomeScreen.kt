@@ -141,8 +141,8 @@ fun HomeScreen(
                     vm.showBackupRestoreDialog(false)
                     val appName = context.getString(context.applicationInfo.labelRes)
                     val timestamp = System.currentTimeMillis()
-                    val date = TimeUtils.millis2String(timestamp, "yyyy/MM/dd HH:mm:ss")
-                    val fileName = "$appName-$date"
+                    val date = TimeUtils.millis2String(timestamp, "yyyyMMdd_HHmmss")
+                    val fileName = "${appName}_$date"
                     createFileLauncher.launch(fileName)
                 },
                 onRestoreRequest = {
