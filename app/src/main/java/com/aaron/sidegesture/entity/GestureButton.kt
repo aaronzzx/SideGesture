@@ -28,7 +28,7 @@ data class GestureButton(
     val slideTriggerDistance: Int = ConvertUtils.dp2px(30f),
     val longSlideTriggerDistance: Int = ConvertUtils.dp2px(100f),
     val longSlideTriggerImmediately: Boolean = true,
-    val longSlideTriggerDelayMs: Long = 0L,
+    val longSlideTriggerDelayMs: Long = 100L,
     val vibrations: Vibrations = Vibrations(),
     val color: Int = 0,
     val alignRegion: Boolean = true
