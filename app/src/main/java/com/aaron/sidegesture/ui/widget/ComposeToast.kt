@@ -29,8 +29,8 @@ import com.aaron.compose.ktx.clipToBackground
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * @author aaronzzxup@gmail.com
@@ -56,11 +56,9 @@ fun ComposeToast(modifier: Modifier = Modifier) {
                     true -> context.getString(toastData.resId)
                     else -> toastData.text
                 }
-                launch {
+                withTimeoutOrNull(toastData.duration) {
                     snackbarHostState.showSnackbar(text)
                 }
-                delay(toastData.duration)
-                snackbarHostState.currentSnackbarData?.dismiss()
             }
         }
 
