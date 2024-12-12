@@ -1,6 +1,12 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.Left
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.P1
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.P2
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.P3
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.P4
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.Right
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,17 +17,17 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class GestureAngles(
-    val left: GestureAngle = GestureAngle(),
-    val right: GestureAngle = GestureAngle()
+    val left: GestureAngle = Left,
+    val right: GestureAngle = Right
 )
 
 @Serializable
 @Keep
 data class GestureAngle(
-    val p1: Float = 0.12f,
-    val p2: Float = 0.40f,
-    val p3: Float = 0.70f,
-    val p4: Float = 0.88f
+    val p1: Float = P1,
+    val p2: Float = P2,
+    val p3: Float = P3,
+    val p4: Float = P4
 ) {
 
     val ps: List<Float> = listOf(p1, p2, p3, p4)

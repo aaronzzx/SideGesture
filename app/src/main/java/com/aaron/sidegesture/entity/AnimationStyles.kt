@@ -1,6 +1,13 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.AnimationStylesDefaults
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.IsAnimationEnabled
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.Type
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleBackgroundColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleIconColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleStrokeColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleStrokeWidth
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -13,12 +20,12 @@ import kotlinx.serialization.Transient
 @Serializable
 @Keep
 data class AnimationStyles(
-    val type: Int = TYPE_WAVE,
+    val type: Int = Type,
     val json: String = "",
-    val isAnimationEnabled: Boolean = true
+    val isAnimationEnabled: Boolean = IsAnimationEnabled
 ) {
     companion object {
-        const val TYPE_WAVE = 1
+        const val TYPE_WAVE = AnimationStylesDefaults.TYPE_WAVE
     }
 
     @Transient
@@ -39,8 +46,8 @@ sealed interface AnimationStyle
 @Serializable
 @Keep
 data class WaveStyle(
-    val backgroundColor: Int = android.graphics.Color.BLACK,
-    val strokeColor: Int = android.graphics.Color.TRANSPARENT,
-    val strokeWidth: Int = 0,
-    val iconColor: Int = android.graphics.Color.argb(200, 255, 255, 255)
+    val backgroundColor: Int = WaveStyleBackgroundColor,
+    val strokeColor: Int = WaveStyleStrokeColor,
+    val strokeWidth: Int = WaveStyleStrokeWidth,
+    val iconColor: Int = WaveStyleIconColor
 ) : AnimationStyle

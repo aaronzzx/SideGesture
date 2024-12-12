@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.AppInfoDefaults
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,11 +14,11 @@ data class AppInfo(
     val packageName: String,
     val className: String,
     val label: String,
-    val iconScale: Float = DEFAULT_SCALE
+    val iconScale: Float = AppInfoDefaults.DEFAULT_SCALE
 ) {
     companion object {
-        const val DEFAULT_SCALE = 1f
-        const val MIN_SCALE = 0.5f
-        const val MAX_SCALE = 1.5f
+        const val DEFAULT_SCALE = AppInfoDefaults.DEFAULT_SCALE
+        const val MIN_SCALE = AppInfoDefaults.MIN_SCALE
+        const val MAX_SCALE = AppInfoDefaults.MAX_SCALE
     }
 }

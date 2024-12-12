@@ -1,6 +1,18 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelStyles
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.AnimationStyles
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipApps
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DayNightMode
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DynamicColor
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ExcludeApps
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ExcludeFromRecents
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.FitSoftKeyboard
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideHomeScreen
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideLandscape
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideQuickPanel
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideScreenLock
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
@@ -13,16 +25,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class AdvancedSettings(
-    val excludeApps: List<String> = emptyList(),
-    val animationStyles: AnimationStyles = AnimationStyles(),
-    val actionPanelStyles: ActionPanelStyles = ActionPanelStyles(),
-    val fitSoftKeyboard: Boolean = true,
-    val hideLandscape: Boolean = false,
-    val hideQuickPanel: Boolean = false,
-    val hideScreenLock: Boolean = false,
-    val hideHomeScreen: Boolean = false,
-    val excludeFromRecents: Boolean = false,
-    val dynamicColor: Boolean = false,
-    val dayNightMode: DayNightMode = DayNightMode.Auto,
-    val clipApps: Map<String, Float> = emptyMap()
+    val excludeApps: List<String> = ExcludeApps,
+    val animationStyles: AnimationStyles = AnimationStyles,
+    val actionPanelStyles: ActionPanelStyles = ActionPanelStyles,
+    val fitSoftKeyboard: Boolean = FitSoftKeyboard,
+    val hideLandscape: Boolean = HideLandscape,
+    val hideQuickPanel: Boolean = HideQuickPanel,
+    val hideScreenLock: Boolean = HideScreenLock,
+    val hideHomeScreen: Boolean = HideHomeScreen,
+    val excludeFromRecents: Boolean = ExcludeFromRecents,
+    val dynamicColor: Boolean = DynamicColor,
+    val dayNightMode: DayNightMode = DayNightMode,
+    val clipApps: Map<String, Float> = ClipApps
 )

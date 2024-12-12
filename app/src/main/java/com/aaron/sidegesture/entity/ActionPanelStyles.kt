@@ -1,8 +1,10 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.ActionPanelStylesDefaults
+import com.aaron.sidegesture.constant.ActionPanelStylesDefaults.ArcStyleItemSize
+import com.aaron.sidegesture.constant.ActionPanelStylesDefaults.Type
 import com.aaron.sidegesture.utils.JsonHelper
-import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -14,11 +16,11 @@ import kotlinx.serialization.Transient
 @Serializable
 @Keep
 data class ActionPanelStyles(
-    val type: Int = TYPE_ARC,
+    val type: Int = Type,
     val json: String = ""
 ) {
     companion object {
-        const val TYPE_ARC = 1
+        const val TYPE_ARC = ActionPanelStylesDefaults.TYPE_ARC
     }
 
     @Transient
@@ -39,5 +41,5 @@ sealed interface ActionPanelStyle
 @Serializable
 @Keep
 data class ArcStyle(
-    val itemSize: Int = ConvertUtils.dp2px(48f)
+    val itemSize: Int = ArcStyleItemSize
 ) : ActionPanelStyle
