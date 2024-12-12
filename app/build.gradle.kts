@@ -46,9 +46,8 @@ android {
         debug {
             applicationIdSuffix = ".dev"
             isMinifyEnabled = false
-            val appName = "gulugulu+"
-            resValue("string", "app_name", appName)
-            resValue("string", "home_title", appName)
+            resValue("string", "app_name", "@string/app_name_dev")
+            resValue("string", "home_title", "@string/app_name_dev")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

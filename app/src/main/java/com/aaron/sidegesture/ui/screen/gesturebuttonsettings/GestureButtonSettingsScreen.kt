@@ -28,15 +28,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonLength
-import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonStart
+import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonPosition
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonWidth
-import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
-import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonStart
+import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonPosition
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonWidth
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.GestureButton
@@ -47,7 +48,6 @@ import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
-import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
@@ -56,6 +56,7 @@ import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextRangeSlider
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -77,8 +78,8 @@ fun GestureButtonSettingsScreen(
         if (uiState.showDeleteWarningDialog) {
             MyAlertDialog(
                 onDismissRequest = { vm.showDeleteWarningDialog(false) },
-                title = stringResource(id = R.string.delete_gesture_button),
-                text = stringResource(id = R.string.delete_gesture_button_hint),
+                title = stringResource(id = R.string.delete_gesture_button_warning),
+                text = stringResource(id = R.string.delete_gesture_button_warning_desc),
                 onConfirmClick = { vm.deleteGestureButton() }
             )
         }
@@ -94,15 +95,12 @@ fun GestureButtonSettingsScreen(
                     val colorController = rememberColorPickerController()
                     HsvColorPicker(
                         modifier = Modifier
-                            .graphicsLayer {
-                                alpha = 0.5f
-                            }
                             .fillMaxWidth()
                             .aspectRatio(1f),
                         initialColor = color,
                         controller = colorController,
                         onColorChanged = { colorEnvelope ->
-                            vm.colorPickerDialog.onColorChange(colorEnvelope.color.copy(alpha = 0.2f))
+                            vm.colorPickerDialog.onColorChange(colorEnvelope.color)
                         }
                     )
                 },
@@ -148,7 +146,7 @@ fun GestureButtonSettingsScreen(
                                     .background(
                                         color = when (uiState.gestureButton.isDefault) {
                                             true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(uiState.gestureButton.color)
+                                            else -> Color(uiState.gestureButton.color).copy(alpha = GestureButtonColorAlpha)
                                         },
                                         shape = CircleShape
                                     )
@@ -156,7 +154,7 @@ fun GestureButtonSettingsScreen(
                         }
                     },
                     actions = {
-                        if (uiState.gestureButton?.isDefault != true) {
+                        if (uiState.gestureButton != null && !uiState.gestureButton.isDefault) {
                             IconButton(onClick = { vm.showDeleteWarningDialog(true) }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
@@ -254,26 +252,18 @@ fun GestureButtonSettingsScreen(
                             MyTextSlider(
                                 value = gestureButton.width.toFloat(),
                                 onValueChange = { vm.onGestureButtonWidthChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
+                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_width),
                                 sliderValueHint = stringResource(id = R.string.slider_small) to stringResource(id = R.string.slider_large),
                                 valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat()
                             )
-                            MyTextSlider(
-                                value = gestureButton.fraction,
-                                onValueChange = { vm.onGestureButtonLengthChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
+                            MyTextRangeSlider(
+                                value = gestureButton.start..gestureButton.end,
+                                onValueChange = { vm.onGestureButtonPositionChange(it.start, it.endInclusive) },
+                                onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
-                                sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
-                                valueRange = MinGestureButtonLength..MaxGestureButtonLength
-                            )
-                            MyTextSlider(
-                                value = MaxGestureButtonStart - gestureButton.start,
-                                onValueChange = { vm.onGestureButtonLocationChange(it) },
-                                onValueChangeFinished = { vm.saveSettings() },
-                                text = stringResource(id = R.string.gesture_button_location),
-                                sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
-                                valueRange = MinGestureButtonStart..MaxGestureButtonStart
+                                sliderValueHint = stringResource(id = R.string.slider_top) to stringResource(id = R.string.slider_bottom),
+                                valueRange = MinGestureButtonPosition..MaxGestureButtonPosition
                             )
                             MyTextSwitch(
                                 onCheckedChange = { vm.onGestureButtonAlignChange(it) },
@@ -316,10 +306,20 @@ fun GestureButtonSettingsScreen(
                     .drawBehind {
                         uiState.gestureButtons.fastForEach { button ->
                             val bounds = button.bounds()
+                            val color = when (button.isDefault) {
+                                true -> colorScheme.primary
+                                else -> Color(
+                                    red = button.color.red,
+                                    green = button.color.green,
+                                    blue = button.color.blue
+                                )
+                            }
+                            val highlight = uiState.isGestureButtonAdjusting &&
+                                    button.id == uiState.gestureButton?.id
                             drawRect(
-                                color = when (button.isDefault) {
-                                    true -> colorScheme.primary.copy(GestureButtonColorAlpha)
-                                    else -> Color(button.color)
+                                color = when (highlight) {
+                                    true -> color
+                                    else -> color.copy(alpha = GestureButtonColorAlpha)
                                 },
                                 topLeft = bounds.topLeft,
                                 size = bounds.size

@@ -192,6 +192,9 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.WECHAT_PAY -> R.drawable.wechat_paycode
     GlobalActions.ALIPAY_SCAN -> R.drawable.alipay_scan
     GlobalActions.ALIPAY_PAY -> R.drawable.alipay_paycode
-    GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.icon
+    GlobalActions.EXTRA_LAUNCH_APP -> {
+        // 一般是应用被卸载，返回个默认图标防止ActionPanel显示空白
+        action.appInfo?.icon ?: Icons.Default.Android
+    }
     else -> null
 }

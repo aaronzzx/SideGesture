@@ -1,6 +1,8 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.InitialSettingsDefaults.GestureEnabled
+import com.aaron.sidegesture.constant.InitialSettingsDefaults.Unlocked
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,6 +12,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class InitialSettings(
-    val gestureEnabled: Boolean = true,
-    val unlocked: Boolean = false
+    val gestureEnabled: Boolean = GestureEnabled,
+    val unlocked: Boolean = Unlocked
 )

@@ -35,11 +35,12 @@ fun TopBar(
     actions: @Composable RowScope.() -> Unit = {},
     showBackIcon: Boolean = true,
     titleStyle: TextStyle = LocalTextStyle.current.copy(fontSize = 18.sp),
+    containerColor: Color = Color.Transparent,
     postfixTitle: (@Composable () -> Unit)? = null
 ) {
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

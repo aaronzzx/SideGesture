@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.KeyEvent
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.AppUtils
 
@@ -51,6 +52,22 @@ fun Context.launchAssist(): Boolean {
         true
     } catch (ignored: Exception) {
         showToast(R.string.launch_assist_failed)
+        false
+    }
+}
+
+fun Context.launchAppInfo(appInfo: AppInfo): Boolean {
+    return try {
+        val intent = Intent().apply {
+            setClassName(appInfo.packageName, appInfo.className)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+        true
+    } catch (ignored: ActivityNotFoundException) {
+        showToast(getString(R.string.launch_app_info_failed, appInfo.label))
         false
     }
 }

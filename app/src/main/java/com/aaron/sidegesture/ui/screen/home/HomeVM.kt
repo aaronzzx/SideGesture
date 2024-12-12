@@ -1,16 +1,31 @@
 package com.aaron.sidegesture.ui.screen.home
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.global.Backup
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ktx.isIgnoringBatteryOptimizations
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.DataStoreHolder.advancedSettings
+import com.aaron.sidegesture.utils.DataStoreHolder.gestureButtons
+import com.aaron.sidegesture.utils.DataStoreHolder.gestureSettings
+import com.aaron.sidegesture.utils.DataStoreHolder.initialSettings
+import com.aaron.sidegesture.utils.JsonHelper
+import com.blankj.utilcode.util.EncodeUtils
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -28,6 +43,72 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         loadData()
     }
 
+    fun backup(context: Context, uri: Uri) {
+        viewModelScope.launchWithLoading(
+            Dispatchers.IO + CoroutineExceptionHandler { _, _ ->
+                toast(R.string.backup_failed)
+            },
+            cancelable = false
+        ) {
+            val backup = Backup(
+                initialSettings = async { initialSettings.data.first() }.await(),
+                advancedSettings = async { advancedSettings.data.first() }.await(),
+                gestureSettings = async { gestureSettings.data.first() }.await(),
+                gestureButtons = async { gestureButtons.data.first() }.await(),
+                timestamp = System.currentTimeMillis(),
+                version = BuildConfig.VERSION_NAME
+            )
+            val json = JsonHelper.encodeToString(backup)
+            val encoded = EncodeUtils.base64Encode(json.toByteArray())
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(encoded)
+                outputStream.flush()
+            }
+            toast(R.string.backup_success)
+        }
+    }
+
+    fun restore(context: Context, uri: Uri) {
+        viewModelScope.launchWithLoading(
+            Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
+                ex.printStackTrace()
+                toast(R.string.restore_failed)
+            },
+            cancelable = false
+        ) {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val input = inputStream.readBytes()
+                val decoded = EncodeUtils.base64Decode(input)
+                val backup = JsonHelper.decodeFromString<Backup>(String(decoded))
+                coroutineScope {
+                    listOf(
+                        async {
+                            initialSettings.updateData {
+                                backup.initialSettings ?: it
+                            }
+                        },
+                        async {
+                            advancedSettings.updateData {
+                                backup.advancedSettings ?: it
+                            }
+                        },
+                        async {
+                            gestureSettings.updateData {
+                                backup.gestureSettings ?: it
+                            }
+                        },
+                        async {
+                            gestureButtons.updateData {
+                                backup.gestureButtons ?: it
+                            }
+                        }
+                    ).awaitAll()
+                }
+                toast(R.string.restore_success)
+            }
+        }
+    }
+
     fun addGestureButton() {
         if (uiState.gestureButtons.size >= 20) {
             toast(R.string.gesture_button_size_max)
@@ -39,12 +120,20 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                     addAll(GestureButton.createPair())
                 }
             }
+            delay(50)
+            sendUiEvent(UiEvent.ScrollToBottom)
         }
     }
 
     fun showResetWarningDialog(show: Boolean) {
         updateUiState {
             it.copy(showResetWarningDialog = show)
+        }
+    }
+
+    fun showBackupRestoreDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showBackupRestoreDialog = show)
         }
     }
 
@@ -60,12 +149,12 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Float = Float.NaN) {
+    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Int = Int.MAX_VALUE) {
         updateUiState {
             it.copy(isGestureButtonListExpanded = expanded)
         }
-        if (expanded) {
-            sendUiEvent(UiEvent.ScrollEvent(scrollOffset))
+        if (expanded && scrollOffset != Int.MAX_VALUE) {
+            sendUiEvent(UiEvent.ScrollToEvent(scrollOffset))
         }
     }
 
@@ -150,11 +239,13 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         val isPopBackgroundEnabled: Boolean = false,
         val isGestureButtonListExpanded: Boolean = false,
         val showMoreMenu: Boolean = false,
-        val showResetWarningDialog: Boolean = false
+        val showResetWarningDialog: Boolean = false,
+        val showBackupRestoreDialog: Boolean = false
     )
 
     sealed interface UiEvent {
 
-        data class ScrollEvent(val offsetY: Float) : UiEvent
+        data object ScrollToBottom : UiEvent
+        data class ScrollToEvent(val offsetY: Int) : UiEvent
     }
 }

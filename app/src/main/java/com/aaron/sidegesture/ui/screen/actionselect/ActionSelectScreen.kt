@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,20 +52,18 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
-import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
-import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
@@ -76,11 +76,11 @@ import com.aaron.sidegesture.ui.theme.MinIconSize
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -122,10 +122,10 @@ fun ActionSelectScreen(
                 )
             },
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
+                MySnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            Column(modifier = Modifier.padding(contentPadding)) {
+            Column(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
                 val pagerState = rememberPagerState { PAGES.size }
                 val coroutineScope = rememberCoroutineScope()
                 TabRow(
@@ -156,16 +156,18 @@ fun ActionSelectScreen(
                     }
                 }
 
-                val permissionState = rememberPermissionState(PERMISSION_GET_INSTALLED_APPS) {
-                    vm.updateAppInfos()
+                val permissionState = rememberGetInstalledAppsPermissionState { granted ->
+                    if (granted) {
+                        vm.updateAppInfos()
+                    }
                 }
-                LaunchedEffect(pagerState, permissionState) {
+                LaunchedEffect(vm, pagerState, permissionState) {
                     var init = true
                     snapshotFlow { pagerState.currentPage }
                         .drop(1)
                         .filter { init && it == PAGE_APPS }
                         .collectLatest {
-                            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
+                            if (!permissionState.status.isGranted) {
                                 permissionState.launchPermissionRequest()
                             } else {
                                 vm.updateAppInfos()
@@ -181,6 +183,14 @@ fun ActionSelectScreen(
                         PAGE_ACTION -> {
                             ActionPage(
                                 modifier = Modifier.fillMaxSize(),
+                                contentPadding = run {
+                                    val direction = LocalLayoutDirection.current
+                                    PaddingValues(
+                                        start = contentPadding.calculateStartPadding(direction),
+                                        end = contentPadding.calculateEndPadding(direction),
+                                        bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                    )
+                                },
                                 actions = uiState.actions,
                                 selectedRecord = uiState.selectedRecord,
                                 selectSingle = uiState.selectSingle,
@@ -195,6 +205,15 @@ fun ActionSelectScreen(
                                 component = vm.loadingComponent
                             ) {
                                 AppPage(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = run {
+                                        val direction = LocalLayoutDirection.current
+                                        PaddingValues(
+                                            start = contentPadding.calculateStartPadding(direction),
+                                            end = contentPadding.calculateEndPadding(direction),
+                                            bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                        )
+                                    },
                                     onSelect = { appInfo, selected ->
                                         vm.select(appInfo, selected)
                                     },
@@ -202,8 +221,7 @@ fun ActionSelectScreen(
                                     selectedRecord = uiState.selectedRecord,
                                     snackbarHostState = snackbarHostState,
                                     permissionState = permissionState,
-                                    selectSingle = uiState.selectSingle,
-                                    modifier = Modifier.fillMaxSize()
+                                    selectSingle = uiState.selectSingle
                                 )
                             }
                         }
@@ -221,11 +239,12 @@ private fun ActionPage(
     selectedRecord: SelectedRecord,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+        contentPadding = contentPadding
     ) {
         items(
             items = actions,
@@ -326,13 +345,14 @@ private fun AppPage(
     permissionState: PermissionState,
     selectSingle: Boolean,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     maxSelectCount: Int = MAX_SELECT_COUNT
 ) {
     Box(modifier = modifier) {
-        if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
+        if (permissionState.status.isGranted) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+                contentPadding = contentPadding
             ) {
                 items(
                     items = appInfos,

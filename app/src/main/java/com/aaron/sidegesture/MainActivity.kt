@@ -22,9 +22,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         myEnableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isNavigationBarContrastEnforced = false
-        }
+
         setContent {
             SideGestureApp()
         }
@@ -50,6 +48,9 @@ private fun ComponentActivity.myEnableEdgeToEdge(isAppNightMode: Boolean = false
             flag == Configuration.UI_MODE_NIGHT_YES || isAppNightMode
         }
     )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+    }
 }
 
 private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)

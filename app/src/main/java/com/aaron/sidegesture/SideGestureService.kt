@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -17,8 +19,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
+import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
@@ -38,9 +42,13 @@ import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -51,6 +59,7 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private val proxy = SideGestureServiceProxy(this)
 
+    private val imeInsetObserver = ImeInsetObserver(this)
     private var mainView: View? = null
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
@@ -75,10 +84,15 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onInterrupt() {
+        imeInsetObserver.unregister()
         coroutineScope.cancel()
     }
 
     override fun onSetOverlay() {
+        registerScreenLockReceiver()
+        registerWallpaperChangedReceiver()
+        registerImeInsetObserver()
+
         val mainView = mainView
         if (mainView != null) {
             removeWindow(mainView)
@@ -95,9 +109,22 @@ class SideGestureService : ComponentAccessibilityService() {
                             .gestureButtons
                             .data
                             .collectAsStateWithLifecycle(initialValue = emptyList())
+                        val animationStyles by DataStoreHolder
+                            .advancedSettings
+                            .data
+                            .map { it.animationStyles }
+                            .collectAsStateWithLifecycle(initialValue = AnimationStyles())
+                        val imePadding by imeInsetObserver
+                            .flow
+                            .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = buttons,
+                            imePadding = imePadding,
+                            animationStyle = when (animationStyles.isAnimationEnabled) {
+                                true -> animationStyles.value
+                                else -> null
+                            },
                             onAction = { action ->
                                 proxy.onAction(action)
                             }
@@ -130,15 +157,12 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
             }
         }
-
-        registerScreenLockReceiver()
-        registerWallpaperChangedReceiver()
     }
 
     private fun registerScreenLockReceiver() {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                     isNowInLockScreenPage = true
                 } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
                     isNowInLockScreenPage = false
@@ -147,7 +171,7 @@ class SideGestureService : ComponentAccessibilityService() {
             }
         }
         val intentFilter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_USER_PRESENT)
         }
         registerReceiver(receiver, intentFilter)
@@ -163,6 +187,31 @@ class SideGestureService : ComponentAccessibilityService() {
             addAction(Intent.ACTION_WALLPAPER_CHANGED)
         }
         registerReceiver(receiver, intentFilter)
+    }
+
+    private fun registerImeInsetObserver() {
+        coroutineScope.launch {
+            launch {
+                imeInsetObserver.flow.collectLatest {
+                    updateGestureButtons()
+                }
+            }
+            launch {
+                DataStoreHolder
+                    .advancedSettings
+                    .data
+                    .distinctUntilChangedBy {
+                        it.fitSoftKeyboard
+                    }
+                    .collectLatest {
+                        if (it.fitSoftKeyboard) {
+                            imeInsetObserver.register()
+                        } else {
+                            imeInsetObserver.unregister()
+                        }
+                    }
+            }
+        }
     }
 
     private fun updateLayout() {
@@ -183,6 +232,8 @@ class SideGestureService : ComponentAccessibilityService() {
                 val button = view.tag as? GestureButton ?: return@forEach
                 val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
                     updateGestureButton(button)
+                    val imePadding = imeInsetObserver.flow.value
+                    y += -imePadding
 
                     val initialSettings = DataStoreHolder.initialSettings.data.first()
                     if (!initialSettings.gestureEnabled) {
@@ -223,5 +274,67 @@ class SideGestureService : ComponentAccessibilityService() {
                 packageManager.getLaunchIntentForPackage(it.activityInfo.packageName ?: "") == null
             }
         return resolves.any { it.activityInfo?.packageName == pkgName }
+    }
+
+    private class ImeInsetObserver(val context: Context) {
+
+        private val _flow = MutableStateFlow(0)
+        val flow: StateFlow<Int> = _flow.asStateFlow()
+
+        private var view: View? = null
+
+        fun register() {
+            unregister()
+            this.view = View(context).apply {
+                val localRect = Rect()
+                val windowRect = Rect()
+                viewTreeObserver.addOnGlobalLayoutListener {
+                    getLocalVisibleRect(localRect)
+                    getWindowVisibleDisplayFrame(windowRect)
+                    val navBarHeight = ScreenUtils.getScreenHeight() - windowRect.bottom
+                    val imePadding = windowRect.height() - localRect.height() + navBarHeight
+                    if (localRect.height() == windowRect.height()) {
+                        // ime invisible
+                        _flow.value = 0
+                    } else {
+                        // ime visible
+                        _flow.value = imePadding
+                    }
+                }
+                val lp = WindowManager.LayoutParams().also { lp ->
+                    lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+                    lp.width = WindowManager.LayoutParams.MATCH_PARENT
+                    lp.height = WindowManager.LayoutParams.MATCH_PARENT
+                    lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                    lp.format = PixelFormat.RGBA_8888
+                    lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM or
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                }
+                addView(this, lp)
+            }
+        }
+
+        fun unregister() {
+            val view = view
+            if (view != null) {
+                _flow.value = 0
+                removeView(view)
+                this.view = null
+            }
+        }
+
+        private fun addView(view: View, lp: WindowManager.LayoutParams) {
+            val wm = ContextCompat.getSystemService(context, WindowManager::class.java)!!
+            wm.addView(view, lp)
+        }
+
+        private fun removeView(view: View) {
+            val wm = ContextCompat.getSystemService(context, WindowManager::class.java)!!
+            try {
+                wm.removeViewImmediate(view)
+            } catch (ignored: Exception) {
+            }
+        }
     }
 }

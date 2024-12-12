@@ -40,20 +40,20 @@ fun GestureButton.actionTextCompose(): String {
     return text
 }
 
-fun List<GestureButton>.find(offset: Offset): GestureButton? {
-    return find { it.contains(offset) }
+fun List<GestureButton>.find(offset: Offset, imePadding: Int = 0): GestureButton? {
+    return find { it.contains(offset, imePadding) }
 }
 
-fun GestureButton.contains(offset: Offset): Boolean {
-    val bounds = bounds()
+fun GestureButton.contains(offset: Offset, imePadding: Int = 0): Boolean {
+    val bounds = bounds(imePadding)
     return bounds.contains(offset)
 }
 
-fun GestureButton.bounds(): Rect {
+fun GestureButton.bounds(imePadding: Int = 0): Rect {
     val y = rootSize.height * start
     val topLeft = when (position) {
-        Position.Left -> Offset(0f, y)
-        Position.Right -> Offset((rootSize.width - width).toFloat(), y)
+        Position.Left -> Offset(0f, y - imePadding)
+        Position.Right -> Offset((rootSize.width - width).toFloat(), y - imePadding)
     }
     val boundsSize = Size(width.toFloat(), rootSize.height * fraction)
     return Rect(topLeft, boundsSize)

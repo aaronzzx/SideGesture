@@ -1,11 +1,13 @@
 package com.aaron.sidegesture.ui.screen.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,19 +18,20 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -42,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -69,9 +73,8 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.aaron.sidegesture.utils.AboutUtils
 import com.aaron.sidegesture.utils.KeepAliveHelper
-import kotlinx.coroutines.launch
+import com.blankj.utilcode.util.TimeUtils
 
 /**
  * @author aaronzzxup@gmail.com
@@ -87,21 +90,23 @@ fun HomeScreen(
     onNavToGestureButtonSettings: (GestureButton) -> Unit,
     vm: HomeVM = viewModel()
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
             when (event) {
-                is UiEvent.ScrollEvent -> {
-                    coroutineScope.launch {
-                        if (!event.offsetY.isNaN()) {
-                            scrollState.animateScrollBy(
-                                value = event.offsetY,
-                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                            )
-                        }
-                    }
+                is UiEvent.ScrollToBottom -> {
+                    scrollState.animateScrollTo(
+                        value = scrollState.maxValue,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    )
+                }
+                is UiEvent.ScrollToEvent -> {
+                    scrollState.animateScrollTo(
+                        value = event.offsetY,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    )
                 }
             }
         }
@@ -110,12 +115,43 @@ fun HomeScreen(
             MyAlertDialog(
                 onDismissRequest = { vm.showResetWarningDialog(false) },
                 onConfirmClick = { vm.reset() },
-                title = stringResource(id = R.string.reset_default_settings),
-                text = stringResource(id = R.string.reset_default_settings_hint)
+                title = stringResource(id = R.string.reset_default_settings_warning),
+                text = stringResource(id = R.string.reset_default_settings_warning_desc)
             )
         }
 
-        val context = LocalContext.current
+        val createFileLauncher = rememberLauncherForActivityResult(
+            contract = CreateDocument("text/plain")
+        ) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            vm.backup(context, uri)
+        }
+        val getFileLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            vm.restore(context, uri)
+        }
+        if (uiState.showBackupRestoreDialog) {
+            BackupRestoreDialog(
+                onDismissRequest = {
+                    vm.showBackupRestoreDialog(false)
+                },
+                onBackupRequest = {
+                    vm.showBackupRestoreDialog(false)
+                    val appName = context.getString(context.applicationInfo.labelRes)
+                    val timestamp = System.currentTimeMillis()
+                    val date = TimeUtils.millis2String(timestamp, "yyyyMMdd_HHmmss")
+                    val fileName = "${appName}_$date"
+                    createFileLauncher.launch(fileName)
+                },
+                onRestoreRequest = {
+                    vm.showBackupRestoreDialog(false)
+                    getFileLauncher.launch("text/plain")
+                }
+            )
+        }
+
         val lifecycleOwner = LocalLifecycleOwner.current
         LaunchedEffect(key1 = lifecycleOwner) {
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -151,7 +187,7 @@ fun HomeScreen(
                                     vm.showResetWarningDialog(true)
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.reset_default_settings),)
+                                    Text(text = stringResource(id = R.string.reset_default_settings_warning),)
                                 }
                             )
 //                            DropdownMenuItem(
@@ -167,11 +203,11 @@ fun HomeScreen(
                             DropdownMenuItem(
                                 onClick = {
                                     vm.showMoreMenu(false) {
-                                        AboutUtils.checkUpgrade(context)
+                                        vm.showBackupRestoreDialog(true)
                                     }
                                 },
                                 text = {
-                                    Text(text = stringResource(id = R.string.check_update))
+                                    Text(text = stringResource(id = R.string.backup_restore))
                                 }
                             )
                             DropdownMenuItem(
@@ -251,18 +287,15 @@ fun HomeScreen(
                         )
                     }
 
-                    var gestureButtonListOffset by rememberSaveable {
-                        mutableFloatStateOf(Float.NaN)
-                    }
+                    var gestureButtonListOffset by remember { mutableIntStateOf(Int.MAX_VALUE) }
                     val density = LocalDensity.current
                     MyExpandableColumn(
                         modifier = Modifier
                             .onGloballyPositioned {
-                                if (gestureButtonListOffset.isNaN()) {
-                                    density.run {
-                                        val position = it.positionInParent()
-                                        gestureButtonListOffset = position.y + RootPadding.toPx()
-                                    }
+                                density.run {
+                                    val position = it.positionInParent()
+                                    gestureButtonListOffset =
+                                        (position.y + RootPadding.toPx()).toInt()
                                 }
                             }
                             .padding(top = SectionPaddingNoTitle),
@@ -293,7 +326,7 @@ fun HomeScreen(
                                     secondaryTextColor = MaterialTheme.colorScheme.primary,
                                     markColor = when (button.isDefault) {
                                         true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                        else -> Color(button.color)
+                                        else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
                                     }
                                 )
                             }
@@ -331,8 +364,8 @@ fun HomeScreen(
                                 val bounds = button.bounds()
                                 drawRect(
                                     color = when (button.isDefault) {
-                                        true -> colorScheme.primary.copy(GestureButtonColorAlpha)
-                                        else -> Color(button.color)
+                                        true -> colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                                        else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
                                     },
                                     topLeft = bounds.topLeft,
                                     size = bounds.size
@@ -340,6 +373,38 @@ fun HomeScreen(
                             }
                         }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackupRestoreDialog(
+    onDismissRequest: () -> Unit,
+    onBackupRequest: () -> Unit,
+    onRestoreRequest: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AlertDialogDefaults.shape,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                MySection {
+                    MyTextButton(
+                        onClick = onBackupRequest,
+                        text = stringResource(id = R.string.backup),
+                        secondaryText = stringResource(id = R.string.backup_hint)
+                    )
+                }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextButton(
+                        onClick = onRestoreRequest,
+                        text = stringResource(id = R.string.restore),
+                        secondaryText = stringResource(id = R.string.restore_hint)
+                    )
+                }
             }
         }
     }

@@ -81,7 +81,7 @@ fun IconResizeScreen(
             MyAlertDialog(
                 onDismissRequest = { vm.showResetWarningDialog(false) },
                 onConfirmClick = { vm.reset() },
-                title = stringResource(id = R.string.reset_default_settings),
+                title = stringResource(id = R.string.reset_default_settings_warning),
                 text = stringResource(id = R.string.reset_app_info_icon_scale)
             )
         }

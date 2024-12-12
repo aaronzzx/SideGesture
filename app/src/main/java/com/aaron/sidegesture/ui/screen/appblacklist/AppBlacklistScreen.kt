@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,13 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.fastForEach
@@ -39,15 +42,13 @@ import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
-import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
-import com.aaron.sidegesture.ktx.PERMISSION_GET_INSTALLED_APPS
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.isGetInstalledAppsPermissionGranted
 import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.IconTextPadding
@@ -56,10 +57,10 @@ import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
+import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
 /**
@@ -79,17 +80,19 @@ fun AppBlacklistScreen(
                 onDismissRequest = {
                     vm.showResetWarningDialog(false)
                 },
-                title = stringResource(id = R.string.reset_default_settings),
-                text = stringResource(id = R.string.reset_exclude_apps_warning),
+                title = stringResource(id = R.string.reset_default_settings_warning),
+                text = stringResource(id = R.string.reset_exclude_apps_warning_desc),
                 onConfirmClick = { vm.reset() }
             )
         }
 
-        val permissionState = rememberPermissionState(PERMISSION_GET_INSTALLED_APPS) {
-            vm.updateAppInfos()
+        val permissionState = rememberGetInstalledAppsPermissionState { granted ->
+            if (granted) {
+                vm.updateAppInfos()
+            }
         }
-        LaunchedEffect(permissionState) {
-            if (!App.getContext().isGetInstalledAppsPermissionGranted()) {
+        LaunchedEffect(vm, permissionState) {
+            if (!permissionState.status.isGranted) {
                 permissionState.launchPermissionRequest()
             } else {
                 vm.updateAppInfos()
@@ -109,23 +112,36 @@ fun AppBlacklistScreen(
                                     contentDescription = "Reset"
                                 )
                             }
+                            IconButton(onClick = { vm.done() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Done,
+                                    contentDescription = "Done"
+                                )
+                            }
                         }
                     }
                 )
             },
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
+                MySnackbarHost(hostState = snackbarHostState)
             }
         ) { contentPadding ->
-            Box(modifier = Modifier.padding(contentPadding)) {
-                if (App.getContext().isGetInstalledAppsPermissionGranted() || permissionState.status.isGranted) {
+            Box(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
+                if (permissionState.status.isGranted) {
                     LoadingComponent(
                         modifier = Modifier.fillMaxSize(),
                         component = vm.loadingComponent
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = ScrollBottomPadding)
+                            contentPadding = run {
+                                val direction = LocalLayoutDirection.current
+                                PaddingValues(
+                                    start = contentPadding.calculateStartPadding(direction),
+                                    end = contentPadding.calculateEndPadding(direction),
+                                    bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                )
+                            }
                         ) {
                             listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
                                 items(

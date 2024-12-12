@@ -34,6 +34,7 @@ import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -65,15 +66,15 @@ fun AdvancedSettingsScreen(
                         secondaryText = stringResource(id = R.string.exclude_app_hint)
                     )
                 }
-//                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
-//                    MyTextSwitch(
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextSwitch(
 //                        onTextClick = { /*TODO*/ },
-//                        onCheckedChange = { /*TODO*/ },
-//                        checked = false,
-//                        text = stringResource(id = R.string.animation_style),
+                        onCheckedChange = { vm.onShowAnimation(it) },
+                        checked = uiState.showAnimation,
+                        text = stringResource(id = R.string.animation_style),
 //                        secondaryText = "TODO",
 //                        secondaryTextColor = MaterialTheme.colorScheme.primary
-//                    )
+                    )
 //                    MyTextSwitch(
 //                        onTextClick = { /*TODO*/ },
 //                        onCheckedChange = { /*TODO*/ },
@@ -82,7 +83,15 @@ fun AdvancedSettingsScreen(
 //                        secondaryText = "TODO",
 //                        secondaryTextColor = MaterialTheme.colorScheme.primary
 //                    )
-//                }
+                }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
+                        checked = uiState.fitSoftKeyboard,
+                        text = stringResource(id = R.string.fit_soft_keyboard),
+                        secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
+                    )
+                }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.hide_gesture_button)
@@ -113,12 +122,6 @@ fun AdvancedSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.app_settings)
                 ) {
-//                    MyTextSwitch(
-//                        onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
-//                        checked = uiState.fitSoftKeyboard,
-//                        text = stringResource(id = R.string.fit_soft_keyboard),
-//                        secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
-//                    )
                     MyTextSwitch(
                         onCheckedChange = { vm.onExcludeFromRecentsChange(it) },
                         checked = uiState.excludeFromRecents,

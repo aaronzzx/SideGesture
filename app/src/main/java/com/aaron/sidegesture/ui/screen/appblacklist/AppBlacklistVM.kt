@@ -35,15 +35,28 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     fun selectApp(qualifiedName: String, selected: Boolean) {
+        updateUiState {
+            val mutableList = it.excludeApps.toMutableList()
+            if (selected) {
+                mutableList.add(qualifiedName)
+            } else {
+                mutableList.remove(qualifiedName)
+            }
+            it.copy(excludeApps = mutableList)
+        }
+    }
+
+    fun done() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.updateData {
-                val mutableList = it.excludeApps.toMutableList()
-                if (selected) {
-                    mutableList.add(qualifiedName)
-                } else {
-                    mutableList.remove(qualifiedName)
-                }
-                it.copy(excludeApps = mutableList)
+                it.copy(excludeApps = uiState.excludeApps)
+            }
+        }.invokeOnCompletion {
+            if (it == null) {
+                toast(R.string.save_success)
+                finish()
+            } else {
+                toast(R.string.save_failure)
             }
         }
     }
@@ -74,32 +87,43 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
                         }
                 }
             }
-            updateUiState {
-                val selectedList = mutableListOf<AppInfo>()
-                val unselectedList = mutableListOf<AppInfo>()
-                appInfos.forEach { info ->
-                    if (info.qualifiedName in it.excludeApps) {
-                        selectedList.add(info)
-                    } else {
-                        unselectedList.add(info)
-                    }
-                }
-                it.copy(
-                    selectedAppInfos = selectedList,
-                    unselectedAppInfos = unselectedList
-                )
-            }
+            arrangeAppInfos(appInfos)
         }
     }
 
     private fun loadData() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.data.collectLatest { item ->
-                val excludeApps = item.excludeApps
                 updateUiState {
-                    it.copy(excludeApps = excludeApps)
+                    it.copy(excludeApps = item.excludeApps)
                 }
             }
+        }
+    }
+
+    private suspend fun arrangeAppInfos(appInfos: List<AppInfo>) {
+        val selectedList = mutableListOf<AppInfo>()
+        val unselectedList = mutableListOf<AppInfo>()
+        val excludeApps = uiState.excludeApps.toMutableList()
+        withContext(Dispatchers.Default) {
+            excludeApps.apply {
+                val qualifiedNames = appInfos.map { app -> app.qualifiedName }
+                removeAll { qualifiedName -> qualifiedName !in qualifiedNames }
+            }
+            appInfos.forEach { info ->
+                if (info.qualifiedName in excludeApps) {
+                    selectedList.add(info)
+                } else {
+                    unselectedList.add(info)
+                }
+            }
+        }
+        updateUiState {
+            it.copy(
+                excludeApps = excludeApps,
+                selectedAppInfos = selectedList,
+                unselectedAppInfos = unselectedList
+            )
         }
     }
 

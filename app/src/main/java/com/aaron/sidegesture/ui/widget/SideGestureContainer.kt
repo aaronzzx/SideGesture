@@ -4,7 +4,6 @@ import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,11 +12,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.util.fastForEach
-import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
+import androidx.compose.ui.geometry.Rect
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.AnimationStyle
@@ -53,8 +49,8 @@ fun SideGestureContainer(
     onAction: (Action) -> Unit,
     buttons: List<GestureButton>,
     modifier: Modifier = Modifier,
-    drawButtonBounds: Boolean = false,
-    animationStyle: AnimationStyle = WaveStyle(),
+    imePadding: Int = 0,
+    animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -62,7 +58,7 @@ fun SideGestureContainer(
     val actionPanelState = rememberActionPanelState()
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
-            sideGestureState.onDragStart(offset)
+            sideGestureState.onDragStart(offset, imePadding)
         },
         onDrag = onDrag@{ dragAmount ->
             if (actionPanelState.visible) {
@@ -105,27 +101,7 @@ fun SideGestureContainer(
             sideGestureState.onDragCancel()
         }
     )
-    val colorScheme = MaterialTheme.colorScheme
-    Box(
-        modifier = modifier.drawBehind {
-            if (drawButtonBounds) {
-                buttons.fastForEach { button ->
-                    if (!button.enabled) {
-                        return@fastForEach
-                    }
-                    val bounds = button.bounds()
-                    drawRect(
-                        color = when (button.isDefault) {
-                            true -> colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                            else -> Color(button.color)
-                        },
-                        topLeft = bounds.topLeft,
-                        size = bounds.size
-                    )
-                }
-            }
-        }
-    ) {
+    Box(modifier = modifier) {
         ActionPanel(
             modifier = Modifier.matchParentSize(),
             actionPanelStyle = actionPanelStyle,
@@ -133,11 +109,13 @@ fun SideGestureContainer(
             vibrations = sideGestureState.button?.vibrations
         )
 
-        GestureAnimation(
-            modifier = Modifier.matchParentSize(),
-            animationStyle = animationStyle,
-            sideGestureState = sideGestureState
-        )
+        if (animationStyle != null) {
+            GestureAnimation(
+                modifier = Modifier.matchParentSize(),
+                animationStyle = animationStyle,
+                sideGestureState = sideGestureState
+            )
+        }
     }
 }
 
@@ -173,6 +151,7 @@ class SideGestureState(
         private set
     var finger = Offset.Unspecified
         private set
+    private var buttonBounds: Rect? = null
 
     private var longSlideFirstTriggerMs = 0L
     private var longSlideTriggerFlags = false
@@ -180,10 +159,11 @@ class SideGestureState(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
-    fun onDragStart(offset: Offset) {
+    fun onDragStart(offset: Offset, imePadding: Int) {
         origin = offset
         finger = offset
-        button = buttons.find(offset)
+        button = buttons.find(offset, imePadding)
+        buttonBounds = button?.bounds(imePadding)
 
         coroutineScope.launch {
             val curY = offset.y
@@ -246,7 +226,7 @@ class SideGestureState(
     }
 
     fun onDragEnd(): Action {
-        val button = checkNotNull(button)
+        val button = button ?: return Action.NONE
         val longPressDelayMs = button.longSlideTriggerDelayMs
         val triggerDirection = triggerDirection
         var returnAction = Action.NONE
@@ -315,9 +295,17 @@ class SideGestureState(
         val originY = origin.y
         val fingerX = finger.x
         val fingerY = finger.y
+        val slideDistanceX = when (button.position) {
+            Position.Left -> fingerX - originX
+            Position.Right -> originX - fingerX
+        }
+        // 解决左侧触钮往左滑右侧触钮往右滑还能触发的问题
+        if (slideDistanceX < 0) {
+            return false
+        }
         val triggerDirection = triggerDirection
         if (triggerDirection == Center) {
-            val distance = abs(fingerX - originX)
+            val distance = slideDistanceX
             if (isLongPress) {
                 return distance >= button.longSlideTriggerDistance &&
                         longSlideAction.center.isNotEmpty()
@@ -325,7 +313,7 @@ class SideGestureState(
             return distance >= button.slideTriggerDistance &&
                     slideAction.center.isNotEmpty()
         } else if (triggerDirection == Up || triggerDirection == Down) {
-            val edge1 = abs(fingerX - originX)
+            val edge1 = slideDistanceX
             val edge2 = abs(fingerY - originY)
             val edge3 = hypot(edge1, edge2)
             if (isLongPress) {
@@ -345,11 +333,13 @@ class SideGestureState(
     }
 
     private fun calcDirection(button: GestureButton): TriggerDirection? {
+        val buttonBounds = buttonBounds ?: return null
         val origin = origin
         val finger = finger
+        // 解决右侧触钮不灵敏的问题
         val x = when (button.position) {
-            Position.Left -> finger.x
-            Position.Right -> origin.x - finger.x
+            Position.Left -> finger.x - buttonBounds.left
+            Position.Right -> buttonBounds.right - finger.x
         }
         val tanVal = x / abs(finger.y - origin.y)
         val radians = atan(tanVal)

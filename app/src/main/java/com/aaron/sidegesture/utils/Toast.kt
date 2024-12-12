@@ -6,6 +6,7 @@ import android.view.Gravity
 import androidx.annotation.StringRes
 import androidx.core.os.postDelayed
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.ui.widget.ToastDuration
 import com.aaron.sidegesture.ui.widget.showComposeToast
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ProcessUtils
@@ -28,8 +29,20 @@ fun showToastDelay(text: String, continueBlock: () -> Unit) {
     }
 }
 
+fun showToastLongDelay(text: String, continueBlock: () -> Unit) {
+    showToastLong(text, DELAYED_MILLIS) {
+        continueBlock()
+    }
+}
+
 fun showToastDelay(@StringRes resId: Int, continueBlock: () -> Unit) {
     showToast(resId, DELAYED_MILLIS) {
+        continueBlock()
+    }
+}
+
+fun showToastLongDelay(@StringRes resId: Int, continueBlock: () -> Unit) {
+    showToastLong(resId, DELAYED_MILLIS) {
         continueBlock()
     }
 }
@@ -50,6 +63,22 @@ fun showToast(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = nu
     }
 }
 
+fun showToastLong(text: String, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
+//    if (canShowToast()) {
+//        if (!init) {
+//            init()
+//        }
+//        ToastUtils.showShort(text)
+//    } else {
+//    }
+    showComposeToast(text, ToastDuration.Long)
+    if (delayMs > 0 && continueBlock != null) {
+        handler.postDelayed(delayMs) {
+            continueBlock()
+        }
+    }
+}
+
 fun showToast(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
 //    if (canShowToast()) {
 //        if (!init) {
@@ -59,6 +88,22 @@ fun showToast(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Un
 //    } else {
 //    }
     showComposeToast(resId)
+    if (delayMs > 0 && continueBlock != null) {
+        handler.postDelayed(delayMs) {
+            continueBlock()
+        }
+    }
+}
+
+fun showToastLong(@StringRes resId: Int, delayMs: Long = 0, continueBlock: (() -> Unit)? = null) {
+//    if (canShowToast()) {
+//        if (!init) {
+//            init()
+//        }
+//        ToastUtils.showShort(resId)
+//    } else {
+//    }
+    showComposeToast(resId, ToastDuration.Long)
     if (delayMs > 0 && continueBlock != null) {
         handler.postDelayed(delayMs) {
             continueBlock()

@@ -26,7 +26,7 @@
 # 包含有类名->混淆后类名的映射关系
 # 然后使用printmapping指定映射文件的名称
 -verbose
--printmapping proguardMapping.txt
+-printmapping mapping.txt
 
 #抛出异常时保留源文件和代码行号
 -keepattributes SourceFile,LineNumberTable
