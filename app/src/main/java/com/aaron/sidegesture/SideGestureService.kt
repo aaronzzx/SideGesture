@@ -8,7 +8,16 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.media.AudioManager
+import android.os.PowerManager
+import android.view.KeyEvent
+import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
+import android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
+import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
+import android.view.KeyEvent.KEYCODE_VOLUME_UP
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.layout.Box
@@ -29,20 +38,25 @@ import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
+import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ktx.setFlags
 import com.aaron.sidegesture.ktx.updateGestureButton
 import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
+import com.aaron.sidegesture.ktx.volumeDown
+import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.ui.widget.SideGestureContainer
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +81,9 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private var isNowInLockScreenPage = false
 
+    private var isVolumeButtonSwitchSongEnabled = false
+    private var volumeButtonSwitchSongJob: Job? = null
+
     val coroutineScope = MainScope()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -82,6 +99,46 @@ class SideGestureService : ComponentAccessibilityService() {
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             updateGestureButtons()
         }
+    }
+
+    override fun onKeyEvent(event: KeyEvent?): Boolean {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val keyCode = event?.keyCode
+        if (isVolumeButtonSwitchSongEnabled &&
+            audioManager.isMusicActive &&
+            powerManager.isInteractive.not() &&
+            (keyCode == KEYCODE_VOLUME_UP || keyCode == KEYCODE_VOLUME_DOWN)
+        ) {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    volumeButtonSwitchSongJob = coroutineScope.launch {
+                        delay(ViewConfiguration.getLongPressTimeout().toLong())
+                        when (keyCode) {
+                            KEYCODE_VOLUME_UP -> dispatchMediaKeyEvent(KEYCODE_MEDIA_PREVIOUS)
+                            KEYCODE_VOLUME_DOWN -> dispatchMediaKeyEvent(KEYCODE_MEDIA_NEXT)
+                        }
+                    }
+                }
+                MotionEvent.ACTION_UP -> {
+                    val isCompleted = volumeButtonSwitchSongJob?.isCompleted == true
+                    volumeButtonSwitchSongJob?.cancel()
+                    volumeButtonSwitchSongJob = null
+                    if (!isCompleted) {
+                        when (keyCode) {
+                            KEYCODE_VOLUME_UP -> volumeUp()
+                            KEYCODE_VOLUME_DOWN -> volumeDown()
+                        }
+                    }
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    volumeButtonSwitchSongJob?.cancel()
+                    volumeButtonSwitchSongJob = null
+                }
+            }
+            return true
+        }
+        return super.onKeyEvent(event)
     }
 
     override fun onInterrupt() {
@@ -166,6 +223,17 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                     .collectLatest {
                         updateGestureButtons()
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .advancedSettings
+                    .data
+                    .distinctUntilChangedBy {
+                        it.volumeButtonSwitchSong
+                    }
+                    .collectLatest {
+                        isVolumeButtonSwitchSongEnabled = it.volumeButtonSwitchSong
                     }
             }
         }

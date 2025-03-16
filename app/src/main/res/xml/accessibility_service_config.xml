@@ -4,7 +4,8 @@
     android:settingsActivity="com.aaron.sidegesture.MainActivity"
     android:accessibilityEventTypes="typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault"
+    android:accessibilityFlags="flagDefault|flagRequestFilterKeyEvents"
     android:notificationTimeout="0"
     android:canPerformGestures="true"
-    android:canRetrieveWindowContent="true" />
+    android:canRetrieveWindowContent="true"
+    android:canRequestFilterKeyEvents="true" />

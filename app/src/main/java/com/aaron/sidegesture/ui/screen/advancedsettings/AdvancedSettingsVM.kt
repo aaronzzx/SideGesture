@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ui.screen.advancedsettings
 import android.os.Build
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
@@ -20,6 +21,16 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     init {
         loadData()
+    }
+
+    fun onVolumeButtonSwitchSong(volumeButtonSwitchSong: Boolean) {
+        if (volumeButtonSwitchSong) {
+            toast(R.string.volume_button_switch_song_warning)
+        }
+        updateUiState {
+            it.copy(volumeButtonSwitchSong = volumeButtonSwitchSong)
+        }
+        saveSettings()
     }
 
     fun onShowAnimation(showAnimation: Boolean) {
@@ -104,6 +115,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 val uiState = uiState
                 it.copy(
                     animationStyles = it.animationStyles.copy(isAnimationEnabled = uiState.showAnimation),
+                    volumeButtonSwitchSong = uiState.volumeButtonSwitchSong,
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
                     hideLandscape = uiState.hideLandscape,
                     hideQuickPanel = uiState.hideQuickPanel,
@@ -124,6 +136,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 updateUiState {
                     it.copy(
                         showAnimation = item.animationStyles.isAnimationEnabled,
+                        volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                         fitSoftKeyboard = item.fitSoftKeyboard,
                         hideLandscape = item.hideLandscape,
                         hideQuickPanel = item.hideQuickPanel,
@@ -140,6 +153,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     data class UiState(
+        val volumeButtonSwitchSong: Boolean = false,
         val showAnimation: Boolean = false,
         val fitSoftKeyboard: Boolean = false,
         val hideLandscape: Boolean = false,

@@ -92,6 +92,14 @@ fun AdvancedSettingsScreen(
                         secondaryText = stringResource(id = R.string.fit_soft_keyboard_hint)
                     )
                 }
+                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onVolumeButtonSwitchSong(it) },
+                        checked = uiState.volumeButtonSwitchSong,
+                        text = stringResource(id = R.string.volume_button_switch_song),
+                        secondaryText = stringResource(id = R.string.volume_button_switch_song_hint)
+                    )
+                }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.hide_gesture_button)
