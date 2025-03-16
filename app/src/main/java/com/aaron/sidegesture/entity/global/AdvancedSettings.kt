@@ -13,6 +13,7 @@ import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideHomeScreen
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideLandscape
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideQuickPanel
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideScreenLock
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideTemporary
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
@@ -25,6 +26,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class AdvancedSettings(
+    // packageName
     val excludeApps: List<String> = ExcludeApps,
     val animationStyles: AnimationStyles = AnimationStyles,
     val actionPanelStyles: ActionPanelStyles = ActionPanelStyles,
@@ -33,8 +35,10 @@ data class AdvancedSettings(
     val hideQuickPanel: Boolean = HideQuickPanel,
     val hideScreenLock: Boolean = HideScreenLock,
     val hideHomeScreen: Boolean = HideHomeScreen,
+    val hideTemporary: Boolean = HideTemporary,
     val excludeFromRecents: Boolean = ExcludeFromRecents,
     val dynamicColor: Boolean = DynamicColor,
     val dayNightMode: DayNightMode = DayNightMode,
+    // qualifiedName
     val clipApps: Map<String, Float> = ClipApps
 )

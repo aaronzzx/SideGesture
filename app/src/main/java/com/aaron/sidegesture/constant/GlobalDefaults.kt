@@ -27,6 +27,7 @@ object AdvancedSettingsDefaults {
     const val HideQuickPanel = false
     const val HideScreenLock = false
     const val HideHomeScreen = false
+    const val HideTemporary = false
     const val ExcludeFromRecents = false
     const val DynamicColor = false
     val DayNightMode = com.aaron.sidegesture.entity.DayNightMode.Auto

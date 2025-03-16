@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.core.view.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.AnimationStyles
@@ -156,6 +157,17 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
+            launch {
+                DataStoreHolder
+                    .advancedSettings
+                    .data
+                    .distinctUntilChangedBy {
+                        it.hideTemporary
+                    }
+                    .collectLatest {
+                        updateGestureButtons()
+                    }
+            }
         }
     }
 
@@ -235,11 +247,27 @@ class SideGestureService : ComponentAccessibilityService() {
                     val imePadding = imeInsetObserver.flow.value
                     y += -imePadding
 
+                    val advancedSettings = DataStoreHolder.advancedSettings.data.first()
+                    if (advancedSettings.hideTemporary) {
+                        view.setOnClickListener { v ->
+                            val lp = v.layoutParams as WindowManager.LayoutParams
+                            lp.setFlags(false)
+                            updateLayout(v, lp)
+                            v.postDelayed(1000) {
+                                val lp2 = v.layoutParams as WindowManager.LayoutParams
+                                val enabled = (view.tag as? GestureButton)?.enabled ?: false
+                                lp2.setFlags(enabled)
+                                updateLayout(v, lp2)
+                            }
+                        }
+                    } else {
+                        view.setOnClickListener(null)
+                    }
+
                     val initialSettings = DataStoreHolder.initialSettings.data.first()
                     if (!initialSettings.gestureEnabled) {
                         setFlags(false)
                     } else {
-                        val advancedSettings = DataStoreHolder.advancedSettings.data.first()
                         if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
                             setFlags(false)
                         } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {

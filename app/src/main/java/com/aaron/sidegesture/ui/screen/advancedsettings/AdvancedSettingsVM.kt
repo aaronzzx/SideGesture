@@ -77,6 +77,13 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onHideTemporaryChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideTemporary = value)
+        }
+        saveSettings()
+    }
+
     fun onDynamicColorChange(value: Boolean) {
         updateUiState {
             it.copy(dynamicColor = value)
@@ -102,6 +109,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     hideQuickPanel = uiState.hideQuickPanel,
                     hideScreenLock = uiState.hideScreenLock,
                     hideHomeScreen = uiState.hideHomeScreen,
+                    hideTemporary = uiState.hideTemporary,
                     excludeFromRecents = uiState.excludeFromRecents,
                     dynamicColor = uiState.dynamicColor,
                     dayNightMode = uiState.dayNightMode
@@ -121,6 +129,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         hideQuickPanel = item.hideQuickPanel,
                         hideScreenLock = item.hideScreenLock,
                         hideHomeScreen = item.hideHomeScreen,
+                        hideTemporary = item.hideTemporary,
                         excludeFromRecents = item.excludeFromRecents,
                         dynamicColor = item.dynamicColor,
                         dayNightMode = item.dayNightMode
@@ -132,11 +141,12 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     data class UiState(
         val showAnimation: Boolean = false,
-        val fitSoftKeyboard: Boolean = true,
+        val fitSoftKeyboard: Boolean = false,
         val hideLandscape: Boolean = false,
         val hideQuickPanel: Boolean = false,
         val hideScreenLock: Boolean = false,
         val hideHomeScreen: Boolean = false,
+        val hideTemporary: Boolean = false,
         val excludeFromRecents: Boolean = false,
         val dynamicColor: Boolean = false,
         val dayNightMode: DayNightMode = DayNightMode.Auto,
