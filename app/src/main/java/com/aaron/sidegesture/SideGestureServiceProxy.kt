@@ -11,10 +11,12 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_QUICK_SET
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import androidx.annotation.RequiresApi
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.appInfo
@@ -37,6 +39,7 @@ import com.blankj.utilcode.util.FlashlightUtils
 import com.blankj.utilcode.util.PermissionUtils
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -48,18 +51,36 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
 
     private var prevPackageName: String? = null
     private var currPackageName: String? = null
+    private var currActivityName: String? = null
+
+    private var pendingWechatPay = false
+    private var pendingWechatPayAutoCancelJob: Job? = null
 
     fun onAccessibilityEvent(event: AccessibilityEvent?) {
         host.apply {
             when(event?.eventType){
                 AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                     val packageName = event.packageName?.toString()
+                    val className = event.className?.toString()
+
+                    if (isActivity(event)) {
+                        currActivityName = className
+                    }
                     if (hasLaunchIntent(packageName) && currPackageName != packageName) {
                         prevPackageName = currPackageName
                         currPackageName = packageName
                         if (prevPackageName == null) {
                             prevPackageName = currPackageName
                         }
+                    }
+
+                    if (pendingWechatPay &&
+                        Build.VERSION.SDK_INT >= 24 &&
+                        packageName == "com.tencent.mm"
+                    ) {
+                        pendingWechatPayAutoCancelJob?.cancel()
+                        pendingWechatPay = false
+                        mockClickWechatPay()
                     }
                 }
                 else -> Unit
@@ -177,20 +198,15 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.WECHAT_PAY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    if (gotoWechat()) {
-                        coroutineScope.launch {
-                            delay(500)
-                            val screenWidth = ScreenUtils.getScreenWidth()
-                            val statusBarHeight = BarUtils.getStatusBarHeight()
-                            val radius = ConvertUtils.dp2px(12f)
-                            var x = screenWidth - ConvertUtils.dp2px(14f) - radius
-                            var y = statusBarHeight + ConvertUtils.dp2px(10f) + radius
-                            AccessibilityUtils.click(this@onAction, x, y)
-                            delay(500)
-                            x = screenWidth - ConvertUtils.dp2px(60f) - radius
-                            y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
-                            AccessibilityUtils.click(this@onAction, x, y)
+                    val isCurrInWechatHome = currActivityName == "com.tencent.mm.ui.LauncherUI"
+                    gotoWechat()
+                    if (!isCurrInWechatHome) {
+                        pendingWechatPayAutoCancelJob?.cancel()
+                        pendingWechatPayAutoCancelJob = coroutineScope.launch {
+                            delay(3000)
+                            pendingWechatPay = false
                         }
+                        pendingWechatPay = true
                     }
                 } else {
                     showToast(R.string.os_version_too_low)
@@ -208,6 +224,24 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     launchAppInfo(appInfo)
                 }
             }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun mockClickWechatPay() {
+        val host = host
+        host.coroutineScope.launch {
+            delay(500)
+            val screenWidth = ScreenUtils.getScreenWidth()
+            val statusBarHeight = BarUtils.getStatusBarHeight()
+            val radius = ConvertUtils.dp2px(12f)
+            var x = screenWidth - ConvertUtils.dp2px(14f) - radius
+            var y = statusBarHeight + ConvertUtils.dp2px(10f) + radius
+            AccessibilityUtils.click(host, x, y)
+            delay(500)
+            x = screenWidth - ConvertUtils.dp2px(60f) - radius
+            y = statusBarHeight + ConvertUtils.dp2px(220f) + radius
+            AccessibilityUtils.click(host, x, y)
         }
     }
 
@@ -249,5 +283,15 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
 
     private fun AccessibilityService.hasLaunchIntent(packageName: String?): Boolean {
         return packageManager.getLaunchIntentForPackage(packageName ?: "") != null
+    }
+
+    private fun isActivity(event: AccessibilityEvent): Boolean {
+        val component = ComponentName(event.packageName.toString(), event.className.toString())
+        return try {
+            host.packageManager.getActivityInfo(component, 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }
