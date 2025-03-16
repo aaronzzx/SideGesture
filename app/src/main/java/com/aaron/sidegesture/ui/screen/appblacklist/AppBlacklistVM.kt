@@ -6,7 +6,6 @@ import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
-import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -34,13 +33,13 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun selectApp(qualifiedName: String, selected: Boolean) {
+    fun selectApp(appInfo: AppInfo, selected: Boolean) {
         updateUiState {
             val mutableList = it.excludeApps.toMutableList()
             if (selected) {
-                mutableList.add(qualifiedName)
+                mutableList.add(appInfo.packageName)
             } else {
-                mutableList.remove(qualifiedName)
+                mutableList.remove(appInfo.packageName)
             }
             it.copy(excludeApps = mutableList)
         }
@@ -80,7 +79,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
             val appInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(500) {
                     AppInfoUtils
-                        .getInstalledPackages(App.getContext())
+                        .queryLauncherActivities(App.getContext())
                         .filter {
                             // 排除自己
                             it.packageName != App.getContext().packageName
@@ -107,11 +106,11 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         val excludeApps = uiState.excludeApps.toMutableList()
         withContext(Dispatchers.Default) {
             excludeApps.apply {
-                val qualifiedNames = appInfos.map { app -> app.qualifiedName }
-                removeAll { qualifiedName -> qualifiedName !in qualifiedNames }
+                val packageNames = appInfos.map { app -> app.packageName }
+                removeAll { packageName -> packageName !in packageNames }
             }
             appInfos.forEach { info ->
-                if (info.qualifiedName in excludeApps) {
+                if (info.packageName in excludeApps) {
                     selectedList.add(info)
                 } else {
                     unselectedList.add(info)

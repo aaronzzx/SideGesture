@@ -98,7 +98,7 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
                 val selectedQualifiedNames = iconResize.qualifiedNames
                 val clipApps = item.clipApps
                 val appInfos = withContext(Dispatchers.IO) {
-                    AppInfoUtils.getInstalledPackages(App.getContext())
+                    AppInfoUtils.queryLauncherActivities(App.getContext())
                 }
                 val normalList = mutableListOf<AppInfo>()
                 val modifiedList = mutableListOf<AppInfo>()

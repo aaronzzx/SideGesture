@@ -150,9 +150,9 @@ fun AppBlacklistScreen(
                                 ) { item ->
                                     AppBlacklistItem(
                                         appInfo = item,
-                                        selected = item.qualifiedName in uiState.excludeApps,
+                                        selected = item.packageName in uiState.excludeApps,
                                         onSelect = { selected ->
-                                            vm.selectApp(item.qualifiedName, selected)
+                                            vm.selectApp(item, selected)
                                         }
                                     )
                                 }

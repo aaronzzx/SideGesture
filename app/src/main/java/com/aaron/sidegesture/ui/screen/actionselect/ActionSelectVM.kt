@@ -93,7 +93,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(500) {
-                    AppInfoUtils.getInstalledPackages(App.getContext())
+                    AppInfoUtils.queryLauncherActivities(App.getContext())
                 }
             }
             if (uiState.selectSingle) {

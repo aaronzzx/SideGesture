@@ -11,8 +11,9 @@ import com.aaron.sidegesture.entity.AppInfo
  */
 object AppInfoUtils {
 
-    fun getInstalledPackages(context: Context): List<AppInfo> {
+    fun queryLauncherActivities(context: Context, allowRepeatPackage: Boolean = true): List<AppInfo> {
         val list = mutableListOf<AppInfo>()
+        val pkgList = mutableListOf<String>()
         val packageManager = context.packageManager
         val intent = Intent().apply {
             setAction(Intent.ACTION_MAIN)
@@ -23,12 +24,14 @@ object AppInfoUtils {
             val activityInfo = resolveInfo.activityInfo
             val packageName = activityInfo?.packageName
             if (packageName.isNullOrEmpty()) continue
+            if (!allowRepeatPackage && packageName in pkgList) continue
             val item = AppInfo(
                 packageName = packageName,
                 className = activityInfo.name,
                 label = activityInfo.loadLabel(packageManager).toString()
             )
             list.add(item)
+            pkgList.add(packageName)
         }
         return list
     }

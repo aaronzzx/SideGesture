@@ -19,7 +19,11 @@ val AppInfo.icon: Drawable? @Composable get() {
     val pkgManager = LocalContext.current.packageManager
     return remember(this) {
         try {
-            pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
+            if (className.isNotEmpty()) {
+                pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
+            } else {
+                pkgManager.getApplicationIcon(packageName)
+            }
         } catch (ignored: Exception) {
             null
         }
@@ -29,7 +33,11 @@ val AppInfo.icon: Drawable? @Composable get() {
 fun AppInfo.getIcon(context: Context): Drawable? {
     return try {
         val pkgManager = context.packageManager
-        pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
+        if (className.isNotEmpty()) {
+            pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
+        } else {
+            pkgManager.getApplicationIcon(packageName)
+        }
     } catch (ignored: Exception) {
         null
     }
