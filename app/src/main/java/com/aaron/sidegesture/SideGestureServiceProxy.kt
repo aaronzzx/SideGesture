@@ -286,8 +286,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
     }
 
     private fun isActivity(event: AccessibilityEvent): Boolean {
-        val component = ComponentName(event.packageName.toString(), event.className.toString())
         return try {
+            val component = ComponentName(event.packageName!!.toString(), event.className!!.toString())
             host.packageManager.getActivityInfo(component, 0)
             true
         } catch (e: Exception) {
