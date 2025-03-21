@@ -12,6 +12,7 @@ dataStore = "1.1.1"
 compose = "1.7.5"
 colorpicker = "1.1.2"
 pinyin = "1.0.7"
+freereflection = "3.2.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,6 +27,7 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore-preferenc
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose" }
 compose-colorpicker = { group = "com.github.skydoves", name = "colorpicker-compose", version.ref = "colorpicker" }
 pinyin = { group = "cn.lalaki", name = "pinyin4j-chinese-simplified", version.ref = "pinyin" }
+com-tiann-freereflection = { group = "com.github.tiann", name = "FreeReflection", version.ref = "freereflection" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -13,6 +13,8 @@ import com.aaron.sidegesture.entity.AppInfo
  * @since 2024/12/3
  */
 
+val AppInfo.componentName: ComponentName get() = ComponentName.createRelative(packageName, className)
+
 val AppInfo.qualifiedName: String get() = "$packageName/$className"
 
 val AppInfo.icon: Drawable? @Composable get() {

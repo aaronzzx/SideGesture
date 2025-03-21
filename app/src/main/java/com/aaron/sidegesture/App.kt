@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import com.aaron.compose.component.UDFComponentDefaults
 import com.aaron.sidegesture.defaults.UDFComponentDefaultsImpl
+import me.weishu.reflection.Reflection
 
 /**
  * @author aaronzzxup@gmail.com
@@ -19,6 +20,11 @@ class App : Application() {
         fun getContext(): Context {
             return context
         }
+    }
+
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        Reflection.unseal(base)
     }
 
     override fun onCreate() {
