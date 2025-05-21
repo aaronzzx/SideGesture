@@ -79,7 +79,50 @@ fun rememberActionPanelState(): ActionPanelState {
     }
 }
 
-class ActionPanelState : QuickStartState()
+class ActionPanelState : LongSlideState() {
+
+    var visible: Boolean by mutableStateOf(false)
+        private set
+    var actions: List<Action> by mutableStateOf(emptyList())
+        private set
+    var position: Position by mutableStateOf(Position.Left)
+        private set
+    private val pendingActions: MutableMap<Int, Action> = mutableMapOf()
+
+    override fun onDragStart(offset: Offset) {
+        super.onDragStart(offset)
+        visible = true
+    }
+
+    fun ready(position: Position, actions: List<Action>) {
+        this.position = position
+        this.actions = actions
+    }
+
+    fun done(): Action {
+        val pendingActions = pendingActions
+        val action = pendingActions.values.find {
+            it != Action.NONE
+        } ?: Action.NONE
+        reset()
+        return action
+    }
+
+    fun isSelected(action: Action): Boolean {
+        return pendingActions.values.find { it == action } != null
+    }
+
+    fun select(index: Int, action: Action) {
+        pendingActions[index] = action
+    }
+
+    override fun reset() {
+        visible = false
+        pendingActions.clear()
+        origin = Offset.Unspecified
+        finger = Offset.Unspecified
+    }
+}
 
 @Composable
 fun ActionPanel(

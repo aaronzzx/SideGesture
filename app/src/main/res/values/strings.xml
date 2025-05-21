@@ -200,4 +200,5 @@
     <string name="action_wechat_pay_simulate_click">微信付款码(7.0+ 模拟点击)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>
     <string name="action_alipay_pay">支付宝付款码</string>
+    <string name="action_move_screen">移动屏幕(11.0+ 模拟点击)</string>
 </resources>

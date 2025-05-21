@@ -28,6 +28,7 @@ import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
+import com.aaron.sidegesture.ktx.offset
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
@@ -222,6 +223,16 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 val appInfo = action.appInfo
                 if (appInfo != null) {
                     launchAppInfo(appInfo)
+                }
+            }
+            GlobalActions.MOVE_SCREEN -> {
+                val offset = action.offset
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                    offset != null &&
+                    offset.x in 0..ScreenUtils.getScreenWidth() &&
+                    offset.y in 0..ScreenUtils.getScreenHeight()
+                ) {
+                    AccessibilityUtils.click(host, offset.x, offset.y)
                 }
             }
         }

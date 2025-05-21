@@ -1,12 +1,16 @@
 package com.aaron.sidegesture.ui.widget
 
+import android.graphics.Bitmap
+import android.os.Build
 import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -14,6 +18,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalContext
+import com.aaron.sidegesture.SideGestureService
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.AnimationStyle
@@ -29,11 +36,13 @@ import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
+import com.aaron.sidegesture.ktx.takeScreenshot
 import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.utils.DragGestureHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.atan
@@ -56,6 +65,7 @@ fun SideGestureContainer(
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons)
     val actionPanelState = rememberActionPanelState()
+    val moveScreenState = rememberMoveScreenState()
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
             sideGestureState.onDragStart(offset, imePadding)
@@ -65,6 +75,10 @@ fun SideGestureContainer(
                 actionPanelState.onDrag(dragAmount)
                 return@onDrag
             }
+            if (moveScreenState.visible) {
+                moveScreenState.onDrag(dragAmount)
+                return@onDrag
+            }
             if (sideGestureState.isCanceled) {
                 return@onDrag
             }
@@ -72,11 +86,17 @@ fun SideGestureContainer(
             if (actions != null) {
                 val button = sideGestureState.button
                 if (button != null && actions.size > 1) {
-                    actionPanelState.onDragStart(button.position, sideGestureState.finger, actions)
+                    actionPanelState.onDragStart(sideGestureState.finger)
+                    actionPanelState.ready(button.position, actions)
                     sideGestureState.cancel()
                 } else if (actions.isNotEmpty()) {
-                    curOnAction(actions.first())
-                    sideGestureState.cancel()
+                    if (actions.first().value == GlobalActions.MOVE_SCREEN) {
+                        moveScreenState.onDragStart(sideGestureState.finger)
+                        sideGestureState.cancel()
+                    } else {
+                        curOnAction(actions.first())
+                        sideGestureState.cancel()
+                    }
                 }
             } else {
                 sideGestureState.cancel()
@@ -84,7 +104,8 @@ fun SideGestureContainer(
         },
         onDragEnd = onDragEnd@{
             if (actionPanelState.visible) {
-                val action = actionPanelState.onDragEnd()
+                val action = actionPanelState.done()
+                actionPanelState.onDragEnd()
                 curOnAction(action)
             }
             if (sideGestureState.isCanceled) {
@@ -93,12 +114,20 @@ fun SideGestureContainer(
                 val action = sideGestureState.onDragEnd()
                 curOnAction(action)
             }
+            if (moveScreenState.visible) {
+                val action = moveScreenState.done()
+                moveScreenState.onDragEnd()
+                curOnAction(action)
+            }
         },
         onDragCancel = onDragCancel@{
             if (actionPanelState.visible) {
                 actionPanelState.onDragCancel()
             }
             sideGestureState.onDragCancel()
+            if (moveScreenState.visible) {
+                moveScreenState.onDragCancel()
+            }
         }
     )
     Box(modifier = modifier) {
@@ -109,12 +138,30 @@ fun SideGestureContainer(
             vibrations = sideGestureState.button?.vibrations
         )
 
-        if (animationStyle != null) {
+        if (!moveScreenState.visible && animationStyle != null) {
             GestureAnimation(
                 modifier = Modifier.matchParentSize(),
                 animationStyle = animationStyle,
                 sideGestureState = sideGestureState
             )
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && moveScreenState.visible) {
+            val context = LocalContext.current
+            val screenshotState: State<Bitmap?> = produceState(null) {
+                // 16ms为屏幕一帧，等待一帧防止截到手势
+                delay(20)
+                val service = context as SideGestureService
+                value = service.takeScreenshot()
+            }
+            val screenshot = screenshotState.value
+            if (screenshot != null) {
+                MoveScreen(
+                    modifier = Modifier.matchParentSize(),
+                    screenshot = screenshot,
+                    state = moveScreenState
+                )
+            }
         }
     }
 }
@@ -354,56 +401,31 @@ class SideGestureState(
     }
 }
 
-abstract class QuickStartState {
+abstract class LongSlideState {
 
-    var visible: Boolean by mutableStateOf(false)
-        private set
     var origin: Offset by mutableStateOf(Offset.Unspecified)
-        private set
+        protected set
     var finger: Offset by mutableStateOf(Offset.Unspecified)
-        private set
-    var actions: List<Action> by mutableStateOf(emptyList())
-        private set
-    var position: Position by mutableStateOf(Position.Left)
-        private set
-    private val pendingActions: MutableMap<Int, Action> = mutableMapOf()
+        protected set
 
-    fun onDragStart(position: Position, offset: Offset, actions: List<Action>) {
-        visible = true
-        this.position = position
-        this.origin = offset
-        this.finger = offset
-        this.actions = actions
+    open fun onDragStart(offset: Offset) {
+        origin = offset
+        finger = offset
     }
 
-    fun onDrag(dragAmount: Offset) {
+    open fun onDrag(dragAmount: Offset) {
         finger += dragAmount
     }
 
-    fun onDragEnd(): Action {
-        val pendingActions = pendingActions
-        val action = pendingActions.values.find {
-            it != Action.NONE
-        } ?: Action.NONE
-        reset()
-        return action
-    }
-
-    fun onDragCancel() {
+    open fun onDragEnd() {
         reset()
     }
 
-    fun isSelected(action: Action): Boolean {
-        return pendingActions.values.find { it == action } != null
+    open fun onDragCancel() {
+        reset()
     }
 
-    fun select(index: Int, action: Action) {
-        pendingActions[index] = action
-    }
-
-    private fun reset() {
-        visible = false
-        pendingActions.clear()
+    protected open fun reset() {
         origin = Offset.Unspecified
         finger = Offset.Unspecified
     }

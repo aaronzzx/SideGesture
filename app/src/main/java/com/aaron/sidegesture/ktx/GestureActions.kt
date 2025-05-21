@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.IntOffset
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
@@ -18,6 +19,14 @@ import com.aaron.sidegesture.utils.JsonHelper
 val Action.appInfo: AppInfo? get() {
     if (value == GlobalActions.EXTRA_LAUNCH_APP) {
         return JsonHelper.decodeFromString<AppInfo>(data)
+    }
+    return null
+}
+
+val Action.offset: IntOffset? get() {
+    if (value == GlobalActions.MOVE_SCREEN) {
+        val array = data.split(",")
+        return IntOffset(array[0].toInt(), array[1].toInt())
     }
     return null
 }

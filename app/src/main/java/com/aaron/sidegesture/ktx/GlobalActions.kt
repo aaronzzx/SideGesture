@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import android.content.Context
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Anchor
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowBack
@@ -94,6 +95,7 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
     GlobalActions.ALIPAY_SCAN -> getString(R.string.action_alipay_scan)
     GlobalActions.ALIPAY_PAY -> getString(R.string.action_alipay_pay)
     GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.label ?: ""
+    GlobalActions.MOVE_SCREEN -> getString(R.string.action_move_screen)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -144,6 +146,7 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.ALIPAY_SCAN -> stringResource(R.string.action_alipay_scan)
     GlobalActions.ALIPAY_PAY -> stringResource(R.string.action_alipay_pay)
     GlobalActions.EXTRA_LAUNCH_APP -> action.appInfo?.label ?: ""
+    GlobalActions.MOVE_SCREEN -> stringResource(R.string.action_move_screen)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -196,5 +199,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
         // 一般是应用被卸载，返回个默认图标防止ActionPanel显示空白
         action.appInfo?.icon ?: Icons.Default.Android
     }
+    GlobalActions.MOVE_SCREEN -> Icons.Default.Anchor
     else -> null
 }

@@ -53,6 +53,7 @@ import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
@@ -254,9 +255,7 @@ private fun ActionPage(
                 action = item,
                 selected = selectedRecord.isSelected(item),
                 selectSingle = selectSingle,
-                enabled = run {
-                    !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
-                },
+                enabled = canActionEnabled(selectedRecord, item, maxSelectCount),
                 onSelect = { selected ->
                     onSelect(item, selected)
                 }
@@ -362,9 +361,7 @@ private fun AppPage(
                         appInfo = item,
                         selected = selectedRecord.isSelected(item),
                         selectSingle = selectSingle,
-                        enabled = run {
-                            !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
-                        },
+                        enabled = canAppInfoEnabled(selectedRecord, item, maxSelectCount),
                         onSelect = { selected ->
                             onSelect(item, selected)
                         }
@@ -462,6 +459,44 @@ private fun AppItem(
             )
         }
     }
+}
+
+private fun canActionEnabled(
+    selectedRecord: SelectedRecord,
+    item: Action,
+    maxSelectCount: Int
+): Boolean {
+    val isMoveScreenSelected = selectedRecord.list.find {
+        (it as? Action)?.value == GlobalActions.MOVE_SCREEN
+    } != null
+    val isMoveScreenAction = item.value == GlobalActions.MOVE_SCREEN
+    if (isMoveScreenSelected && !isMoveScreenAction) {
+        return false
+    } else if (!isMoveScreenSelected &&
+        selectedRecord.list.isNotEmpty() &&
+        isMoveScreenAction
+    ) {
+        return false
+    }
+
+    // 走完移动屏幕的检查后再走其他
+    return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
+}
+
+private fun canAppInfoEnabled(
+    selectedRecord: SelectedRecord,
+    item: AppInfo,
+    maxSelectCount: Int
+): Boolean {
+    val isMoveScreenSelected = selectedRecord.list.find {
+        (it as? Action)?.value == GlobalActions.MOVE_SCREEN
+    } != null
+    if (isMoveScreenSelected) {
+        return false
+    }
+
+    // 走完移动屏幕的检查后再走其他
+    return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 
 private const val MAX_SELECT_COUNT = 5
