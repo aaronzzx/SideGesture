@@ -64,6 +64,31 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    fun toggleMiniWindow(appInfo: AppInfo) {
+        val switchToMiniWindow = !appInfo.miniWindow
+        updateUiState {
+            val block: (MutableList<Any>) -> MutableList<Any> = { list ->
+                val index = list.indexOf(appInfo)
+                if (index != -1) {
+                    val newAppInfo = appInfo.copy(miniWindow = switchToMiniWindow)
+                    list[index] = newAppInfo
+                }
+                list
+            }
+            it.copy(
+                apps = block(it.apps.toMutableList()) as List<AppInfo>,
+                selectedRecord = it.selectedRecord.copy(
+                    list = block(it.selectedRecord.list.toMutableList())
+                )
+            )
+        }
+        if (switchToMiniWindow) {
+            toast(R.string.enable_mini_window)
+        } else {
+            toast(R.string.disable_mini_window)
+        }
+    }
+
     private fun selectAppInfo(appInfo: AppInfo, selected: Boolean) {
         updateUiState {
             it.copy(selectedRecord = it.selectedRecord.selectAppInfo(appInfo, selected))
@@ -129,7 +154,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         app.qualifiedName == appInfo.qualifiedName
                     }
                     if (cache != null) {
-                        list1.add(appInfo.copy(iconScale = cache.iconScale))
+                        val appInfo2 = appInfo.copy(
+                            iconScale = cache.iconScale,
+                            miniWindow = cache.miniWindow
+                        )
+                        list1.add(appInfo2)
                     } else {
                         list2.add(appInfo)
                     }
@@ -305,7 +334,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             obj is AppInfo && obj.qualifiedName == appInfo.qualifiedName
                         }
                         if (index != -1) {
-                            selectedList[index] = appInfo
+                            val old = selectedList[index] as AppInfo
+                            selectedList[index] = appInfo.copy(miniWindow = old.miniWindow)
                         }
                     }
                     it.copy(selectedRecord = UiState.SelectedRecord(selectedList))

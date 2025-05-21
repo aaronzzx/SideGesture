@@ -1,6 +1,9 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +21,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -218,6 +222,9 @@ fun ActionSelectScreen(
                                     onSelect = { appInfo, selected ->
                                         vm.select(appInfo, selected)
                                     },
+                                    onLongClick = { appInfo ->
+                                        vm.toggleMiniWindow(appInfo)
+                                    },
                                     appInfos = uiState.apps,
                                     selectedRecord = uiState.selectedRecord,
                                     snackbarHostState = snackbarHostState,
@@ -337,6 +344,7 @@ private fun ActionItem(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun AppPage(
+    onLongClick: (AppInfo) -> Unit,
     onSelect: (AppInfo, Boolean) -> Unit,
     appInfos: List<AppInfo>,
     selectedRecord: SelectedRecord,
@@ -364,6 +372,9 @@ private fun AppPage(
                         enabled = canAppInfoEnabled(selectedRecord, item, maxSelectCount),
                         onSelect = { selected ->
                             onSelect(item, selected)
+                        },
+                        onLongClick = {
+                            onLongClick(item)
                         }
                     )
                 }
@@ -400,8 +411,10 @@ private fun AppPage(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppItem(
+    onLongClick: () -> Unit,
     onSelect: (Boolean) -> Unit,
     selected: Boolean,
     appInfo: AppInfo,
@@ -414,9 +427,13 @@ private fun AppItem(
                 alpha = if (enabled) 1f else GlobalSettings.DisabledAlpha
             }
             .fillMaxWidth()
-            .onClick(enabled = enabled) {
-                onSelect(!selected)
-            }
+            .combinedClickable(
+                enabled = enabled,
+                onLongClick = onLongClick,
+                onClick = {
+                    onSelect(!selected)
+                }
+            )
             .padding(vertical = ContentPaddingVertical),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -435,12 +452,24 @@ private fun AppItem(
                 .padding(start = IconTextPadding, end = ItemPadding)
                 .weight(1f)
         ) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = appInfo.label,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (appInfo.miniWindow) {
+                    Icon(
+                        modifier = Modifier.size(16.dp),
+                        imageVector = Icons.Default.Window,
+                        contentDescription = null
+                    )
+                }
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = appInfo.label,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 text = appInfo.packageName,

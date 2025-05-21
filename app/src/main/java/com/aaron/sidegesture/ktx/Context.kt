@@ -8,12 +8,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.KeyEvent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.utils.MiniWindowUtils
 import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.AppUtils
 
@@ -56,7 +58,7 @@ fun Context.launchAssist(): Boolean {
     }
 }
 
-fun Context.launchAppInfo(appInfo: AppInfo): Boolean {
+fun Context.launchAppInfo(appInfo: AppInfo, miniWindow: Boolean = appInfo.miniWindow): Boolean {
     return try {
         val intent = Intent().apply {
             setClassName(appInfo.packageName, appInfo.className)
@@ -64,7 +66,13 @@ fun Context.launchAppInfo(appInfo: AppInfo): Boolean {
             addCategory(Intent.CATEGORY_LAUNCHER)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        startActivity(intent)
+        var launchSucceed = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && miniWindow) {
+            launchSucceed = MiniWindowUtils.startActivity(this, appInfo.componentName, false)
+        }
+        if (!launchSucceed) {
+            startActivity(intent)
+        }
         true
     } catch (ignored: ActivityNotFoundException) {
         showToast(getString(R.string.launch_app_info_failed, appInfo.label))

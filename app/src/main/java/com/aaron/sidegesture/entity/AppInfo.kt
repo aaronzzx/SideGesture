@@ -14,7 +14,8 @@ data class AppInfo(
     val packageName: String,
     val className: String,
     val label: String,
-    val iconScale: Float = AppInfoDefaults.DEFAULT_SCALE
+    val iconScale: Float = AppInfoDefaults.DEFAULT_SCALE,
+    val miniWindow: Boolean = false
 ) {
     companion object {
         const val DEFAULT_SCALE = AppInfoDefaults.DEFAULT_SCALE

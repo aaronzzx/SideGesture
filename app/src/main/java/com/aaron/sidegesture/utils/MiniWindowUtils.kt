@@ -9,9 +9,9 @@ import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.blankj.utilcode.util.ScreenUtils
+import kotlin.contracts.ExperimentalContracts
 import kotlin.math.roundToInt
 
 /**
@@ -20,16 +20,20 @@ import kotlin.math.roundToInt
  */
 object MiniWindowUtils {
 
-    val isMiniWindowSupported: Boolean
-        get() {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val name = PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT
-                App.getContext().packageManager.hasSystemFeature(name)
-            } else false
-        }
+    @OptIn(ExperimentalContracts::class)
+    fun isMiniWindowSupported(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val name = PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT
+            context.packageManager.hasSystemFeature(name)
+        } else false
+    }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun startActivity(context: Context, component: ComponentName): Boolean {
+    fun startActivity(
+        context: Context,
+        component: ComponentName,
+        showErrorMsg: Boolean = true
+    ): Boolean {
         return try {
             val intent = Intent().apply {
                 setComponent(component)
@@ -41,7 +45,9 @@ object MiniWindowUtils {
             context.startActivity(intent, activityOptions.toBundle())
             true
         } catch (ignored: ActivityNotFoundException) {
-            showToast(context.getString(R.string.launch_app_failed))
+            if (showErrorMsg) {
+                showToast(context.getString(R.string.launch_app_failed))
+            }
             false
         }
     }
