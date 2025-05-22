@@ -11,6 +11,7 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_QUICK_SET
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -35,7 +36,9 @@ import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.utils.AccessibilityUtils
+import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.showToast
+import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.FlashlightUtils
@@ -44,6 +47,7 @@ import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -144,7 +148,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
                 } else {
-                    showToast(R.string.os_version_too_low)
+                    showVersionTooLowToast(this, R.string.action_lock_screen)
                 }
             }
             GlobalActions.FLASHLIGHT -> {
@@ -184,7 +188,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     performGlobalAction(GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN)
                 } else {
-                    showToast(R.string.os_version_too_low)
+                    showVersionTooLowToast(this, R.string.action_split_screen)
                 }
             }
             GlobalActions.ASSIST_APP -> {
@@ -197,7 +201,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT)
                     }
                 } else {
-                    showToast(R.string.os_version_too_low)
+                    showVersionTooLowToast(this, R.string.action_screenshot)
                 }
             }
             GlobalActions.POWER_BUTTON -> {
@@ -219,7 +223,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         pendingWechatPay = true
                     }
                 } else {
-                    showToast(R.string.os_version_too_low)
+                    showVersionTooLowToast(this, R.string.action_wechat_pay_simulate_click)
                 }
             }
             GlobalActions.ALIPAY_SCAN -> {
@@ -235,13 +239,27 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.MOVE_SCREEN -> {
-                val offset = action.offset
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-                    offset != null &&
-                    offset.x in 0..ScreenUtils.getScreenWidth() &&
-                    offset.y in 0..ScreenUtils.getScreenHeight()
-                ) {
-                    AccessibilityUtils.click(host, offset.x, offset.y)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                    showVersionTooLowToast(this, R.string.action_move_screen)
+                    return
+                }
+                coroutineScope.launch {
+                    val gestureSettings = DataStoreHolder
+                        .gestureSettings
+                        .data
+                        .first()
+                    if (!gestureSettings.longSlideTriggerImmediately) {
+                        showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
+                        return@launch
+                    }
+                    val offset = action.offset
+                    if (offset != null &&
+                        offset.x in 0..ScreenUtils.getScreenWidth() &&
+                        offset.y in 0..ScreenUtils.getScreenHeight()
+                    ) {
+                        @SuppressLint("NewApi")
+                        AccessibilityUtils.click(host, offset.x, offset.y)
+                    }
                 }
             }
             GlobalActions.KEEP_SCREEN_ON -> {

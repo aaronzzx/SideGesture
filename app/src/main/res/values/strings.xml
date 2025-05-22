@@ -128,6 +128,7 @@
     <string name="launch_assist_failed">无法启动系统助手，请检查您是否已安装。</string>
     <string name="flashlight_failed">无法使用手电筒，请检查设备是否支持。</string>
     <string name="os_version_too_low">系统版本不支持</string>
+    <string name="os_version_too_low_placeholder">系统版本不支持：%1$s</string>
     <string name="ignoring_battery_optimizations">电池优化</string>
     <string name="ignoring_battery_optimizations_hint">应用需要后台运行以维持正常工作</string>
     <string name="launch_self_permission">应用自启动</string>
@@ -158,6 +159,7 @@
     <string name="disable_mini_window">已取消小窗启动</string>
     <string name="enable_keep_screen_on">已启用屏幕常亮</string>
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
+    <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法移动屏幕，请先开启长距离滑动立即触发</string>
 
     <string name="action_none">无</string>
     <string name="action_back">返回键</string>

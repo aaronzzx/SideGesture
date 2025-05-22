@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalContext
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
@@ -40,6 +41,7 @@ import com.aaron.sidegesture.ktx.takeScreenshot
 import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.utils.DragGestureHandler
+import com.aaron.sidegesture.utils.showVersionTooLowToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -62,6 +64,7 @@ fun SideGestureContainer(
     animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle()
 ) {
+    val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons)
     val actionPanelState = rememberActionPanelState()
@@ -91,6 +94,11 @@ fun SideGestureContainer(
                     sideGestureState.cancel()
                 } else if (actions.isNotEmpty()) {
                     if (actions.first().value == GlobalActions.MOVE_SCREEN) {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                            showVersionTooLowToast(context, R.string.action_move_screen)
+                            sideGestureState.cancel()
+                            return@onDrag
+                        }
                         moveScreenState.onDragStart(sideGestureState.finger)
                         sideGestureState.cancel()
                     } else {

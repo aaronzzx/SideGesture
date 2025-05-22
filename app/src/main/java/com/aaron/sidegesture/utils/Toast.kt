@@ -1,11 +1,13 @@
 package com.aaron.sidegesture.utils
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import androidx.annotation.StringRes
 import androidx.core.os.postDelayed
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ui.widget.ToastDuration
 import com.aaron.sidegesture.ui.widget.showComposeToast
 import com.blankj.utilcode.util.ConvertUtils
@@ -22,6 +24,11 @@ private const val DELAYED_MILLIS = 2000L
 private var init = false
 
 private val handler = Handler(Looper.getMainLooper())
+
+fun showVersionTooLowToast(context: Context, @StringRes placeholder: Int) {
+    val name = context.getString(placeholder)
+    showToast(context.getString(R.string.os_version_too_low_placeholder, name))
+}
 
 fun showToastDelay(text: String, continueBlock: () -> Unit) {
     showToast(text, DELAYED_MILLIS) {
