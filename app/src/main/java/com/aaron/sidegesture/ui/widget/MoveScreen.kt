@@ -43,15 +43,6 @@ fun MoveScreen(
         modifier = modifier
             .background(color = backgroundColor)
             .drawWithCache {
-                val magnifierSize = 100.dp
-                val path = Path().also {
-                    it.addOval(
-                        Rect(
-                            Offset.Zero,
-                            Size(magnifierSize.toPx(), magnifierSize.toPx())
-                        )
-                    )
-                }
                 val srcBitmap = screenshot
                 onDrawBehind {
                     translate(
@@ -61,6 +52,15 @@ fun MoveScreen(
                         drawImage(srcBitmap.asImageBitmap())
                     }
 
+                    val magnifierSize = 80.dp
+                    val path = Path().also {
+                        it.addOval(
+                            Rect(
+                                offset = Offset.Zero,
+                                size = Size(magnifierSize.toPx(), magnifierSize.toPx())
+                            )
+                        )
+                    }
                     translate(
                         left = size.width / 2f - magnifierSize.toPx() / 2f,
                         top = BarUtils.getStatusBarHeight().toFloat()
