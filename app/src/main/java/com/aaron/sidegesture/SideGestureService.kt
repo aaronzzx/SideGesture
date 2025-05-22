@@ -142,6 +142,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onInterrupt() {
+        proxy.onRelease()
         imeInsetObserver.unregister()
         coroutineScope.cancel()
     }

@@ -12,8 +12,10 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PowerManager
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import androidx.annotation.RequiresApi
@@ -56,6 +58,13 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
 
     private var pendingWechatPay = false
     private var pendingWechatPayAutoCancelJob: Job? = null
+
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    fun onRelease() {
+        wakeLock?.release()
+        wakeLock = null
+    }
 
     fun onAccessibilityEvent(event: AccessibilityEvent?) {
         host.apply {
@@ -233,6 +242,18 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     offset.y in 0..ScreenUtils.getScreenHeight()
                 ) {
                     AccessibilityUtils.click(host, offset.x, offset.y)
+                }
+            }
+            GlobalActions.KEEP_SCREEN_ON -> {
+                if (wakeLock != null) {
+                    wakeLock?.release()
+                    wakeLock = null
+                    showToast(R.string.disable_keep_screen_on)
+                } else {
+                    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                    wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "gulugulu:KeepScreenOn")
+                    wakeLock?.acquire()
+                    showToast(R.string.enable_keep_screen_on)
                 }
             }
         }
