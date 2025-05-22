@@ -158,36 +158,44 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
     vibrations: Vibrations? = null
 ) {
     val itemSize = actionPanelStyle.itemSize.toDp()
+    // 斜边，从origin原点到item中心的距离，值越大item散得越开
     val hypot = itemSize.toPx() * 2f
-    var size by remember { mutableStateOf(Size.Zero) }
+    var parentSize by remember { mutableStateOf(Size.Zero) }
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .onGloballyPositioned {
-                    size = it.size.toSize()
+                    parentSize = it.size.toSize()
                 }
                 .matchParentSize()
                 .background(color = Color.Black.copy(DimAlpha))
         )
 
         Box(
-            Modifier
+            modifier = Modifier
                 .run {
                     val origin = remember(actionPanelState) { actionPanelState.origin }
                     graphicsLayer {
-                        if (size.isEmpty()) return@graphicsLayer
+                        if (parentSize.isEmpty()) return@graphicsLayer
                         val itemSizeHalf = itemSize.toPx() / 2f
+                        // 限制展开位置，防止显示不全
+                        val iconOffset = itemSize.toPx() * 3f
                         val ox = origin.x.let {
                             when (actionPanelState.position) {
-                                Position.Left -> it.coerceAtMost(size.width / 2f)
-                                Position.Right -> it.coerceAtLeast(size.width / 2f)
+                                Position.Left -> it.coerceAtMost(parentSize.width / 2f)
+                                Position.Right -> it.coerceAtLeast(parentSize.width / 2f)
+                                Position.Bottom -> it.coerceIn(iconOffset, parentSize.width - iconOffset)
                             }
                         }
-                        val offsetY = itemSize.toPx() * 3f
-                        val oy = origin.y.coerceIn(
-                            minimumValue = offsetY,
-                            maximumValue = size.height - offsetY
-                        )
+                        val oy = origin.y.let {
+                            when (actionPanelState.position) {
+                                Position.Left, Position.Right -> it.coerceIn(
+                                    minimumValue = iconOffset,
+                                    maximumValue = parentSize.height - iconOffset
+                                )
+                                Position.Bottom -> it.coerceAtLeast(parentSize.height / 2f)
+                            }
+                        }
                         translationX = ox - itemSizeHalf
                         translationY = oy - itemSizeHalf
                     }
@@ -197,19 +205,26 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
             val transition = transition
             actionPanelState.actions.fastForEachIndexed { index, action ->
                 key(index) {
-                    val animOffset = remember {
-                        val avgAngDeg = 35.0
-                        val totalAngDeg = avgAngDeg * (actionPanelState.actions.size - 1)
-                        val angDeg = -90.0 - totalAngDeg / 2.0 + avgAngDeg * index
-                        val radians = Math.toRadians(angDeg)
-                        val dy = hypot * cos(radians)
-                        val dx = sqrt(hypot.pow(2) - dy.pow(2)).let { value ->
-                            when (actionPanelState.position) {
-                                Position.Left -> value
-                                Position.Right -> -value
-                            }
+                    val targetAnimOffset = remember {
+                        // 平均每个块之间的角度
+                        val avgAngleDegree = 35.0
+                        val totalAngleDegree = avgAngleDegree * (actionPanelState.actions.size - 1)
+                        val angleDegree = -90.0 - totalAngleDegree / 2.0 + avgAngleDegree * index
+                        val radians = Math.toRadians(angleDegree)
+                        val neighbor = hypot * cos(radians)
+                        val opposite = sqrt(hypot.pow(2) - neighbor.pow(2))
+                        // 需要移动的x距离
+                        val transX = when (actionPanelState.position) {
+                            Position.Left -> opposite
+                            Position.Right -> -opposite
+                            Position.Bottom -> neighbor
                         }
-                        Offset(x = dx.toFloat(), y = dy.toFloat())
+                        // 需要移动的y距离
+                        val transY = when (actionPanelState.position) {
+                            Position.Left, Position.Right -> neighbor
+                            Position.Bottom -> -opposite
+                        }
+                        Offset(x = transX.toFloat(), y = transY.toFloat())
                     }
                     val selectAnim = remember { Animatable(1f) }
 
@@ -222,7 +237,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                         transition.currentState == Visible
                             }
                             .collect { finger ->
-                                val transFinger = finger - animOffset
+                                val transFinger = finger - targetAnimOffset
                                 if (originBounds.contains(transFinger)) {
                                     if (!actionPanelState.isSelected(action)) {
                                         launch { selectAnim.animateTo(1.15f) }
@@ -245,8 +260,8 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 originBounds = it.boundsInRoot()
                             }
                             .graphicsLayer {
-                                translationX = animOffset.x
-                                translationY = animOffset.y
+                                translationX = targetAnimOffset.x
+                                translationY = targetAnimOffset.y
                                 scaleX = selectAnim.value
                                 scaleY = selectAnim.value
                             }
@@ -255,11 +270,11 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 animateEnterExit(
                                     enter = scaleIn(spring(stiffness = stiffness)) +
                                             slideIn(animationSpec = spring(stiffness = stiffness)) {
-                                                -animOffset.toIntOffset()
+                                                -targetAnimOffset.toIntOffset()
                                             },
                                     exit = scaleOut(spring(stiffness = stiffness)) +
                                             slideOut(animationSpec = spring(stiffness = stiffness)) {
-                                                -animOffset.toIntOffset()
+                                                -targetAnimOffset.toIntOffset()
                                             }
                                 )
                             }

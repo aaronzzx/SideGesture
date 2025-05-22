@@ -176,18 +176,22 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun createTitle(): String {
         val context = App.getContext()
+        val actionSelect = actionSelect
         val str1 = when (actionSelect.direction) {
             TriggerDirection.Center -> when (actionSelect.position) {
                 Position.Left -> context.getString(R.string.slide_to_right)
                 Position.Right -> context.getString(R.string.slide_to_left)
+                Position.Bottom -> context.getString(R.string.slide_to_top)
             }
             TriggerDirection.Up -> when (actionSelect.position) {
                 Position.Left -> context.getString(R.string.slide_to_top_right)
                 Position.Right -> context.getString(R.string.slide_to_top_left)
+                Position.Bottom -> context.getString(R.string.slide_to_top_left)
             }
             TriggerDirection.Down -> when (actionSelect.position) {
                 Position.Left -> context.getString(R.string.slide_to_bottom_right)
                 Position.Right -> context.getString(R.string.slide_to_bottom_left)
+                Position.Bottom -> context.getString(R.string.slide_to_top_right)
             }
         }
         val str2 = when (actionSelect.isLongSlide) {
@@ -199,8 +203,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun loadData() {
         viewModelScope.launch {
+            val buttons = if (actionSelect.isSideButton) {
+                DataStoreHolder.sideGestureButtons
+            } else {
+                DataStoreHolder.bottomGestureButtons
+            }
             DataStoreHolder.gestureSettings.data
-                .combine(DataStoreHolder.gestureButtons.data) { f1, f2 ->
+                .combine(buttons.data) { f1, f2 ->
                     f1 to f2
                 }
                 .collectLatest { (gestureSettings, gestureButtons) ->
@@ -266,7 +275,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun saveSettings() {
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.updateData { list ->
+            val buttons = if (actionSelect.isSideButton) {
+                DataStoreHolder.sideGestureButtons
+            } else {
+                DataStoreHolder.bottomGestureButtons
+            }
+            buttons.updateData { list ->
                 val actionSelect = actionSelect
                 var button: GestureButton? = null
                 var index = -1

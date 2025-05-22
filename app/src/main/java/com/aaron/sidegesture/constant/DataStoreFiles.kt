@@ -9,5 +9,6 @@ object DataStoreFiles {
     const val INITIAL_SETTINGS = "aa"
     const val ADVANCED_SETTINGS = "bb"
     const val GESTURE_SETTINGS = "cc"
-    const val GESTURE_BUTTONS = "dd"
+    const val SIDE_GESTURE_BUTTONS = "dd"
+    const val BOTTOM_GESTURE_BUTTONS = "ee"
 }

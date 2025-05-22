@@ -39,10 +39,20 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
 
     fun deleteGestureButton() {
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.updateData {
-                it.toMutableList().apply {
-                    removeAll { item ->
-                        item.id == uiState.gestureButton?.id
+            if (gestureButtonSettings.isSideButton) {
+                DataStoreHolder.sideGestureButtons.updateData {
+                    it.toMutableList().apply {
+                        removeAll { item ->
+                            item.id == uiState.gestureButton?.id
+                        }
+                    }
+                }
+            } else {
+                DataStoreHolder.bottomGestureButtons.updateData {
+                    it.toMutableList().apply {
+                        removeAll { item ->
+                            item.id == uiState.gestureButton?.id
+                        }
                     }
                 }
             }
@@ -133,8 +143,14 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
 
     fun saveSettings() {
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.updateData {
-                uiState.gestureButtons
+            if (gestureButtonSettings.isSideButton) {
+                DataStoreHolder.sideGestureButtons.updateData {
+                    uiState.gestureButtons
+                }
+            } else {
+                DataStoreHolder.bottomGestureButtons.updateData {
+                    uiState.gestureButtons
+                }
             }
         }
     }
@@ -178,16 +194,24 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.data.collectLatest { items ->
-                val button = items.find {
-                    it.id == gestureButtonSettings.buttonId &&
-                            it.position == gestureButtonSettings.position
+            if (gestureButtonSettings.isSideButton) {
+                DataStoreHolder.sideGestureButtons.data.collectLatest { items ->
+                    val button = items.find {
+                        it.id == gestureButtonSettings.buttonId &&
+                                it.position == gestureButtonSettings.position
+                    }
+                    updateUiState {
+                        it.copy(
+                            gestureButtons = items,
+                            alignRegion = button?.alignRegion ?: true
+                        )
+                    }
                 }
-                updateUiState {
-                    it.copy(
-                        gestureButtons = items,
-                        alignRegion = button?.alignRegion ?: true
-                    )
+            } else {
+                DataStoreHolder.bottomGestureButtons.data.collectLatest { items ->
+                    updateUiState {
+                        it.copy(gestureButtons = items)
+                    }
                 }
             }
         }

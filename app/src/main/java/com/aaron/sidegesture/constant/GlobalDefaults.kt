@@ -92,6 +92,7 @@ object GestureAnglesDefaults {
 
     val Left = GestureAngle()
     val Right = GestureAngle()
+    val Bottom = GestureAngle(0.12f, 0.40f, 0.60f, 0.88f)
     const val P1 = 0.12f
     const val P2 = 0.40f
     const val P3 = 0.70f
@@ -125,7 +126,7 @@ object GestureButtonDefaults {
     val Vibrations = GestureSettingsDefaults.Vibrations
     const val Color = android.graphics.Color.TRANSPARENT
     const val AlignRegion = true
-    val Defaults = listOf(
+    val SideDefaults = listOf(
         GestureButton(
             id = ID_DEFAULT,
             position = Position.Left,
@@ -139,6 +140,16 @@ object GestureButtonDefaults {
             start = 0.0f,
             end = 1.0f,
             slideActions = GestureActions(center = Action.toList(GlobalActions.BACK))
+        )
+    )
+    val BottomDefaults = listOf(
+        GestureButton(
+            id = ID_DEFAULT,
+            position = Position.Bottom,
+            enabled = false,
+            start = 0.0f,
+            end = 1.0f,
+            slideActions = GestureActions(center = Action.toList(GlobalActions.HOME))
         )
     )
 }

@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -61,6 +62,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -164,8 +166,12 @@ class SideGestureService : ComponentAccessibilityService() {
             key(key) {
                 SideGestureTheme {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        val buttons by DataStoreHolder
-                            .gestureButtons
+                        val sideButtons by DataStoreHolder
+                            .sideGestureButtons
+                            .data
+                            .collectAsStateWithLifecycle(initialValue = emptyList())
+                        val bottomButtons by DataStoreHolder
+                            .bottomGestureButtons
                             .data
                             .collectAsStateWithLifecycle(initialValue = emptyList())
                         val animationStyles by DataStoreHolder
@@ -178,7 +184,7 @@ class SideGestureService : ComponentAccessibilityService() {
                             .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
-                            buttons = buttons,
+                            buttons = sideButtons + bottomButtons,
                             imePadding = imePadding,
                             animationStyle = when (animationStyles.isAnimationEnabled) {
                                 true -> animationStyles.value
@@ -195,14 +201,20 @@ class SideGestureService : ComponentAccessibilityService() {
 
         coroutineScope.launch(Dispatchers.Main.immediate) {
             launch {
-                DataStoreHolder.gestureButtons.data.collectLatest { buttons ->
-                    val buttonViews = buttonViews
-                    if (buttonViews != null) {
-                        removeWindows(buttonViews)
+                DataStoreHolder
+                    .sideGestureButtons
+                    .data
+                    .combine(DataStoreHolder.bottomGestureButtons.data) { l1, l2 ->
+                        l1 + l2
                     }
-                    this@SideGestureService.buttonViews = attachGestureButtons(buttons)
-                    updateGestureButtons()
-                }
+                    .collectLatest { buttons ->
+                        val buttonViews = buttonViews
+                        if (buttonViews != null) {
+                            removeWindows(buttonViews)
+                        }
+                        this@SideGestureService.buttonViews = attachGestureButtons(buttons)
+                        updateGestureButtons()
+                    }
             }
             launch {
                 DataStoreHolder
@@ -313,8 +325,10 @@ class SideGestureService : ComponentAccessibilityService() {
                 val button = view.tag as? GestureButton ?: return@forEach
                 val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
                     updateGestureButton(button)
-                    val imePadding = imeInsetObserver.flow.value
-                    y += -imePadding
+                    if (button.position != Position.Bottom) {
+                        val imePadding = imeInsetObserver.flow.value
+                        y += -imePadding
+                    }
 
                     val advancedSettings = DataStoreHolder.advancedSettings.data.first()
                     if (advancedSettings.hideTemporary) {

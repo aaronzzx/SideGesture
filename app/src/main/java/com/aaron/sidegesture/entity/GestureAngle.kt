@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.Bottom
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.Left
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.P1
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.P2
@@ -18,7 +19,8 @@ import kotlinx.serialization.Serializable
 @Keep
 data class GestureAngles(
     val left: GestureAngle = Left,
-    val right: GestureAngle = Right
+    val right: GestureAngle = Right,
+    val bottom: GestureAngle = Bottom
 )
 
 @Serializable

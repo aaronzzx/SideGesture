@@ -9,5 +9,5 @@ import androidx.annotation.Keep
 @Keep
 enum class Position {
 
-    Left, Right
+    Left, Right, Bottom
 }

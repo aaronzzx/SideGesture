@@ -82,7 +82,9 @@ fun SideGestureApp() {
                         onNavToAbout = { navController.navigate(About) },
                         onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
                         onNavToGestureSettings = { navController.navigate(GestureSettings) },
-                        onNavToGestureButtonSettings = { navController.navigate(GestureButtonSettings(it.id, it.position)) }
+                        onNavToGestureButtonSettings = { button, isSideButton ->
+                            navController.navigate(GestureButtonSettings(button.id, button.position, isSideButton))
+                        }
                     )
                 }
                 myComposable<Unlock> {

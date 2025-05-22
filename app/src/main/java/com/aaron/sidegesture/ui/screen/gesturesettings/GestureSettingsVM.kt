@@ -40,7 +40,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 }
             }
             launch {
-                DataStoreHolder.gestureButtons.updateData {
+                DataStoreHolder.sideGestureButtons.updateData {
                     it.toMutableList().apply {
                         forEachIndexed { index, button ->
                             val newButton = button.copy(

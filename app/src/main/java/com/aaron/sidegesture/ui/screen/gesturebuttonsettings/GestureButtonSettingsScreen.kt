@@ -79,7 +79,10 @@ fun GestureButtonSettingsScreen(
             MyAlertDialog(
                 onDismissRequest = { vm.showDeleteWarningDialog(false) },
                 title = stringResource(id = R.string.delete_gesture_button_warning),
-                text = stringResource(id = R.string.delete_gesture_button_warning_desc),
+                text = when (uiState.gestureButtonSettings.isSideButton) {
+                    true -> stringResource(id = R.string.delete_side_gesture_button_warning_desc)
+                    else -> stringResource(id = R.string.delete_gesture_button_warning_desc)
+                },
                 onConfirmClick = { vm.deleteGestureButton() }
             )
         }
@@ -135,6 +138,7 @@ fun GestureButtonSettingsScreen(
                         when (it.position) {
                             Position.Left -> stringResource(id = R.string.left_gesture_button)
                             Position.Right -> stringResource(id = R.string.right_gesture_button)
+                            Position.Bottom -> stringResource(id = R.string.bottom_gesture_button)
                         }
                     },
                     postfixTitle = {
@@ -173,7 +177,8 @@ fun GestureButtonSettingsScreen(
                                     gestureButtonId = gestureButton.id,
                                     position = gestureButton.position,
                                     direction = it,
-                                    isLongSlide = false
+                                    isLongSlide = false,
+                                    isSideButton = uiState.gestureButtonSettings.isSideButton
                                 )
                                 onNavToActionSelect(actionSelect)
                             }
@@ -215,7 +220,8 @@ fun GestureButtonSettingsScreen(
                                     gestureButtonId = gestureButton.id,
                                     position = gestureButton.position,
                                     direction = it,
-                                    isLongSlide = true
+                                    isLongSlide = true,
+                                    isSideButton = uiState.gestureButtonSettings.isSideButton
                                 )
                                 onNavToActionSelect(actionSelect)
                             }
@@ -265,12 +271,14 @@ fun GestureButtonSettingsScreen(
                                 sliderValueHint = stringResource(id = R.string.slider_top) to stringResource(id = R.string.slider_bottom),
                                 valueRange = MinGestureButtonPosition..MaxGestureButtonPosition
                             )
-                            MyTextSwitch(
-                                onCheckedChange = { vm.onGestureButtonAlignChange(it) },
-                                checked = uiState.alignRegion,
-                                text = stringResource(id = R.string.gesture_button_align),
-                                secondaryText = stringResource(id = R.string.gesture_button_align_hint)
-                            )
+                            if (uiState.gestureButtonSettings.isSideButton) {
+                                MyTextSwitch(
+                                    onCheckedChange = { vm.onGestureButtonAlignChange(it) },
+                                    checked = uiState.alignRegion,
+                                    text = stringResource(id = R.string.gesture_button_align),
+                                    secondaryText = stringResource(id = R.string.gesture_button_align_hint)
+                                )
+                            }
                         }
                         if (!gestureButton.isDefault) {
                             MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
@@ -345,14 +353,17 @@ private fun MyGestureSettings(
             Center -> when (gestureButton.position) {
                 Position.Left -> stringResource(id = R.string.slide_to_right)
                 Position.Right -> stringResource(id = R.string.slide_to_left)
+                Position.Bottom -> stringResource(id = R.string.slide_to_top)
             }
             Up -> when (gestureButton.position) {
                 Position.Left -> stringResource(id = R.string.slide_to_top_right)
                 Position.Right -> stringResource(id = R.string.slide_to_top_left)
+                Position.Bottom -> stringResource(id = R.string.slide_to_top_left)
             }
             Down -> when (gestureButton.position) {
                 Position.Left -> stringResource(id = R.string.slide_to_bottom_right)
                 Position.Right -> stringResource(id = R.string.slide_to_bottom_left)
+                Position.Bottom -> stringResource(id = R.string.slide_to_top_right)
             }
         },
         secondaryText = run {
@@ -372,14 +383,17 @@ private fun MyGestureSettings(
                             Up -> when (position) {
                                 Position.Left -> -45f
                                 Position.Right -> -135f
+                                Position.Bottom -> -135f
                             }
                             Center -> when (position) {
                                 Position.Left -> 0f
                                 Position.Right -> 180f
+                                Position.Bottom -> -90f
                             }
                             Down -> when (position) {
                                 Position.Left -> 45f
                                 Position.Right -> 135f
+                                Position.Bottom -> -45f
                             }
                         }
                     }

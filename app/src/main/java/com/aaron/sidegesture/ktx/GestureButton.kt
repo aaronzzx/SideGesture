@@ -19,6 +19,7 @@ fun GestureButton.buttonTextCompose(): String {
     return when (position) {
         Position.Left -> stringResource(id = R.string.left_gesture_button)
         Position.Right -> stringResource(id = R.string.right_gesture_button)
+        Position.Bottom -> stringResource(id = R.string.bottom_gesture_button)
     }
 }
 
@@ -54,8 +55,12 @@ fun GestureButton.bounds(imePadding: Int = 0): Rect {
     val topLeft = when (position) {
         Position.Left -> Offset(0f, y - imePadding)
         Position.Right -> Offset((rootSize.width - width).toFloat(), y - imePadding)
+        Position.Bottom -> Offset(rootSize.width * start, (rootSize.height - width).toFloat())
     }
-    val boundsSize = Size(width.toFloat(), rootSize.height * fraction)
+    val boundsSize = when (position) {
+        Position.Left, Position.Right -> Size(width.toFloat(), rootSize.height * fraction)
+        Position.Bottom -> Size(rootSize.width * fraction, width.toFloat())
+    }
     return Rect(topLeft, boundsSize)
 }
 

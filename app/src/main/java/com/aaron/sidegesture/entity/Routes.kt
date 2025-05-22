@@ -18,7 +18,8 @@ data class ActionSelect(
     val gestureButtonId: String,
     val position: Position,
     val direction: TriggerDirection,
-    val isLongSlide: Boolean
+    val isLongSlide: Boolean,
+    val isSideButton: Boolean
 )
 
 @Keep
@@ -37,7 +38,8 @@ data object AdjustGestureAngles
 @Keep
 data class GestureButtonSettings(
     val buttonId: String,
-    val position: Position
+    val position: Position,
+    val isSideButton: Boolean
 )
 
 @Keep

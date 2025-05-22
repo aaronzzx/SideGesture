@@ -33,6 +33,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Center
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.WaveStyle
+import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
@@ -155,8 +156,7 @@ fun SideGestureContainer(
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && moveScreenState.visible) {
-            val context = LocalContext.current
-            val screenshotState: State<Bitmap?> = produceState(null) {
+            val screenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
                 // 16ms为屏幕一帧，等待一帧防止截到手势
                 delay(20)
                 val service = context as SideGestureService
@@ -195,9 +195,11 @@ class SideGestureState(
     var triggerDirection by mutableStateOf(Center)
         private set
 
-    val originY: Float get() = originYAnim.value
-    val fingerX: Float get() = fingerXAnim.value
-    val fingerY: Float get() = fingerYAnim.value
+    val originXAnimVal: Float get() = originXAnim.value
+    val originYAnimVal: Float get() = originYAnim.value
+    val fingerXAnimVal: Float get() = fingerXAnim.value
+    val fingerYAnimVal: Float get() = fingerYAnim.value
+    private val originXAnim = Animatable(Float.NaN)
     private val originYAnim = Animatable(Float.NaN)
     private val fingerXAnim = Animatable(Float.NaN)
     private val fingerYAnim = Animatable(Float.NaN)
@@ -220,11 +222,20 @@ class SideGestureState(
         button = buttons.find(offset, imePadding)
         buttonBounds = button?.bounds(imePadding)
 
+        val button = button ?: return
         coroutineScope.launch {
-            val curY = offset.y
-            originYAnim.snapTo(curY)
-            fingerXAnim.snapTo(0f)
-            fingerYAnim.snapTo(curY)
+            originXAnim.snapTo(offset.x)
+            originYAnim.snapTo(offset.y)
+            when (button.position) {
+                Position.Left, Position.Right -> {
+                    fingerXAnim.snapTo(0f)
+                    fingerYAnim.snapTo(offset.y)
+                }
+                Position.Bottom -> {
+                    fingerXAnim.snapTo(offset.x)
+                    fingerYAnim.snapTo(0f)
+                }
+            }
         }
     }
 
@@ -244,8 +255,8 @@ class SideGestureState(
         }
         triggerDirection = direction
         coroutineScope.launch {
-            fingerXAnim.snapTo(fingerX + dragAmount.x)
-            fingerYAnim.snapTo(fingerY + dragAmount.y)
+            fingerXAnim.snapTo(fingerXAnimVal + dragAmount.x)
+            fingerYAnim.snapTo(fingerYAnimVal + dragAmount.y)
         }
 
         if (canDistanceTrigger(button, false)) {
@@ -333,52 +344,65 @@ class SideGestureState(
         coroutineScope.launch {
             val fingerXAnim = fingerXAnim
             val fingerYAnim = fingerYAnim
+            val position = button?.position ?: return@launch
             coroutineScope {
-                launch { fingerXAnim.animateTo(0f, animationSpec) }
-                launch { fingerYAnim.animateTo(originY, animationSpec) }
+                when (position) {
+                    Position.Left, Position.Right -> {
+                        launch { fingerXAnim.animateTo(0f, animationSpec) }
+                        launch { fingerYAnim.animateTo(originYAnimVal, animationSpec) }
+                    }
+                    Position.Bottom -> {
+                        launch { fingerYAnim.animateTo(0f, animationSpec) }
+                        launch { fingerXAnim.animateTo(originXAnimVal, animationSpec) }
+                    }
+                }
             }
         }
     }
 
     /**
-     * 手指划过的距离是否足够触发动作，上和下的动作需要按斜线距离计算
+     * 手指划过的距离是否足够触发动作
      */
-    private fun canDistanceTrigger(button: GestureButton, isLongPress: Boolean): Boolean {
+    private fun canDistanceTrigger(button: GestureButton, isLongSlide: Boolean): Boolean {
         val slideAction = button.slideActions
         val longSlideAction = button.longSlideActions
         val originX = origin.x
         val originY = origin.y
         val fingerX = finger.x
         val fingerY = finger.y
-        val slideDistanceX = when (button.position) {
+        val slideDistance = when (button.position) {
             Position.Left -> fingerX - originX
             Position.Right -> originX - fingerX
+            Position.Bottom -> originY - fingerY
         }
-        // 解决左侧触钮往左滑右侧触钮往右滑还能触发的问题
-        if (slideDistanceX < 0) {
+        // 解决触钮往回滑还能触发的问题
+        if (slideDistance < 0) {
             return false
         }
         val triggerDirection = triggerDirection
         if (triggerDirection == Center) {
-            val distance = slideDistanceX
-            if (isLongPress) {
-                return distance >= button.longSlideTriggerDistance &&
+            if (isLongSlide) {
+                return slideDistance >= button.longSlideTriggerDistance &&
                         longSlideAction.center.isNotEmpty()
             }
-            return distance >= button.slideTriggerDistance &&
+            return slideDistance >= button.slideTriggerDistance &&
                     slideAction.center.isNotEmpty()
         } else if (triggerDirection == Up || triggerDirection == Down) {
-            val edge1 = slideDistanceX
-            val edge2 = abs(fingerY - originY)
-            val edge3 = hypot(edge1, edge2)
-            if (isLongPress) {
-                val canTrigger = edge3 >= button.longSlideTriggerDistance
+            // 需要计算斜边
+            val edge1 = slideDistance
+            val edge2 = when (button.position) {
+                Position.Left, Position.Right -> abs(fingerY - originY)
+                Position.Bottom -> abs(fingerX - originX)
+            }
+            val hypot = hypot(edge1, edge2)
+            if (isLongSlide) {
+                val canTrigger = hypot >= button.longSlideTriggerDistance
                 if (triggerDirection == Up) {
                     return canTrigger && longSlideAction.up.isNotEmpty()
                 }
                 return canTrigger && longSlideAction.down.isNotEmpty()
             }
-            val canTrigger = edge3 >= button.slideTriggerDistance
+            val canTrigger = hypot >= button.slideTriggerDistance
             if (triggerDirection == Up) {
                 return canTrigger && slideAction.up.isNotEmpty()
             }
@@ -391,19 +415,27 @@ class SideGestureState(
         val buttonBounds = buttonBounds ?: return null
         val origin = origin
         val finger = finger
-        // 解决右侧触钮不灵敏的问题
-        val x = when (button.position) {
+        val opposite = when (button.position) {
             Position.Left -> finger.x - buttonBounds.left
             Position.Right -> buttonBounds.right - finger.x
+            Position.Bottom -> buttonBounds.bottom - finger.y
         }
-        val tanVal = x / abs(finger.y - origin.y)
+        val neighbor = when (button.position) {
+            Position.Left, Position.Right -> abs(finger.y - origin.y)
+            Position.Bottom -> abs(finger.x - origin.x)
+        }
+        val tanVal = opposite / neighbor
         val radians = atan(tanVal)
-        val degree = if (finger.y < origin.y) {
-            // 第一象限
+        val isPreviousArea = when (button.position) {
+            Position.Left, Position.Right -> finger.y < origin.y
+            Position.Bottom -> finger.x < origin.x
+        }
+        val degree = if (isPreviousArea) {
+            // 上半区
             Math.toDegrees(radians.toDouble())
         } else {
-            // 第四象限
-            180f - Math.toDegrees(radians.toDouble())
+            // 下半区
+            GESTURE_ANGLE_BASE - Math.toDegrees(radians.toDouble())
         }
         return button.angle.getTriggerDirection(degree.toFloat())
     }

@@ -16,9 +16,10 @@ import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.DataStoreHolder.advancedSettings
-import com.aaron.sidegesture.utils.DataStoreHolder.gestureButtons
+import com.aaron.sidegesture.utils.DataStoreHolder.bottomGestureButtons
 import com.aaron.sidegesture.utils.DataStoreHolder.gestureSettings
 import com.aaron.sidegesture.utils.DataStoreHolder.initialSettings
+import com.aaron.sidegesture.utils.DataStoreHolder.sideGestureButtons
 import com.aaron.sidegesture.utils.JsonHelper
 import com.blankj.utilcode.util.EncodeUtils
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -54,7 +55,8 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                 initialSettings = async { initialSettings.data.first() }.await(),
                 advancedSettings = async { advancedSettings.data.first() }.await(),
                 gestureSettings = async { gestureSettings.data.first() }.await(),
-                gestureButtons = async { gestureButtons.data.first() }.await(),
+                gestureButtons = async { sideGestureButtons.data.first() }.await(),
+                bottomGestureButtons = async { bottomGestureButtons.data.first() }.await(),
                 timestamp = System.currentTimeMillis(),
                 version = BuildConfig.VERSION_NAME
             )
@@ -98,8 +100,13 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                             }
                         },
                         async {
-                            gestureButtons.updateData {
+                            sideGestureButtons.updateData {
                                 backup.gestureButtons ?: it
+                            }
+                        },
+                        async {
+                            bottomGestureButtons.updateData {
+                                backup.bottomGestureButtons ?: it
                             }
                         }
                     ).awaitAll()
@@ -109,15 +116,31 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun addGestureButton() {
-        if (uiState.gestureButtons.size >= 20) {
+    fun addBottomGestureButton() {
+        if (uiState.bottomGestureButtons.size >= 10) {
             toast(R.string.gesture_button_size_max)
             return
         }
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.updateData {
+            DataStoreHolder.bottomGestureButtons.updateData {
                 it.toMutableList().apply {
-                    addAll(GestureButton.createPair())
+                    add(GestureButton.createBottom())
+                }
+            }
+            delay(50)
+            sendUiEvent(UiEvent.ScrollToBottom)
+        }
+    }
+
+    fun addSideGestureButton() {
+        if (uiState.sideGestureButtons.size >= 20) {
+            toast(R.string.gesture_button_size_max)
+            return
+        }
+        viewModelScope.launch {
+            DataStoreHolder.sideGestureButtons.updateData {
+                it.toMutableList().apply {
+                    addAll(GestureButton.createSidePair())
                 }
             }
             delay(50)
@@ -149,9 +172,24 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun expandGestureButtonList(expanded: Boolean, scrollOffset: Int = Int.MAX_VALUE) {
+    fun expandBottomGestureButtonList(expanded: Boolean, scrollOffset: Int = Int.MAX_VALUE) {
         updateUiState {
-            it.copy(isGestureButtonListExpanded = expanded)
+            it.copy(
+                isBottomGestureButtonListExpanded = expanded,
+                isSideGestureButtonListExpanded = it.isSideGestureButtonListExpanded && !expanded
+            )
+        }
+        if (expanded && scrollOffset != Int.MAX_VALUE) {
+            sendUiEvent(UiEvent.ScrollToEvent(scrollOffset))
+        }
+    }
+
+    fun expandSideGestureButtonList(expanded: Boolean, scrollOffset: Int = Int.MAX_VALUE) {
+        updateUiState {
+            it.copy(
+                isSideGestureButtonListExpanded = expanded,
+                isBottomGestureButtonListExpanded = it.isBottomGestureButtonListExpanded && !expanded
+            )
         }
         if (expanded && scrollOffset != Int.MAX_VALUE) {
             sendUiEvent(UiEvent.ScrollToEvent(scrollOffset))
@@ -169,15 +207,29 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
-    fun onGestureButtonEnabledChange(button: GestureButton, enabled: Boolean) {
+    fun onBottomGestureButtonEnabledChange(button: GestureButton, enabled: Boolean) {
         updateUiState {
-            val buttons = it.gestureButtons
+            val buttons = it.bottomGestureButtons
             val index = buttons.indexOf(button)
             if (index < 0) it else {
                 val list = buttons.toMutableList().apply {
                     set(index, button.copy(enabled = enabled))
                 }
-                it.copy(gestureButtons = list)
+                it.copy(bottomGestureButtons = list)
+            }
+        }
+        saveSettings()
+    }
+
+    fun onSideGestureButtonEnabledChange(button: GestureButton, enabled: Boolean) {
+        updateUiState {
+            val buttons = it.sideGestureButtons
+            val index = buttons.indexOf(button)
+            if (index < 0) it else {
+                val list = buttons.toMutableList().apply {
+                    set(index, button.copy(enabled = enabled))
+                }
+                it.copy(sideGestureButtons = list)
             }
         }
         saveSettings()
@@ -213,8 +265,13 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                 }
             }
             launch {
-                DataStoreHolder.gestureButtons.updateData {
-                    uiState.gestureButtons
+                DataStoreHolder.sideGestureButtons.updateData {
+                    uiState.sideGestureButtons
+                }
+            }
+            launch {
+                DataStoreHolder.bottomGestureButtons.updateData {
+                    uiState.bottomGestureButtons
                 }
             }
         }
@@ -222,22 +279,33 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.gestureButtons.data.collectLatest { buttons ->
-                updateUiState {
-                    it.copy(gestureButtons = buttons.sorted())
+            launch {
+                DataStoreHolder.sideGestureButtons.data.collectLatest { buttons ->
+                    updateUiState {
+                        it.copy(sideGestureButtons = buttons.sortedBy { b -> b.id })
+                    }
+                }
+            }
+            launch {
+                DataStoreHolder.bottomGestureButtons.data.collectLatest { buttons ->
+                    updateUiState {
+                        it.copy(bottomGestureButtons = buttons.sortedBy { b -> b.id })
+                    }
                 }
             }
         }
     }
 
     data class UiState(
-        val gestureButtons: List<GestureButton> = emptyList(),
+        val sideGestureButtons: List<GestureButton> = emptyList(),
+        val bottomGestureButtons: List<GestureButton> = emptyList(),
         val isGestureEnabled: Boolean = false,
         val isAccessibilityEnabled: Boolean = false,
         val isIgnoringBatteryOptimizations: Boolean = false,
         val isDrawOverlayEnabled: Boolean = false,
         val isPopBackgroundEnabled: Boolean = false,
-        val isGestureButtonListExpanded: Boolean = false,
+        val isBottomGestureButtonListExpanded: Boolean = false,
+        val isSideGestureButtonListExpanded: Boolean = false,
         val showMoreMenu: Boolean = false,
         val showResetWarningDialog: Boolean = false,
         val showBackupRestoreDialog: Boolean = false

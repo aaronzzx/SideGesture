@@ -50,9 +50,10 @@ data class GestureButton(
     companion object {
         private const val ID_DEFAULT = GestureButtonDefaults.ID_DEFAULT
 
-        val Defaults: List<GestureButton> get() = GestureButtonDefaults.Defaults
+        val SideDefaults: List<GestureButton> get() = GestureButtonDefaults.SideDefaults
+        val BottomDefaults: List<GestureButton> get() = GestureButtonDefaults.BottomDefaults
 
-        fun createPair(): List<GestureButton> {
+        fun createSidePair(): List<GestureButton> {
             val id = SystemClock.uptimeMillis().toString()
             val colorInt = ColorUtils.getRandomColor(false)
             val color = Color(colorInt).toArgb()
@@ -67,6 +68,17 @@ data class GestureButton(
                 color = color
             )
             return listOf(b1, b2)
+        }
+
+        fun createBottom(): GestureButton {
+            val id = SystemClock.uptimeMillis().toString()
+            val colorInt = ColorUtils.getRandomColor(false)
+            val color = Color(colorInt).toArgb()
+            return GestureButton(
+                id = id,
+                position = Position.Bottom,
+                color = color
+            )
         }
     }
 

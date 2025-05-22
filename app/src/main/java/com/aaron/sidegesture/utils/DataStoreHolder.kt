@@ -33,9 +33,15 @@ object DataStoreHolder {
         App.getContext().dataStore(fileName, defValue)
     }
 
-    val gestureButtons: DataStore<List<GestureButton>> = run {
-        val fileName = DataStoreFiles.GESTURE_BUTTONS
-        val defValue = GestureButton.Defaults
+    val bottomGestureButtons: DataStore<List<GestureButton>> = run {
+        val fileName = DataStoreFiles.BOTTOM_GESTURE_BUTTONS
+        val defValue = GestureButton.BottomDefaults
+        App.getContext().dataStore(fileName, defValue)
+    }
+
+    val sideGestureButtons: DataStore<List<GestureButton>> = run {
+        val fileName = DataStoreFiles.SIDE_GESTURE_BUTTONS
+        val defValue = GestureButton.SideDefaults
         App.getContext().dataStore(fileName, defValue)
     }
 
@@ -43,6 +49,7 @@ object DataStoreHolder {
         initialSettings.updateData { InitialSettings() }
         advancedSettings.updateData { AdvancedSettings() }
         gestureSettings.updateData { GestureSettings() }
-        gestureButtons.updateData { GestureButton.Defaults }
+        sideGestureButtons.updateData { GestureButton.SideDefaults }
+        bottomGestureButtons.updateData { GestureButton.BottomDefaults }
     }
 }
