@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Money
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +27,8 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.widget.DonateDialog
+import com.aaron.sidegesture.ui.widget.MyAppsDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -42,6 +46,21 @@ fun AboutScreen(
     vm: AboutVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+        if (uiState.showMyAppsDialog) {
+            MyAppsDialog(
+                onDismissRequest = {
+                    vm.showMyAppsDialog(false)
+                }
+            )
+        }
+        if (uiState.showDonateDialog) {
+            DonateDialog(
+                onDismissRequest = {
+                    vm.showDonateDialog(false)
+                }
+            )
+        }
+
         Column {
             TopBar(
                 onBack = onBack,
@@ -106,6 +125,30 @@ fun AboutScreen(
                             Icon(
                                 modifier = Modifier.size(24.dp),
                                 painter = painterResource(id = R.drawable.coolapk),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                    MyTextButton(
+                        onClick = { vm.showMyAppsDialog(true) },
+                        text = stringResource(id = R.string.my_apps),
+                        prefix = {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                imageVector = Icons.Default.Apps,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                    MyTextButton(
+                        onClick = { vm.showDonateDialog(true) },
+                        text = stringResource(id = R.string.donate),
+                        prefix = {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                imageVector = Icons.Default.Money,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )

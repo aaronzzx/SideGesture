@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">gulugulu</string>
-    <string name="app_name_dev">gulugulu+</string>
-    <string name="home_title">gulugulu</string>
+    <string name="app_name_dev">gulugulu.dev</string>
+    <string name="home_title">@string/app_name</string>
     <string name="version_placeholder">Version %s</string>
     <string name="accessibility_description">辅助服务用于模拟返回、主页、等按键操作，实现侧滑手势的各种自定义操控，不会收集任何数据。</string>
     <string name="more">更多</string>
@@ -33,6 +33,16 @@
     <string name="coolapk_app_not_found">无法启动酷安客户端</string>
     <string name="feedback_email">邮件反馈</string>
     <string name="feedback_coolapk">酷安反馈</string>
+    <string name="my_apps">我的应用</string>
+    <string name="my_apps_dialog_title">YES PDF</string>
+    <string name="my_apps_dialog_desc">一款无广告、轻量级的PDF阅读器</string>
+    <string name="my_apps_dialog_cancel">下次一定</string>
+    <string name="my_apps_dialog_confirm">前往下载</string>
+    <string name="donate">捐赠</string>
+    <string name="donate_dialog_desc">如果用得还不错，请作者喝瓶饮料呗~\n\n如果出现跳转未保存图片的情况，请手动截图前往扫码</string>
+    <string name="donate_dialog_cancel">下次一定</string>
+    <string name="donate_dialog_wechat">微信支付</string>
+    <string name="donate_dialog_alipay">支付宝支付</string>
     <string name="feedback_email_headline">请尽可能描述清楚您的问题或建议，不要删除或修改以下设备信息。</string>
     <string name="backup_restore">备份/恢复</string>
     <string name="backup">备份</string>

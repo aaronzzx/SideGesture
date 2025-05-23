@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui.theme
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * @author aaronzzxup@gmail.com
@@ -26,3 +27,5 @@ val MinItemHeight = 70.dp
 val MinItemHeightNoSecondary = 50.dp
 val MinInteractiveSize = 48.dp
 val MinIconSize = 24.dp
+val DialogTitlePadding = RootPadding * 2
+val DialogTitleFontSize = 24.sp

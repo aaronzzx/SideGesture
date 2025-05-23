@@ -22,6 +22,18 @@ class AboutVM : BaseComposeVM<UiState, UiEvent>() {
         loadSelfPackageInfo()
     }
 
+    fun showMyAppsDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showMyAppsDialog = show)
+        }
+    }
+
+    fun showDonateDialog(show: Boolean) {
+        updateUiState {
+            it.copy(showDonateDialog = show)
+        }
+    }
+
     private fun loadSelfPackageInfo() {
         viewModelScope.launch {
             val context = App.getContext()
@@ -43,7 +55,9 @@ class AboutVM : BaseComposeVM<UiState, UiEvent>() {
     data class UiState(
         val appName: String = "",
         val icon: Drawable? = null,
-        val versionName: String = ""
+        val versionName: String = "",
+        val showMyAppsDialog: Boolean = false,
+        val showDonateDialog: Boolean = false
     )
 
     sealed interface UiEvent
