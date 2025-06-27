@@ -149,7 +149,8 @@ object GestureButtonDefaults {
             enabled = false,
             start = 0.0f,
             end = 1.0f,
-            slideActions = GestureActions(center = Action.toList(GlobalActions.HOME))
+            slideActions = GestureActions(center = Action.toList(GlobalActions.HOME)),
+            longSlideActions = GestureActions(center = Action.toList(GlobalActions.RECENT))
         )
     )
 }
