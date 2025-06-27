@@ -105,6 +105,8 @@ object GlobalActions {
 
     /** 启动应用 */
     const val EXTRA_LAUNCH_APP = "101"
+    /** 启动快捷方式 */
+    const val EXTRA_LAUNCH_SHORTCUT = "102"
 
     val all = Action.toList(
         NONE, BACK, HOME, RECENT, VOLUME_UP, VOLUME_DOWN, MUTE, PLAY_PAUSE_SONG,

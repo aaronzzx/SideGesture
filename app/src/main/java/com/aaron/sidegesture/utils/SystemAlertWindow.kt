@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import java.util.Locale
 
 object SystemAlertWindow {
@@ -171,9 +172,9 @@ object SystemAlertWindow {
 
     private fun hasActivity(context: Context, intent: Intent?): Boolean {
         val packageManager = context.packageManager
-        return packageManager.queryIntentActivities(
+        return packageManager.queryIntentActivitiesCompat(
             intent!!,
             PackageManager.MATCH_DEFAULT_ONLY
-        ).size > 0
+        ).isNotEmpty()
     }
 }

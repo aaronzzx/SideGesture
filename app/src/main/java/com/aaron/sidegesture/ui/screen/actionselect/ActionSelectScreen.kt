@@ -1,7 +1,14 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
+import android.app.Activity
+import android.content.Intent
+import android.content.Intent.ShortcutIconResource
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,8 +42,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +72,7 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
@@ -80,6 +92,7 @@ import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinIconSize
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
+import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -90,6 +103,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
+
 
 /**
  * @author aaronzzxup@gmail.com
@@ -154,6 +169,7 @@ fun ActionSelectScreen(
                                 text = when (tabIndex) {
                                     PAGE_ACTION -> stringResource(id = R.string.tab_action)
                                     PAGE_APPS -> stringResource(id = R.string.tab_apps)
+                                    PAGE_SHORTCUTS -> stringResource(id = R.string.tab_shortcuts)
                                     else -> error("Unknown tabIndex: $tabIndex")
                                 }
                             )
@@ -164,21 +180,38 @@ fun ActionSelectScreen(
                 val permissionState = rememberGetInstalledAppsPermissionState { granted ->
                     if (granted) {
                         vm.updateAppInfos()
+                        vm.updateShortcutInfos()
                     }
                 }
                 LaunchedEffect(vm, pagerState, permissionState) {
-                    var init = true
-                    snapshotFlow { pagerState.currentPage }
-                        .drop(1)
-                        .filter { init && it == PAGE_APPS }
-                        .collectLatest {
-                            if (!permissionState.status.isGranted) {
-                                permissionState.launchPermissionRequest()
-                            } else {
-                                vm.updateAppInfos()
+                    launch {
+                        var init = true
+                        snapshotFlow { pagerState.currentPage }
+                            .drop(1)
+                            .filter { init && it == PAGE_APPS }
+                            .collectLatest {
+                                if (!permissionState.status.isGranted) {
+                                    permissionState.launchPermissionRequest()
+                                } else {
+                                    vm.updateAppInfos()
+                                }
+                                init = false
                             }
-                            init = false
-                        }
+                    }
+                    launch {
+                        var init = true
+                        snapshotFlow { pagerState.currentPage }
+                            .drop(1)
+                            .filter { init && it == PAGE_SHORTCUTS }
+                            .collectLatest {
+                                if (!permissionState.status.isGranted) {
+                                    permissionState.launchPermissionRequest()
+                                } else {
+                                    vm.updateShortcutInfos()
+                                }
+                                init = false
+                            }
+                    }
                 }
                 HorizontalPager(
                     modifier = Modifier.fillMaxSize(),
@@ -233,6 +266,229 @@ fun ActionSelectScreen(
                                 )
                             }
                         }
+                        PAGE_SHORTCUTS -> {
+                            LoadingComponent(
+                                modifier = Modifier.fillMaxSize(),
+                                component = vm.loadingComponent
+                            ) {
+                                val context = LocalContext.current
+                                var currentLauncherInfo: LauncherInfo? by remember {
+                                    mutableStateOf(null)
+                                }
+                                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                                    val launcherInfo = currentLauncherInfo
+                                    if (result.resultCode == Activity.RESULT_OK && launcherInfo != null) {
+                                        val bitmap = result.data?.getParcelableExtra<Bitmap>(Intent.EXTRA_SHORTCUT_ICON)
+                                        val shortcutIconRes = result.data?.getParcelableExtra<ShortcutIconResource>(Intent.EXTRA_SHORTCUT_ICON_RESOURCE)
+                                        var iconByteArray: ByteArray? = null
+                                        var iconRes = 0
+                                        if (bitmap != null) {
+                                            val buffer = ByteBuffer.allocate(bitmap.byteCount)
+                                            bitmap.copyPixelsToBuffer(buffer)
+                                            iconByteArray = buffer.array()
+                                        } else if (shortcutIconRes != null) {
+                                            val res = context.packageManager.getResourcesForApplication(shortcutIconRes.packageName)
+                                            iconRes = res.getIdentifier(shortcutIconRes.resourceName, null, null)
+                                        }
+                                        val intent = result.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)?.toUri(Intent.URI_INTENT_SCHEME)
+                                        val shortcutInfo = LauncherInfo.ShortcutInfo(
+                                            packageName = launcherInfo.packageName,
+                                            className = launcherInfo.className,
+                                            label = result.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME) ?: "",
+                                            iconRes = iconRes,
+                                            intents = intent?.let { listOf(it) } ?: emptyList(),
+                                            iconData = iconByteArray,
+                                            iconWidth = bitmap?.width ?: 0,
+                                            iconHeight = bitmap?.height ?: 0
+                                        )
+                                        vm.addNewShortcut(launcherInfo, shortcutInfo)
+                                        if (uiState.selectedRecord.size < MAX_SELECT_COUNT) {
+                                            vm.select(shortcutInfo, true)
+                                        }
+                                    }
+                                    currentLauncherInfo = null
+                                }
+                                ShortcutPage(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = run {
+                                        val direction = LocalLayoutDirection.current
+                                        PaddingValues(
+                                            start = contentPadding.calculateStartPadding(direction),
+                                            end = contentPadding.calculateEndPadding(direction),
+                                            bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                        )
+                                    },
+                                    onSelect = { shortcutInfo, selected ->
+                                        vm.select(shortcutInfo, selected)
+                                    },
+                                    onClick = { launcherInfo ->
+                                        try {
+                                            currentLauncherInfo = launcherInfo
+                                            val intent = Intent().apply {
+                                                setClassName(
+                                                    launcherInfo.packageName,
+                                                    launcherInfo.className
+                                                )
+                                            }
+                                            launcher.launch(intent)
+                                        } catch (ignored: Exception) {
+                                            currentLauncherInfo = null
+                                        }
+                                    },
+                                    createShortcuts = uiState.createShortcuts,
+                                    launchShortcuts = uiState.launchShortcuts,
+                                    selectedRecord = uiState.selectedRecord,
+                                    snackbarHostState = snackbarHostState,
+                                    permissionState = permissionState,
+                                    selectSingle = uiState.selectSingle
+                                )
+                            }
+                        }
+                        /*PAGE_SHORTCUTS -> {
+                            LoadingComponent(
+                                modifier = Modifier.fillMaxSize(),
+                                component = vm.loadingComponent
+                            ) {
+                                val context = LocalContext.current
+                                val activities = remember(context) {
+                                    AppInfoUtils.queryCreateShortcutActivities(context)
+                                }
+                                val shortcuts = remember(context) {
+                                    ShortcutUtils.getAllAppsWithShortcut(context)
+                                }
+                                var currentLauncherInfo: LauncherInfo? by remember {
+                                    mutableStateOf(null)
+                                }
+                                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                                    val launcherInfo = currentLauncherInfo
+                                    if (launcherInfo != null) {
+                                        val intent = it.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)?.toUri(Intent.URI_INTENT_SCHEME)
+                                        val shortcutInfo = LauncherInfo.ShortcutInfo(
+                                            packageName = launcherInfo.packageName,
+                                            className = launcherInfo.className,
+                                            label = it.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME) ?: "",
+                                            iconRes = 0,
+                                            intents = intent?.let { listOf(it) } ?: emptyList()
+                                        )
+                                        vm.addNewShortcut(launcherInfo, shortcutInfo)
+                                        currentLauncherInfo = null
+                                    }
+                                }
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    stickyHeader {
+                                        Text(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(color = MaterialTheme.colorScheme.primary)
+                                                .padding(16.dp),
+                                            text = "Create Shortcuts",
+                                            color = Color.White
+                                        )
+                                    }
+                                    items(items = activities) { launcherInfo ->
+                                        Column {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .onSingleClick {
+                                                        try {
+                                                            currentLauncherInfo = launcherInfo
+                                                            val intent = Intent().apply {
+                                                                setClassName(
+                                                                    launcherInfo.packageName,
+                                                                    launcherInfo.className
+                                                                )
+                                                            }
+                                                            launcher.launch(intent)
+                                                        } catch (ignored: Exception) {
+                                                            currentLauncherInfo = null
+                                                        }
+                                                    },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                AsyncImage(
+                                                    modifier = Modifier.size(40.dp),
+                                                    model = launcherInfo.icon,
+                                                    contentDescription = null
+                                                )
+                                                Text(text = launcherInfo.label)
+                                            }
+
+                                            launcherInfo.shortcuts.fastForEach { shortcutInfo ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .padding(start = 16.dp)
+                                                        .fillMaxWidth()
+                                                        .onSingleClick {
+                                                        },
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    AsyncImage(
+                                                        modifier = Modifier.size(40.dp),
+                                                        model = shortcutInfo.getIcon(context),
+                                                        contentDescription = null
+                                                    )
+                                                    Text(text = shortcutInfo.label)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    stickyHeader {
+                                        Text(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(color = MaterialTheme.colorScheme.primary)
+                                                .padding(16.dp),
+                                            text = "Go to Shortcuts",
+                                            color = Color.White
+                                        )
+                                    }
+                                    items(items = shortcuts) { item ->
+                                        Column {
+                                            Text(text = item.label)
+                                            Text(text = item.packageName)
+                                            item.shortcuts.fastForEach { shortcut ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .onSingleClick {
+                                                            try {
+                                                                val intents = shortcut
+                                                                    .intents
+                                                                    .map {
+                                                                        Intent.parseUri(
+                                                                            it,
+                                                                            Intent.URI_INTENT_SCHEME
+                                                                        )
+                                                                    }
+                                                                    .toTypedArray()
+                                                                context.startActivities(intents)
+                                                            } catch (ex: Exception) {
+                                                                ex.printStackTrace()
+                                                            }
+                                                        },
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    val icon = item.icon
+                                                    AsyncImage(
+                                                        modifier = Modifier.size(40.dp),
+                                                        model = icon,
+                                                        contentDescription = null
+                                                    )
+                                                    Column {
+                                                        Text(text = "package: ${shortcut.packageName}")
+                                                        Text(text = "label: ${shortcut.label}")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }*/
                     }
                 }
             }
@@ -380,33 +636,143 @@ private fun AppPage(
                 }
             }
         } else {
-            Box(
+            PermissionPage(
+                snackbarHostState = snackbarHostState,
+                permissionState = permissionState
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalFoundationApi::class)
+@Composable
+private fun ShortcutPage(
+    onClick: (LauncherInfo) -> Unit,
+    onSelect: (LauncherInfo.ShortcutInfo, Boolean) -> Unit,
+    createShortcuts: List<LauncherInfo>,
+    launchShortcuts: List<LauncherInfo>,
+    selectedRecord: SelectedRecord,
+    snackbarHostState: SnackbarHostState,
+    permissionState: PermissionState,
+    selectSingle: Boolean,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    maxSelectCount: Int = MAX_SELECT_COUNT
+) {
+    Box(modifier = modifier) {
+        if (permissionState.status.isGranted) {
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentPadding = contentPadding
             ) {
-                val context = LocalContext.current
-                val coroutineScope = rememberCoroutineScope()
-                TextButton(
-                    onClick = {
-                        if (permissionState.status.deniedForever) {
-                            coroutineScope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = context.getString(R.string.goto_grant_get_apps_permission),
-                                    actionLabel = context.getString(R.string.goto_enable_settings),
-                                    withDismissAction = true
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    context.gotoAppDetailSettings()
-                                }
-                            }
-                        } else {
-                            permissionState.launchPermissionRequest()
-                        }
+                if (createShortcuts.isNotEmpty()) {
+                    stickyHeader {
+                        Text(
+                            modifier = Modifier
+                                .background(color = MaterialTheme.colorScheme.background)
+                                .fillMaxWidth()
+                                .padding(vertical = ContentPaddingVertical)
+                                .padding(horizontal = ContentPaddingHorizontal * 2),
+                            text = stringResource(R.string.create_shortcut),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
-                ) {
-                    Text(text = stringResource(id = R.string.request_get_apps_permission))
+                }
+                items(
+                    items = createShortcuts,
+                    key = { it.qualifiedName }
+                ) { item ->
+                    LauncherInfoItem(
+                        launcherInfo = item,
+                        selectSingle = selectSingle,
+                        canLauncherInfoEnabled = { canLauncherInfoEnabled(selectedRecord, it, maxSelectCount) },
+                        canShortcutInfoEnabled = { canShortcutInfoEnabled(selectedRecord, it, maxSelectCount) },
+                        isShortcutInfoSelected = { shortcutInfo ->
+                            selectedRecord.isSelected(shortcutInfo)
+                        },
+                        onSelect = { shortcutInfo, selected ->
+                            onSelect(shortcutInfo, selected)
+                        },
+                        onClick = {
+                            onClick(item)
+                        }
+                    )
+                }
+                if (launchShortcuts.isNotEmpty()) {
+                    stickyHeader {
+                        Text(
+                            modifier = Modifier
+                                .background(color = MaterialTheme.colorScheme.background)
+                                .fillMaxWidth()
+                                .padding(vertical = ContentPaddingVertical)
+                                .padding(horizontal = ContentPaddingHorizontal * 2),
+                            text = stringResource(R.string.launch_shortcut),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+                items(
+                    items = launchShortcuts,
+                    key = { it.qualifiedName }
+                ) { item ->
+                    LauncherInfoItem(
+                        launcherInfo = item,
+                        selectSingle = selectSingle,
+                        canLauncherInfoEnabled = { canLauncherInfoEnabled(selectedRecord, it, maxSelectCount) },
+                        canShortcutInfoEnabled = { canShortcutInfoEnabled(selectedRecord, it, maxSelectCount) },
+                        isShortcutInfoSelected = { shortcutInfo ->
+                            selectedRecord.isSelected(shortcutInfo)
+                        },
+                        onSelect = { shortcutInfo, selected ->
+                            onSelect(shortcutInfo, selected)
+                        },
+                        onClick = {
+                        }
+                    )
                 }
             }
+        } else {
+            PermissionPage(
+                snackbarHostState = snackbarHostState,
+                permissionState = permissionState
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun PermissionPage(
+    snackbarHostState: SnackbarHostState,
+    permissionState: PermissionState
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+        TextButton(
+            onClick = {
+                if (permissionState.status.deniedForever) {
+                    coroutineScope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = context.getString(R.string.goto_grant_get_apps_permission),
+                            actionLabel = context.getString(R.string.goto_enable_settings),
+                            withDismissAction = true
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            context.gotoAppDetailSettings()
+                        }
+                    }
+                } else {
+                    permissionState.launchPermissionRequest()
+                }
+            }
+        ) {
+            Text(text = stringResource(id = R.string.request_get_apps_permission))
         }
     }
 }
@@ -490,6 +856,117 @@ private fun AppItem(
     }
 }
 
+@Composable
+private fun LauncherInfoItem(
+    canLauncherInfoEnabled: (LauncherInfo) -> Boolean,
+    canShortcutInfoEnabled: (LauncherInfo.ShortcutInfo) -> Boolean,
+    isShortcutInfoSelected: (LauncherInfo.ShortcutInfo) -> Boolean,
+    onClick: () -> Unit,
+    onSelect: (LauncherInfo.ShortcutInfo, Boolean) -> Unit,
+    launcherInfo: LauncherInfo,
+    selectSingle: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .graphicsLayer {
+                alpha =
+                    if (canLauncherInfoEnabled(launcherInfo)) 1f else GlobalSettings.DisabledAlpha
+            }
+            .fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onClick(enabled = canLauncherInfoEnabled(launcherInfo)) {
+                    onClick()
+                }
+                .padding(vertical = ContentPaddingVertical),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val context = LocalContext.current
+            AsyncImage(
+                modifier = Modifier
+                    .padding(start = ContentPaddingHorizontal * 2)
+                    .size(MinInteractiveSize),
+                model = launcherInfo.icon,
+                contentDescription = null,
+                imageLoader = context.imageLoader,
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                modifier = Modifier
+                    .padding(start = IconTextPadding, end = ItemPadding)
+                    .weight(1f)
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = launcherInfo.label,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = launcherInfo.packageName,
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+
+        Column {
+            launcherInfo.shortcuts.fastForEach { shortcutInfo ->
+                key(shortcutInfo) {
+                    val selected = isShortcutInfoSelected(shortcutInfo)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onClick(enabled = canShortcutInfoEnabled(shortcutInfo)) {
+                                onSelect(shortcutInfo, !selected)
+                            }
+                        /*.padding(start = ContentPaddingHorizontal * 2 + MinInteractiveSize)*/,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val context = LocalContext.current
+                        AsyncImage(
+                            modifier = Modifier
+                                .padding(start = ContentPaddingHorizontal * 3)
+                                .size(SubMinInteractiveSize),
+                            model = shortcutInfo.icon,
+                            contentDescription = null,
+                            imageLoader = context.imageLoader,
+                            contentScale = ContentScale.Crop
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = IconTextPadding, end = ItemPadding)
+                                .weight(1f)
+                        ) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = shortcutInfo.label,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        if (!selectSingle) {
+                            Checkbox(
+                                modifier = Modifier.padding(end = TopBarPaddingExtra),
+                                enabled = canShortcutInfoEnabled(shortcutInfo),
+                                checked = selected,
+                                onCheckedChange = { newSelected ->
+                                    onSelect(shortcutInfo, newSelected)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun canActionEnabled(
     selectedRecord: SelectedRecord,
     item: Action,
@@ -528,9 +1005,42 @@ private fun canAppInfoEnabled(
     return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 
+private fun canLauncherInfoEnabled(
+    selectedRecord: SelectedRecord,
+    item: LauncherInfo,
+    maxSelectCount: Int
+): Boolean {
+    val isMoveScreenSelected = selectedRecord.list.find {
+        (it as? Action)?.value == GlobalActions.MOVE_SCREEN
+    } != null
+    if (isMoveScreenSelected) {
+        return false
+    }
+
+    // 走完移动屏幕的检查后再走其他
+    return !(selectedRecord.size >= maxSelectCount && !item.shortcuts.any { selectedRecord.isSelected(it) })
+}
+
+private fun canShortcutInfoEnabled(
+    selectedRecord: SelectedRecord,
+    item: LauncherInfo.ShortcutInfo,
+    maxSelectCount: Int
+): Boolean {
+    val isMoveScreenSelected = selectedRecord.list.find {
+        (it as? Action)?.value == GlobalActions.MOVE_SCREEN
+    } != null
+    if (isMoveScreenSelected) {
+        return false
+    }
+
+    // 走完移动屏幕的检查后再走其他
+    return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
+}
+
 private const val MAX_SELECT_COUNT = 5
 
 private const val PAGE_ACTION = 0
 private const val PAGE_APPS = 1
+private const val PAGE_SHORTCUTS = 2
 
-private val PAGES = listOf(PAGE_ACTION, PAGE_APPS)
+private val PAGES = listOf(PAGE_ACTION, PAGE_APPS, PAGE_SHORTCUTS)

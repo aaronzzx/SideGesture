@@ -15,6 +15,7 @@ import android.text.TextUtils
 import android.view.KeyEvent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.utils.MiniWindowUtils
 import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.AppUtils
@@ -58,12 +59,28 @@ fun Context.launchAssist(): Boolean {
     }
 }
 
+fun Context.launchShortcutInfo(shortcutInfo: LauncherInfo.ShortcutInfo): Boolean {
+    return try {
+        val intents = shortcutInfo
+            .intents
+            .map {
+                Intent.parseUri(it, Intent.URI_INTENT_SCHEME).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            .toTypedArray()
+        startActivities(intents)
+        true
+    } catch (ignored: Exception) {
+        showToast(getString(R.string.launch_shortcut_info_failed, shortcutInfo.label))
+        false
+    }
+}
+
 fun Context.launchAppInfo(appInfo: AppInfo, miniWindow: Boolean = appInfo.miniWindow): Boolean {
     return try {
         val intent = Intent().apply {
             setClassName(appInfo.packageName, appInfo.className)
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_LAUNCHER)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         var launchSucceed = false

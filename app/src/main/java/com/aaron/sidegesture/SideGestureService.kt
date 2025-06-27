@@ -40,6 +40,7 @@ import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.attachGestureButtons
 import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
+import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.removeWindows
 import com.aaron.sidegesture.ktx.setFlags
@@ -380,7 +381,7 @@ class SideGestureService : ComponentAccessibilityService() {
             addCategory(Intent.CATEGORY_HOME)
         }
         val resolves = packageManager
-            .queryIntentActivities(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            .queryIntentActivitiesCompat(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
             .filter {
                 packageManager.getLaunchIntentForPackage(it.activityInfo.packageName ?: "") == null
             }
