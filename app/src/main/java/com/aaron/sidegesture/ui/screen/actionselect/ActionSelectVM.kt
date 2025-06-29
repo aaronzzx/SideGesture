@@ -29,6 +29,7 @@ import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.ShortcutUtils
+import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -430,12 +431,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 DataStoreHolder.bottomGestureButtons
             }
             buttons.updateData { list ->
+                val mutableList = list.toMutableList()
                 val actionSelect = actionSelect
                 var button: GestureButton? = null
                 var index = -1
-                for (i in list.indices) {
+                for (i in mutableList.indices) {
                     index = i
-                    val b = list[i]
+                    val b = mutableList[i]
                     if (b.id == actionSelect.gestureButtonId &&
                         b.position == actionSelect.position
                     ) {
@@ -443,42 +445,62 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         break
                     }
                 }
-                if (button != null) {
-                    val selectedRecord = uiState.selectedRecord
-                    val selectedList = selectedRecord.list.map { obj ->
-                        if (obj is AppInfo) {
+                if (button == null) {
+                    return@updateData mutableList
+                }
+                val selectedRecord = uiState.selectedRecord
+                val selectedList = selectedRecord.list.map { obj ->
+                    when (obj) {
+                        is AppInfo -> {
                             val data = JsonHelper.encodeToString(obj)
                             Action(value = GlobalActions.EXTRA_LAUNCH_APP, data = data)
-                        } else if (obj is LauncherInfo.ShortcutInfo) {
+                        }
+                        is LauncherInfo.ShortcutInfo -> {
                             val data = JsonHelper.encodeToString(obj)
                             Action(value = GlobalActions.EXTRA_LAUNCH_SHORTCUT, data = data)
-                        } else {
+                        }
+                        else -> {
                             obj as Action
                         }
                     }
-                    val newActions = when (uiState.selectSingle) {
-                        true -> selectedList.takeLast(1)
-                        else -> selectedList
-                    }
-                    val gestureActions = when (actionSelect.isLongSlide) {
-                        true -> button.longSlideActions
-                        else -> button.slideActions
-                    }
-                    val newGestureActions = when (actionSelect.direction) {
-                        TriggerDirection.Center -> gestureActions.copy(center = newActions)
-                        TriggerDirection.Up -> gestureActions.copy(up = newActions)
-                        TriggerDirection.Down -> gestureActions.copy(down = newActions)
-                    }
-                    button = if (actionSelect.isLongSlide) {
-                        button.copy(longSlideActions = newGestureActions)
-                    } else {
-                        button.copy(slideActions = newGestureActions)
-                    }
-                    return@updateData list.toMutableList().apply {
-                        set(index, button)
+                }
+                val newActions = when (uiState.selectSingle) {
+                    true -> selectedList.takeLast(1)
+                    else -> selectedList
+                }
+                val gestureActions = when (actionSelect.isLongSlide) {
+                    true -> button.longSlideActions
+                    else -> button.slideActions
+                }
+                fun tryDeleteShortcutIcons(actions: List<Action>) {
+                    actions.forEach { action ->
+                        val shortcutInfo = action.shortcutInfo ?: return@forEach
+                        if (shortcutInfo.iconPath.isNullOrEmpty()) return@forEach
+                        FileUtils.delete(shortcutInfo.iconPath)
                     }
                 }
-                list
+                val newGestureActions = when (actionSelect.direction) {
+                    TriggerDirection.Center -> {
+                        tryDeleteShortcutIcons(gestureActions.center)
+                        gestureActions.copy(center = newActions)
+                    }
+                    TriggerDirection.Up -> {
+                        tryDeleteShortcutIcons(gestureActions.up)
+                        gestureActions.copy(up = newActions)
+                    }
+                    TriggerDirection.Down -> {
+                        tryDeleteShortcutIcons(gestureActions.down)
+                        gestureActions.copy(down = newActions)
+                    }
+                }
+                button = if (actionSelect.isLongSlide) {
+                    button.copy(longSlideActions = newGestureActions)
+                } else {
+                    button.copy(slideActions = newGestureActions)
+                }
+                mutableList.apply {
+                    set(index, button)
+                }
             }
         }.invokeOnCompletion {
             if (it == null) {
