@@ -37,7 +37,7 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
         }
     }
 
-    fun onBgColorEnabled(enabled: Boolean) {
+    fun onBgColorEnabled(enabled: Boolean, defaultColor: Color) {
         updateUiState {
             it.copy(
                 bgColors = it.bgColors.toMutableMap().apply {
@@ -45,7 +45,7 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
                     if (bgColor != null) {
                         put(it.selectedId, bgColor.copy(enabled = enabled))
                     } else {
-                        put(it.selectedId, UiState.BgColor(enabled = enabled))
+                        put(it.selectedId, UiState.BgColor(enabled = enabled, color = defaultColor))
                     }
                 }
             )

@@ -79,6 +79,7 @@ fun IconResizeScreen(
     onBack: () -> Unit,
     vm: IconResizeVM = viewModel()
 ) {
+    val defaultBgColor = MaterialTheme.colorScheme.primary
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
         if (uiState.showResetWarningDialog) {
             MyAlertDialog(
@@ -96,7 +97,7 @@ fun IconResizeScreen(
                 onColorPicked = { color ->
                     vm.onBgColorChange(color)
                 },
-                initialColor = uiState.selectedBgColor?.color ?: MaterialTheme.colorScheme.primary
+                initialColor = uiState.selectedBgColor?.color ?: defaultBgColor
             )
         }
 
@@ -226,7 +227,7 @@ fun IconResizeScreen(
                                     modifier = Modifier
                                         .matchParentSize()
                                         .clip(CircleShape)
-                                        .background(color = selectedBgColor.color ?: MaterialTheme.colorScheme.primary)
+                                        .background(color = selectedBgColor.color ?: defaultBgColor)
                                 )
                             }
 
@@ -255,12 +256,12 @@ fun IconResizeScreen(
                     onTextClick = {
                         vm.showColorPickerDialog(true)
                     },
-                    onCheckedChange = {
-                        vm.onBgColorEnabled(it)
+                    onCheckedChange = { enabled ->
+                        vm.onBgColorEnabled(enabled, defaultBgColor)
                     },
                     checked = uiState.selectedBgColor?.enabled ?: false,
                     text = stringResource(id = R.string.background_color),
-                    markColor = uiState.selectedBgColor?.color ?: MaterialTheme.colorScheme.primary
+                    markColor = uiState.selectedBgColor?.color ?: defaultBgColor
                 )
             }
         }
