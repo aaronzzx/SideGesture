@@ -101,6 +101,12 @@ fun GestureSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.slide_action)
                 ) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onVibrateForSlide(it) },
+                        checked = uiState.vibrations.slideEnabled,
+                        text = stringResource(id = R.string.vibration),
+                        secondaryText = stringResource(id = R.string.vibration_hint)
+                    )
                     MyTextSlider(
                         value = uiState.slideTriggerDistance,
                         onValueChange = { vm.onPressTriggerDistanceChange(it) },
@@ -119,6 +125,12 @@ fun GestureSettingsScreen(
                         checked = uiState.longSlideTriggerImmediately,
                         text = stringResource(id = R.string.long_slide_trigger_immediately),
                         secondaryText = stringResource(id = R.string.long_slide_trigger_immediately_hint)
+                    )
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onVibrateForLongSlide(it) },
+                        checked = uiState.vibrations.longSlideEnabled,
+                        text = stringResource(id = R.string.vibration),
+                        secondaryText = stringResource(id = R.string.vibration_hint)
                     )
                     MyTextSlider(
                         value = uiState.longSlideTriggerDistance,

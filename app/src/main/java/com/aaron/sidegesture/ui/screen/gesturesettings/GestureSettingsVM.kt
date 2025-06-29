@@ -118,6 +118,20 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onVibrateForSlide(value: Boolean) {
+        updateUiState {
+            it.copy(vibrations = it.vibrations.copy(slideEnabled = value))
+        }
+        saveSettings()
+    }
+
+    fun onVibrateForLongSlide(value: Boolean) {
+        updateUiState {
+            it.copy(vibrations = it.vibrations.copy(longSlideEnabled = value))
+        }
+        saveSettings()
+    }
+
     fun onVibrateImmediatelyChange(value: Boolean) {
         updateUiState {
             it.copy(vibrations = it.vibrations.copy(vibrateImmediately = value))
