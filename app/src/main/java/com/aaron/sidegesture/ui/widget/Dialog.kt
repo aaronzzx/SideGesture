@@ -295,6 +295,9 @@ fun ColorPickerDialog(
         mutableStateOf(false)
     }
     val colorController = rememberColorPickerController()
+    LaunchedEffect(initialColor) {
+        colorController.selectByColor(initialColor, false)
+    }
     val hexColor by remember(colorController) {
         derivedStateOf {
             val selectedColor = colorController.selectedColor.value
@@ -322,7 +325,7 @@ fun ColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
-                    initialColor = initialColor,
+//                    initialColor = initialColor,
                     controller = colorController,
                     onColorChanged = {
                     }

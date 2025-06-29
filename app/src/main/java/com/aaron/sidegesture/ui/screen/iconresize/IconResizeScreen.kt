@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Done
@@ -55,15 +57,16 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
-import com.aaron.sidegesture.entity.AppInfo.Companion.DEFAULT_SCALE
-import com.aaron.sidegesture.entity.AppInfo.Companion.MAX_SCALE
-import com.aaron.sidegesture.entity.AppInfo.Companion.MIN_SCALE
-import com.aaron.sidegesture.ktx.icon
-import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.constant.ScaleableDefaults.DEFAULT_SCALE
+import com.aaron.sidegesture.constant.ScaleableDefaults.MAX_SCALE
+import com.aaron.sidegesture.constant.ScaleableDefaults.MIN_SCALE
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
+import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
+import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 
 /**
@@ -82,7 +85,18 @@ fun IconResizeScreen(
                 onDismissRequest = { vm.showResetWarningDialog(false) },
                 onConfirmClick = { vm.reset() },
                 title = stringResource(id = R.string.reset_default_settings_warning),
-                text = stringResource(id = R.string.reset_app_info_icon_scale)
+                text = stringResource(id = R.string.reset_icon_settings)
+            )
+        }
+        if (uiState.showColorPickerDialog) {
+            ColorPickerDialog(
+                onDismissRequest = {
+                    vm.showColorPickerDialog(false)
+                },
+                onColorPicked = { color ->
+                    vm.onBgColorChange(color)
+                },
+                initialColor = uiState.selectedBgColor?.color ?: MaterialTheme.colorScheme.primary
             )
         }
 
@@ -109,21 +123,23 @@ fun IconResizeScreen(
                     horizontalArrangement = Arrangement.spacedBy(ContentPaddingHorizontal)
                 ) {
                     itemsIndexed(
-                        items = uiState.appInfos,
-                        key = { _, item -> item.qualifiedName }
-                    ) { index, item ->
+                        items = uiState.ids,
+                        key = { _, item -> item }
+                    ) { _, id ->
                         BadgedBox(
                             modifier = Modifier
                                 .size(MinInteractiveSize)
                                 .onClick(enableRipple = false) {
-                                    vm.onIndexChange(index)
+                                    vm.onSelectedIdChange(id)
                                 },
                             badge = {
                                 val curScaleFactors by rememberUpdatedState(newValue = uiState.scaleFactors)
-                                val visible by remember(index) {
+                                val curBgColors by rememberUpdatedState(newValue = uiState.bgColors)
+                                val visible by remember(id) {
                                     derivedStateOf {
-                                        val scale = curScaleFactors[index]
-                                        scale != null && scale != DEFAULT_SCALE
+                                        val scale = curScaleFactors[id]
+                                        (scale != null && scale != DEFAULT_SCALE) ||
+                                                (curBgColors[id]?.enabled == true)
                                     }
                                 }
                                 androidx.compose.animation.AnimatedVisibility(
@@ -145,7 +161,7 @@ fun IconResizeScreen(
                         ) {
                             AsyncImage(
                                 modifier = Modifier.matchParentSize(),
-                                model = item.icon,
+                                model = uiState.icons[id],
                                 contentDescription = null
                             )
                         }
@@ -153,69 +169,99 @@ fun IconResizeScreen(
                 }
             }
 
-            Box(
+            Column(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(250.dp)
-                    .drawWithCache {
-                        val bounds = Rect(Offset.Zero, size)
-                        val path = Path().apply {
-                            addOval(bounds)
-                        }
-                        onDrawWithContent {
-                            drawContent()
-                            clipPath(path = path, clipOp = ClipOp.Difference) {
-                                drawRect(color = Color.Black.copy(DimAlpha))
+                    .width(250.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .drawWithCache {
+                            val bounds = Rect(Offset.Zero, size)
+                            val path = Path().apply {
+                                addOval(bounds)
+                            }
+                            onDrawWithContent {
+                                drawContent()
+                                clipPath(path = path, clipOp = ClipOp.Difference) {
+                                    drawRect(color = Color.Black.copy(DimAlpha))
+                                }
                             }
                         }
-                    }
-                    .clip(RectangleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                LazyVerticalGrid(
-                    modifier = Modifier.matchParentSize(),
-                    columns = GridCells.Fixed(11),
-                    userScrollEnabled = false
+                        .clip(RectangleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(11 * 11) { index ->
-                        val color = when (index % 2 == 0) {
-                            true -> Color.LightGray
-                            else -> Color.White
+                    LazyVerticalGrid(
+                        modifier = Modifier.matchParentSize(),
+                        columns = GridCells.Fixed(11),
+                        userScrollEnabled = false
+                    ) {
+                        items(11 * 11) { index ->
+                            val color = when (index % 2 == 0) {
+                                true -> Color.LightGray
+                                else -> Color.White
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .background(color = color)
+                            )
                         }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .background(color = color)
-                        )
+                    }
+
+                    AnimatedContent(
+                        modifier = Modifier.matchParentSize(),
+                        targetState = uiState.selectedId to uiState.selectedBgColor,
+                        label = "IconChangeAnimation"
+                    ) { (id, selectedBgColor) ->
+                        val scaleFactor by rememberUpdatedState(newValue = uiState.scaleFactors[id] ?: DEFAULT_SCALE)
+                        Box {
+                            if (selectedBgColor?.enabled == true) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .clip(CircleShape)
+                                        .background(color = selectedBgColor.color ?: MaterialTheme.colorScheme.primary)
+                                )
+                            }
+
+                            AsyncImage(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .pointerInput(Unit) {
+                                        detectTransformGestures { _, _, zoom, _ ->
+                                            val newScale =
+                                                (scaleFactor * zoom).coerceIn(MIN_SCALE, MAX_SCALE)
+                                            vm.onScaleChange(newScale)
+                                        }
+                                    }
+                                    .graphicsLayer {
+                                        scaleX = scaleFactor
+                                        scaleY = scaleFactor
+                                    },
+                                model = uiState.icons[id],
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
 
-                AnimatedContent(
-                    modifier = Modifier.matchParentSize(),
-                    targetState = uiState.index,
-                    label = "IconChangeAnimation"
-                ) { index ->
-                    val appInfo = uiState.appInfos.getOrNull(index)
-                    val scaleFactor by rememberUpdatedState(newValue = uiState.scaleFactors[index] ?: DEFAULT_SCALE)
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectTransformGestures { _, _, zoom, _ ->
-                                    val newScale =
-                                        (scaleFactor * zoom).coerceIn(MIN_SCALE, MAX_SCALE)
-                                    vm.onScaleChange(newScale)
-                                }
-                            }
-                            .graphicsLayer {
-                                scaleX = scaleFactor
-                                scaleY = scaleFactor
-                            },
-                        model = appInfo?.icon,
-                        contentDescription = null
-                    )
-                }
+                MyTextSwitch(
+                    onTextClick = {
+                        vm.showColorPickerDialog(true)
+                    },
+                    onCheckedChange = {
+                        vm.onBgColorEnabled(it)
+                    },
+                    checked = uiState.selectedBgColor?.enabled ?: false,
+                    text = stringResource(id = R.string.background_color),
+                    markColor = uiState.selectedBgColor?.color ?: MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

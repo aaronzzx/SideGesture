@@ -72,6 +72,7 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
@@ -96,6 +97,7 @@ import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.blankj.utilcode.util.PathUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -103,7 +105,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
+import java.io.FileOutputStream
 
 
 /**
@@ -115,14 +117,14 @@ import java.nio.ByteBuffer
 @Composable
 fun ActionSelectScreen(
     onBack: () -> Unit,
-    onNavToIconResize: (List<String>) -> Unit,
+    onNavToIconResize: (IconResize) -> Unit,
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
             when (event) {
-                is UiEvent.GotoIconResize -> onNavToIconResize(event.qualifiedNames)
+                is UiEvent.GotoIconResize -> onNavToIconResize(event.iconResize)
             }
         }
     ) { uiState ->
@@ -280,26 +282,25 @@ fun ActionSelectScreen(
                                     if (result.resultCode == Activity.RESULT_OK && launcherInfo != null) {
                                         val bitmap = result.data?.getParcelableExtra<Bitmap>(Intent.EXTRA_SHORTCUT_ICON)
                                         val shortcutIconRes = result.data?.getParcelableExtra<ShortcutIconResource>(Intent.EXTRA_SHORTCUT_ICON_RESOURCE)
-                                        var iconByteArray: ByteArray? = null
+                                        val intent = result.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)?.toUri(Intent.URI_INTENT_SCHEME)
+                                        val label = result.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME) ?: ""
                                         var iconRes = 0
+                                        var iconPath: String? = null
                                         if (bitmap != null) {
-                                            val buffer = ByteBuffer.allocate(bitmap.byteCount)
-                                            bitmap.copyPixelsToBuffer(buffer)
-                                            iconByteArray = buffer.array()
+                                            iconPath = PathUtils.getExternalAppPicturesPath() + "/" + System.currentTimeMillis()
+                                            val fos = FileOutputStream(iconPath)
+                                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
                                         } else if (shortcutIconRes != null) {
                                             val res = context.packageManager.getResourcesForApplication(shortcutIconRes.packageName)
                                             iconRes = res.getIdentifier(shortcutIconRes.resourceName, null, null)
                                         }
-                                        val intent = result.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)?.toUri(Intent.URI_INTENT_SCHEME)
                                         val shortcutInfo = LauncherInfo.ShortcutInfo(
                                             packageName = launcherInfo.packageName,
                                             className = launcherInfo.className,
-                                            label = result.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME) ?: "",
-                                            iconRes = iconRes,
                                             intents = intent?.let { listOf(it) } ?: emptyList(),
-                                            iconData = iconByteArray,
-                                            iconWidth = bitmap?.width ?: 0,
-                                            iconHeight = bitmap?.height ?: 0
+                                            label = label,
+                                            iconRes = iconRes,
+                                            iconPath = iconPath
                                         )
                                         vm.addNewShortcut(launcherInfo, shortcutInfo)
                                         if (uiState.selectedRecord.size < MAX_SELECT_COUNT) {
@@ -890,8 +891,7 @@ private fun LauncherInfoItem(
                     .size(MinInteractiveSize),
                 model = launcherInfo.icon,
                 contentDescription = null,
-                imageLoader = context.imageLoader,
-                contentScale = ContentScale.Crop
+                imageLoader = context.imageLoader
             )
             Column(
                 modifier = Modifier
@@ -935,8 +935,7 @@ private fun LauncherInfoItem(
                                 .size(SubMinInteractiveSize),
                             model = shortcutInfo.icon,
                             contentDescription = null,
-                            imageLoader = context.imageLoader,
-                            contentScale = ContentScale.Crop
+                            imageLoader = context.imageLoader
                         )
                         Column(
                             modifier = Modifier

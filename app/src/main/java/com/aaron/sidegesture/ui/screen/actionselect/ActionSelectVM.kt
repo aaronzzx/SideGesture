@@ -11,13 +11,16 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
+import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.qualifiedName
+import com.aaron.sidegesture.ktx.qualifiedNameWithIntents
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.subscribeEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
@@ -132,13 +135,30 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun done() {
-        val qualifiedNames = uiState
+        val appInfos = uiState
             .selectedRecord
             .list
             .filterIsInstance<AppInfo>()
-            .map { it.qualifiedName }
-        if (qualifiedNames.isNotEmpty()) {
-            sendUiEvent(UiEvent.GotoIconResize(qualifiedNames))
+        val shortcutInfos = uiState
+            .selectedRecord
+            .list
+            .filterIsInstance<LauncherInfo.ShortcutInfo>()
+        if (appInfos.isNotEmpty() || shortcutInfos.isNotEmpty()) {
+            val ids = mutableListOf<String>()
+            appInfos.forEach { appInfo ->
+                val icon = appInfo.getIcon(App.getContext()) ?: return@forEach
+                ids.add(appInfo.qualifiedName)
+                IconResize.iconCache[appInfo.qualifiedName] = icon
+                IconResize.iconBgColorCache[appInfo.qualifiedName] = appInfo.iconBgColor
+            }
+            shortcutInfos.forEach { shortcutInfo ->
+                val icon = shortcutInfo.getIcon(App.getContext()) ?: return@forEach
+                ids.add(shortcutInfo.qualifiedNameWithIntents)
+                IconResize.iconCache[shortcutInfo.qualifiedNameWithIntents] = icon
+                IconResize.iconBgColorCache[shortcutInfo.qualifiedNameWithIntents] = shortcutInfo.iconBgColor
+            }
+
+            sendUiEvent(UiEvent.GotoIconResize(IconResize(ids)))
         } else {
             saveSettings()
         }
@@ -175,17 +195,15 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         .forEach { selected ->
                             val uninstalled = !createLauncherInfos.any { launcher ->
                                 launcher.shortcuts.any { shortcut ->
-                                    shortcut.qualifiedName == selected.qualifiedName &&
-                                            shortcut.intents == selected.intents
+                                    shortcut.qualifiedNameWithIntents == selected.qualifiedNameWithIntents
                                 }
                             } && !launchLauncherInfos.any { launcher ->
                                 launcher.shortcuts.any { shortcut ->
-                                    shortcut.qualifiedName == selected.qualifiedName &&
-                                            shortcut.intents == selected.intents
+                                    shortcut.qualifiedNameWithIntents == selected.qualifiedNameWithIntents
                                 }
                             }
                             if (uninstalled) {
-                                uninstalledList.add(selected)
+//                                uninstalledList.add(selected)
                             }
                         }
                     selectedRecord.removeAllShortcutInfos(uninstalledList)
@@ -476,16 +494,42 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
         fun init() {
             subscribeEvent(IconResizeEvent::class) { event ->
-                val resizedAppInfos = event.appInfos
+                val scaleFactors = event.scaleFactors
+                val bgColors = event.bgColors
                 updateUiState {
                     val selectedList = it.selectedRecord.list.toMutableList()
-                    resizedAppInfos.forEach { appInfo ->
+                    scaleFactors.forEach { (id, scaleFactor) ->
                         val index = selectedList.indexOfFirst { obj ->
-                            obj is AppInfo && obj.qualifiedName == appInfo.qualifiedName
+                            obj is AppInfo && obj.qualifiedName == id
                         }
                         if (index != -1) {
                             val old = selectedList[index] as AppInfo
-                            selectedList[index] = appInfo.copy(miniWindow = old.miniWindow)
+                            selectedList[index] = old.copy(iconScale = scaleFactor)
+                            return@forEach
+                        }
+                        val index2 = selectedList.indexOfFirst { obj ->
+                            obj is LauncherInfo.ShortcutInfo && obj.qualifiedNameWithIntents == id
+                        }
+                        if (index2 != -1) {
+                            val old = selectedList[index2] as LauncherInfo.ShortcutInfo
+                            selectedList[index2] = old.copy(iconScale = scaleFactor)
+                        }
+                    }
+                    bgColors.forEach { (id, color) ->
+                        val index = selectedList.indexOfFirst { obj ->
+                            obj is AppInfo && obj.qualifiedName == id
+                        }
+                        if (index != -1) {
+                            val old = selectedList[index] as AppInfo
+                            selectedList[index] = old.copy(iconBgColor = color)
+                            return@forEach
+                        }
+                        val index2 = selectedList.indexOfFirst { obj ->
+                            obj is LauncherInfo.ShortcutInfo && obj.qualifiedNameWithIntents == id
+                        }
+                        if (index2 != -1) {
+                            val old = selectedList[index2] as LauncherInfo.ShortcutInfo
+                            selectedList[index2] = old.copy(iconBgColor = color)
                         }
                     }
                     it.copy(selectedRecord = UiState.SelectedRecord(selectedList))
@@ -552,8 +596,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     } else {
                         removeAll {
                             it is LauncherInfo.ShortcutInfo &&
-                                    it.qualifiedName == shortcut.qualifiedName &&
-                                    it.intents == shortcut.intents
+                                    it.qualifiedNameWithIntents == shortcut.qualifiedNameWithIntents
                         }
                     }
                 }
@@ -578,8 +621,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     removeAll {
                         it is LauncherInfo.ShortcutInfo &&
                                 list.any { selected ->
-                                    it.qualifiedName == selected.qualifiedName &&
-                                            it.intents == selected.intents
+                                    it.qualifiedNameWithIntents == selected.qualifiedNameWithIntents
                                 }
                     }
                 }
@@ -594,8 +636,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 } else if (obj is LauncherInfo.ShortcutInfo) {
                     return list.find {
                         it is LauncherInfo.ShortcutInfo &&
-                                it.qualifiedName == obj.qualifiedName &&
-                                it.intents == obj.intents
+                                it.qualifiedNameWithIntents == obj.qualifiedNameWithIntents
                     } != null
                 }
                 return obj in list
@@ -604,6 +645,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     sealed interface UiEvent {
-        data class GotoIconResize(val qualifiedNames: List<String>) : UiEvent
+        data class GotoIconResize(val iconResize: IconResize) : UiEvent
     }
 }

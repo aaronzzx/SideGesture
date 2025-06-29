@@ -16,13 +16,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +39,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
@@ -56,11 +61,15 @@ import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.actionIcon
+import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.appInfo
+import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.ktx.wechatColor
+import com.aaron.sidegesture.ui.theme.RootPadding
+import com.blankj.utilcode.util.BarUtils
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.cos
@@ -71,58 +80,6 @@ import kotlin.math.sqrt
  * @author aaronzzxup@gmail.com
  * @since 2024/11/20
  */
-
-@Composable
-fun rememberActionPanelState(): ActionPanelState {
-    return remember {
-        ActionPanelState()
-    }
-}
-
-class ActionPanelState : LongSlideState() {
-
-    var visible: Boolean by mutableStateOf(false)
-        private set
-    var actions: List<Action> by mutableStateOf(emptyList())
-        private set
-    var position: Position by mutableStateOf(Position.Left)
-        private set
-    private val pendingActions: MutableMap<Int, Action> = mutableMapOf()
-
-    override fun onDragStart(offset: Offset) {
-        super.onDragStart(offset)
-        visible = true
-    }
-
-    fun ready(position: Position, actions: List<Action>) {
-        this.position = position
-        this.actions = actions
-    }
-
-    fun done(): Action {
-        val pendingActions = pendingActions
-        val action = pendingActions.values.find {
-            it != Action.NONE
-        } ?: Action.NONE
-        reset()
-        return action
-    }
-
-    fun isSelected(action: Action): Boolean {
-        return pendingActions.values.find { it == action } != null
-    }
-
-    fun select(index: Int, action: Action) {
-        pendingActions[index] = action
-    }
-
-    override fun reset() {
-        visible = false
-        pendingActions.clear()
-        origin = Offset.Unspecified
-        finger = Offset.Unspecified
-    }
-}
 
 @Composable
 fun ActionPanel(
@@ -171,6 +128,28 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                 .background(color = Color.Black.copy(DimAlpha))
         )
 
+        val selectedLabel: String = actionText(actionPanelState.selectedAction)
+        val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
+        AnimatedVisibility(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = BarUtils.getStatusBarHeight().toDp())
+                .padding(RootPadding),
+            visible = selectedLabel.isNotEmpty(),
+            enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f),
+            exit = fadeOut(animationSpec) + scaleOut(animationSpec, 0.9f)
+        ) {
+            Text(
+                text = selectedLabel,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    shadow = Shadow(
+                        color = Color.Black, offset = Offset(2.0f, 2.0f), blurRadius = 3f
+                    )
+                ),
+                color = Color.White
+            )
+        }
+
         Box(
             modifier = Modifier
                 .run {
@@ -184,7 +163,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             when (actionPanelState.position) {
                                 Position.Left -> it.coerceAtMost(parentSize.width / 2f)
                                 Position.Right -> it.coerceAtLeast(parentSize.width / 2f)
-                                Position.Bottom -> it.coerceIn(iconOffset, parentSize.width - iconOffset)
+                                Position.Bottom -> it.coerceIn(
+                                    iconOffset,
+                                    parentSize.width - iconOffset
+                                )
                             }
                         }
                         val oy = origin.y.let {
@@ -193,6 +175,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                     minimumValue = iconOffset,
                                     maximumValue = parentSize.height - iconOffset
                                 )
+
                                 Position.Bottom -> it.coerceAtLeast(parentSize.height / 2f)
                             }
                         }
@@ -254,6 +237,12 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                     }
 
                     val actionIcon = actionIcon(action = action)
+                    val isWechatAlipay = remember(actionIcon) {
+                        actionIcon == R.drawable.wechat_scan ||
+                                actionIcon == R.drawable.wechat_paycode ||
+                                actionIcon == R.drawable.alipay_scan ||
+                                actionIcon == R.drawable.alipay_paycode
+                    }
                     Box(
                         modifier = Modifier
                             .onGloballyPositioned {
@@ -289,7 +278,11 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
 
                                     GlobalActions.EXTRA_LAUNCH_APP -> when (actionIcon is ImageVector) {
                                         true -> MaterialTheme.colorScheme.primary
-                                        else -> Color.Transparent
+                                        else -> Color(action.appInfo!!.iconBgColor)
+                                    }
+                                    GlobalActions.EXTRA_LAUNCH_SHORTCUT -> when (actionIcon is ImageVector) {
+                                        true -> MaterialTheme.colorScheme.primary
+                                        else -> Color(action.shortcutInfo!!.iconBgColor)
                                     }
 
                                     else -> MaterialTheme.colorScheme.primary
@@ -305,12 +298,6 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
                             )
                         } else {
-                            val isWechatAlipay = remember(actionIcon) {
-                                actionIcon == R.drawable.wechat_scan ||
-                                        actionIcon == R.drawable.wechat_paycode ||
-                                        actionIcon == R.drawable.alipay_scan ||
-                                        actionIcon == R.drawable.alipay_paycode
-                            }
                             AsyncImage(
                                 modifier = Modifier
                                     .graphicsLayer {
@@ -322,6 +309,12 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                             if (appInfo != null) {
                                                 scaleX = appInfo.iconScale
                                                 scaleY = appInfo.iconScale
+                                                return@graphicsLayer
+                                            }
+                                            val shortcutInfo = action.shortcutInfo
+                                            if (shortcutInfo != null) {
+                                                scaleX = shortcutInfo.iconScale
+                                                scaleY = shortcutInfo.iconScale
                                             }
                                         }
                                     },
@@ -337,5 +330,58 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun rememberActionPanelState(): ActionPanelState {
+    return remember {
+        ActionPanelState()
+    }
+}
+
+class ActionPanelState : LongSlideState() {
+
+    var visible: Boolean by mutableStateOf(false)
+        private set
+    var actions: List<Action> by mutableStateOf(emptyList())
+        private set
+    var position: Position by mutableStateOf(Position.Left)
+        private set
+    private val pendingActions: MutableMap<Int, Action> = mutableStateMapOf()
+
+    val selectedAction: Action by derivedStateOf {
+        pendingActions.values.find { it != Action.NONE } ?: Action.NONE
+    }
+
+    override fun onDragStart(offset: Offset) {
+        super.onDragStart(offset)
+        visible = true
+    }
+
+    fun ready(position: Position, actions: List<Action>) {
+        this.position = position
+        this.actions = actions
+    }
+
+    fun done(): Action {
+        val action = selectedAction
+        reset()
+        return action
+    }
+
+    fun isSelected(action: Action): Boolean {
+        return pendingActions.values.find { it == action } != null
+    }
+
+    fun select(index: Int, action: Action) {
+        pendingActions[index] = action
+    }
+
+    override fun reset() {
+        visible = false
+        pendingActions.clear()
+        origin = Offset.Unspecified
+        finger = Offset.Unspecified
     }
 }

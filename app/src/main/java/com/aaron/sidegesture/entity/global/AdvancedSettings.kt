@@ -4,6 +4,7 @@ import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelStyles
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.AnimationStyles
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipApps
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipShortcuts
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DayNightMode
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DynamicColor
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ExcludeApps
@@ -42,5 +43,7 @@ data class AdvancedSettings(
     val dynamicColor: Boolean = DynamicColor,
     val dayNightMode: DayNightMode = DayNightMode,
     // qualifiedName
-    val clipApps: Map<String, Float> = ClipApps
+    val clipApps: Map<String, Float> = ClipApps,
+    // qualifiedNameWithIntents
+    val clipShortcuts: Map<String, Float> = ClipShortcuts
 )

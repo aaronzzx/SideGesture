@@ -120,7 +120,7 @@ fun SideGestureApp() {
                 myComposable<ActionSelect> {
                     ActionSelectScreen(
                         onBack = { navController.navigateUp() },
-                        onNavToIconResize = { navController.navigate(IconResize(it)) }
+                        onNavToIconResize = { navController.navigate(it) }
                     )
                 }
                 myComposable<IconResize> {

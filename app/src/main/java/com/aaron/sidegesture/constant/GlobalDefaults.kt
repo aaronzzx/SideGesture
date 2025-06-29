@@ -33,6 +33,7 @@ object AdvancedSettingsDefaults {
     const val DynamicColor = false
     val DayNightMode = com.aaron.sidegesture.entity.DayNightMode.Auto
     val ClipApps = emptyMap<String, Float>()
+    val ClipShortcuts = emptyMap<String, Float>()
 }
 
 object GestureSettingsDefaults {
@@ -72,10 +73,10 @@ object AnimationStylesDefaults {
     val WaveStyleIconColor = android.graphics.Color.argb(200, 255, 255, 255)
 }
 
-object AppInfoDefaults {
+object ScaleableDefaults {
 
     const val MIN_SCALE = 0.5f
-    const val MAX_SCALE = 1.5f
+    const val MAX_SCALE = 2.0f
     const val DEFAULT_SCALE = 1f
 }
 

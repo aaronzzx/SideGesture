@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.entity
 
+import android.graphics.drawable.Drawable
 import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 
@@ -52,7 +53,13 @@ data object Home
 
 @Keep
 @Serializable
-data class IconResize(val qualifiedNames: List<String>)
+data class IconResize(val ids: List<String>) {
+
+    companion object {
+        val iconCache = mutableMapOf<String, Drawable>()
+        val iconBgColorCache = mutableMapOf<String, Int>()
+    }
+}
 
 @Keep
 @Serializable

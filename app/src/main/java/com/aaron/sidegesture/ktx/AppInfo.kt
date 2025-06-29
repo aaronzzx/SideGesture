@@ -18,18 +18,8 @@ val AppInfo.componentName: ComponentName get() = ComponentName.createRelative(pa
 val AppInfo.qualifiedName: String get() = "$packageName/$className"
 
 val AppInfo.icon: Drawable? @Composable get() {
-    val pkgManager = LocalContext.current.packageManager
-    return remember(this) {
-        try {
-            if (className.isNotEmpty()) {
-                pkgManager.getActivityIcon(ComponentName.createRelative(packageName, className))
-            } else {
-                pkgManager.getApplicationIcon(packageName)
-            }
-        } catch (ignored: Exception) {
-            null
-        }
-    }
+    val context = LocalContext.current
+    return remember(this, context) { getIcon(context) }
 }
 
 fun AppInfo.getIcon(context: Context): Drawable? {
