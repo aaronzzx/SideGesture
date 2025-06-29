@@ -153,6 +153,7 @@
     <string name="launch_self_permission_hint">配合电池优化选项提高后台留存能力</string>
     <string name="please_enable_launch_self_permission_by_yourself">请手动前往开启自启动权限</string>
     <string name="please_enable_ignoring_battery_optimizations_by_yourself">请手动前往启用电池优化白名单</string>
+    <string name="invalid_color_value">非法色值，请重新输入</string>
 
     <string name="gesture_to_right_top">👆</string>
     <string name="gesture_to_right">👉</string>

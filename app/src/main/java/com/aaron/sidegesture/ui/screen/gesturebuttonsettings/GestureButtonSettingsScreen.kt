@@ -4,22 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -52,6 +47,7 @@ import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.MarkColorSize
 import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
@@ -60,8 +56,6 @@ import com.aaron.sidegesture.ui.widget.MyTextRangeSlider
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.github.skydoves.colorpicker.compose.HsvColorPicker
-import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 
 /**
  * @author aaronzzxup@gmail.com
@@ -87,45 +81,14 @@ fun GestureButtonSettingsScreen(
             )
         }
         if (uiState.colorPickerDialog.first) {
-            AlertDialog(
-                containerColor = MaterialTheme.colorScheme.surface,
+            ColorPickerDialog(
                 onDismissRequest = {
                     vm.colorPickerDialog.show(false)
                 },
-                title = { },
-                text = {
-                    val color = uiState.colorPickerDialog.second
-                    val colorController = rememberColorPickerController()
-                    HsvColorPicker(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
-                        initialColor = color,
-                        controller = colorController,
-                        onColorChanged = { colorEnvelope ->
-                            vm.colorPickerDialog.onColorChange(colorEnvelope.color)
-                        }
-                    )
+                onColorPicked = { color ->
+                    vm.colorPickerDialog.onColorChange(color)
                 },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            vm.colorPickerDialog.confirm()
-                            vm.colorPickerDialog.show(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            vm.colorPickerDialog.show(false)
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
+                initialColor = uiState.colorPickerDialog.second
             )
         }
 
