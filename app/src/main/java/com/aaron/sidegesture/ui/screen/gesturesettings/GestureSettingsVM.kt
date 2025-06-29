@@ -55,6 +55,22 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     }
                 }
             }
+            launch {
+                DataStoreHolder.bottomGestureButtons.updateData {
+                    it.toMutableList().apply {
+                        forEachIndexed { index, button ->
+                            val newButton = button.copy(
+                                slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                                longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
+                                longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
+                                longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
+                                vibrations = uiState.vibrations
+                            )
+                            set(index, newButton)
+                        }
+                    }
+                }
+            }
         }
     }
 
