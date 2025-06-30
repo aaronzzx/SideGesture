@@ -474,24 +474,25 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     true -> button.longSlideActions
                     else -> button.slideActions
                 }
-                fun tryDeleteShortcutIcons(actions: List<Action>) {
-                    actions.forEach { action ->
+                fun tryDeleteShortcutIcons(old: List<Action>, new: List<Action>) {
+                    old.forEach { action ->
                         val shortcutInfo = action.shortcutInfo ?: return@forEach
                         if (shortcutInfo.iconPath.isNullOrEmpty()) return@forEach
+                        if (new.any { it.shortcutInfo?.iconPath == shortcutInfo.iconPath }) return@forEach
                         FileUtils.delete(shortcutInfo.iconPath)
                     }
                 }
                 val newGestureActions = when (actionSelect.direction) {
                     TriggerDirection.Center -> {
-                        tryDeleteShortcutIcons(gestureActions.center)
+                        tryDeleteShortcutIcons(gestureActions.center, newActions)
                         gestureActions.copy(center = newActions)
                     }
                     TriggerDirection.Up -> {
-                        tryDeleteShortcutIcons(gestureActions.up)
+                        tryDeleteShortcutIcons(gestureActions.up, newActions)
                         gestureActions.copy(up = newActions)
                     }
                     TriggerDirection.Down -> {
-                        tryDeleteShortcutIcons(gestureActions.down)
+                        tryDeleteShortcutIcons(gestureActions.down, newActions)
                         gestureActions.copy(down = newActions)
                     }
                 }
