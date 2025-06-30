@@ -223,6 +223,13 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
     private fun loadData() {
         viewModelScope.launch {
             launch {
+                DataStoreHolder.initialSettings.data.collectLatest { initialSettings ->
+                    updateUiState {
+                        it.copy(isGestureEnabled = initialSettings.gestureEnabled)
+                    }
+                }
+            }
+            launch {
                 DataStoreHolder.sideGestureButtons.data.collectLatest { buttons ->
                     updateUiState {
                         it.copy(sideGestureButtons = buttons.sortedBy { b -> b.id })

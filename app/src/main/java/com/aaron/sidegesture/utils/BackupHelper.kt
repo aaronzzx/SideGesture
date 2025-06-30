@@ -162,5 +162,6 @@ object BackupHelper {
                 }
             ).awaitAll()
         }
+        FileUtils.deleteAllInDir(Paths.Image)
     }
 }
