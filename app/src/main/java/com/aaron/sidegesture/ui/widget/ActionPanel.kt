@@ -3,6 +3,8 @@ package com.aaron.sidegesture.ui.widget
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState.Visible
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -15,10 +17,13 @@ import androidx.compose.animation.slideOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +34,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -45,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEachIndexed
 import coil.compose.AsyncImage
@@ -64,12 +71,16 @@ import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.appInfo
+import com.aaron.sidegesture.ktx.isMiniWindow
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.blankj.utilcode.util.BarUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.cos
@@ -94,13 +105,82 @@ fun ActionPanel(
         enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
         exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
-        when (actionPanelStyle) {
-            is ArcStyle -> {
-                ArcActionPanel(
-                    modifier = Modifier.fillMaxSize(),
-                    actionPanelStyle = actionPanelStyle,
-                    actionPanelState = actionPanelState,
-                    vibrations = vibrations
+        Box {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(color = Color.Black.copy(DimAlpha))
+            )
+
+            val selectedAction = actionPanelState.selectedAction
+            val selectedLabel = actionText(selectedAction)
+            val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
+            val enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f)
+            val exit = fadeOut(animationSpec) + scaleOut(animationSpec, 0.9f)
+
+
+            AnimatedVisibility(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(top = BarUtils.getStatusBarHeight().toDp())
+                    .padding(RootPadding),
+                visible = selectedAction.value == GlobalActions.EXTRA_LAUNCH_APP,
+                enter = enter,
+                exit = ExitTransition.None
+            ) {
+                Box(
+                    modifier = Modifier
+                        .animateContentSize(
+                            animationSpec = spring(),
+                            alignment = Alignment.Center
+                        )
+                        .let { thisModifier ->
+                            when (actionPanelState.triggerType.isMiniWindow()) {
+                                true -> {
+                                    thisModifier
+                                        .width(200.dp)
+                                        .aspectRatio(3 / 4f)
+                                }
+                                else -> {
+                                    thisModifier.fillMaxSize()
+                                }
+                            }
+                        }
+                        .background(
+                            color = Color.White.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                )
+            }
+
+            when (actionPanelStyle) {
+                is ArcStyle -> {
+                    ArcActionPanel(
+                        modifier = Modifier.fillMaxSize(),
+                        actionPanelStyle = actionPanelStyle,
+                        actionPanelState = actionPanelState,
+                        vibrations = vibrations
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = BarUtils.getStatusBarHeight().toDp())
+                    .padding(RootPadding),
+                visible = selectedLabel.isNotEmpty(),
+                enter = enter,
+                exit = exit
+            ) {
+                Text(
+                    text = selectedLabel,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        shadow = Shadow(
+                            color = Color.Black, offset = Offset(2.0f, 2.0f), blurRadius = 3f
+                        )
+                    ),
+                    color = Color.White
                 )
             }
         }
@@ -125,7 +205,6 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                     parentSize = it.size.toSize()
                 }
                 .matchParentSize()
-                .background(color = Color.Black.copy(DimAlpha))
         )
 
         val selectedLabel: String = actionText(actionPanelState.selectedAction)
@@ -280,6 +359,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                         true -> MaterialTheme.colorScheme.primary
                                         else -> Color(action.appInfo!!.iconBgColor)
                                     }
+
                                     GlobalActions.EXTRA_LAUNCH_SHORTCUT -> when (actionIcon is ImageVector) {
                                         true -> MaterialTheme.colorScheme.primary
                                         else -> Color(action.shortcutInfo!!.iconBgColor)
@@ -335,12 +415,13 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
 
 @Composable
 fun rememberActionPanelState(): ActionPanelState {
+    val coroutineScope = rememberCoroutineScope()
     return remember {
-        ActionPanelState()
+        ActionPanelState(coroutineScope)
     }
 }
 
-class ActionPanelState : LongSlideState() {
+class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideState() {
 
     var visible: Boolean by mutableStateOf(false)
         private set
@@ -353,6 +434,9 @@ class ActionPanelState : LongSlideState() {
     val selectedAction: Action by derivedStateOf {
         pendingActions.values.find { it != Action.NONE } ?: Action.NONE
     }
+    var triggerType: TriggerType by mutableStateOf(TriggerType.Press)
+        private set
+    private var delayTriggerTypeChangedJob: Job? = null
 
     override fun onDragStart(offset: Offset) {
         super.onDragStart(offset)
@@ -366,8 +450,9 @@ class ActionPanelState : LongSlideState() {
 
     fun done(): Action {
         val action = selectedAction
+        val triggerType = triggerType
         reset()
-        return action
+        return action.copy(extra = triggerType)
     }
 
     fun isSelected(action: Action): Boolean {
@@ -376,6 +461,13 @@ class ActionPanelState : LongSlideState() {
 
     fun select(index: Int, action: Action) {
         pendingActions[index] = action
+
+        delayTriggerTypeChangedJob?.cancel()
+        triggerType = TriggerType.Press
+        delayTriggerTypeChangedJob = coroutineScope.launch {
+            delay(500)
+            triggerType = TriggerType.LongPress
+        }
     }
 
     override fun reset() {
@@ -383,5 +475,15 @@ class ActionPanelState : LongSlideState() {
         pendingActions.clear()
         origin = Offset.Unspecified
         finger = Offset.Unspecified
+        delayTriggerTypeChangedJob?.cancel()
+        triggerType = TriggerType.Press
+    }
+
+    /**
+     * 用于实现短按和长按
+     */
+    enum class TriggerType {
+
+        Press, LongPress
     }
 }

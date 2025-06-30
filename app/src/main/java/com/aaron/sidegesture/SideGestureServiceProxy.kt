@@ -29,6 +29,7 @@ import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ktx.isMiniWindow
 import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.launchShortcutInfo
@@ -37,6 +38,7 @@ import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
+import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.showToast
@@ -237,7 +239,9 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.EXTRA_LAUNCH_APP -> {
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    launchAppInfo(appInfo)
+                    val triggerType = action.extra as? TriggerType
+                    val miniWindow = triggerType?.isMiniWindow() ?: appInfo.miniWindow
+                    launchAppInfo(appInfo, miniWindow)
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
