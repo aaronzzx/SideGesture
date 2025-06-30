@@ -87,6 +87,7 @@ fun GestureButtonSettingsScreen(
                 },
                 onColorPicked = { color ->
                     vm.colorPickerDialog.onColorChange(color)
+                    vm.colorPickerDialog.confirm()
                 },
                 initialColor = uiState.colorPickerDialog.second
             )
