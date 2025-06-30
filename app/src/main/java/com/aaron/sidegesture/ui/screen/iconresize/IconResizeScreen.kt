@@ -66,6 +66,7 @@ import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
+import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 
@@ -252,17 +253,19 @@ fun IconResizeScreen(
                     }
                 }
 
-                MyTextSwitch(
-                    onTextClick = {
-                        vm.showColorPickerDialog(true)
-                    },
-                    onCheckedChange = { enabled ->
-                        vm.onBgColorEnabled(enabled, defaultBgColor)
-                    },
-                    checked = uiState.selectedBgColor?.enabled ?: false,
-                    text = stringResource(id = R.string.background_color),
-                    markColor = uiState.selectedBgColor?.color ?: defaultBgColor
-                )
+                MySection {
+                    MyTextSwitch(
+                        onTextClick = {
+                            vm.showColorPickerDialog(true)
+                        },
+                        onCheckedChange = { enabled ->
+                            vm.onBgColorEnabled(enabled, defaultBgColor)
+                        },
+                        checked = uiState.selectedBgColor?.enabled ?: false,
+                        text = stringResource(id = R.string.background_color),
+                        markColor = uiState.selectedBgColor?.color ?: defaultBgColor
+                    )
+                }
             }
         }
     }

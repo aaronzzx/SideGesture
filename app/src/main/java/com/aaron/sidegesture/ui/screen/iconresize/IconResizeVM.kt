@@ -161,7 +161,7 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
                         ids = ids,
                         icons = icons,
                         scaleFactors = map,
-                        selectedId = ids.first(),
+                        selectedId = ids.firstOrNull() ?: "",
                         bgColors = bgColors
                     )
                 }
