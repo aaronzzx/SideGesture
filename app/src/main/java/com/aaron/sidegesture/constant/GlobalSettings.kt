@@ -19,6 +19,8 @@ object GlobalSettings {
     val MaxSlideTriggerDistance = ConvertUtils.dp2px(60f)
     val MinLongSlideTriggerDistance = ConvertUtils.dp2px(80f)
     val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(200f)
+    const val MinMoveScreenRate = 1f
+    const val MaxMoveScreenRate = 3f
     const val MinGestureButtonPosition = 0f
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f

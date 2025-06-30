@@ -51,6 +51,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private val eventHandler = EventHandler()
 
+    val actionSettingsDialog = ActionSettingsDialog()
+
     init {
         eventHandler.init()
         loadData()
@@ -561,6 +563,15 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    inner class ActionSettingsDialog {
+
+        fun show(show: Boolean, action: Action = Action.NONE) {
+            updateUiState {
+                it.copy(actionSettingsDialog = it.actionSettingsDialog.copy(show = show, action = action))
+            }
+        }
+    }
+
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
@@ -568,7 +579,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val apps: List<AppInfo> = emptyList(),
         val createShortcuts: List<LauncherInfo> = emptyList(),
         val launchShortcuts: List<LauncherInfo> = emptyList(),
-        val selectedRecord: SelectedRecord = SelectedRecord()
+        val selectedRecord: SelectedRecord = SelectedRecord(),
+        val actionSettingsDialog: ActionSettingsDialogValue = ActionSettingsDialogValue(false, Action.NONE),
     ) {
         data class SelectedRecord(val list: List<Any> = emptyList()) {
 
@@ -664,6 +676,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 return obj in list
             }
         }
+
+        data class ActionSettingsDialogValue(
+            val show: Boolean,
+            val action: Action
+        )
     }
 
     sealed interface UiEvent {

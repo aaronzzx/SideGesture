@@ -33,6 +33,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Center
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.WaveStyle
+import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
@@ -63,13 +64,14 @@ fun SideGestureContainer(
     modifier: Modifier = Modifier,
     imePadding: Int = 0,
     animationStyle: AnimationStyle? = WaveStyle(),
-    actionPanelStyle: ActionPanelStyle = ArcStyle()
+    actionPanelStyle: ActionPanelStyle = ArcStyle(),
+    actionSettings: ActionSettings = ActionSettings()
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons)
     val actionPanelState = rememberActionPanelState()
-    val moveScreenState = rememberMoveScreenState()
+    val moveScreenState = rememberMoveScreenState(actionSettings.moveScreen.rate)
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
             sideGestureState.onDragStart(offset, imePadding)

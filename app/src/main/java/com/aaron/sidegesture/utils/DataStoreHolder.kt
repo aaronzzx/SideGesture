@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.DataStoreFiles
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.entity.global.InitialSettings
@@ -33,6 +34,12 @@ object DataStoreHolder {
         App.getContext().dataStore(fileName, defValue)
     }
 
+    val actionSettings: DataStore<ActionSettings> = run {
+        val fileName = DataStoreFiles.ACTION_SETTINGS
+        val defValue = ActionSettings()
+        App.getContext().dataStore(fileName, defValue)
+    }
+
     val bottomGestureButtons: DataStore<List<GestureButton>> = run {
         val fileName = DataStoreFiles.BOTTOM_GESTURE_BUTTONS
         val defValue = GestureButton.BottomDefaults
@@ -49,6 +56,7 @@ object DataStoreHolder {
         initialSettings.updateData { InitialSettings() }
         advancedSettings.updateData { AdvancedSettings() }
         gestureSettings.updateData { GestureSettings() }
+        actionSettings.updateData { ActionSettings() }
         sideGestureButtons.updateData { GestureButton.SideDefaults }
         bottomGestureButtons.updateData { GestureButton.BottomDefaults }
     }

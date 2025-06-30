@@ -35,6 +35,7 @@ import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -183,6 +184,10 @@ class SideGestureService : ComponentAccessibilityService() {
                         val imePadding by imeInsetObserver
                             .flow
                             .collectAsStateWithLifecycle()
+                        val actionSettings by DataStoreHolder
+                            .actionSettings
+                            .data
+                            .collectAsStateWithLifecycle(initialValue = ActionSettings())
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = sideButtons + bottomButtons,
@@ -193,7 +198,8 @@ class SideGestureService : ComponentAccessibilityService() {
                             },
                             onAction = { action ->
                                 proxy.onAction(action)
-                            }
+                            },
+                            actionSettings = actionSettings
                         )
                     }
                 }

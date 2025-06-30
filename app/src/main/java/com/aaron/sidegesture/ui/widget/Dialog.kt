@@ -56,9 +56,13 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.compose.ui.BottomDialog
 import com.aaron.compose.utils.SystemFontScaleHandler
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
+import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
 import com.aaron.sidegesture.ui.theme.DialogTitlePadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -469,4 +473,45 @@ fun ColorPickerDialog(
             }
         )
     }
+}
+
+@Composable
+fun ActionSettingsDialog(
+    onDismissRequest: () -> Unit,
+    action: Action,
+    autoDismiss: Boolean = true
+) {
+    val context = LocalContext.current
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = context.actionText(action))
+        },
+        text = {
+            when (action.value) {
+                GlobalActions.MOVE_SCREEN -> {
+                    MoveScreenSettingsContent()
+                }
+            }
+        },
+        confirmButton = {
+//            TextButton(
+//                onClick = {
+//                    if (autoDismiss) {
+//                        onDismissRequest()
+//                    }
+//                }
+//            ) {
+//                Text(text = stringResource(id = R.string.confirm))
+//            }
+        },
+        dismissButton = {
+//            TextButton(
+//                onClick = onDismissRequest
+//            ) {
+//                Text(text = stringResource(id = R.string.cancel))
+//            }
+        }
+    )
 }

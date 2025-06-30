@@ -94,6 +94,8 @@
     <string name="slider_high">高</string>
     <string name="slider_top">上</string>
     <string name="slider_bottom">下</string>
+    <string name="slider_fast">快</string>
+    <string name="slider_slow">慢</string>
     <string name="long_slide_action">长距离滑动</string>
     <string name="long_slide_trigger_immediately">立即触发</string>
     <string name="long_slide_trigger_immediately_hint">识别到手势立即触发</string>
@@ -185,6 +187,7 @@
     <string name="enable_keep_screen_on">已启用屏幕常亮</string>
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
     <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法移动屏幕，请先开启长距离滑动立即触发</string>
+    <string name="move_screen_rate">移动速率</string>
 
     <string name="action_none">无</string>
     <string name="action_back">返回键</string>

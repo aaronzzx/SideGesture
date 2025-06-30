@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,14 +21,17 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -66,7 +70,9 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
+import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.onClick
+import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
@@ -87,7 +93,6 @@ import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinIconSize
@@ -95,6 +100,7 @@ import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.widget.ActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.blankj.utilcode.util.PathUtils
@@ -128,6 +134,13 @@ fun ActionSelectScreen(
             }
         }
     ) { uiState ->
+        if (uiState.actionSettingsDialog.show) {
+            ActionSettingsDialog(
+                onDismissRequest = { vm.actionSettingsDialog.show(false) },
+                action = uiState.actionSettingsDialog.action
+            )
+        }
+
         val snackbarHostState = remember { SnackbarHostState() }
         Scaffold(
             topBar = {
@@ -236,6 +249,9 @@ fun ActionSelectScreen(
                                 selectSingle = uiState.selectSingle,
                                 onSelect = { action, selected ->
                                     vm.select(action, selected)
+                                },
+                                onSettingsClick = { action ->
+                                    vm.actionSettingsDialog.show(true, action)
                                 }
                             )
                         }
@@ -499,6 +515,7 @@ fun ActionSelectScreen(
 
 @Composable
 private fun ActionPage(
+    onSettingsClick: (Action) -> Unit,
     onSelect: (Action, Boolean) -> Unit,
     actions: List<Action>,
     selectedRecord: SelectedRecord,
@@ -522,6 +539,10 @@ private fun ActionPage(
                 enabled = canActionEnabled(selectedRecord, item, maxSelectCount),
                 onSelect = { selected ->
                     onSelect(item, selected)
+                },
+                showSettings = item.value == GlobalActions.MOVE_SCREEN,
+                onSettingsClick = {
+                    onSettingsClick(item)
                 }
             )
         }
@@ -534,7 +555,9 @@ private fun ActionItem(
     selected: Boolean,
     action: Action,
     selectSingle: Boolean,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    showSettings: Boolean = false,
+    onSettingsClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -542,11 +565,11 @@ private fun ActionItem(
                 alpha = if (enabled) 1f else GlobalSettings.DisabledAlpha
             }
             .fillMaxWidth()
-            .height(MinInteractiveSize)
+            .heightIn(min = MinInteractiveSize)
             .onClick(enabled = enabled) {
                 onSelect(!selected)
             }
-            .padding(vertical = ContentPaddingVerticalWithSection),
+            .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
@@ -579,14 +602,43 @@ private fun ActionItem(
             }
         }
 
-        Text(
+        Row(
             modifier = Modifier
-                .padding(start = ItemPadding, end = ItemPadding)
+                .padding(horizontal = ItemPadding)
                 .weight(1f),
-            text = actionText(action = action, emptyIfNone = false),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        ) {
+            Text(
+                modifier = Modifier
+                    .weight(1f, false)
+                    .basicMarquee(velocity = 50.dp),
+                text = actionText(action = action, emptyIfNone = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (showSettings) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clipToBackground(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = CircleShape
+                        )
+                        .onSingleClick(enabled = enabled) {
+                            onSettingsClick?.invoke()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
         if (!selectSingle) {
             Checkbox(
                 modifier = Modifier.padding(end = TopBarPaddingExtra),

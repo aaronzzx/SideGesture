@@ -11,4 +11,5 @@ object DataStoreFiles {
     const val GESTURE_SETTINGS = "cc"
     const val SIDE_GESTURE_BUTTONS = "dd"
     const val BOTTOM_GESTURE_BUTTONS = "ee"
+    const val ACTION_SETTINGS = "ff"
 }

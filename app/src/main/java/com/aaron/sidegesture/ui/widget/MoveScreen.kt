@@ -61,9 +61,10 @@ fun MoveScreen(
                             )
                         )
                     }
+                    val statusBarHeight = BarUtils.getStatusBarHeight().toFloat()
                     translate(
                         left = size.width / 2f - magnifierSize.toPx() / 2f,
-                        top = BarUtils.getStatusBarHeight().toFloat()
+                        top = statusBarHeight
                     ) {
                         clipPath(path) {
                             val srcOffset = IntOffset(
@@ -76,20 +77,54 @@ fun MoveScreen(
                             )
                         }
                     }
+
+                    //region 瞄准
+                    val magnifierCenter = Offset(
+                        x = center.x,
+                        y = statusBarHeight + magnifierSize.toPx() / 2f
+                    )
+                    val lineLength = 16.dp.toPx()
+                    val lineColor = Color.LightGray
+                    val strokeWidth = 2.dp.toPx()
+                    drawLine(
+                        color = lineColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(
+                            x = magnifierCenter.x - lineLength / 2,
+                            y = magnifierCenter.y
+                        ),
+                        end = Offset(
+                            x = magnifierCenter.x + lineLength / 2,
+                            y = magnifierCenter.y
+                        )
+                    )
+                    drawLine(
+                        color = lineColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(
+                            x = magnifierCenter.x,
+                            y = magnifierCenter.y - lineLength / 2
+                        ),
+                        end = Offset(
+                            x = magnifierCenter.x,
+                            y = magnifierCenter.y + lineLength / 2
+                        )
+                    )
+                    //endregion
                 }
             }
     )
 }
 
 @Composable
-fun rememberMoveScreenState(): MoveScreenState {
-    return remember {
-        MoveScreenState()
+fun rememberMoveScreenState(rate: Float = 1f): MoveScreenState {
+    return remember(rate) {
+        MoveScreenState(rate)
     }
 }
 
 @Stable
-class MoveScreenState : LongSlideState() {
+class MoveScreenState(private val rate: Float = 1f) : LongSlideState() {
 
     var visible: Boolean by mutableStateOf(false)
         private set
@@ -97,8 +132,9 @@ class MoveScreenState : LongSlideState() {
         private set
     // 等待模拟点击的坐标
     val fingerOnScreen: Offset by derivedStateOf {
-        origin + offset * 2f
+        origin + srcOffset * 2f + (offset - srcOffset)
     }
+    private var srcOffset: Offset by mutableStateOf(Offset.Zero)
 
     override fun onDragStart(offset: Offset) {
         super.onDragStart(offset)
@@ -107,7 +143,8 @@ class MoveScreenState : LongSlideState() {
 
     override fun onDrag(dragAmount: Offset) {
         super.onDrag(dragAmount)
-        offset += dragAmount
+        offset += dragAmount * rate
+        srcOffset += dragAmount
     }
 
     fun done(): Action {
@@ -120,5 +157,6 @@ class MoveScreenState : LongSlideState() {
         super.reset()
         visible = false
         offset = Offset.Zero
+        srcOffset = Offset.Zero
     }
 }
