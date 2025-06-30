@@ -122,7 +122,7 @@ fun HomeScreen(
         }
 
         val createFileLauncher = rememberLauncherForActivityResult(
-            contract = CreateDocument("text/plain")
+            contract = CreateDocument("*/*")
         ) { uri ->
             uri ?: return@rememberLauncherForActivityResult
             vm.backup(context, uri)
@@ -148,7 +148,7 @@ fun HomeScreen(
                 },
                 onRestoreRequest = {
                     vm.showBackupRestoreDialog(false)
-                    getFileLauncher.launch("text/plain")
+                    getFileLauncher.launch("*/*")
                 }
             )
         }

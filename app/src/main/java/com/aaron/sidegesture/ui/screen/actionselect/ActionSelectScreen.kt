@@ -76,6 +76,7 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
+import com.aaron.sidegesture.constant.Paths
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.IconResize
@@ -103,7 +104,6 @@ import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.ActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
-import com.blankj.utilcode.util.PathUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -303,7 +303,7 @@ fun ActionSelectScreen(
                                         var iconRes = 0
                                         var iconPath: String? = null
                                         if (bitmap != null) {
-                                            iconPath = PathUtils.getExternalAppPicturesPath() + "/" + System.currentTimeMillis()
+                                            iconPath = "${Paths.Image}/${System.currentTimeMillis()}"
                                             val fos = FileOutputStream(iconPath)
                                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
                                         } else if (shortcutIconRes != null) {
