@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
-import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenRate
 import kotlinx.serialization.Serializable
 
 /**
@@ -15,5 +14,5 @@ data class ActionSettings(
 ) {
     @Serializable
     @Keep
-    data class MoveScreen(val rate: Float = MinMoveScreenRate)
+    data class MoveScreen(val rate: Float = 2f)
 }
