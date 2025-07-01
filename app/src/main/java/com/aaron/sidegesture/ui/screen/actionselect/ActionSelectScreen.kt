@@ -76,7 +76,6 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
-import com.aaron.sidegesture.constant.Paths
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.IconResize
@@ -111,7 +110,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import java.io.FileOutputStream
 
 
 /**
@@ -301,12 +299,7 @@ fun ActionSelectScreen(
                                         val intent = result.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)?.toUri(Intent.URI_INTENT_SCHEME)
                                         val label = result.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME) ?: ""
                                         var iconRes = 0
-                                        var iconPath: String? = null
-                                        if (bitmap != null) {
-                                            iconPath = "${Paths.Image}/${System.currentTimeMillis()}"
-                                            val fos = FileOutputStream(iconPath)
-                                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-                                        } else if (shortcutIconRes != null) {
+                                        if (shortcutIconRes != null) {
                                             val res = context.packageManager.getResourcesForApplication(shortcutIconRes.packageName)
                                             iconRes = res.getIdentifier(shortcutIconRes.resourceName, null, null)
                                         }
@@ -316,7 +309,8 @@ fun ActionSelectScreen(
                                             intents = intent?.let { listOf(it) } ?: emptyList(),
                                             label = label,
                                             iconRes = iconRes,
-                                            iconPath = iconPath
+                                            iconPath = null,
+                                            iconBitmap = bitmap
                                         )
                                         vm.addNewShortcut(launcherInfo, shortcutInfo)
                                         if (uiState.selectedRecord.size < MAX_SELECT_COUNT) {

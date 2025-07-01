@@ -58,12 +58,13 @@ val LauncherInfo.ShortcutInfo.icon: Drawable? @Composable get() {
 fun LauncherInfo.ShortcutInfo.getIcon(context: Context): Drawable? {
     return try {
         var resources = context.resources
-        val model = if (iconPath != null) {
-            BitmapFactory.decodeFile(iconPath)
-        } else {
-            resources = context.packageManager.getResourcesForApplication(packageName)
-            BitmapFactory.decodeResource(resources, iconRes) ?: resources.getDrawable(iconRes, context.theme)
-        }
+        val model = iconBitmap
+            ?: if (iconPath != null) {
+                BitmapFactory.decodeFile(iconPath)
+            } else {
+                resources = context.packageManager.getResourcesForApplication(packageName)
+                BitmapFactory.decodeResource(resources, iconRes) ?: resources.getDrawable(iconRes, context.theme)
+            }
 
         val stdSize = ConvertUtils.dp2px(48f)
         if (model is Bitmap) {

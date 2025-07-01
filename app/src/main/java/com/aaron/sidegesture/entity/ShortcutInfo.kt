@@ -1,8 +1,10 @@
 package com.aaron.sidegesture.entity
 
+import android.graphics.Bitmap
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.ScaleableDefaults.DEFAULT_SCALE
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * @author DS-Z
@@ -26,6 +28,8 @@ data class LauncherInfo (
         val iconRes: Int = 0,
         val iconPath: String? = null,
         val iconScale: Float = DEFAULT_SCALE,
-        val iconBgColor: Int = 0
+        val iconBgColor: Int = 0,
+        @Transient
+        val iconBitmap: Bitmap? = null
     )
 }

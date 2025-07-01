@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
+import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -7,6 +8,7 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.constant.Paths
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AppInfo
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.FileOutputStream
 
 /**
  * @author aaronzzxup@gmail.com
@@ -557,6 +560,21 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             selectedList[index2] = old.copy(iconBgColor = color)
                         }
                     }
+
+                    // 保存Bitmap到本地
+                    val shortcutInfos = mutableMapOf<Int, LauncherInfo.ShortcutInfo>()
+                    selectedList.forEachIndexed { index, obj ->
+                        if (obj !is LauncherInfo.ShortcutInfo) return@forEachIndexed
+                        val iconBitmap = obj.iconBitmap ?: return@forEachIndexed
+                        val iconPath = "${Paths.Image}/${System.currentTimeMillis()}"
+                        val fos = FileOutputStream(iconPath)
+                        iconBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                        shortcutInfos[index] = obj.copy(iconPath = iconPath)
+                    }
+                    shortcutInfos.forEach { (index, shortcutInfo) ->
+                        selectedList[index] = shortcutInfo
+                    }
+
                     it.copy(selectedRecord = UiState.SelectedRecord(selectedList))
                 }
                 saveSettings()
