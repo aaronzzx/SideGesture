@@ -55,7 +55,13 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         viewModelScope.launch {
             launch {
                 DataStoreHolder.gestureSettings.updateData {
-                    it.copy(angles = GestureAngles(left = leftAngle, right = rightAngle))
+                    it.copy(
+                        angles = GestureAngles(
+                            left = getGestureAngle(Position.Left),
+                            right = getGestureAngle(Position.Right),
+                            bottom = getGestureAngle(Position.Bottom)
+                        )
+                    )
                 }
             }
             launch {
@@ -63,11 +69,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = when (gestureButton.position) {
-                                    Position.Left -> leftAngle
-                                    Position.Right -> rightAngle
-                                    Position.Bottom -> bottomAngle
-                                }
+                                angle = getGestureAngle(gestureButton.position)
                             )
                             set(index, newButton)
                         }
@@ -79,11 +81,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = when (gestureButton.position) {
-                                    Position.Left -> leftAngle
-                                    Position.Right -> rightAngle
-                                    Position.Bottom -> bottomAngle
-                                }
+                                angle = getGestureAngle(gestureButton.position)
                             )
                             set(index, newButton)
                         }
@@ -102,10 +100,9 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun reset() {
         viewModelScope.launch {
-            val angles = GestureAngles()
             launch {
                 DataStoreHolder.gestureSettings.updateData {
-                    it.copy(angles = angles)
+                    it.copy(angles = GestureAngles())
                 }
             }
             launch {
@@ -113,11 +110,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = when (gestureButton.position) {
-                                    Position.Left -> angles.left
-                                    Position.Right -> angles.right
-                                    Position.Bottom -> angles.bottom
-                                }
+                                angle = getGestureAngle(gestureButton.position, true)
                             )
                             set(index, newButton)
                         }
@@ -129,11 +122,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     it.toMutableList().apply {
                         forEachIndexed { index, gestureButton ->
                             val newButton = gestureButton.copy(
-                                angle = when (gestureButton.position) {
-                                    Position.Left -> angles.left
-                                    Position.Right -> angles.right
-                                    Position.Bottom -> angles.bottom
-                                }
+                                angle = getGestureAngle(gestureButton.position, true)
                             )
                             set(index, newButton)
                         }
@@ -162,11 +151,11 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    private fun getGestureAngle(position: Position): GestureAngle {
+    private fun getGestureAngle(position: Position, reset: Boolean = false): GestureAngle {
         return when (position) {
-            Position.Left -> leftAngle
-            Position.Right -> rightAngle
-            Position.Bottom -> bottomAngle
+            Position.Left -> if (reset) GestureAngle() else leftAngle
+            Position.Right -> if (reset) GestureAngle() else rightAngle
+            Position.Bottom -> if (reset) GestureAngle() else bottomAngle
         }
     }
 
