@@ -83,6 +83,7 @@ object BackupHelper {
                 try {
                     // 兼容旧版备份文件恢复
                     restoreBackupFromBytes(input)
+                    FileUtils.deleteAllInDir(Paths.Image)
                 } catch (ignored: Exception) {
                     val restoreDirFile = File(restoreDir).also {
                         // 创建临时目录
@@ -96,6 +97,7 @@ object BackupHelper {
                         if (file.name == ZIP_BACKUP) {
                             restoreBackupFromBytes(file.readBytes())
                         } else if (file.name == ZIP_IMAGES) {
+                            FileUtils.deleteAllInDir(Paths.Image)
                             FileUtils.createOrExistsDir(Paths.Image)
                             ZipUtils.unzipFile(file, restoreDirFile).forEach { imageFile ->
                                 val destFile = File("${Paths.Image}/${imageFile.name}")
@@ -162,6 +164,5 @@ object BackupHelper {
                 }
             ).awaitAll()
         }
-        FileUtils.deleteAllInDir(Paths.Image)
     }
 }
