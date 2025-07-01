@@ -200,16 +200,14 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         .filterIsInstance<LauncherInfo.ShortcutInfo>()
                         .forEach { selected ->
                             val uninstalled = !createLauncherInfos.any { launcher ->
-                                launcher.shortcuts.any { shortcut ->
-                                    shortcut.qualifiedNameWithIntents == selected.qualifiedNameWithIntents
-                                }
+                                launcher.qualifiedName == selected.qualifiedName
                             } && !launchLauncherInfos.any { launcher ->
                                 launcher.shortcuts.any { shortcut ->
                                     shortcut.qualifiedNameWithIntents == selected.qualifiedNameWithIntents
                                 }
                             }
                             if (uninstalled) {
-//                                uninstalledList.add(selected)
+                                uninstalledList.add(selected)
                             }
                         }
                     selectedRecord.removeAllShortcutInfos(uninstalledList)
