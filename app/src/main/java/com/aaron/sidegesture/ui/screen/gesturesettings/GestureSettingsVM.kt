@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.entity.Vibrations
-import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -29,7 +28,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             val uiState = uiState
             launch {
                 DataStoreHolder.gestureSettings.updateData {
-                    GestureSettings(
+                    it.copy(
                         slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
                         longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
                         longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
