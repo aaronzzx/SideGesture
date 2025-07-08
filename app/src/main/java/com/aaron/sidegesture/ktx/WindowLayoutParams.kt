@@ -35,13 +35,14 @@ fun WindowManager.LayoutParams.updateGestureButton(button: GestureButton) {
             width = (windowWidth * button.fraction).toInt()
             height = button.width
             x = (windowWidth * button.start).toInt()
+            y = windowHeight - button.width
         }
     }
     @SuppressLint("RtlHardcoded")
     gravity = when (button.position) {
         Position.Left -> Gravity.LEFT or Gravity.TOP
         Position.Right -> Gravity.RIGHT or Gravity.TOP
-        Position.Bottom -> Gravity.LEFT or Gravity.BOTTOM
+        Position.Bottom -> Gravity.LEFT or Gravity.TOP
     }
 }
 
