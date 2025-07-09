@@ -4,9 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState.Visible
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,11 +17,10 @@ import androidx.compose.animation.slideOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEachIndexed
@@ -97,6 +97,7 @@ fun ActionPanel(
     actionPanelStyle: ActionPanelStyle,
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
+    longPressLaunchPopup: Boolean = false,
     vibrations: Vibrations? = null
 ) {
     AnimatedVisibility(
@@ -128,29 +129,36 @@ fun ActionPanel(
                 enter = enter,
                 exit = ExitTransition.None
             ) {
-                Box(
-                    modifier = Modifier
-                        .animateContentSize(
-                            animationSpec = spring(),
-                            alignment = Alignment.Center
-                        )
-                        .let { thisModifier ->
-                            when (actionPanelState.triggerType.isMiniWindow()) {
-                                true -> {
-                                    thisModifier
-                                        .width(200.dp)
-                                        .aspectRatio(3 / 4f)
-                                }
-                                else -> {
-                                    thisModifier.fillMaxSize()
-                                }
+                BoxWithConstraints {
+                    Box(
+                        modifier = Modifier
+                            .let { thisModifier ->
+                                val miniWindow = actionPanelState.triggerType.isMiniWindow(longPressLaunchPopup)
+                                val maxWidth = this@BoxWithConstraints.maxWidth
+                                val maxHeight = this@BoxWithConstraints.maxHeight
+                                val spec = spring<Dp>(stiffness = 5000f)
+                                val width by animateDpAsState(
+                                    targetValue = when (miniWindow) {
+                                        true -> 200.dp
+                                        false -> maxWidth
+                                    },
+                                    animationSpec = spec
+                                )
+                                val height by animateDpAsState(
+                                    targetValue = when (miniWindow) {
+                                        true -> width / 0.75f
+                                        false -> maxHeight
+                                    },
+                                    animationSpec = spec
+                                )
+                                thisModifier.size(width = width, height = height)
                             }
-                        }
-                        .background(
-                            color = Color.White.copy(alpha = 0.35f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                )
+                            .background(
+                                color = Color.White.copy(alpha = 0.35f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                    )
+                }
             }
 
             when (actionPanelStyle) {

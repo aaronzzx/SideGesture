@@ -53,6 +53,13 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onActionPanelAppLongPressLaunchPopupChanged(value: Boolean) {
+        updateUiState {
+            it.copy(actionPanelAppLongPressLaunchPopup = value)
+        }
+        saveSettings()
+    }
+
     fun onExcludeFromRecentsChange(value: Boolean) {
         updateUiState {
             it.copy(excludeFromRecents = value)
@@ -117,6 +124,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     animationStyles = it.animationStyles.copy(isAnimationEnabled = uiState.showAnimation),
                     volumeButtonSwitchSong = uiState.volumeButtonSwitchSong,
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
+                    actionPanelAppLongPressLaunchPopup = uiState.actionPanelAppLongPressLaunchPopup,
                     hideLandscape = uiState.hideLandscape,
                     hideQuickPanel = uiState.hideQuickPanel,
                     hideScreenLock = uiState.hideScreenLock,
@@ -138,6 +146,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         showAnimation = item.animationStyles.isAnimationEnabled,
                         volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                         fitSoftKeyboard = item.fitSoftKeyboard,
+                        actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
                         hideLandscape = item.hideLandscape,
                         hideQuickPanel = item.hideQuickPanel,
                         hideScreenLock = item.hideScreenLock,
@@ -156,6 +165,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val volumeButtonSwitchSong: Boolean = false,
         val showAnimation: Boolean = false,
         val fitSoftKeyboard: Boolean = false,
+        val actionPanelAppLongPressLaunchPopup: Boolean = false,
         val hideLandscape: Boolean = false,
         val hideQuickPanel: Boolean = false,
         val hideScreenLock: Boolean = false,

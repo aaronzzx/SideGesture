@@ -263,9 +263,13 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             GlobalActions.EXTRA_LAUNCH_APP -> {
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    val triggerType = action.extra as? TriggerType
-                    val miniWindow = triggerType?.isMiniWindow() ?: appInfo.miniWindow
-                    launchAppInfo(appInfo, miniWindow)
+                    coroutineScope.launch {
+                        val longPressLaunchPopup =
+                            DataStoreHolder.advancedSettings.data.first().actionPanelAppLongPressLaunchPopup
+                        val triggerType = action.extra as? TriggerType
+                        val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: appInfo.miniWindow
+                        launchAppInfo(appInfo, miniWindow)
+                    }
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {

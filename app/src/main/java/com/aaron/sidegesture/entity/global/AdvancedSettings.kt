@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelAppLongPressLaunchPopup
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelStyles
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.AnimationStyles
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipApps
@@ -34,6 +35,7 @@ data class AdvancedSettings(
     val actionPanelStyles: ActionPanelStyles = ActionPanelStyles,
     val volumeButtonSwitchSong: Boolean = VolumeButtonSwitchSong,
     val fitSoftKeyboard: Boolean = FitSoftKeyboard,
+    val actionPanelAppLongPressLaunchPopup: Boolean = ActionPanelAppLongPressLaunchPopup,
     val hideLandscape: Boolean = HideLandscape,
     val hideQuickPanel: Boolean = HideQuickPanel,
     val hideScreenLock: Boolean = HideScreenLock,

@@ -65,7 +65,8 @@ fun SideGestureContainer(
     imePadding: Int = 0,
     animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle(),
-    actionSettings: ActionSettings = ActionSettings()
+    actionSettings: ActionSettings = ActionSettings(),
+    actionPanelLongPressLaunchPopup: Boolean = false
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -143,9 +144,10 @@ fun SideGestureContainer(
     )
     Box(modifier = modifier) {
         ActionPanel(
-            modifier = Modifier.matchParentSize(),
             actionPanelStyle = actionPanelStyle,
             actionPanelState = actionPanelState,
+            modifier = Modifier.matchParentSize(),
+            longPressLaunchPopup = actionPanelLongPressLaunchPopup,
             vibrations = sideGestureState.button?.vibrations
         )
 

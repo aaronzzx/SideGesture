@@ -32,10 +32,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
-import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -67,7 +67,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -176,11 +175,10 @@ class SideGestureService : ComponentAccessibilityService() {
                             .bottomGestureButtons
                             .data
                             .collectAsStateWithLifecycle(initialValue = emptyList())
-                        val animationStyles by DataStoreHolder
+                        val advancedSettings by DataStoreHolder
                             .advancedSettings
                             .data
-                            .map { it.animationStyles }
-                            .collectAsStateWithLifecycle(initialValue = AnimationStyles())
+                            .collectAsStateWithLifecycle(initialValue = AdvancedSettings())
                         val imePadding by imeInsetObserver
                             .flow
                             .collectAsStateWithLifecycle()
@@ -192,14 +190,15 @@ class SideGestureService : ComponentAccessibilityService() {
                             modifier = Modifier.matchParentSize(),
                             buttons = sideButtons + bottomButtons,
                             imePadding = imePadding,
-                            animationStyle = when (animationStyles.isAnimationEnabled) {
-                                true -> animationStyles.value
+                            animationStyle = when (advancedSettings.animationStyles.isAnimationEnabled) {
+                                true -> advancedSettings.animationStyles.value
                                 else -> null
                             },
                             onAction = { action ->
                                 proxy.onAction(action)
                             },
-                            actionSettings = actionSettings
+                            actionSettings = actionSettings,
+                            actionPanelLongPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
                         )
                     }
                 }
@@ -207,6 +206,7 @@ class SideGestureService : ComponentAccessibilityService() {
         }
 
         coroutineScope.launch(Dispatchers.Main.immediate) {
+            // 监听触钮修改
             launch {
                 DataStoreHolder
                     .sideGestureButtons
@@ -223,6 +223,7 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
+            // 监听手势开关
             launch {
                 DataStoreHolder
                     .initialSettings
@@ -234,6 +235,7 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
+            // 监听手势临时隐藏
             launch {
                 DataStoreHolder
                     .advancedSettings
@@ -245,6 +247,7 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
+            // 监听音量键切歌
             launch {
                 DataStoreHolder
                     .advancedSettings

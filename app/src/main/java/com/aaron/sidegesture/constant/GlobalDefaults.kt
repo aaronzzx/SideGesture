@@ -24,6 +24,7 @@ object AdvancedSettingsDefaults {
     val ActionPanelStyles = ActionPanelStyles()
     const val VolumeButtonSwitchSong = false
     const val FitSoftKeyboard = true
+    const val ActionPanelAppLongPressLaunchPopup = false
     const val HideLandscape = false
     const val HideQuickPanel = false
     const val HideScreenLock = false

@@ -7,9 +7,9 @@ import com.aaron.sidegesture.ui.widget.ActionPanelState
  * @since 2025/6/30
  */
 
-fun ActionPanelState.TriggerType.isMiniWindow(): Boolean {
+fun ActionPanelState.TriggerType.isMiniWindow(longPressLaunchPopup: Boolean): Boolean {
     return when (this) {
-        ActionPanelState.TriggerType.Press -> true
-        ActionPanelState.TriggerType.LongPress -> false
+        ActionPanelState.TriggerType.Press -> !longPressLaunchPopup
+        ActionPanelState.TriggerType.LongPress -> longPressLaunchPopup
     }
 }

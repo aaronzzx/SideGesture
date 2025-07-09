@@ -17,8 +17,8 @@
     <string name="gesture_settings">手势设置</string>
     <string name="gesture_button_settings">触钮设置</string>
     <string name="icon_resize">图标缩放</string>
-    <string name="advanced_settings_hint">应用黑名单·隐藏触钮·应用设置</string>
-    <string name="gesture_settings_hint">手势角度·滑动距离·振动</string>
+    <string name="advanced_settings_hint">应用黑名单·触钮相关·应用设置</string>
+    <string name="gesture_settings_hint">手势角度·滑动相关·振动相关</string>
     <string name="gesture_button_settings_hint">长度·宽度·位置·颜色</string>
     <string name="add_gesture_button">添加触钮</string>
     <string name="reset_default_settings_warning">恢复默认设置</string>
@@ -67,9 +67,13 @@
     <string name="animation_style">动画风格</string>
     <string name="action_panel_style">动作面板风格</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
-    <string name="fit_soft_keyboard_hint">自动抬高所有触钮，不干扰输入</string>
+    <string name="fit_soft_keyboard_hint">软键盘弹出时抬高侧边触钮</string>
     <string name="exclude_from_recents">在最近任务列表中隐藏</string>
     <string name="exclude_from_recents_hint">隐藏后部分机型可能会被清理后台，可尝试将后台卡片上锁后再开启</string>
+    <string name="action_panel">动作面板</string>
+    <string name="gesture_button_extension">触钮扩展</string>
+    <string name="action_panel_launch_app">启动应用</string>
+    <string name="action_panel_launch_app_hint">默认短按小窗长按全屏，调换顺序请打开</string>
     <string name="hide_gesture_button">隐藏触钮</string>
     <string name="landscape">横屏模式</string>
     <string name="quick_settings">快捷面板</string>
