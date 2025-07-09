@@ -376,11 +376,11 @@ class SideGestureService : ComponentAccessibilityService() {
         }
     }
 
-    private fun getCurrentPackageName(): String {
+    fun getCurrentPackageName(): String {
         return rootInActiveWindow?.packageName?.toString() ?: ""
     }
 
-    private fun nowInLauncher(): Boolean {
+    fun nowInLauncher(): Boolean {
         val pkgName = getCurrentPackageName()
         val launcherIntent = Intent().apply {
             setAction(Intent.ACTION_MAIN)

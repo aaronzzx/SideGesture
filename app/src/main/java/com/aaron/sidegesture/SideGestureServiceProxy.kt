@@ -11,10 +11,10 @@ import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_QUICK_SET
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_RECENTS
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT
 import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
 import android.view.KeyEvent
@@ -30,10 +30,12 @@ import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.isMiniWindow
+import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.launchShortcutInfo
 import com.aaron.sidegesture.ktx.offset
+import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
@@ -81,7 +83,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     val packageName = event.packageName?.toString()
                     val className = event.className?.toString()
 
-                    if (isActivity(event)) {
+                    if (isActivity(event.packageName.toString(), event.className.toString())) {
                         currActivityName = className
                     }
                     if (hasLaunchIntent(packageName) && currPackageName != packageName) {
@@ -195,6 +197,28 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     showVersionTooLowToast(this, R.string.action_split_screen)
                 }
             }
+            GlobalActions.POPUP_SCREEN -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val curPkgName = currPackageName
+                    if (nowInLauncher() || curPkgName.isNullOrEmpty()) {
+                        return
+                    }
+                    val intent = Intent().apply {
+                        setPackage(curPkgName)
+                        setAction(Intent.ACTION_MAIN)
+                        addCategory(Intent.CATEGORY_LAUNCHER)
+                    }
+                    val resolveInfo = packageManager
+                        .queryIntentActivitiesCompat(intent, PackageManager.MATCH_ALL)
+                        .firstOrNull()
+                    val className = resolveInfo?.activityInfo?.name
+                    if (!className.isNullOrEmpty()) {
+                        launchAppInPopup(curPkgName, className)
+                    }
+                } else {
+                    showVersionTooLowToast(this, R.string.action_popup_screen)
+                }
+            }
             GlobalActions.ASSIST_APP -> {
                 launchAssist()
             }
@@ -269,7 +293,6 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         offset.x in 0..ScreenUtils.getScreenWidth() &&
                         offset.y in 0..ScreenUtils.getScreenHeight()
                     ) {
-                        @SuppressLint("NewApi")
                         AccessibilityUtils.click(host, offset.x, offset.y)
                     }
                 }
@@ -347,9 +370,11 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
         return packageManager.getLaunchIntentForPackage(packageName ?: "") != null
     }
 
-    private fun isActivity(event: AccessibilityEvent): Boolean {
+    private fun isActivity(packageName: String?, className: String?): Boolean {
+        packageName ?: return false
+        className ?: return false
         return try {
-            val component = ComponentName(event.packageName!!.toString(), event.className!!.toString())
+            val component = ComponentName(packageName, className)
             host.packageManager.getActivityInfo(component, 0)
             true
         } catch (e: Exception) {

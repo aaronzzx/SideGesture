@@ -25,9 +25,13 @@ private var init = false
 
 private val handler = Handler(Looper.getMainLooper())
 
-fun showVersionTooLowToast(context: Context, @StringRes placeholder: Int) {
-    val name = context.getString(placeholder)
-    showToast(context.getString(R.string.os_version_too_low_placeholder, name))
+fun showVersionTooLowToast(context: Context, @StringRes placeholder: Int = 0) {
+    if (placeholder == 0) {
+        showToast(context.getString(R.string.os_version_too_low))
+    } else {
+        val name = context.getString(placeholder)
+        showToast(context.getString(R.string.os_version_too_low_placeholder, name))
+    }
 }
 
 fun showToastDelay(text: String, continueBlock: () -> Unit) {

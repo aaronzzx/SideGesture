@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.utils
 
 import android.app.ActivityOptions
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -29,11 +28,7 @@ object MiniWindowUtils {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun startActivity(
-        context: Context,
-        component: ComponentName,
-        showErrorMsg: Boolean = true
-    ): Boolean {
+    fun startActivity(context: Context, component: ComponentName): Boolean {
         return try {
             val intent = Intent().apply {
                 setComponent(component)
@@ -44,10 +39,8 @@ object MiniWindowUtils {
             val activityOptions = getActivityOptions()
             context.startActivity(intent, activityOptions.toBundle())
             true
-        } catch (ignored: ActivityNotFoundException) {
-            if (showErrorMsg) {
-                showToast(context.getString(R.string.launch_app_failed))
-            }
+        } catch (ignored: Exception) {
+            showToast(context.getString(R.string.launch_mini_window_failed))
             false
         }
     }
@@ -57,7 +50,7 @@ object MiniWindowUtils {
         val brand = Build.BRAND.lowercase()
         return when (brand) {
             "huawei", "honor" -> makeActivityOptions(102)
-            "oppo" -> makeActivityOptions(100)
+            "oppo", "oneplus", "realme" -> makeActivityOptions(100)
             else -> makeActivityOptions(5)
         }
     }

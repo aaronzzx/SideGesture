@@ -2,7 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import android.accessibilityservice.AccessibilityService
 import android.app.NotificationManager
-import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,11 +13,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.KeyEvent
+import androidx.annotation.RequiresApi
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.utils.MiniWindowUtils
 import com.aaron.sidegesture.utils.showToast
+import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.AppUtils
 
 
@@ -78,39 +80,43 @@ fun Context.launchShortcutInfo(shortcutInfo: LauncherInfo.ShortcutInfo): Boolean
 }
 
 fun Context.launchAppInfo(appInfo: AppInfo, miniWindow: Boolean = appInfo.miniWindow): Boolean {
+    val launchSucceed = launchApp(appInfo.packageName, appInfo.className, miniWindow)
+    if (!launchSucceed) {
+        showToast(getString(R.string.launch_app_info_failed, appInfo.label))
+    }
+    return launchSucceed
+}
+
+fun Context.launchApp(packageName: String, className: String, miniWindow: Boolean = false): Boolean {
     return try {
-        val intent = Intent().apply {
-            setClassName(appInfo.packageName, appInfo.className)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        var launchMiniWindowSucceed = false
+        if (miniWindow) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                launchMiniWindowSucceed = launchAppInPopup(packageName, className)
+            } else {
+                showVersionTooLowToast(this)
+            }
         }
-        var launchSucceed = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && miniWindow) {
-            launchSucceed = MiniWindowUtils.startActivity(this, appInfo.componentName, false)
-        }
-        if (!launchSucceed) {
+        if (!launchMiniWindowSucceed) {
+            val intent = Intent().apply {
+                setClassName(packageName, className)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             startActivity(intent)
         }
         true
-    } catch (ignored: ActivityNotFoundException) {
-        showToast(getString(R.string.launch_app_info_failed, appInfo.label))
+    } catch (ignored: Exception) {
+        if (!miniWindow) {
+            showToast(R.string.launch_app_failed)
+        }
         false
     }
 }
 
-fun Context.launchApp(packageName: String, className: String): Boolean {
-    return try {
-        val intent = Intent().apply {
-            setClassName(packageName, className)
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        startActivity(intent)
-        true
-    } catch (ignored: ActivityNotFoundException) {
-        showToast(R.string.launch_app_failed)
-        false
-    }
+@RequiresApi(Build.VERSION_CODES.N)
+fun Context.launchAppInPopup(packageName: String, className: String): Boolean {
+    val componentName = ComponentName.createRelative(packageName, className)
+    return MiniWindowUtils.startActivity(this, componentName)
 }
 
 fun Context.volumeUp() {
@@ -159,7 +165,7 @@ fun Context.gotoWechat(): Boolean {
         }
         startActivity(intent)
         true
-    } catch (exception: ActivityNotFoundException) {
+    } catch (exception: Exception) {
         showToast(R.string.goto_wechat_failed)
         false
     }
@@ -176,7 +182,7 @@ fun Context.gotoWechatScan(): Boolean {
         try {
             startActivity(intent)
             true
-        } catch (exception: ActivityNotFoundException) {
+        } catch (exception: Exception) {
             showToast(R.string.goto_wechat_failed)
             false
         }

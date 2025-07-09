@@ -144,6 +144,7 @@
     <string name="delete_gesture_button_warning_desc">将删除触钮，是否继续？</string>
     <string name="goto_wechat_failed">无法跳转到微信，请检查您是否安装了微信。</string>
     <string name="goto_alipay_failed">无法跳转到支付宝，请检查您是否安装了支付宝。</string>
+    <string name="launch_mini_window_failed">无法启动应用小窗。</string>
     <string name="launch_app_failed">无法启动应用，请检查您是否已安装。</string>
     <string name="launch_app_info_failed">无法启动%1$s，请检查您是否已安装。</string>
     <string name="launch_shortcut_info_failed">无法启动%1$s快捷方式。</string>
@@ -210,7 +211,7 @@
     <string name="action_kill_app">关闭应用程序</string>
     <string name="action_flashlight">手电筒</string>
     <string name="action_split_screen">应用分屏(7.0+)</string>
-    <string name="action_popup_screen">应用小窗</string>
+    <string name="action_popup_screen">应用小窗(7.0+)</string>
     <string name="action_assist_app">系统助手</string>
     <string name="action_search">搜索查找</string>
     <string name="action_screenshot">截屏(9.0+)</string>
