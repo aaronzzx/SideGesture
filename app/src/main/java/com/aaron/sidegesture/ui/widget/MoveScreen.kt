@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ui.widget
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -11,7 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -24,7 +25,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
-import com.blankj.utilcode.util.BarUtils
 import kotlin.math.roundToInt
 
 /**
@@ -42,76 +42,73 @@ fun MoveScreen(
     Box(
         modifier = modifier
             .background(color = backgroundColor)
-            .drawWithCache {
-                val srcBitmap = screenshot
-                onDrawBehind {
-                    translate(
-                        left = -state.offset.x,
-                        top = -state.offset.y
-                    ) {
-                        drawImage(srcBitmap.asImageBitmap())
-                    }
-
-                    val magnifierSize = 80.dp
-                    val path = Path().also {
-                        it.addOval(
-                            Rect(
-                                offset = Offset.Zero,
-                                size = Size(magnifierSize.toPx(), magnifierSize.toPx())
-                            )
-                        )
-                    }
-                    val statusBarHeight = BarUtils.getStatusBarHeight().toFloat()
-                    translate(
-                        left = size.width / 2f - magnifierSize.toPx() / 2f,
-                        top = statusBarHeight
-                    ) {
-                        clipPath(path) {
-                            val srcOffset = IntOffset(
-                                x = state.fingerOnScreen.x.roundToInt() - magnifierSize.roundToPx() / 2,
-                                y = state.fingerOnScreen.y.roundToInt() - magnifierSize.roundToPx() / 2
-                            )
-                            drawImage(
-                                image = srcBitmap.asImageBitmap(),
-                                srcOffset = srcOffset
-                            )
-                        }
-                    }
-
-                    //region 瞄准
-                    val magnifierCenter = Offset(
-                        x = center.x,
-                        y = statusBarHeight + magnifierSize.toPx() / 2f
-                    )
-                    val lineLength = 16.dp.toPx()
-                    val lineColor = Color.LightGray
-                    val strokeWidth = 2.dp.toPx()
-                    drawLine(
-                        color = lineColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(
-                            x = magnifierCenter.x - lineLength / 2,
-                            y = magnifierCenter.y
-                        ),
-                        end = Offset(
-                            x = magnifierCenter.x + lineLength / 2,
-                            y = magnifierCenter.y
-                        )
-                    )
-                    drawLine(
-                        color = lineColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(
-                            x = magnifierCenter.x,
-                            y = magnifierCenter.y - lineLength / 2
-                        ),
-                        end = Offset(
-                            x = magnifierCenter.x,
-                            y = magnifierCenter.y + lineLength / 2
-                        )
-                    )
-                    //endregion
+            .drawBehind {
+                translate(
+                    left = -state.offset.x,
+                    top = -state.offset.y
+                ) {
+                    drawImage(screenshot.asImageBitmap())
                 }
+            }
+            .displayCutoutPadding()
+            .drawBehind {
+                val magnifierSize = 80.dp
+                val path = Path().also {
+                    it.addOval(
+                        Rect(
+                            offset = Offset.Zero,
+                            size = Size(magnifierSize.toPx(), magnifierSize.toPx())
+                        )
+                    )
+                }
+                translate(
+                    left = size.width / 2f - magnifierSize.toPx() / 2f
+                ) {
+                    clipPath(path) {
+                        val srcOffset = IntOffset(
+                            x = state.fingerOnScreen.x.roundToInt() - magnifierSize.roundToPx() / 2,
+                            y = state.fingerOnScreen.y.roundToInt() - magnifierSize.roundToPx() / 2
+                        )
+                        drawImage(
+                            image = screenshot.asImageBitmap(),
+                            srcOffset = srcOffset
+                        )
+                    }
+                }
+
+                //region 瞄准
+                val magnifierCenter = Offset(
+                    x = center.x,
+                    y = magnifierSize.toPx() / 2f
+                )
+                val lineLength = 16.dp.toPx()
+                val lineColor = Color.LightGray
+                val strokeWidth = 2.dp.toPx()
+                drawLine(
+                    color = lineColor,
+                    strokeWidth = strokeWidth,
+                    start = Offset(
+                        x = magnifierCenter.x - lineLength / 2,
+                        y = magnifierCenter.y
+                    ),
+                    end = Offset(
+                        x = magnifierCenter.x + lineLength / 2,
+                        y = magnifierCenter.y
+                    )
+                )
+                drawLine(
+                    color = lineColor,
+                    strokeWidth = strokeWidth,
+                    start = Offset(
+                        x = magnifierCenter.x,
+                        y = magnifierCenter.y - lineLength / 2
+                    ),
+                    end = Offset(
+                        x = magnifierCenter.x,
+                        y = magnifierCenter.y + lineLength / 2
+                    )
+                )
+                //endregion
             }
     )
 }

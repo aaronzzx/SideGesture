@@ -18,6 +18,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -77,7 +78,6 @@ import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.theme.RootPadding
-import com.blankj.utilcode.util.BarUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -123,7 +123,7 @@ fun ActionPanel(
             AnimatedVisibility(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .padding(top = BarUtils.getStatusBarHeight().toDp())
+                    .displayCutoutPadding()
                     .padding(RootPadding),
                 visible = selectedAction.value == GlobalActions.EXTRA_LAUNCH_APP,
                 enter = enter,
@@ -175,7 +175,7 @@ fun ActionPanel(
             AnimatedVisibility(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = BarUtils.getStatusBarHeight().toDp())
+                    .displayCutoutPadding()
                     .padding(RootPadding),
                 visible = selectedLabel.isNotEmpty(),
                 enter = enter,
@@ -220,7 +220,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
         AnimatedVisibility(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = BarUtils.getStatusBarHeight().toDp())
+                .displayCutoutPadding()
                 .padding(RootPadding),
             visible = selectedLabel.isNotEmpty(),
             enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f),
