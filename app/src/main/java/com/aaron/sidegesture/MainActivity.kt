@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -48,9 +47,6 @@ private fun ComponentActivity.myEnableEdgeToEdge(isAppNightMode: Boolean = false
             flag == Configuration.UI_MODE_NIGHT_YES || isAppNightMode
         }
     )
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        window.isNavigationBarContrastEnforced = false
-    }
 }
 
 private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
