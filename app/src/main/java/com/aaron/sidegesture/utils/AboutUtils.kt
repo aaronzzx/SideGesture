@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.R
 import com.blankj.utilcode.util.PathUtils
@@ -31,7 +32,7 @@ object AboutUtils {
         context.startActivity(github)
     }
 
-    fun feedbackEmail(context: Context) {
+    fun feedbackEmail(context: Context, uri: Uri? = null) {
         try {
             val subject = "${context.getString(R.string.app_name)} ${context.getString(R.string.feedback)}"
             val text = (context.getString(R.string.feedback_email_headline) + "\n"
@@ -41,12 +42,17 @@ object AboutUtils {
                     + "System Language: " + Locale.getDefault().language + "(" + Locale.getDefault().country + ")" + "\n"
                     + "App Version: " + BuildConfig.VERSION_NAME)
             val sendMail = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse("mailto:aaronzzxup@gmail.com")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                data = "mailto:aaronzzxup@gmail.com".toUri()
                 putExtra(Intent.EXTRA_SUBJECT, subject)
                 putExtra(Intent.EXTRA_TEXT, text)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                if (uri != null) {
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
             }
-            context.startActivity(sendMail)
+            context.startActivity(Intent.createChooser(sendMail, "Send Email"))
         } catch (ignored: Exception) {
             showToast(R.string.email_app_not_found)
         }

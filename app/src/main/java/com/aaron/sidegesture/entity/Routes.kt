@@ -64,3 +64,7 @@ data class IconResize(val ids: List<String>) {
 @Keep
 @Serializable
 data object Unlock
+
+@Keep
+@Serializable
+data object BugCollecting

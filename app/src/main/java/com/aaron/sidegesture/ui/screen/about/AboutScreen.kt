@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material3.Icon
@@ -43,6 +44,7 @@ import com.aaron.sidegesture.utils.AboutUtils
 @Composable
 fun AboutScreen(
     onBack: () -> Unit,
+    onNavToBugCollecting: () -> Unit,
     vm: AboutVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -149,6 +151,18 @@ fun AboutScreen(
                             Icon(
                                 modifier = Modifier.size(24.dp),
                                 imageVector = Icons.Default.Money,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                    MyTextButton(
+                        onClick = onNavToBugCollecting,
+                        text = stringResource(id = R.string.bug_collecting),
+                        prefix = {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                imageVector = Icons.Default.BugReport,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )

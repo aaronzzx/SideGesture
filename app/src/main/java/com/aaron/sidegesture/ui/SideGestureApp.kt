@@ -27,6 +27,7 @@ import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AdjustGestureAngles
 import com.aaron.sidegesture.entity.AdvancedSettings
 import com.aaron.sidegesture.entity.AppBlacklist
+import com.aaron.sidegesture.entity.BugCollecting
 import com.aaron.sidegesture.entity.GestureButtonSettings
 import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
@@ -37,6 +38,7 @@ import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
+import com.aaron.sidegesture.ui.screen.bug.BugScreen
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesScreen
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsScreen
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
@@ -91,7 +93,12 @@ fun SideGestureApp() {
                     UnlockScreen(onBack = { navController.navigateUp() })
                 }
                 myComposable<About> {
-                    AboutScreen(onBack = { navController.navigateUp() })
+                    AboutScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToBugCollecting = {
+                            navController.navigate(BugCollecting)
+                        }
+                    )
                 }
                 myComposable<AdvancedSettings> {
                     AdvancedSettingsScreen(
@@ -125,6 +132,9 @@ fun SideGestureApp() {
                 }
                 myComposable<IconResize> {
                     IconResizeScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<BugCollecting> {
+                    BugScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

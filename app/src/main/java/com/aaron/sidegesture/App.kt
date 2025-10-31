@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import com.aaron.compose.component.UDFComponentDefaults
 import com.aaron.sidegesture.defaults.UDFComponentDefaultsImpl
+import com.aaron.sidegesture.utils.CrashHandler
 import me.weishu.reflection.Reflection
 
 /**
@@ -32,5 +33,7 @@ class App : Application() {
         context = applicationContext
 
         UDFComponentDefaults.set(UDFComponentDefaultsImpl())
+
+        Thread.setDefaultUncaughtExceptionHandler(CrashHandler)
     }
 }

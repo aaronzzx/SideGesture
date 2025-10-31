@@ -241,4 +241,14 @@
     <string name="action_alipay_pay">支付宝付款码</string>
     <string name="action_move_screen">移动屏幕(11.0+ 模拟点击)</string>
     <string name="action_keep_screen_on">屏幕常亮</string>
+
+    <string name="bug_collecting">异常收集</string>
+    <string name="cannot_find_app_for_open_this_file">没有找到可以打开该文件的应用</string>
+    <string name="clear_exception_cache">清除异常缓存</string>
+    <string name="clear_exception_cache_tips">将彻底删除本地异常日志，确认请继续。</string>
+    <string name="feedback_to_dev">反馈给开发者</string>
+    <string name="feedback_to_dev_tips">请手动将日志保存到本地，随后将自动前往发送邮件，如果无法自动带上附件，请在邮件中自行添加</string>
+    <string name="crashlog_not_found">不存在异常日志，无需反馈</string>
+    <string name="goto_save_crashlog">前往保存异常日志</string>
+    <string name="goto_save">去保存</string>
 </resources>
