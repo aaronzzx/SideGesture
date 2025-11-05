@@ -45,6 +45,13 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
+    fun onStickySlideChange(value: Boolean) {
+        updateUiState {
+            it.copy(animationStyle = it.animationStyle.copy(stickySlideEnabled = value))
+        }
+        saveSettings()
+    }
+
     fun onLengthHalfRatioChange(ratio: Float) {
         updateUiState {
             it.copy(animationStyle = it.animationStyle.copy(bezierLengthHalfRatio = ratio))

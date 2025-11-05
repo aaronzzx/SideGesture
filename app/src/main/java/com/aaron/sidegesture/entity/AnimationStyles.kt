@@ -61,7 +61,8 @@ data class WaveStyle(
     val transformEnabled: Boolean = WaveStyleTransformEnabled,
     val iconColor: Int = WaveStyleIconColor,
     val iconScale: Float = WaveStyleIconScale,
-    val iconType: Int = WaveStyleIconType
+    val iconType: Int = WaveStyleIconType,
+    val stickySlideEnabled: Boolean = false
 ) : AnimationStyle {
 
     companion object {

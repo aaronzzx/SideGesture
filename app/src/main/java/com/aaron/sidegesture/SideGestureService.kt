@@ -198,7 +198,7 @@ class SideGestureService : ComponentAccessibilityService() {
                                 proxy.onAction(action)
                             },
                             actionSettings = actionSettings,
-                            actionPanelLongPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
+                            advancedSettings = advancedSettings
                         )
                     }
                 }

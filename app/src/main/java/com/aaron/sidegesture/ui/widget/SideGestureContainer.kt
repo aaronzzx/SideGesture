@@ -34,6 +34,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
@@ -44,6 +45,7 @@ import com.aaron.sidegesture.ktx.tryVibrateForLongPress
 import com.aaron.sidegesture.ktx.tryVibrateForPress
 import com.aaron.sidegesture.utils.DragGestureHandler
 import com.aaron.sidegesture.utils.showVersionTooLowToast
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -66,11 +68,11 @@ fun SideGestureContainer(
     animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle(),
     actionSettings: ActionSettings = ActionSettings(),
-    actionPanelLongPressLaunchPopup: Boolean = false
+    advancedSettings: AdvancedSettings = AdvancedSettings()
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
-    val sideGestureState = rememberSideGestureState(buttons)
+    val sideGestureState = rememberSideGestureState(buttons, advancedSettings)
     val actionPanelState = rememberActionPanelState()
     val moveScreenState = rememberMoveScreenState(actionSettings.moveScreen.rate)
     DragGestureHandler(
@@ -147,7 +149,7 @@ fun SideGestureContainer(
             actionPanelStyle = actionPanelStyle,
             actionPanelState = actionPanelState,
             modifier = Modifier.matchParentSize(),
-            longPressLaunchPopup = actionPanelLongPressLaunchPopup,
+            longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
             vibrations = sideGestureState.button?.vibrations
         )
 
@@ -179,16 +181,20 @@ fun SideGestureContainer(
 }
 
 @Composable
-private fun rememberSideGestureState(buttons: List<GestureButton>): SideGestureState {
+private fun rememberSideGestureState(
+    buttons: List<GestureButton>,
+    advancedSettings: AdvancedSettings = AdvancedSettings()
+): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    return remember(coroutineScope, buttons) {
-        SideGestureState(coroutineScope, buttons)
+    return remember(coroutineScope, buttons, advancedSettings) {
+        SideGestureState(coroutineScope, buttons, advancedSettings)
     }
 }
 
 class SideGestureState(
     private val coroutineScope: CoroutineScope,
-    private val buttons: List<GestureButton>
+    private val buttons: List<GestureButton>,
+    private val advancedSettings: AdvancedSettings = AdvancedSettings()
 ) {
 
     var isCanceled: Boolean by mutableStateOf(false)
@@ -218,6 +224,13 @@ class SideGestureState(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
+    private val stickySlideValue = run {
+        val waveStyle = advancedSettings.animationStyles.value as? WaveStyle
+        if (waveStyle?.stickySlideEnabled == true) {
+            ConvertUtils.dp2px(36f) .toFloat()
+        } else 0f
+    }
+
     fun onDragStart(offset: Offset, imePadding: Int) {
         origin = offset
         finger = offset
@@ -228,14 +241,15 @@ class SideGestureState(
         coroutineScope.launch {
             originXAnim.snapTo(offset.x)
             originYAnim.snapTo(offset.y)
+
             when (button.position) {
                 Position.Left, Position.Right -> {
-                    fingerXAnim.snapTo(0f)
+                    fingerXAnim.snapTo(getStickySlideValue(button, true))
                     fingerYAnim.snapTo(offset.y)
                 }
                 Position.Bottom -> {
                     fingerXAnim.snapTo(offset.x)
-                    fingerYAnim.snapTo(0f)
+                    fingerYAnim.snapTo(getStickySlideValue(button, false))
                 }
             }
         }
@@ -342,13 +356,13 @@ class SideGestureState(
     /**
      * 手指划过的距离是否足够触发动作
      */
-    private fun canDistanceTrigger(button: GestureButton, isLongSlide: Boolean): Boolean {
+    fun canDistanceTrigger(button: GestureButton, isLongSlide: Boolean): Boolean {
         val slideAction = button.slideActions
         val longSlideAction = button.longSlideActions
         val originX = origin.x
         val originY = origin.y
-        val fingerX = finger.x
-        val fingerY = finger.y
+        val fingerX = finger.x + getStickySlideValue(button, true)
+        val fingerY = finger.y + getStickySlideValue(button, false)
         val slideDistance = when (button.position) {
             Position.Left -> fingerX - originX
             Position.Right -> originX - fingerX
@@ -388,6 +402,17 @@ class SideGestureState(
             return canTrigger && slideAction.down.isNotEmpty()
         }
         return false
+    }
+
+    private fun getStickySlideValue(button: GestureButton, isX: Boolean): Float {
+        val stickySlideValue = stickySlideValue
+        if (isX) {
+            return when (button.position) {
+                Position.Left -> -stickySlideValue
+                else -> stickySlideValue
+            }
+        }
+        return stickySlideValue
     }
 
     private fun calcDirection(button: GestureButton): TriggerDirection? {

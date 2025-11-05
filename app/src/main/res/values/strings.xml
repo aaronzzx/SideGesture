@@ -266,4 +266,6 @@
     <string name="scaling">缩放</string>
     <string name="custom_icon">自定义图标</string>
     <string name="custom_icon_tips">提供几个预设图标供切换使用</string>
+    <string name="sticky_slide">增加初始滑动阻尼</string>
+    <string name="sticky_slide_tips">关闭预留边界如看不清动画请打开</string>
 </resources>

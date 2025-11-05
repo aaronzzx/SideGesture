@@ -140,6 +140,12 @@ fun WaveStyleScreen(
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
                         valueRange = MinBezierStrokeWidth.toFloat()..MaxBezierStrokeWidth.toFloat()
                     )
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onStickySlideChange(it) },
+                        checked = uiState.animationStyle.stickySlideEnabled,
+                        text = stringResource(id = R.string.sticky_slide),
+                        secondaryText = stringResource(id = R.string.sticky_slide_tips)
+                    )
                 }
 
                 MySection(
