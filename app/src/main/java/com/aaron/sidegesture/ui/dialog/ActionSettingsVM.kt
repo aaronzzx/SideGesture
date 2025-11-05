@@ -21,14 +21,6 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         loadData()
     }
 
-    fun saveSettings() {
-        viewModelScope.launchWithLoading {
-            DataStoreHolder.actionSettings.updateData {
-                uiState.actionSettings
-            }
-        }
-    }
-
     fun onMoveScreenRateChange(rate: Float) {
         updateUiState {
             it.copy(
@@ -36,6 +28,31 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     moveScreen = it.actionSettings.moveScreen.copy(rate = rate)
                 )
             )
+        }
+    }
+
+    fun onPreviousAppOperation(pkgName: String, add: Boolean) {
+        updateUiState {
+            val pkgNames = it.actionSettings.previousApp.packageNames
+            val newPkgNames = if (add) {
+                pkgNames + pkgName
+            } else {
+                pkgNames - pkgName
+            }
+            it.copy(
+                actionSettings = it.actionSettings.copy(
+                    previousApp = it.actionSettings.previousApp.copy(packageNames = newPkgNames)
+                )
+            )
+        }
+        saveSettings()
+    }
+
+    fun saveSettings() {
+        viewModelScope.launchWithLoading {
+            DataStoreHolder.actionSettings.updateData {
+                uiState.actionSettings
+            }
         }
     }
 

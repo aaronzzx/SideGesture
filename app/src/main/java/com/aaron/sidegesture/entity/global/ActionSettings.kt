@@ -10,9 +10,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Keep
 data class ActionSettings(
-    val moveScreen: MoveScreen = MoveScreen()
+    val moveScreen: MoveScreen = MoveScreen(),
+    val previousApp: PreviousApp = PreviousApp()
 ) {
     @Serializable
     @Keep
     data class MoveScreen(val rate: Float = 2f)
+
+    @Serializable
+    @Keep
+    data class PreviousApp(val packageNames: List<String> = emptyList())
 }

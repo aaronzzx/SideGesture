@@ -86,7 +86,11 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     if (isActivity(event.packageName.toString(), event.className.toString())) {
                         currActivityName = className
                     }
-                    if (hasLaunchIntent(packageName) && currPackageName != packageName) {
+                    val prevAppExcludePkgNames = host.prevAppExcludePkgNames
+                    if (packageName !in prevAppExcludePkgNames &&
+                        hasLaunchIntent(packageName) &&
+                        currPackageName != packageName
+                    ) {
                         prevPackageName = currPackageName
                         currPackageName = packageName
                         if (prevPackageName == null) {

@@ -89,6 +89,9 @@ class SideGestureService : ComponentAccessibilityService() {
 
     val coroutineScope = MainScope()
 
+    var prevAppExcludePkgNames: List<String> = emptyList()
+        private set
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (orientation != newConfig.orientation) {
@@ -257,6 +260,15 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                     .collectLatest {
                         isVolumeButtonSwitchSongEnabled = it.volumeButtonSwitchSong
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .actionSettings
+                    .data
+                    .distinctUntilChangedBy { it.previousApp }
+                    .collectLatest {
+                        prevAppExcludePkgNames = it.previousApp.packageNames
                     }
             }
         }

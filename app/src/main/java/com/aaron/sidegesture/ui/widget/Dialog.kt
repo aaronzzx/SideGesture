@@ -63,6 +63,7 @@ import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
+import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
 import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
 import com.aaron.sidegesture.ui.theme.DialogTitlePadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -493,25 +494,15 @@ fun ActionSettingsDialog(
                 GlobalActions.MOVE_SCREEN -> {
                     MoveScreenSettingsContent()
                 }
+
+                GlobalActions.PREVIOUS_APP -> {
+                    PreviousAppSettingsContent()
+                }
             }
         },
         confirmButton = {
-//            TextButton(
-//                onClick = {
-//                    if (autoDismiss) {
-//                        onDismissRequest()
-//                    }
-//                }
-//            ) {
-//                Text(text = stringResource(id = R.string.confirm))
-//            }
         },
         dismissButton = {
-//            TextButton(
-//                onClick = onDismissRequest
-//            ) {
-//                Text(text = stringResource(id = R.string.cancel))
-//            }
         }
     )
 }
