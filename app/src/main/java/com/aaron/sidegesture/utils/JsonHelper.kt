@@ -9,7 +9,10 @@ import kotlinx.serialization.json.Json
  */
 object JsonHelper {
 
-    val globalJson = Json { encodeDefaults = true }
+    val globalJson = Json {
+        encodeDefaults = true
+        ignoreUnknownKeys = true
+    }
 
     inline fun <reified T> encodeToString(value: T): String {
         return globalJson.encodeToString(value)
