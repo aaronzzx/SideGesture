@@ -7,7 +7,6 @@ import com.aaron.sidegesture.constant.VibrationDefaults.CustomVibrationMs
 import com.aaron.sidegesture.constant.VibrationDefaults.LongSlideEnabled
 import com.aaron.sidegesture.constant.VibrationDefaults.PredefinedEffect
 import com.aaron.sidegesture.constant.VibrationDefaults.SlideEnabled
-import com.aaron.sidegesture.constant.VibrationDefaults.VibrateImmediately
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,7 +19,6 @@ data class Vibrations(
     val slideEnabled: Boolean = SlideEnabled,
     val longSlideEnabled: Boolean = LongSlideEnabled,
     val actionPanelEnabled: Boolean = ActionPanelEnabled,
-    val vibrateImmediately: Boolean = VibrateImmediately,
     val predefinedEffect: VibrationEffects = PredefinedEffect,
     val customVibrationMs: Long = CustomVibrationMs
 ) {

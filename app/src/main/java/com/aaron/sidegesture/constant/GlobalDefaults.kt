@@ -113,7 +113,6 @@ object VibrationDefaults {
     const val SlideEnabled = true
     const val LongSlideEnabled = true
     const val ActionPanelEnabled = true
-    const val VibrateImmediately = true
     val PredefinedEffect = VibrationEffects.Click
     const val CustomVibrationMs = 50L
 }

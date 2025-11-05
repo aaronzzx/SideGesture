@@ -105,7 +105,7 @@
     <string name="long_slide_trigger_immediately_hint">识别到手势立即触发，而不是等到抬手</string>
     <string name="long_slide_trigger_delay_ms">长距离滑动触发延迟</string>
     <string name="vibration">振动</string>
-    <string name="vibration_hint">识别或触发手势时振动</string>
+    <string name="vibration_hint">触发手势时振动</string>
     <string name="vibrate_immediately">立即振动</string>
     <string name="vibrate_immediately_hint">识别到手势立即振动，而不是等到抬手</string>
     <string name="custom_vibration">自定义振动</string>

@@ -215,8 +215,6 @@ class SideGestureState(
     private var buttonBounds: Rect? = null
 
     private var longSlideFirstTriggerMs = 0L
-    private var longSlideTriggerFlags = false
-    private var slideTriggerFlags = false
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
@@ -253,23 +251,10 @@ class SideGestureState(
         val button = button ?: return null
         // 没触发方向，这一轮不再识别手势
         val direction = calcDirection(button) ?: return null
-        if (direction != triggerDirection) {
-            slideTriggerFlags = false
-            longSlideTriggerFlags = false
-        }
         triggerDirection = direction
         coroutineScope.launch {
             fingerXAnim.snapTo(fingerXAnimVal + dragAmount.x)
             fingerYAnim.snapTo(fingerYAnimVal + dragAmount.y)
-        }
-
-        if (canDistanceTrigger(button, false)) {
-            if (button.vibrations.vibrateImmediately && !slideTriggerFlags) {
-                slideTriggerFlags = true
-                button.vibrations.tryVibrateForPress()
-            }
-        } else {
-            slideTriggerFlags = false
         }
 
         if (canDistanceTrigger(button, true)) {
@@ -278,17 +263,13 @@ class SideGestureState(
             if (longSlideFirstTriggerMs == 0L) {
                 longSlideFirstTriggerMs = timeMs
             } else if (timeMs - longSlideFirstTriggerMs >= longPressDelayMs) {
-                if (button.vibrations.vibrateImmediately && !longSlideTriggerFlags) {
-                    longSlideTriggerFlags = true
-                    button.vibrations.tryVibrateForLongPress()
-                }
                 if (button.longSlideTriggerImmediately) {
+                    button.vibrations.tryVibrateForLongPress()
                     // 要触发ActionPanel，longPressTriggerImmediately必须为true
                     return button.longSlideActions.actionsBy(triggerDirection)
                 }
             }
         } else {
-            longSlideTriggerFlags = false
             longSlideFirstTriggerMs = 0L
         }
 
@@ -304,18 +285,14 @@ class SideGestureState(
             canDistanceTrigger(button, true) &&
             SystemClock.uptimeMillis() - longSlideFirstTriggerMs >= longPressDelayMs
         ) {
-            if (!button.vibrations.vibrateImmediately) {
-                button.vibrations.tryVibrateForLongPress()
-            }
+            button.vibrations.tryVibrateForLongPress()
             val actions = button.longSlideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
             if (action != null) {
                 returnAction = action
             }
         } else if (canDistanceTrigger(button, false)) {
-            if (!button.vibrations.vibrateImmediately) {
-                button.vibrations.tryVibrateForPress()
-            }
+            button.vibrations.tryVibrateForPress()
             val actions = button.slideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
             if (action != null) {
@@ -343,8 +320,6 @@ class SideGestureState(
         origin = Offset.Unspecified
         finger = Offset.Unspecified
         longSlideFirstTriggerMs = 0L
-        longSlideTriggerFlags = false
-        slideTriggerFlags = false
         coroutineScope.launch {
             val fingerXAnim = fingerXAnim
             val fingerYAnim = fingerYAnim
