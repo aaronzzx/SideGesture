@@ -16,11 +16,11 @@ object GlobalSettings {
     val MinGestureButtonWidth = ConvertUtils.dp2px(1f)
     val MaxGestureButtonWidth = ConvertUtils.dp2px(60f)
     val MinSlideTriggerDistance = ConvertUtils.dp2px(24f)
-    val MaxSlideTriggerDistance = ConvertUtils.dp2px(60f)
+    val MaxSlideTriggerDistance = ConvertUtils.dp2px(40f)
     val MinLongSlideTriggerDistance = ConvertUtils.dp2px(80f)
-    val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(200f)
+    val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(100f)
     const val MinBezierStrokeWidth = 0
-    val MaxBezierStrokeWidth = ConvertUtils.dp2px(10f)
+    val MaxBezierStrokeWidth = ConvertUtils.dp2px(5f)
     val MinBezierWidth = ConvertUtils.dp2px(20f)
     val MaxBezierWidth = ConvertUtils.dp2px(80f)
     const val MinBezierLength = 1.8f
@@ -33,7 +33,7 @@ object GlobalSettings {
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f
     const val MinLongPressTriggerDelayMs = 0L
-    const val MaxLongPressTriggerDelayMs = 500L
+    const val MaxLongPressTriggerDelayMs = 250L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
     const val GestureButtonColorAlpha = 0.36f
