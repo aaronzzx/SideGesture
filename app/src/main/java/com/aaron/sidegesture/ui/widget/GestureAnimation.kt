@@ -1,10 +1,6 @@
 package com.aaron.sidegesture.ui.widget
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,7 +12,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.entity.AnimationStyle
@@ -25,6 +20,8 @@ import com.aaron.sidegesture.entity.TriggerDirection.Center
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.WaveStyle
+import com.aaron.sidegesture.ktx.getIcon
+import com.aaron.sidegesture.ktx.getIconInitialRotation
 
 /**
  * @author aaronzzxup@gmail.com
@@ -53,24 +50,22 @@ private fun WaveGestureAnimation(
     modifier: Modifier = Modifier
 ) {
     val button = sideGestureState.button ?: return
-    val arrowBack = rememberVectorPainter(Icons.Default.ArrowBack)
-    val arrowForward = rememberVectorPainter(Icons.Default.ArrowForward)
-    val arrowUpward = rememberVectorPainter(Icons.Default.ArrowUpward)
+    val icon = animationStyle.getIcon()
     val bezierPath = remember { Path() }
     // 贝塞尔偏移值
     val bezierOffset = when (button.position) {
         // 使贝塞尔显示在手指落点上方
-        Position.Left, Position.Right -> 70.dp.toPx()
+        Position.Left, Position.Right -> if (animationStyle.safeBounds) 70.dp.toPx() else 0f
         Position.Bottom -> 0f
     }
     // 贝塞尔与边界间距
-    val bezierSpacing = 40.dp.toPx()
+    val bezierSpacing = if (animationStyle.safeBounds) 40.dp.toPx() else 0f
     // 贝塞尔的最大宽度
-    val bezierMaxWidth = 40.dp.toPx()
+    val bezierMaxWidth = animationStyle.width.toFloat()
     // 贝塞尔长度的一半
-    val bezierLengthHalf = 100.dp.toPx()
-    // 贝塞尔变形约束
-    val bezierTransformOffsetCoerce = 55.dp.toPx()
+    val bezierLengthHalf = bezierMaxWidth * animationStyle.bezierLengthHalfRatio
+    // 贝塞尔沿边缘滑动变形约束
+    val bezierTransformOffsetCoerce = if (animationStyle.transformEnabled) bezierLengthHalf / 2f else 0f
 
     Canvas(modifier = modifier) {
         val originXAnimVal = sideGestureState.originXAnimVal
@@ -100,10 +95,19 @@ private fun WaveGestureAnimation(
             Position.Left, Position.Right -> originYAnimVal - bezierOffset
             Position.Bottom -> originXAnimVal - bezierOffset
         }.coerceIn(
-            minimumValue = bezierLengthHalf + bezierSpacing,
+            minimumValue = when (animationStyle.safeBounds) {
+                true -> bezierLengthHalf + bezierSpacing
+                else -> 0f
+            },
             maximumValue = when (button.position) {
-                Position.Left, Position.Right -> size.height - bezierLengthHalf - bezierSpacing
-                Position.Bottom -> size.width - bezierLengthHalf - bezierSpacing
+                Position.Left, Position.Right -> when (animationStyle.safeBounds) {
+                    true -> size.height - bezierLengthHalf - bezierSpacing
+                    else -> size.height
+                }
+                Position.Bottom -> when (animationStyle.safeBounds) {
+                    true -> size.width - bezierLengthHalf - bezierSpacing
+                    else -> size.width
+                }
             }
         )
         bezierPath.also { path ->
@@ -120,6 +124,8 @@ private fun WaveGestureAnimation(
             }
             path.moveTo(moveToX, moveToY)
 
+            // 避免边缘出现没覆盖全的白边
+            val factor = 1.dp.toPx()
             var safeFingerX: Float
             var safeFingerY: Float
             when (button.position) {
@@ -131,8 +137,8 @@ private fun WaveGestureAnimation(
                     safeFingerY = safeOrigin - bezierLengthHalf / 2.5f - transformOffset
                     path.cubicTo(
                         x1 = when (button.position) {
-                            Position.Left -> -1f
-                            else -> size.width + 1f
+                            Position.Left -> -factor
+                            else -> size.width + factor
                         },
                         y1 = safeFingerY,
                         x2 = safeFingerX,
@@ -151,8 +157,8 @@ private fun WaveGestureAnimation(
                         },
                         y2 = safeFingerY,
                         x3 = when (button.position) {
-                            Position.Left -> -1f
-                            else -> size.width + 1f
+                            Position.Left -> -factor
+                            else -> size.width + factor
                         },
                         y3 = safeOrigin + bezierLengthHalf
                     )
@@ -162,7 +168,7 @@ private fun WaveGestureAnimation(
                     safeFingerY = (size.height + fingerYAnimVal).coerceAtLeast(size.height - bezierMaxWidth)
                     path.cubicTo(
                         x1 = safeFingerX,
-                        y1 = size.height + 1f,
+                        y1 = size.height + factor,
                         x2 = safeFingerX,
                         y2 = safeFingerY,
                         x3 = safeOrigin - transformOffset,
@@ -174,9 +180,9 @@ private fun WaveGestureAnimation(
                         x1 = safeFingerX,
                         y1 = safeFingerY,
                         x2 = safeFingerX,
-                        y2 = size.height + 1f,
+                        y2 = size.height,
                         x3 = safeOrigin + bezierLengthHalf,
-                        y3 = size.height
+                        y3 = size.height + factor
                     )
                 }
             }
@@ -205,14 +211,9 @@ private fun WaveGestureAnimation(
             Position.Left, Position.Right -> bezierPath.getBounds().translate(Offset(0f, -transformOffset))
             Position.Bottom -> bezierPath.getBounds().translate(Offset(-transformOffset, 0f))
         }
-        // 默认图标
-        val defaultIcon = when (button.position) {
-            Position.Left -> arrowForward
-            Position.Right -> arrowBack
-            Position.Bottom -> arrowUpward
-        }
-        defaultIcon.run {
-            val degree = when (sideGestureState.triggerDirection) {
+        icon.run {
+            val initialDegree = animationStyle.getIconInitialRotation(button.position)
+            val degree = initialDegree + when (sideGestureState.triggerDirection) {
                 Up -> when (button.position) {
                     Position.Left -> -45f
                     Position.Right -> 45f
@@ -227,17 +228,19 @@ private fun WaveGestureAnimation(
             }
             rotate(degree, pivot = bezierBounds.center) {
                 val radius = when (button.position) {
-                    Position.Left, Position.Right -> bezierBounds.width * 0.6f
-                    Position.Bottom -> bezierBounds.height * 0.6f
+                    Position.Left, Position.Right -> bezierBounds.width * animationStyle.iconScale
+                    Position.Bottom -> bezierBounds.height * animationStyle.iconScale
                 }
+                val paddingHori = (bezierBounds.width - radius) / 2f
+                val paddingVert = (bezierBounds.height - radius) / 2f
                 val left = when (button.position) {
-                    Position.Left -> bezierBounds.width * 0.2f - animationStyle.strokeWidth
-                    Position.Right -> size.width - bezierBounds.width * 0.8f + animationStyle.strokeWidth
+                    Position.Left -> paddingHori - animationStyle.strokeWidth
+                    Position.Right -> size.width - bezierBounds.width + paddingHori + animationStyle.strokeWidth
                     Position.Bottom -> bezierBounds.left + bezierBounds.width / 2f - radius / 2f
                 }
                 val top = when (button.position) {
                     Position.Left, Position.Right -> bezierBounds.top + bezierBounds.height / 2f - radius / 2f
-                    Position.Bottom -> size.height - bezierBounds.height * 0.8f + animationStyle.strokeWidth
+                    Position.Bottom -> size.height - bezierBounds.height + paddingVert + animationStyle.strokeWidth
                 }
                 translate(left = left, top = top) {
                     draw(

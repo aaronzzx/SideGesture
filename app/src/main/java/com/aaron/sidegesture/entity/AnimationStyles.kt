@@ -5,9 +5,15 @@ import com.aaron.sidegesture.constant.AnimationStylesDefaults
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.IsAnimationEnabled
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.Type
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleBackgroundColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleBezierLengthHalfRatio
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleIconColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleIconScale
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleIconType
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleSafeBounds
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleStrokeColor
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleStrokeWidth
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleTransformEnabled
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleWidth
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -49,5 +55,19 @@ data class WaveStyle(
     val backgroundColor: Int = WaveStyleBackgroundColor,
     val strokeColor: Int = WaveStyleStrokeColor,
     val strokeWidth: Int = WaveStyleStrokeWidth,
-    val iconColor: Int = WaveStyleIconColor
-) : AnimationStyle
+    val width: Int = WaveStyleWidth,
+    val bezierLengthHalfRatio: Float = WaveStyleBezierLengthHalfRatio,
+    val safeBounds: Boolean = WaveStyleSafeBounds,
+    val transformEnabled: Boolean = WaveStyleTransformEnabled,
+    val iconColor: Int = WaveStyleIconColor,
+    val iconScale: Float = WaveStyleIconScale,
+    val iconType: Int = WaveStyleIconType
+) : AnimationStyle {
+
+    companion object {
+        const val ICON_TYPE_ARROW = 1
+        const val ICON_TYPE_TRIANGLE = 2
+        const val ICON_TYPE_ANGLE = 3
+        const val ICON_TYPE_ARROW_NEW = 4
+    }
+}

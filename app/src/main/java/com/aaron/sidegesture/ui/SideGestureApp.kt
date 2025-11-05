@@ -33,10 +33,12 @@ import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
 import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.Unlock
+import com.aaron.sidegesture.entity.WaveAnimationStyle
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
+import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
 import com.aaron.sidegesture.ui.screen.bug.BugScreen
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesScreen
@@ -103,7 +105,10 @@ fun SideGestureApp() {
                 myComposable<AdvancedSettings> {
                     AdvancedSettingsScreen(
                         onBack = { navController.navigateUp() },
-                        onNavToAppBlacklist = { navController.navigate(AppBlacklist) }
+                        onNavToAppBlacklist = { navController.navigate(AppBlacklist) },
+                        onNavToAnimationStyle = {
+                            navController.navigate(WaveAnimationStyle)
+                        }
                     )
                 }
                 myComposable<GestureSettings> {
@@ -135,6 +140,9 @@ fun SideGestureApp() {
                 }
                 myComposable<BugCollecting> {
                     BugScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<WaveAnimationStyle> {
+                    WaveStyleScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

@@ -39,7 +39,7 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     onValueChange = { vm.onMoveScreenRateChange(it) },
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.move_screen_rate),
-                    sliderValueHint = stringResource(id = R.string.slider_slow) to stringResource(id = R.string.slider_fast),
+                    sliderValueHint = stringResource(id = R.string.slow) to stringResource(id = R.string.fast),
                     valueRange = MinMoveScreenRate..MaxMoveScreenRate
                 )
             }

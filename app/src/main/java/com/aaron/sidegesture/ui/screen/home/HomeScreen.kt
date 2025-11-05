@@ -353,11 +353,7 @@ fun HomeScreen(
                         }
 
                         MyExpandableColumn(
-                            modifier = Modifier
-                                .onGloballyPositioned {
-
-                                }
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             backgroundColor = Color.Transparent,
                             shape = RectangleShape,
                             title = stringResource(id = R.string.side_gesture_button_list),

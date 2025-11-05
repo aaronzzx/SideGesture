@@ -112,7 +112,7 @@ fun GestureSettingsScreen(
                         onValueChange = { vm.onPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
-                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
                         valueRange = MinSlideTriggerDistance.toFloat()..MaxSlideTriggerDistance.toFloat()
                     )
                 }
@@ -137,7 +137,7 @@ fun GestureSettingsScreen(
                         onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
-                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
                         valueRange = MinLongSlideTriggerDistance.toFloat()..MaxLongSlideTriggerDistance.toFloat()
                     )
                     MyTextSlider(
@@ -145,7 +145,7 @@ fun GestureSettingsScreen(
                         onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.long_slide_trigger_delay_ms),
-                        sliderValueHint = stringResource(id = R.string.slider_short) to stringResource(id = R.string.slider_long),
+                        sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
                         valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
                     )
                 }
@@ -238,7 +238,7 @@ fun GestureSettingsScreen(
                                     onValueChange = { vm.onCustomVibrationMsChange(it) },
                                     onValueChangeFinished = { vm.saveSettings() },
                                     text = stringResource(id = R.string.vibration_strength),
-                                    sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
+                                    sliderValueHint = stringResource(id = R.string.low) to stringResource(id = R.string.high),
                                     valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
                                 )
                             }
@@ -249,7 +249,7 @@ fun GestureSettingsScreen(
                             onValueChange = { vm.onCustomVibrationMsChange(it) },
                             onValueChangeFinished = { vm.saveSettings() },
                             text = stringResource(id = R.string.vibration_strength),
-                            sliderValueHint = stringResource(id = R.string.slider_low) to stringResource(id = R.string.slider_high),
+                            sliderValueHint = stringResource(id = R.string.low) to stringResource(id = R.string.high),
                             valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
                         )
                     }

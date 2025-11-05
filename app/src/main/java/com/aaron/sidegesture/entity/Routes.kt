@@ -68,3 +68,7 @@ data object Unlock
 @Keep
 @Serializable
 data object BugCollecting
+
+@Keep
+@Serializable
+data object WaveAnimationStyle

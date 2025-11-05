@@ -224,7 +224,7 @@ fun GestureButtonSettingsScreen(
                                 onValueChange = { vm.onGestureButtonWidthChange(it) },
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_width),
-                                sliderValueHint = stringResource(id = R.string.slider_small) to stringResource(id = R.string.slider_large),
+                                sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
                                 valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat()
                             )
                             MyTextRangeSlider(
@@ -232,7 +232,7 @@ fun GestureButtonSettingsScreen(
                                 onValueChange = { vm.onGestureButtonPositionChange(it.start, it.endInclusive) },
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
-                                sliderValueHint = stringResource(id = R.string.slider_top) to stringResource(id = R.string.slider_bottom),
+                                sliderValueHint = stringResource(id = R.string.top) to stringResource(id = R.string.bottom),
                                 valueRange = MinGestureButtonPosition..MaxGestureButtonPosition
                             )
                             if (uiState.gestureButtonSettings.isSideButton) {

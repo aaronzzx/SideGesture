@@ -49,6 +49,7 @@ import com.aaron.sidegesture.ui.widget.TopBar
 fun AdvancedSettingsScreen(
     onBack: () -> Unit,
     onNavToAppBlacklist: () -> Unit,
+    onNavToAnimationStyle: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -70,9 +71,10 @@ fun AdvancedSettingsScreen(
                     title = stringResource(id = R.string.gesture_button_extension)
                 ) {
                     MyTextSwitch(
+                        onTextClick = onNavToAnimationStyle,
                         onCheckedChange = { vm.onShowAnimation(it) },
                         checked = uiState.showAnimation,
-                        text = stringResource(id = R.string.animation_style),
+                        text = stringResource(id = R.string.animation_style)
                     )
                     MyTextSwitch(
                         onCheckedChange = { vm.onFitSoftKeyboardChange(it) },

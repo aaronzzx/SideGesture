@@ -348,8 +348,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             }
         }
         val str2 = when (actionSelect.isLongSlide) {
-            true -> context.getString(R.string.slider_long)
-            else -> context.getString(R.string.slider_short)
+            true -> context.getString(R.string.long1)
+            else -> context.getString(R.string.short1)
         }
         return "$str1($str2)"
     }

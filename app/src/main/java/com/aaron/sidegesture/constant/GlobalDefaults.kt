@@ -10,6 +10,7 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.entity.WaveStyle.Companion.ICON_TYPE_ARROW
 import com.blankj.utilcode.util.ConvertUtils
 
 /**
@@ -71,7 +72,13 @@ object AnimationStylesDefaults {
     const val WaveStyleBackgroundColor = android.graphics.Color.BLACK
     const val WaveStyleStrokeColor = android.graphics.Color.TRANSPARENT
     const val WaveStyleStrokeWidth = 0
+    val WaveStyleWidth = ConvertUtils.dp2px(40f)
+    const val WaveStyleBezierLengthHalfRatio = 2.5f
+    const val WaveStyleSafeBounds = true
+    const val WaveStyleTransformEnabled = true
     val WaveStyleIconColor = android.graphics.Color.argb(200, 255, 255, 255)
+    const val WaveStyleIconScale = 0.6f
+    const val WaveStyleIconType = ICON_TYPE_ARROW
 }
 
 object ScaleableDefaults {

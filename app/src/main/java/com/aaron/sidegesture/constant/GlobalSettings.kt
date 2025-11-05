@@ -19,6 +19,14 @@ object GlobalSettings {
     val MaxSlideTriggerDistance = ConvertUtils.dp2px(60f)
     val MinLongSlideTriggerDistance = ConvertUtils.dp2px(80f)
     val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(200f)
+    const val MinBezierStrokeWidth = 0
+    val MaxBezierStrokeWidth = ConvertUtils.dp2px(10f)
+    val MinBezierWidth = ConvertUtils.dp2px(20f)
+    val MaxBezierWidth = ConvertUtils.dp2px(80f)
+    const val MinBezierLength = 1.8f
+    const val MaxBezierLength = 4.0f
+    const val MinIconScale = 0.4f
+    const val MaxIconScale = 1.2f
     const val MinMoveScreenRate = 1f
     const val MaxMoveScreenRate = 3f
     const val MinGestureButtonPosition = 0f
