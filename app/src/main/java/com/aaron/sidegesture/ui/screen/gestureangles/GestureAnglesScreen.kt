@@ -111,7 +111,13 @@ fun GestureAnglesScreen(
                 }
             )
             AdjustAngle(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .let { thisModifier ->
+                        if (uiState.position != Position.Bottom) thisModifier else {
+                            thisModifier.navigationBarsPadding()
+                        }
+                    }
+                    .fillMaxSize(),
                 angle = uiState.angle,
                 onAngleChange = {
                     vm.updateGestureAngle(it)
