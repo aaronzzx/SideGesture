@@ -55,7 +55,7 @@ private fun WaveGestureAnimation(
     // 贝塞尔偏移值
     val bezierOffset = when (button.position) {
         // 使贝塞尔显示在手指落点上方
-        Position.Left, Position.Right -> if (animationStyle.safeBounds) 70.dp.toPx() else 8.dp.toPx()
+        Position.Left, Position.Right -> if (animationStyle.safeBounds) 70.dp.toPx() else 0f
         Position.Bottom -> 0f
     }
     // 贝塞尔与边界间距
