@@ -1,10 +1,7 @@
 package com.aaron.sidegesture.ui.screen.animationstyle.wave
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +49,7 @@ import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyColorDisplay
 import com.aaron.sidegesture.ui.widget.MyColumn
+import com.aaron.sidegesture.ui.widget.MyExpandableColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSlider
@@ -208,16 +206,10 @@ fun WaveStyleScreen(
                         valueRange = MinIconScale.toFloat()..MaxIconScale.toFloat()
                     )
 
-                    MyTextSwitch(
-                        onCheckedChange = { vm.onCustomIconExpandedChange(it) },
-                        checked = uiState.isCustomIconExpanded,
-                        text = stringResource(id = R.string.custom_icon),
-                        secondaryText = stringResource(id = R.string.custom_icon_tips)
-                    )
-                    AnimatedVisibility(
-                        visible = uiState.isCustomIconExpanded,
-                        enter = expandVertically(),
-                        exit = shrinkVertically()
+                    MyExpandableColumn(
+                        onExpandedChange = { vm.onCustomIconExpandedChange(it) },
+                        title = stringResource(id = R.string.custom_icon),
+                        expanded = uiState.isCustomIconExpanded
                     ) {
                         Row(
                             modifier = Modifier
