@@ -447,7 +447,7 @@ private fun MyParallelGestureSettings(
                 Position.Bottom -> stringResource(id = R.string.slide_to_left)
             }
             Down -> when (gestureButton.position) {
-                Position.Left, Position.Right -> stringResource(id = R.string.slide_to_right)
+                Position.Left, Position.Right -> stringResource(id = R.string.slide_to_bottom)
                 Position.Bottom -> stringResource(id = R.string.slide_to_right)
             }
         },
