@@ -164,15 +164,16 @@
     <string name="please_enable_ignoring_battery_optimizations_by_yourself">请手动前往启用电池优化白名单</string>
     <string name="invalid_color_value">非法色值，请重新输入</string>
 
-    <string name="gesture_to_right_top">👆</string>
-    <string name="gesture_to_right">👉</string>
-    <string name="gesture_to_right_bottom">👇</string>
-    <string name="gesture_to_left_top">@string/gesture_to_right_top</string>
-    <string name="gesture_to_left">👈</string>
-    <string name="gesture_to_left_bottom">@string/gesture_to_right_bottom</string>
-    <string name="gesture_to_top">👆</string>
-    <string name="gesture_to_top_left">@string/gesture_to_left</string>
-    <string name="gesture_to_top_right">@string/gesture_to_right</string>
+    <string name="gesture_to_right_top">↗</string>
+    <string name="gesture_to_right">→</string>
+    <string name="gesture_to_right_bottom">↘</string>
+    <string name="gesture_to_left_top">↖</string>
+    <string name="gesture_to_left">←</string>
+    <string name="gesture_to_left_bottom">↙</string>
+    <string name="gesture_to_top">↑</string>
+    <string name="gesture_to_top_left">↖</string>
+    <string name="gesture_to_top_right">↗</string>
+    <string name="gesture_to_bottom">↓</string>
     <string name="slide_to_right">向右滑动</string>
     <string name="slide_to_top_right">向右上滑动</string>
     <string name="slide_to_bottom_right">向右下滑动</string>
@@ -180,6 +181,7 @@
     <string name="slide_to_top_left">向左上滑动</string>
     <string name="slide_to_bottom_left">向左下滑动</string>
     <string name="slide_to_top">向上滑动</string>
+    <string name="slide_to_bottom">向下滑动</string>
     <string name="gesture_button_width">触钮宽度</string>
     <string name="gesture_button_length">触钮长度</string>
     <string name="gesture_button_location">触钮位置</string>
@@ -269,4 +271,5 @@
     <string name="sticky_slide">增加初始滑动阻尼</string>
     <string name="sticky_slide_tips">关闭预留边界如看不清动画请打开</string>
     <string name="typing_package_name_and_click_done">输入包名，回车加入</string>
+    <string name="long_press">长按</string>
 </resources>

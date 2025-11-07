@@ -87,4 +87,12 @@ fun GestureAngle.getTriggerDirection(degree: Float): TriggerDirection? {
     }
 }
 
+fun GestureAngle.getParallelTriggerDirection(degree: Float): TriggerDirection? {
+    return when {
+        degree < getDegree(0) -> TriggerDirection.Up
+        degree > getDegree(3) -> TriggerDirection.Down
+        else -> null
+    }
+}
+
 const val GESTURE_ANGLE_BASE = 180f

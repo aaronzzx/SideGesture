@@ -31,14 +31,14 @@ import com.aaron.sidegesture.ktx.getIconInitialRotation
 @Composable
 fun GestureAnimation(
     animationStyle: AnimationStyle,
-    sideGestureState: SideGestureState,
+    OHOGestureState: OHOGestureState,
     modifier: Modifier = Modifier
 ) {
     when (animationStyle) {
         is WaveStyle -> WaveGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
-            sideGestureState = sideGestureState
+            ohoGestureState = OHOGestureState
         )
     }
 }
@@ -46,10 +46,10 @@ fun GestureAnimation(
 @Composable
 private fun WaveGestureAnimation(
     animationStyle: WaveStyle,
-    sideGestureState: SideGestureState,
+    ohoGestureState: OHOGestureState,
     modifier: Modifier = Modifier
 ) {
-    val button = sideGestureState.button ?: return
+    val button = ohoGestureState.button ?: return
     val icon = animationStyle.getIcon()
     val bezierPath = remember { Path() }
     // 贝塞尔偏移值
@@ -68,10 +68,11 @@ private fun WaveGestureAnimation(
     val bezierTransformOffsetCoerce = if (animationStyle.transformEnabled) bezierLengthHalf / 2f else 0f
 
     Canvas(modifier = modifier) {
-        val originXAnimVal = sideGestureState.originXAnimVal
-        val originYAnimVal = sideGestureState.originYAnimVal
-        val fingerXAnimVal = sideGestureState.fingerXAnimVal
-        val fingerYAnimVal = sideGestureState.fingerYAnimVal
+        val triggerDirection = ohoGestureState.triggerDirection ?: return@Canvas
+        val originXAnimVal = ohoGestureState.originXAnimVal
+        val originYAnimVal = ohoGestureState.originYAnimVal
+        val fingerXAnimVal = ohoGestureState.fingerXAnimVal
+        val fingerYAnimVal = ohoGestureState.fingerYAnimVal
         if (originXAnimVal.isNaN() ||
             originYAnimVal.isNaN() ||
             fingerXAnimVal.isNaN() ||
@@ -213,7 +214,7 @@ private fun WaveGestureAnimation(
         }
         icon.run {
             val initialDegree = animationStyle.getIconInitialRotation(button.position)
-            val degree = initialDegree + when (sideGestureState.triggerDirection) {
+            val degree = initialDegree + when (triggerDirection) {
                 Up -> when (button.position) {
                     Position.Left -> -45f
                     Position.Right -> 45f
@@ -243,7 +244,7 @@ private fun WaveGestureAnimation(
                     Position.Bottom -> size.height - bezierBounds.height + paddingVert + animationStyle.strokeWidth
                 }
                 translate(left = left, top = top) {
-                    val canTriggered = sideGestureState.canDistanceTrigger(button, false)
+                    val canTriggered = ohoGestureState.canDistanceTrigger(button, false)
                     draw(
                         size = Size(radius, radius),
                         colorFilter = ColorFilter.tint(Color(animationStyle.iconColor)),

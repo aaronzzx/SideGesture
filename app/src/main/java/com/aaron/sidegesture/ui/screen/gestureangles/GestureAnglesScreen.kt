@@ -186,12 +186,17 @@ private fun AdjustAngle(
     angle: GestureAngle,
     modifier: Modifier = Modifier,
     position: Position = Position.Left,
-    color: Color = MaterialTheme.colorScheme.primary,
-    inactiveColor: Color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    color: Color = MaterialTheme.colorScheme.primary
 ) {
-    val lineWidth = 6.dp
+    val lineWidth = when (position == Position.Bottom) {
+        true -> (4.5).dp
+        else -> 6.dp
+    }
     // 触点半径
-    val dragHandleRadius = 20.dp
+    val dragHandleRadius = when (position == Position.Bottom) {
+        true -> 15.dp
+        else -> 20.dp
+    }
     // 触点所在轨道半圆半径
     var circleRadius by remember { mutableFloatStateOf(0f) }
     // 触点所在轨道圆心
@@ -207,7 +212,7 @@ private fun AdjustAngle(
         modifier = modifier.let {
             val density = LocalDensity.current
             // 两个拖拽触点间最少需要维持的夹角p值
-            val minGapP by remember(density) {
+            val minGapP by remember(density, dragHandleRadius) {
                 derivedStateOf {
                     // 对边
                     val opposite = density.run { dragHandleRadius.toPx() }
@@ -221,7 +226,7 @@ private fun AdjustAngle(
             val curOnAngleChange by rememberUpdatedState(newValue = onAngleChange)
             val curAngle by rememberUpdatedState(newValue = angle)
             val curPosition by rememberUpdatedState(newValue = position)
-            it.pointerInput(Unit) {
+            it.pointerInput(dragHandleRadius) {
                 var dragOffset = Offset.Zero
                 var property: KProperty0<Float>? = null
                 detectDragGestures(
@@ -283,7 +288,7 @@ private fun AdjustAngle(
     ) {
         val radius = when (position) {
             Position.Left, Position.Right -> size.minDimension / 2f
-            Position.Bottom -> size.minDimension / 3f
+            Position.Bottom -> size.minDimension / 4f
         }
         val myCenter = when (position) {
             Position.Left -> center.copy(x = 0f)
@@ -293,6 +298,8 @@ private fun AdjustAngle(
         circleRadius = radius
         circleCenter = myCenter
         viewBounds = Rect(offset = Offset.Zero, size = size)
+        val lineWidthPx = lineWidth.toPx()
+        val pointRadiusPx = dragHandleRadius.toPx()
 
         clipRect {
             drawCircle(
@@ -311,8 +318,6 @@ private fun AdjustAngle(
         }
 
         degrees.fastForEach { degree ->
-            val lineWidthPx = lineWidth.toPx()
-            val pointRadiusPx = dragHandleRadius.toPx()
             val offset = calcDragHandleOffset(position, myCenter, radius, degree)
             drawLine(
                 color = color,
@@ -326,6 +331,12 @@ private fun AdjustAngle(
                 center = offset
             )
         }
+
+        drawCircle(
+            color = color,
+            radius = lineWidthPx,
+            center = myCenter
+        )
 
         arcDegrees.fastForEachIndexed { index, arcDegree ->
             val degree = degrees.getOrNull(index) ?: GESTURE_ANGLE_BASE
@@ -345,6 +356,10 @@ private fun AdjustAngle(
 
             val displayArcDegree = "${arcDegree.roundToInt()}"
             val hint = when (index) {
+                0 -> when (position) {
+                    Position.Left, Position.Right -> context.getString(R.string.gesture_to_top)
+                    Position.Bottom -> context.getString(R.string.gesture_to_left)
+                }
                 1 -> when (position) {
                     Position.Left -> context.getString(R.string.gesture_to_right_top)
                     Position.Right -> context.getString(R.string.gesture_to_left_top)
@@ -360,6 +375,10 @@ private fun AdjustAngle(
                     Position.Right -> context.getString(R.string.gesture_to_left_bottom)
                     Position.Bottom -> context.getString(R.string.gesture_to_top_right)
                 }
+                4 -> when (position) {
+                    Position.Left, Position.Right -> context.getString(R.string.gesture_to_bottom)
+                    Position.Bottom -> context.getString(R.string.gesture_to_right)
+                }
                 else -> ""
             }
             val displayText = when (position) {
@@ -367,32 +386,22 @@ private fun AdjustAngle(
                 Position.Right -> "$displayArcDegree $hint"
                 Position.Bottom -> "$displayArcDegree\n$hint"
             }
+            val x = when (position) {
+                Position.Left, Position.Bottom -> textX - textMeasurer.measure(displayText).size.width / 2f
+                Position.Right -> textX - textMeasurer.measure(displayText).size.width
+            }.coerceIn(0f, size.width)
+            val y = when (position) {
+                Position.Left, Position.Right -> textY - textMeasurer.measure(displayText).size.height / 2f
+                Position.Bottom -> textY - textMeasurer.measure(displayText).size.height
+            }.coerceIn(0f, size.height)
             drawText(
                 textMeasurer = textMeasurer,
                 text = displayText,
-                topLeft = Offset(
-                    x = when (position) {
-                        Position.Left, Position.Bottom -> textX - textMeasurer.measure(displayText).size.width / 2f
-                        Position.Right -> textX - textMeasurer.measure(displayText).size.width
-                    }.coerceIn(0f, size.width),
-                    y = when (position) {
-                        Position.Left, Position.Right -> textY - textMeasurer.measure(displayText).size.height / 2f
-                        Position.Bottom -> textY - textMeasurer.measure(displayText).size.height
-                    }.coerceIn(0f, size.height)
-                ),
+                topLeft = Offset(x = x, y = y),
                 style = TextStyle.Default.copy(
-                    color = when (index) {
-                        0, arcDegrees.lastIndex -> inactiveColor
-                        else -> color
-                    },
-                    fontSize = when (index) {
-                        0, arcDegrees.lastIndex -> 16.sp
-                        else -> 18.sp
-                    },
-                    fontWeight = when (index) {
-                        0, arcDegrees.lastIndex -> FontWeight.Normal
-                        else -> FontWeight.Bold
-                    }
+                    color = color,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
                 )
             )
         }

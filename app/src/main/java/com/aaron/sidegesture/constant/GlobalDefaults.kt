@@ -93,6 +93,9 @@ object GestureActionsDefaults {
     val Center = emptyList<Action>()
     val Up = emptyList<Action>()
     val Down = emptyList<Action>()
+    val Center2 = emptyList<Action>()
+    val Up2 = emptyList<Action>()
+    val Down2 = emptyList<Action>()
     const val ActionValue = GlobalActions.NONE
     val ActionNone = Action(value = ActionValue, data = "")
 }

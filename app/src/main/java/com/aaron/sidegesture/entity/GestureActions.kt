@@ -4,8 +4,11 @@ import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionNone
 import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionValue
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Center
+import com.aaron.sidegesture.constant.GestureActionsDefaults.Center2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down
+import com.aaron.sidegesture.constant.GestureActionsDefaults.Down2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up
+import com.aaron.sidegesture.constant.GestureActionsDefaults.Up2
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -17,9 +20,15 @@ import kotlinx.serialization.Transient
 @Serializable
 @Keep
 data class GestureActions(
+    // oho
     val center: List<Action> = Center,
     val up: List<Action> = Up,
-    val down: List<Action> = Down
+    val down: List<Action> = Down,
+
+    // 平行手势
+    val center2: List<Action> = Center2,
+    val up2: List<Action> = Up2,
+    val down2: List<Action> = Down2
 )
 
 @Serializable

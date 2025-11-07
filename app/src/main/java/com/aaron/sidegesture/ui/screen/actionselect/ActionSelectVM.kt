@@ -381,9 +381,18 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             else -> button.slideActions
                         }
                         val actions = when (actionSelect.direction) {
-                            TriggerDirection.Center -> gestureActions.center
-                            TriggerDirection.Up -> gestureActions.up
-                            TriggerDirection.Down -> gestureActions.down
+                            TriggerDirection.Center -> when (actionSelect.isOHOGesture) {
+                                true -> gestureActions.center
+                                else -> gestureActions.center2
+                            }
+                            TriggerDirection.Up -> when (actionSelect.isOHOGesture) {
+                                true -> gestureActions.up
+                                else -> gestureActions.up2
+                            }
+                            TriggerDirection.Down -> when (actionSelect.isOHOGesture) {
+                                true -> gestureActions.down
+                                else -> gestureActions.down2
+                            }
                         }
                         updateUiState {
                             val selectedActions = when (it.selectSingle) {
@@ -485,16 +494,40 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 }
                 val newGestureActions = when (actionSelect.direction) {
                     TriggerDirection.Center -> {
-                        tryDeleteShortcutIcons(gestureActions.center, newActions)
-                        gestureActions.copy(center = newActions)
+                        val oldActions = when (actionSelect.isOHOGesture) {
+                            true -> gestureActions.center
+                            else -> gestureActions.center2
+                        }
+                        tryDeleteShortcutIcons(oldActions, newActions)
+                        if (actionSelect.isOHOGesture) {
+                            gestureActions.copy(center = newActions)
+                        } else {
+                            gestureActions.copy(center2 = newActions)
+                        }
                     }
                     TriggerDirection.Up -> {
-                        tryDeleteShortcutIcons(gestureActions.up, newActions)
-                        gestureActions.copy(up = newActions)
+                        val oldActions = when (actionSelect.isOHOGesture) {
+                            true -> gestureActions.up
+                            else -> gestureActions.up2
+                        }
+                        tryDeleteShortcutIcons(oldActions, newActions)
+                        if (actionSelect.isOHOGesture) {
+                            gestureActions.copy(up = newActions)
+                        } else {
+                            gestureActions.copy(up2 = newActions)
+                        }
                     }
                     TriggerDirection.Down -> {
-                        tryDeleteShortcutIcons(gestureActions.down, newActions)
-                        gestureActions.copy(down = newActions)
+                        val oldActions = when (actionSelect.isOHOGesture) {
+                            true -> gestureActions.down
+                            else -> gestureActions.down2
+                        }
+                        tryDeleteShortcutIcons(oldActions, newActions)
+                        if (actionSelect.isOHOGesture) {
+                            gestureActions.copy(down = newActions)
+                        } else {
+                            gestureActions.copy(down2 = newActions)
+                        }
                     }
                 }
                 button = if (actionSelect.isLongSlide) {

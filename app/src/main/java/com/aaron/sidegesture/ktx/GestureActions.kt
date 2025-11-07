@@ -82,10 +82,18 @@ fun List<Action>.actionTextCompose(emptyIfNone: Boolean = false): String {
     }
 }
 
-fun GestureActions.actionsBy(direction: TriggerDirection): List<Action> {
+fun GestureActions.ohoActionsBy(direction: TriggerDirection): List<Action> {
     return when (direction) {
         TriggerDirection.Up -> up
         TriggerDirection.Center -> center
         TriggerDirection.Down -> down
+    }
+}
+
+fun GestureActions.parallelActionsBy(direction: TriggerDirection): List<Action> {
+    return when (direction) {
+        TriggerDirection.Up -> up2
+        TriggerDirection.Center -> emptyList()
+        TriggerDirection.Down -> down2
     }
 }

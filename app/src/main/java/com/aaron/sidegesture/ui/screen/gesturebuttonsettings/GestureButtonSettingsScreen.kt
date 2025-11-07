@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
@@ -136,42 +137,70 @@ fun GestureButtonSettingsScreen(
                 if (gestureButton != null) {
                     MyColumn {
                         MySection(title = stringResource(id = R.string.slide_action)) {
-                            val navToActionSelect: (TriggerDirection) -> Unit = {
+                            val navToActionSelect: (TriggerDirection, Boolean) -> Unit = { direction, isOHOGesture ->
                                 val actionSelect = ActionSelect(
                                     gestureButtonId = gestureButton.id,
                                     position = gestureButton.position,
-                                    direction = it,
+                                    direction = direction,
                                     isLongSlide = false,
-                                    isSideButton = uiState.gestureButtonSettings.isSideButton
+                                    isSideButton = uiState.gestureButtonSettings.isSideButton,
+                                    isOHOGesture = isOHOGesture
                                 )
                                 onNavToActionSelect(actionSelect)
                             }
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Center)
+                                    navToActionSelect(Center, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Center,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.center.actionTextCompose()
                             )
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Up)
+                                    navToActionSelect(Up, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Up,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.up.actionTextCompose()
                             )
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Down)
+                                    navToActionSelect(Down, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Down,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.down.actionTextCompose()
+                            )
+                            MyParallelGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Up, false)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Up,
+                                isLongSlide = false,
+                                secondaryText = gestureButton.slideActions.up2.actionTextCompose()
+                            )
+                            MyParallelGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Down, false)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Down,
+                                isLongSlide = false,
+                                secondaryText = gestureButton.slideActions.down2.actionTextCompose()
+                            )
+                            MyParallelGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Center, false)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Center,
+                                isLongSlide = false,
+                                secondaryText = gestureButton.slideActions.center2.actionTextCompose()
                             )
                         }
 
@@ -179,42 +208,61 @@ fun GestureButtonSettingsScreen(
                             modifier = Modifier.padding(top = SectionPadding),
                             title = stringResource(id = R.string.long_slide_action)
                         ) {
-                            val navToActionSelect: (TriggerDirection) -> Unit = {
+                            val navToActionSelect: (TriggerDirection, Boolean) -> Unit = { direction, isOHOGesture ->
                                 val actionSelect = ActionSelect(
                                     gestureButtonId = gestureButton.id,
                                     position = gestureButton.position,
-                                    direction = it,
+                                    direction = direction,
                                     isLongSlide = true,
-                                    isSideButton = uiState.gestureButtonSettings.isSideButton
+                                    isSideButton = uiState.gestureButtonSettings.isSideButton,
+                                    isOHOGesture = isOHOGesture
                                 )
                                 onNavToActionSelect(actionSelect)
                             }
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Center)
+                                    navToActionSelect(Center, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Center,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.center.actionTextCompose()
                             )
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Up)
+                                    navToActionSelect(Up, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Up,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.up.actionTextCompose()
                             )
-                            MyGestureSettings(
+                            MyOHOGestureSettings(
                                 onClick = {
-                                    navToActionSelect(Down)
+                                    navToActionSelect(Down, true)
                                 },
                                 gestureButton = gestureButton,
                                 direction = Down,
                                 isLongSlide = true,
                                 secondaryText = gestureButton.longSlideActions.down.actionTextCompose()
+                            )
+                            MyParallelGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Up, false)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Up,
+                                isLongSlide = true,
+                                secondaryText = gestureButton.longSlideActions.up2.actionTextCompose()
+                            )
+                            MyParallelGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Down, false)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Down,
+                                isLongSlide = true,
+                                secondaryText = gestureButton.longSlideActions.down2.actionTextCompose()
                             )
                         }
 
@@ -304,7 +352,7 @@ fun GestureButtonSettingsScreen(
 }
 
 @Composable
-private fun MyGestureSettings(
+private fun MyOHOGestureSettings(
     onClick: () -> Unit,
     gestureButton: GestureButton,
     direction: TriggerDirection,
@@ -358,6 +406,76 @@ private fun MyGestureSettings(
                                 Position.Left -> 45f
                                 Position.Right -> 135f
                                 Position.Bottom -> -45f
+                            }
+                        }
+                    }
+                    .size(20.dp)
+                    .background(
+                        color = when (isLongSlide) {
+                            true -> MaterialTheme.colorScheme.outlineVariant
+                            else -> MaterialTheme.colorScheme.surface
+                        },
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        shape = CircleShape
+                    ),
+                imageVector = imageVector,
+                contentDescription = null,
+                tint = LocalContentColor.current
+            )
+        }
+    )
+}
+
+@Composable
+private fun MyParallelGestureSettings(
+    onClick: () -> Unit,
+    gestureButton: GestureButton,
+    direction: TriggerDirection,
+    isLongSlide: Boolean,
+    secondaryText: String
+) {
+    MyTextButton(
+        onClick = onClick,
+        text = when (direction) {
+            Center -> stringResource(R.string.long_press)
+            Up -> when (gestureButton.position) {
+                Position.Left, Position.Right -> stringResource(id = R.string.slide_to_top)
+                Position.Bottom -> stringResource(id = R.string.slide_to_left)
+            }
+            Down -> when (gestureButton.position) {
+                Position.Left, Position.Right -> stringResource(id = R.string.slide_to_right)
+                Position.Bottom -> stringResource(id = R.string.slide_to_right)
+            }
+        },
+        secondaryText = run {
+            if (secondaryText.isNotEmpty()) {
+                return@run secondaryText
+            }
+            stringResource(id = R.string.action_none)
+        },
+        secondaryTextColor = MaterialTheme.colorScheme.primary,
+        prefix = {
+            val imageVector = when (direction) {
+                Center -> Icons.Default.Adjust
+                else -> Icons.Default.ArrowForward
+            }
+            Icon(
+                modifier = Modifier
+                    .graphicsLayer {
+                        val position = gestureButton.position
+                        rotationZ = when (direction) {
+                            Up -> when (position) {
+                                Position.Left, Position.Right -> -90f
+                                Position.Bottom -> -180f
+                            }
+                            Center -> 0f
+                            Down -> when (position) {
+                                Position.Left, Position.Right -> 90f
+                                Position.Bottom -> 0f
                             }
                         }
                     }
