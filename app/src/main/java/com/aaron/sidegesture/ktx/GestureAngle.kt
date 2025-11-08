@@ -79,19 +79,13 @@ fun GestureAngle.getArcDegrees(): List<Float> {
 }
 
 fun GestureAngle.getTriggerDirection(degree: Float): TriggerDirection? {
-    return when (degree) {
-        in getDegree(0)..getDegree(1) -> TriggerDirection.Up
-        in getDegree(1)..getDegree(2) -> TriggerDirection.Center
-        in getDegree(2)..getDegree(3) -> TriggerDirection.Down
-        else -> null
-    }
-}
-
-fun GestureAngle.getParallelTriggerDirection(degree: Float): TriggerDirection? {
     return when {
-        degree < getDegree(0) -> TriggerDirection.Up
-        degree > getDegree(3) -> TriggerDirection.Down
-        else -> null
+        degree < getDegree(0) -> TriggerDirection.Up2
+        degree in getDegree(0)..getDegree(1) -> TriggerDirection.Up
+        degree in getDegree(1)..getDegree(2) -> TriggerDirection.Center
+        degree in getDegree(2)..getDegree(3) -> TriggerDirection.Down
+        degree > getDegree(3) -> TriggerDirection.Down2
+        else -> TriggerDirection.Center2
     }
 }
 

@@ -17,8 +17,11 @@ import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection.Center
+import com.aaron.sidegesture.entity.TriggerDirection.Center2
 import com.aaron.sidegesture.entity.TriggerDirection.Down
+import com.aaron.sidegesture.entity.TriggerDirection.Down2
 import com.aaron.sidegesture.entity.TriggerDirection.Up
+import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.getIconInitialRotation
@@ -31,14 +34,14 @@ import com.aaron.sidegesture.ktx.getIconInitialRotation
 @Composable
 fun GestureAnimation(
     animationStyle: AnimationStyle,
-    OHOGestureState: OHOGestureState,
+    SideGestureState: SideGestureState,
     modifier: Modifier = Modifier
 ) {
     when (animationStyle) {
         is WaveStyle -> WaveGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
-            ohoGestureState = OHOGestureState
+            sideGestureState = SideGestureState
         )
     }
 }
@@ -46,10 +49,10 @@ fun GestureAnimation(
 @Composable
 private fun WaveGestureAnimation(
     animationStyle: WaveStyle,
-    ohoGestureState: OHOGestureState,
+    sideGestureState: SideGestureState,
     modifier: Modifier = Modifier
 ) {
-    val button = ohoGestureState.button ?: return
+    val button = sideGestureState.button ?: return
     val icon = animationStyle.getIcon()
     val bezierPath = remember { Path() }
     // 贝塞尔偏移值
@@ -68,11 +71,11 @@ private fun WaveGestureAnimation(
     val bezierTransformOffsetCoerce = if (animationStyle.transformEnabled) bezierLengthHalf / 2f else 0f
 
     Canvas(modifier = modifier) {
-        val triggerDirection = ohoGestureState.triggerDirection ?: return@Canvas
-        val originXAnimVal = ohoGestureState.originXAnimVal
-        val originYAnimVal = ohoGestureState.originYAnimVal
-        val fingerXAnimVal = ohoGestureState.fingerXAnimVal
-        val fingerYAnimVal = ohoGestureState.fingerYAnimVal
+        val triggerDirection = sideGestureState.triggerDirection
+        val originXAnimVal = sideGestureState.originXAnimVal
+        val originYAnimVal = sideGestureState.originYAnimVal
+        val fingerXAnimVal = sideGestureState.fingerXAnimVal
+        val fingerYAnimVal = sideGestureState.fingerYAnimVal
         if (originXAnimVal.isNaN() ||
             originYAnimVal.isNaN() ||
             fingerXAnimVal.isNaN() ||
@@ -220,11 +223,21 @@ private fun WaveGestureAnimation(
                     Position.Right -> 45f
                     Position.Bottom -> -45f
                 }
-                Center -> 0f
+                Center, Center2 -> 0f
                 Down -> when (button.position) {
                     Position.Left -> 45f
                     Position.Right -> -45f
                     Position.Bottom -> 45f
+                }
+                Up2 -> when (button.position) {
+                    Position.Left -> -90f
+                    Position.Right -> 90f
+                    Position.Bottom -> -90f
+                }
+                Down2 -> when (button.position) {
+                    Position.Left -> 90f
+                    Position.Right -> -90f
+                    Position.Bottom -> 90f
                 }
             }
             rotate(degree, pivot = bezierBounds.center) {
@@ -244,7 +257,7 @@ private fun WaveGestureAnimation(
                     Position.Bottom -> size.height - bezierBounds.height + paddingVert + animationStyle.strokeWidth
                 }
                 translate(left = left, top = top) {
-                    val canTriggered = ohoGestureState.canDistanceTrigger(button, false)
+                    val canTriggered = sideGestureState.canDistanceTrigger(button, false)
                     draw(
                         size = Size(radius, radius),
                         colorFilter = ColorFilter.tint(Color(animationStyle.iconColor)),
