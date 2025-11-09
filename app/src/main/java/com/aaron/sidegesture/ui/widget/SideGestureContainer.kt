@@ -3,7 +3,6 @@ package com.aaron.sidegesture.ui.widget
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.SystemClock
-import android.view.ViewConfiguration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
@@ -260,7 +259,7 @@ class SideGestureState(
         val action = button.slideActions.center2.firstOrNull()
         if (action != null && action != Action.NONE) {
             calcLongPressJob = coroutineScope.launch {
-                delay(ViewConfiguration.getLongPressTimeout().toLong())
+                delay(button.longPressTriggerDelayMs)
                 button.vibrations.tryVibrateForSlide()
                 onLongPress(action)
             }
@@ -323,6 +322,7 @@ class SideGestureState(
     }
 
     fun onDragEnd(): Action {
+        calcLongPressJob?.cancel()
         val button = button ?: return Action.NONE
         val triggerDirection = triggerDirection
         val longSlideDelayMs = button.longSlideTriggerDelayMs
@@ -360,6 +360,8 @@ class SideGestureState(
     }
 
     fun reset() {
+        calcLongPressJob?.cancel()
+        calcLongPressJob = null
         isCanceled = false
         origin = Offset.Unspecified
         finger = Offset.Unspecified

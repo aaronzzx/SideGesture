@@ -30,6 +30,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 DataStoreHolder.gestureSettings.updateData {
                     it.copy(
                         slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                        longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
                         longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
                         longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
                         longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
@@ -44,6 +45,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         forEachIndexed { index, button ->
                             val newButton = button.copy(
                                 slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
                                 longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
                                 longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
                                 longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
@@ -60,6 +62,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         forEachIndexed { index, button ->
                             val newButton = button.copy(
                                 slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
+                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
                                 longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
                                 longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
                                 longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
@@ -92,25 +95,31 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun onPressTriggerDistanceChange(value: Float) {
+    fun onSlideTriggerDistanceChange(value: Float) {
         updateUiState {
             it.copy(slideTriggerDistance = value)
         }
     }
 
-    fun onLongPressTriggerDistanceChange(value: Float) {
+    fun onLongPressTriggerDelayMsChange(value: Float) {
+        updateUiState {
+            it.copy(longPressTriggerDelayMs = value.toLong())
+        }
+    }
+
+    fun onLongSlideTriggerDistanceChange(value: Float) {
         updateUiState {
             it.copy(longSlideTriggerDistance = value)
         }
     }
 
-    fun onLongPressTriggerDelayMsChange(value: Float) {
+    fun onLongSlideTriggerDelayMsChange(value: Float) {
         updateUiState {
             it.copy(longSlideTriggerDelayMs = value.toLong())
         }
     }
 
-    fun onLongPressTriggerImmediatelyChange(value: Boolean) {
+    fun onLongSlideTriggerImmediatelyChange(value: Boolean) {
         updateUiState {
             it.copy(longSlideTriggerImmediately = value)
         }
@@ -145,6 +154,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 updateUiState {
                     it.copy(
                         slideTriggerDistance = item.slideTriggerDistance.toFloat(),
+                        longPressTriggerDelayMs = item.longPressTriggerDelayMs,
                         longSlideTriggerImmediately = item.longSlideTriggerImmediately,
                         longSlideTriggerDistance = item.longSlideTriggerDistance.toFloat(),
                         longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
@@ -158,6 +168,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     data class UiState(
         val slideTriggerDistance: Float = 0f,
+        val longPressTriggerDelayMs: Long = 0L,
         val longSlideTriggerImmediately: Boolean = true,
         val longSlideTriggerDistance: Float = 0f,
         val longSlideTriggerDelayMs: Long = 0L,

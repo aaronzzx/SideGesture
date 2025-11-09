@@ -43,6 +43,7 @@ object GestureSettingsDefaults {
     val Angles = GestureAngles()
     val SlideTriggerDistance = ConvertUtils.dp2px(30f)
     val LongSlideTriggerDistance = ConvertUtils.dp2px(100f)
+    const val LongPressTriggerDelayMs = 250L
     const val LongSlideTriggerImmediately = true
     const val LongSlideTriggerDelayMs = 100L
     const val IsCustomVibration = false

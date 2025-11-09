@@ -19,6 +19,7 @@ import com.aaron.sidegesture.constant.GestureButtonDefaults.SlideTriggerDistance
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Start
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Vibrations
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Width
+import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongPressTriggerDelayMs
 import com.blankj.utilcode.util.ColorUtils
 import kotlinx.serialization.Serializable
 
@@ -39,6 +40,7 @@ data class GestureButton(
     val slideActions: GestureActions = SlideActions,
     val longSlideActions: GestureActions = LongSlideActions,
     val slideTriggerDistance: Int = SlideTriggerDistance,
+    val longPressTriggerDelayMs: Long = LongPressTriggerDelayMs,
     val longSlideTriggerDistance: Int = LongSlideTriggerDistance,
     val longSlideTriggerImmediately: Boolean = LongSlideTriggerImmediately,
     val longSlideTriggerDelayMs: Long = LongSlideTriggerDelayMs,

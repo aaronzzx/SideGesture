@@ -33,10 +33,12 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.MaxLongPressTriggerDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MaxLongSlideTriggerDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.MaxLongSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MaxSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MaxVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinLongPressTriggerDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MinLongSlideTriggerDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinLongSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinSlideTriggerDistance
 import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
@@ -109,11 +111,19 @@ fun GestureSettingsScreen(
                     )
                     MyTextSlider(
                         value = uiState.slideTriggerDistance,
-                        onValueChange = { vm.onPressTriggerDistanceChange(it) },
+                        onValueChange = { vm.onSlideTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
                         valueRange = MinSlideTriggerDistance.toFloat()..MaxSlideTriggerDistance.toFloat()
+                    )
+                    MyTextSlider(
+                        value = uiState.longPressTriggerDelayMs.toFloat(),
+                        onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
+                        onValueChangeFinished = { vm.saveSettings() },
+                        text = stringResource(id = R.string.long_press_trigger_delay_ms),
+                        sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
+                        valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
                     )
                 }
                 MySection(
@@ -121,7 +131,7 @@ fun GestureSettingsScreen(
                     title = stringResource(id = R.string.long_slide_action)
                 ) {
                     MyTextSwitch(
-                        onCheckedChange = { vm.onLongPressTriggerImmediatelyChange(it) },
+                        onCheckedChange = { vm.onLongSlideTriggerImmediatelyChange(it) },
                         checked = uiState.longSlideTriggerImmediately,
                         text = stringResource(id = R.string.long_slide_trigger_immediately),
                         secondaryText = stringResource(id = R.string.long_slide_trigger_immediately_hint)
@@ -134,7 +144,7 @@ fun GestureSettingsScreen(
                     )
                     MyTextSlider(
                         value = uiState.longSlideTriggerDistance,
-                        onValueChange = { vm.onLongPressTriggerDistanceChange(it) },
+                        onValueChange = { vm.onLongSlideTriggerDistanceChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
@@ -142,11 +152,11 @@ fun GestureSettingsScreen(
                     )
                     MyTextSlider(
                         value = uiState.longSlideTriggerDelayMs.toFloat(),
-                        onValueChange = { vm.onLongPressTriggerDelayMsChange(it) },
+                        onValueChange = { vm.onLongSlideTriggerDelayMsChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.long_slide_trigger_delay_ms),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
+                        valueRange = MinLongSlideTriggerDelayMs.toFloat()..MaxLongSlideTriggerDelayMs.toFloat()
                     )
                 }
                 MySection(

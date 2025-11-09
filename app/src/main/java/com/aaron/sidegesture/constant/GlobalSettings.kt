@@ -32,8 +32,10 @@ object GlobalSettings {
     const val MinGestureButtonPosition = 0f
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f
-    const val MinLongPressTriggerDelayMs = 0L
-    const val MaxLongPressTriggerDelayMs = 250L
+    const val MinLongSlideTriggerDelayMs = 0L
+    const val MaxLongSlideTriggerDelayMs = 250L
+    const val MinLongPressTriggerDelayMs = 250L
+    const val MaxLongPressTriggerDelayMs = 1000L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
     const val GestureButtonColorAlpha = 0.36f

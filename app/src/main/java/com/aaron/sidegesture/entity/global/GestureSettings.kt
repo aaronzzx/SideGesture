@@ -3,6 +3,7 @@ package com.aaron.sidegesture.entity.global
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.Angles
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.IsCustomVibration
+import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongPressTriggerDelayMs
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongSlideTriggerDelayMs
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongSlideTriggerDistance
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongSlideTriggerImmediately
@@ -21,6 +22,7 @@ import kotlinx.serialization.Serializable
 data class GestureSettings(
     val angles: GestureAngles = Angles,
     val slideTriggerDistance: Int = SlideTriggerDistance,
+    val longPressTriggerDelayMs: Long = LongPressTriggerDelayMs,
     val longSlideTriggerDistance: Int = LongSlideTriggerDistance,
     val longSlideTriggerImmediately: Boolean = LongSlideTriggerImmediately,
     val longSlideTriggerDelayMs: Long = LongSlideTriggerDelayMs,
