@@ -198,12 +198,12 @@ fun WaveStyleScreen(
                         }
                     )
                     MyTextSlider(
-                        value = uiState.animationStyle.iconScale.toFloat(),
+                        value = uiState.animationStyle.iconScale,
                         onValueChange = { vm.onIconScaleChange(it) },
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.scaling),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinIconScale.toFloat()..MaxIconScale.toFloat()
+                        valueRange = MinIconScale..MaxIconScale
                     )
 
                     MyExpandableColumn(
