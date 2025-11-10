@@ -98,10 +98,12 @@ fun Context.launchApp(packageName: String, className: String, miniWindow: Boolea
             }
         }
         if (!launchMiniWindowSucceed) {
-            val intent = Intent().apply {
-                setClassName(packageName, className)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            val intent = launchIntent
+                ?: Intent().apply {
+                    setClassName(packageName, className)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             startActivity(intent)
         }
         true
