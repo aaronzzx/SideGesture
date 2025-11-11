@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -209,7 +210,8 @@ fun WaveStyleScreen(
                     MyExpandableColumn(
                         onExpandedChange = { vm.onCustomIconExpandedChange(it) },
                         title = stringResource(id = R.string.custom_icon),
-                        expanded = uiState.isCustomIconExpanded
+                        expanded = uiState.isCustomIconExpanded,
+                        shape = RectangleShape
                     ) {
                         Row(
                             modifier = Modifier
