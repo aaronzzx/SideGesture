@@ -62,6 +62,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
 import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
@@ -497,6 +498,10 @@ fun ActionSettingsDialog(
 
                 GlobalActions.PREVIOUS_APP -> {
                     PreviousAppSettingsContent()
+                }
+
+                GlobalActions.GOTO_BOTTOM -> {
+                    GotoBottomSettingsContent()
                 }
             }
         },

@@ -93,6 +93,8 @@ class SideGestureService : ComponentAccessibilityService() {
     var prevAppExcludePkgNames: List<String> = emptyList()
         private set
 
+    var gotoBottomStrength = 10
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (orientation != newConfig.orientation) {
@@ -275,6 +277,15 @@ class SideGestureService : ComponentAccessibilityService() {
                     .distinctUntilChangedBy { it.previousApp }
                     .collectLatest {
                         prevAppExcludePkgNames = it.previousApp.packageNames
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .actionSettings
+                    .data
+                    .distinctUntilChangedBy { it.gotoBottom }
+                    .collectLatest {
+                        gotoBottomStrength = it.gotoBottom.strength
                     }
             }
         }

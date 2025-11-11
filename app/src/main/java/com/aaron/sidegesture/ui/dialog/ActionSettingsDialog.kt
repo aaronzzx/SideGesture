@@ -36,7 +36,9 @@ import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalSettings.MaxGotoBottomStrength
 import com.aaron.sidegesture.constant.GlobalSettings.MaxMoveScreenRate
+import com.aaron.sidegesture.constant.GlobalSettings.MinGotoBottomStrength
 import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenRate
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
@@ -154,6 +156,33 @@ fun PreviousAppSettingsContent(vm: ActionSettingsVM = viewModel()) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun GotoBottomSettingsContent(vm: ActionSettingsVM = viewModel()) {
+    UDFComponent(
+        component = vm.udfComponent,
+        onEvent = {}
+    ) { uiState ->
+        LoadingComponent(
+            modifier = Modifier.fillMaxWidth(),
+            component = vm.loadingComponent
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+            ) {
+                MyTextSlider(
+                    value = uiState.actionSettings.gotoBottom.strength.toFloat(),
+                    onValueChange = { vm.onGotoBottomStrengthChange(it) },
+                    onValueChangeFinished = { vm.saveSettings() },
+                    text = stringResource(id = R.string.strength),
+                    sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
+                    valueRange = MinGotoBottomStrength..MaxGotoBottomStrength
+                )
             }
         }
     }

@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Splitscreen
 import androidx.compose.material.icons.filled.SportsBaseball
+import androidx.compose.material.icons.filled.VerticalAlignBottom
+import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material.icons.filled.VolumeMute
@@ -99,6 +101,8 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
     GlobalActions.EXTRA_LAUNCH_SHORTCUT -> action.shortcutInfo?.label ?: ""
     GlobalActions.MOVE_SCREEN -> getString(R.string.action_move_screen)
     GlobalActions.KEEP_SCREEN_ON -> getString(R.string.action_keep_screen_on)
+    GlobalActions.BACK_TO_TOP -> getString(R.string.action_back_to_top)
+    GlobalActions.GOTO_BOTTOM -> getString(R.string.action_goto_bottom)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -152,6 +156,8 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.EXTRA_LAUNCH_SHORTCUT -> action.shortcutInfo?.label ?: ""
     GlobalActions.MOVE_SCREEN -> stringResource(R.string.action_move_screen)
     GlobalActions.KEEP_SCREEN_ON -> stringResource(R.string.action_keep_screen_on)
+    GlobalActions.BACK_TO_TOP -> stringResource(R.string.action_back_to_top)
+    GlobalActions.GOTO_BOTTOM -> stringResource(R.string.action_goto_bottom)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -210,5 +216,7 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     }
     GlobalActions.MOVE_SCREEN -> Icons.Default.AddToHomeScreen
     GlobalActions.KEEP_SCREEN_ON -> Icons.Default.WbSunny
+    GlobalActions.BACK_TO_TOP -> Icons.Default.VerticalAlignTop
+    GlobalActions.GOTO_BOTTOM -> Icons.Default.VerticalAlignBottom
     else -> null
 }

@@ -8,6 +8,7 @@ import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * @author DS-Z
@@ -46,6 +47,16 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             )
         }
         saveSettings()
+    }
+
+    fun onGotoBottomStrengthChange(strength: Float) {
+        updateUiState {
+            it.copy(
+                actionSettings = it.actionSettings.copy(
+                    gotoBottom = it.actionSettings.gotoBottom.copy(strength = strength.roundToInt())
+                )
+            )
+        }
     }
 
     fun saveSettings() {

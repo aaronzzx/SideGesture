@@ -29,6 +29,8 @@ object GlobalSettings {
     const val MaxIconScale = 1.0f
     const val MinMoveScreenRate = 1f
     const val MaxMoveScreenRate = 3f
+    const val MinGotoBottomStrength = 1f
+    const val MaxGotoBottomStrength = 20f
     const val MinGestureButtonPosition = 0f
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f

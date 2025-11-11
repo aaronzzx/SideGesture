@@ -283,7 +283,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.MOVE_SCREEN -> {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
                     showVersionTooLowToast(this, R.string.action_move_screen)
                     return
                 }
@@ -315,6 +315,20 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "gulugulu:KeepScreenOn")
                     wakeLock?.acquire()
                     showToast(R.string.enable_keep_screen_on)
+                }
+            }
+            GlobalActions.BACK_TO_TOP -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    AccessibilityUtils.fastVerticalScroll(host, true)
+                } else {
+                    showVersionTooLowToast(this, R.string.action_back_to_top)
+                }
+            }
+            GlobalActions.GOTO_BOTTOM -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    AccessibilityUtils.fastVerticalScroll(host, false)
+                } else {
+                    showVersionTooLowToast(this, R.string.action_goto_bottom)
                 }
             }
         }

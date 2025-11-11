@@ -243,6 +243,8 @@
     <string name="action_alipay_pay">支付宝付款码</string>
     <string name="action_move_screen">移动屏幕(11.0+ 模拟点击)</string>
     <string name="action_keep_screen_on">屏幕常亮</string>
+    <string name="action_back_to_top">快速回顶部(7.0+ 模拟滑动)</string>
+    <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>
 
     <string name="bug_collecting">异常收集</string>
     <string name="cannot_find_app_for_open_this_file">没有找到可以打开该文件的应用</string>
@@ -275,4 +277,5 @@
     <string name="long_press_trigger_delay_ms">长按触发延迟</string>
     <string name="precise_slide_type">滑动防误触</string>
     <string name="precise_slide_type_tips">达成侧滑触发条件后续上下滑不再触发</string>
+    <string name="strength">强度</string>
 </resources>

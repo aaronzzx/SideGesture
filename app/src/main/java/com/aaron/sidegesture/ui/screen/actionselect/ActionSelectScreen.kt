@@ -535,7 +535,8 @@ private fun ActionPage(
                     onSelect(item, selected)
                 },
                 showSettings = item.value == GlobalActions.MOVE_SCREEN ||
-                    item.value == GlobalActions.PREVIOUS_APP,
+                    item.value == GlobalActions.PREVIOUS_APP ||
+                    item.value == GlobalActions.GOTO_BOTTOM,
                 onSettingsClick = {
                     onSettingsClick(item)
                 }
