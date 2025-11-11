@@ -34,7 +34,7 @@ object GlobalSettings {
     const val MinGestureButtonLength = 0.1f
     const val MinLongSlideTriggerDelayMs = 0L
     const val MaxLongSlideTriggerDelayMs = 250L
-    const val MinLongPressTriggerDelayMs = 250L
+    const val MinLongPressTriggerDelayMs = 100L
     const val MaxLongPressTriggerDelayMs = 1000L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
