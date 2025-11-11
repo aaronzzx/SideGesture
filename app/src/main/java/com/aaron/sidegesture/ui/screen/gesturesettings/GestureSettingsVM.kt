@@ -35,42 +35,9 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
                         longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
                         isCustomVibration = uiState.isCustomVibration,
-                        vibrations = uiState.vibrations
+                        vibrations = uiState.vibrations,
+                        isPreciseSlideType = uiState.isPreciseSlideTypeEnabled
                     )
-                }
-            }
-            launch {
-                DataStoreHolder.sideGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, button ->
-                            val newButton = button.copy(
-                                slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
-                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
-                                longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
-                                longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
-                                longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
-                                vibrations = uiState.vibrations
-                            )
-                            set(index, newButton)
-                        }
-                    }
-                }
-            }
-            launch {
-                DataStoreHolder.bottomGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, button ->
-                            val newButton = button.copy(
-                                slideTriggerDistance = uiState.slideTriggerDistance.toInt(),
-                                longPressTriggerDelayMs = uiState.longPressTriggerDelayMs,
-                                longSlideTriggerImmediately = uiState.longSlideTriggerImmediately,
-                                longSlideTriggerDistance = uiState.longSlideTriggerDistance.toInt(),
-                                longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
-                                vibrations = uiState.vibrations
-                            )
-                            set(index, newButton)
-                        }
-                    }
                 }
             }
         }
@@ -87,6 +54,13 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         updateUiState {
             it.copy(showPredefinedVibrationDropdown = show)
         }
+    }
+
+    fun onPreciseSlideTypeChange(value: Boolean) {
+        updateUiState {
+            it.copy(isPreciseSlideTypeEnabled = value)
+        }
+        saveSettings()
     }
 
     fun onCustomVibrationMsChange(value: Float) {
@@ -159,7 +133,8 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         longSlideTriggerDistance = item.longSlideTriggerDistance.toFloat(),
                         longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
                         isCustomVibration = item.isCustomVibration,
-                        vibrations = item.vibrations
+                        vibrations = item.vibrations,
+                        isPreciseSlideTypeEnabled = item.isPreciseSlideType
                     )
                 }
             }
@@ -175,7 +150,8 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val canShowPredefinedVibration: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
         val isCustomVibration: Boolean = false,
         val vibrations: Vibrations = Vibrations(),
-        val showPredefinedVibrationDropdown: Boolean = false
+        val showPredefinedVibrationDropdown: Boolean = false,
+        val isPreciseSlideTypeEnabled: Boolean = false
     )
 
     sealed interface UiEvent {

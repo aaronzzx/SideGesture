@@ -6,20 +6,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.aaron.sidegesture.constant.GestureButtonDefaults
 import com.aaron.sidegesture.constant.GestureButtonDefaults.AlignRegion
-import com.aaron.sidegesture.constant.GestureButtonDefaults.Angle
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Color
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Enabled
 import com.aaron.sidegesture.constant.GestureButtonDefaults.End
 import com.aaron.sidegesture.constant.GestureButtonDefaults.LongSlideActions
-import com.aaron.sidegesture.constant.GestureButtonDefaults.LongSlideTriggerDelayMs
-import com.aaron.sidegesture.constant.GestureButtonDefaults.LongSlideTriggerDistance
-import com.aaron.sidegesture.constant.GestureButtonDefaults.LongSlideTriggerImmediately
 import com.aaron.sidegesture.constant.GestureButtonDefaults.SlideActions
-import com.aaron.sidegesture.constant.GestureButtonDefaults.SlideTriggerDistance
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Start
-import com.aaron.sidegesture.constant.GestureButtonDefaults.Vibrations
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Width
-import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongPressTriggerDelayMs
 import com.blankj.utilcode.util.ColorUtils
 import kotlinx.serialization.Serializable
 
@@ -36,15 +29,8 @@ data class GestureButton(
     val start: Float = Start,
     val end: Float = End,
     val width: Int = Width,
-    val angle: GestureAngle = Angle,
     val slideActions: GestureActions = SlideActions,
     val longSlideActions: GestureActions = LongSlideActions,
-    val slideTriggerDistance: Int = SlideTriggerDistance,
-    val longPressTriggerDelayMs: Long = LongPressTriggerDelayMs,
-    val longSlideTriggerDistance: Int = LongSlideTriggerDistance,
-    val longSlideTriggerImmediately: Boolean = LongSlideTriggerImmediately,
-    val longSlideTriggerDelayMs: Long = LongSlideTriggerDelayMs,
-    val vibrations: Vibrations = Vibrations,
     val color: Int = Color,
     val alignRegion: Boolean = AlignRegion
 ) : Comparable<GestureButton> {

@@ -98,6 +98,12 @@ fun GestureSettingsScreen(
                         text = stringResource(id = R.string.gesture_angles),
                         secondaryText = stringResource(id = R.string.gesture_angles_hint)
                     )
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onPreciseSlideTypeChange(it) },
+                        checked = uiState.isPreciseSlideTypeEnabled,
+                        text = stringResource(id = R.string.precise_slide_type),
+                        secondaryText = stringResource(id = R.string.precise_slide_type_tips)
+                    )
                 }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),

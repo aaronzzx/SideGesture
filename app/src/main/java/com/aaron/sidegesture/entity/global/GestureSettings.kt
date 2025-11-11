@@ -3,6 +3,7 @@ package com.aaron.sidegesture.entity.global
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.Angles
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.IsCustomVibration
+import com.aaron.sidegesture.constant.GestureSettingsDefaults.IsPreciseSlideType
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongPressTriggerDelayMs
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongSlideTriggerDelayMs
 import com.aaron.sidegesture.constant.GestureSettingsDefaults.LongSlideTriggerDistance
@@ -27,5 +28,6 @@ data class GestureSettings(
     val longSlideTriggerImmediately: Boolean = LongSlideTriggerImmediately,
     val longSlideTriggerDelayMs: Long = LongSlideTriggerDelayMs,
     val isCustomVibration: Boolean = IsCustomVibration,
-    val vibrations: Vibrations = Vibrations
+    val vibrations: Vibrations = Vibrations,
+    val isPreciseSlideType: Boolean = IsPreciseSlideType
 )

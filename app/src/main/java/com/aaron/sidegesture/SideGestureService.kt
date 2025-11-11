@@ -36,6 +36,7 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
+import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -182,6 +183,10 @@ class SideGestureService : ComponentAccessibilityService() {
                             .advancedSettings
                             .data
                             .collectAsStateWithLifecycle(initialValue = AdvancedSettings())
+                        val gestureSettings by DataStoreHolder
+                            .gestureSettings
+                            .data
+                            .collectAsStateWithLifecycle(initialValue = GestureSettings())
                         val imePadding by imeInsetObserver
                             .flow
                             .collectAsStateWithLifecycle()
@@ -201,7 +206,8 @@ class SideGestureService : ComponentAccessibilityService() {
                                 proxy.onAction(action)
                             },
                             actionSettings = actionSettings,
-                            advancedSettings = advancedSettings
+                            advancedSettings = advancedSettings,
+                            gestureSettings = gestureSettings
                         )
                     }
                 }

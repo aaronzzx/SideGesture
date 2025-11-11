@@ -39,6 +39,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
+import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
@@ -74,11 +75,12 @@ fun SideGestureContainer(
     animationStyle: AnimationStyle? = WaveStyle(),
     actionPanelStyle: ActionPanelStyle = ArcStyle(),
     actionSettings: ActionSettings = ActionSettings(),
-    advancedSettings: AdvancedSettings = AdvancedSettings()
+    advancedSettings: AdvancedSettings = AdvancedSettings(),
+    gestureSettings: GestureSettings = GestureSettings()
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
-    val sideGestureState = rememberSideGestureState(buttons, advancedSettings)
+    val sideGestureState = rememberSideGestureState(buttons, advancedSettings, gestureSettings)
     val actionPanelState = rememberActionPanelState()
     val moveScreenState = rememberMoveScreenState(actionSettings.moveScreen.rate)
 
@@ -164,7 +166,7 @@ fun SideGestureContainer(
             actionPanelState = actionPanelState,
             modifier = Modifier.matchParentSize(),
             longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
-            vibrations = sideGestureState.button?.vibrations
+            vibrations = gestureSettings.vibrations
         )
 
         if (!moveScreenState.visible && animationStyle != null) {
@@ -197,18 +199,20 @@ fun SideGestureContainer(
 @Composable
 private fun rememberSideGestureState(
     buttons: List<GestureButton>,
-    advancedSettings: AdvancedSettings = AdvancedSettings()
+    advancedSettings: AdvancedSettings = AdvancedSettings(),
+    gestureSettings: GestureSettings = GestureSettings()
 ): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    return remember(coroutineScope, buttons, advancedSettings) {
-        SideGestureState(coroutineScope, buttons, advancedSettings)
+    return remember(coroutineScope, buttons, advancedSettings, gestureSettings) {
+        SideGestureState(coroutineScope, buttons, advancedSettings, gestureSettings)
     }
 }
 
 class SideGestureState(
     private val coroutineScope: CoroutineScope,
     private val buttons: List<GestureButton>,
-    private val advancedSettings: AdvancedSettings = AdvancedSettings()
+    private val advancedSettings: AdvancedSettings = AdvancedSettings(),
+    private val gestureSettings: GestureSettings = GestureSettings()
 ) {
 
     var isCanceled: Boolean by mutableStateOf(false)
@@ -248,6 +252,11 @@ class SideGestureState(
         } else 0f
     }
 
+    /**
+     * 区分上下滑和侧滑，当可以触发侧滑时，即使后面触发方向变成上下滑也需要取消手势
+     */
+    private var isOhoGestureEverCanTriggered = false
+
     fun onDragStart(offset: Offset, imePadding: Int) {
         origin = offset
         finger = offset
@@ -255,12 +264,13 @@ class SideGestureState(
         buttonBounds = button?.bounds(imePadding)
 
         val button = button ?: return
+        val gestureSettings = gestureSettings
 
         val action = button.slideActions.center2.firstOrNull()
         if (action != null && action != Action.NONE) {
             calcLongPressJob = coroutineScope.launch {
-                delay(button.longPressTriggerDelayMs)
-                button.vibrations.tryVibrateForSlide()
+                delay(gestureSettings.longPressTriggerDelayMs)
+                gestureSettings.vibrations.tryVibrateForSlide()
                 onLongPress(action)
             }
         }
@@ -292,23 +302,34 @@ class SideGestureState(
         // 理论上能到这里button不应该为空
         val button = button ?: return null
         // 没触发方向，这一轮不再识别手势
-        val direction = calcDirection(button) ?: return null
-        triggerDirection = direction
+        val newDirection = calcDirection(button) ?: return null
+        triggerDirection = newDirection
+        val gestureSettings = gestureSettings
+
+        if (gestureSettings.isPreciseSlideType) {
+            if (newDirection == Center || newDirection == Up || newDirection == Down) {
+                if (!isOhoGestureEverCanTriggered) {
+                    isOhoGestureEverCanTriggered = canDistanceTriggered(button, isLongSlide = false, judgeAction = false)
+                }
+            } else if (isOhoGestureEverCanTriggered) {
+                return null
+            }
+        }
 
         coroutineScope.launch {
             fingerXAnim.snapTo(fingerXAnimVal + dragAmount.x)
             fingerYAnim.snapTo(fingerYAnimVal + dragAmount.y)
         }
-        if (canDistanceTrigger(button, true)) {
-            val longSlideDelayMs = button.longSlideTriggerDelayMs
+        if (canDistanceTriggered(button, true)) {
+            val longSlideDelayMs = gestureSettings.longSlideTriggerDelayMs
             val timeMs = SystemClock.uptimeMillis()
             if (longSlideFirstTriggerMs == 0L) {
                 longSlideFirstTriggerMs = timeMs
             } else if (timeMs - longSlideFirstTriggerMs >= longSlideDelayMs) {
-                if (button.longSlideTriggerImmediately) {
-                    val actions = button.longSlideActions.actionsBy(direction)
+                if (gestureSettings.longSlideTriggerImmediately) {
+                    val actions = button.longSlideActions.actionsBy(newDirection)
                     if (actions.isNotEmpty()) {
-                        button.vibrations.tryVibrateForLongSlide()
+                        gestureSettings.vibrations.tryVibrateForLongSlide()
                     }
                     // 要触发ActionPanel，longPressTriggerImmediately必须为true
                     return actions
@@ -324,24 +345,25 @@ class SideGestureState(
     fun onDragEnd(): Action {
         calcLongPressJob?.cancel()
         val button = button ?: return Action.NONE
+        val gestureSettings = gestureSettings
         val triggerDirection = triggerDirection
-        val longSlideDelayMs = button.longSlideTriggerDelayMs
+        val longSlideDelayMs = gestureSettings.longSlideTriggerDelayMs
         var returnAction = Action.NONE
-        if (!button.longSlideTriggerImmediately &&
-            canDistanceTrigger(button, true) &&
+        if (!gestureSettings.longSlideTriggerImmediately &&
+            canDistanceTriggered(button, true) &&
             SystemClock.uptimeMillis() - longSlideFirstTriggerMs >= longSlideDelayMs
         ) {
             val actions = button.longSlideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
             if (action != null && action != Action.NONE) {
-                button.vibrations.tryVibrateForLongSlide()
+                gestureSettings.vibrations.tryVibrateForLongSlide()
                 returnAction = action
             }
-        } else if (canDistanceTrigger(button, false)) {
+        } else if (canDistanceTriggered(button, false)) {
             val actions = button.slideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
             if (action != null && action != Action.NONE) {
-                button.vibrations.tryVibrateForSlide()
+                gestureSettings.vibrations.tryVibrateForSlide()
                 returnAction = action
             }
         }
@@ -366,6 +388,7 @@ class SideGestureState(
         origin = Offset.Unspecified
         finger = Offset.Unspecified
         longSlideFirstTriggerMs = 0L
+        isOhoGestureEverCanTriggered = false
 
         val position = button?.position ?: return
         coroutineScope.launch {
@@ -389,7 +412,12 @@ class SideGestureState(
     /**
      * 手指划过的距离是否足够触发动作
      */
-    fun canDistanceTrigger(button: GestureButton, isLongSlide: Boolean): Boolean {
+    fun canDistanceTriggered(
+        button: GestureButton,
+        isLongSlide: Boolean,
+        judgeAction: Boolean = true
+    ): Boolean {
+        val gestureSettings = gestureSettings
         val slideAction = button.slideActions
         val longSlideAction = button.longSlideActions
         val originX = origin.x
@@ -398,6 +426,7 @@ class SideGestureState(
         val fingerY = finger.y + getStickySlideValue(button, false)
         val triggerDirection = triggerDirection
 
+        // 长按直接返回
         if (triggerDirection == Center2) {
             return false
         }
@@ -422,13 +451,21 @@ class SideGestureState(
             return false
         }
 
+        var canDistanceTriggered = false
         if (triggerDirection == Center) {
-            if (isLongSlide) {
-                return slideDistance >= button.longSlideTriggerDistance &&
-                        longSlideAction.center.isNotEmpty()
+            canDistanceTriggered = if (isLongSlide) {
+                slideDistance >= gestureSettings.longSlideTriggerDistance
+            } else {
+                slideDistance >= gestureSettings.slideTriggerDistance
             }
-            return slideDistance >= button.slideTriggerDistance &&
-                    slideAction.center.isNotEmpty()
+            if (!judgeAction) {
+                return canDistanceTriggered
+            }
+            return if (isLongSlide) {
+                canDistanceTriggered && longSlideAction.center.isNotEmpty()
+            } else {
+                canDistanceTriggered && slideAction.center.isNotEmpty()
+            }
         } else if (triggerDirection == Up || triggerDirection == Down) {
             // 需要计算斜边
             val edge1 = slideDistance
@@ -437,32 +474,50 @@ class SideGestureState(
                 Position.Bottom -> abs(fingerX - originX)
             }
             val hypot = hypot(edge1, edge2)
-            if (isLongSlide) {
-                val canTrigger = hypot >= button.longSlideTriggerDistance
+            canDistanceTriggered = if (isLongSlide) {
+                hypot >= gestureSettings.longSlideTriggerDistance
+            } else {
+                hypot >= gestureSettings.slideTriggerDistance
+            }
+            if (!judgeAction) {
+                return canDistanceTriggered
+            }
+            return if (isLongSlide) {
                 if (triggerDirection == Up) {
-                    return canTrigger && longSlideAction.up.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.up.isNotEmpty()
+                } else {
+                    canDistanceTriggered && longSlideAction.down.isNotEmpty()
                 }
-                return canTrigger && longSlideAction.down.isNotEmpty()
+            } else { // Slide
+                if (triggerDirection == Up) {
+                    canDistanceTriggered && slideAction.up.isNotEmpty()
+                } else { // Down
+                    canDistanceTriggered && slideAction.down.isNotEmpty()
+                }
             }
-            val canTrigger = hypot >= button.slideTriggerDistance
-            if (triggerDirection == Up) {
-                return canTrigger && slideAction.up.isNotEmpty()
-            }
-            return canTrigger && slideAction.down.isNotEmpty()
         } else if (triggerDirection == Up2 || triggerDirection == Down2) {
             val absDistance = slideDistance.absoluteValue
-            if (isLongSlide) {
-                val canTrigger = absDistance >= button.longSlideTriggerDistance
+            canDistanceTriggered = if (isLongSlide) {
+                absDistance >= gestureSettings.longSlideTriggerDistance
+            } else {
+                absDistance >= gestureSettings.slideTriggerDistance
+            }
+            if (!judgeAction) {
+                return canDistanceTriggered
+            }
+            return if (isLongSlide) {
                 if (triggerDirection == Up2) {
-                    return canTrigger && longSlideAction.up2.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.up2.isNotEmpty()
+                } else { // Down2
+                    canDistanceTriggered && longSlideAction.down2.isNotEmpty()
                 }
-                return canTrigger && longSlideAction.down2.isNotEmpty()
+            } else { // Slide
+                if (triggerDirection == Up2) {
+                    canDistanceTriggered && slideAction.up2.isNotEmpty()
+                } else { // Down2
+                    canDistanceTriggered && slideAction.down2.isNotEmpty()
+                }
             }
-            val canTrigger = absDistance >= button.slideTriggerDistance
-            if (triggerDirection == Up2) {
-                return canTrigger && slideAction.up2.isNotEmpty()
-            }
-            return canTrigger && slideAction.down2.isNotEmpty()
         }
         return false
     }
@@ -493,7 +548,12 @@ class SideGestureState(
             // 下半区
             GESTURE_ANGLE_BASE - Math.toDegrees(radians.toDouble())
         }
-        return button.angle.getTriggerDirection(degree.toFloat())
+        val angle = when (button.position) {
+            Position.Left -> gestureSettings.angles.left
+            Position.Right -> gestureSettings.angles.right
+            Position.Bottom -> gestureSettings.angles.bottom
+        }
+        return angle.getTriggerDirection(degree.toFloat())
     }
 
     private fun getStickySlideValue(button: GestureButton, isX: Boolean): Float {

@@ -64,30 +64,6 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     )
                 }
             }
-            launch {
-                DataStoreHolder.sideGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, gestureButton ->
-                            val newButton = gestureButton.copy(
-                                angle = getGestureAngle(gestureButton.position)
-                            )
-                            set(index, newButton)
-                        }
-                    }
-                }
-            }
-            launch {
-                DataStoreHolder.bottomGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, gestureButton ->
-                            val newButton = gestureButton.copy(
-                                angle = getGestureAngle(gestureButton.position)
-                            )
-                            set(index, newButton)
-                        }
-                    }
-                }
-            }
         }.invokeOnCompletion { ex ->
             if (ex == null) {
                 toast(R.string.save_success)
@@ -103,30 +79,6 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
             launch {
                 DataStoreHolder.gestureSettings.updateData {
                     it.copy(angles = GestureAngles())
-                }
-            }
-            launch {
-                DataStoreHolder.sideGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, gestureButton ->
-                            val newButton = gestureButton.copy(
-                                angle = getGestureAngle(gestureButton.position, true)
-                            )
-                            set(index, newButton)
-                        }
-                    }
-                }
-            }
-            launch {
-                DataStoreHolder.bottomGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        forEachIndexed { index, gestureButton ->
-                            val newButton = gestureButton.copy(
-                                angle = getGestureAngle(gestureButton.position, true)
-                            )
-                            set(index, newButton)
-                        }
-                    }
                 }
             }
         }.invokeOnCompletion { ex ->

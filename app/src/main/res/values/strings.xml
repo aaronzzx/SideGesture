@@ -273,4 +273,6 @@
     <string name="typing_package_name_and_click_done">输入包名，回车加入</string>
     <string name="long_press">长按</string>
     <string name="long_press_trigger_delay_ms">长按触发延迟</string>
+    <string name="precise_slide_type">滑动防误触</string>
+    <string name="precise_slide_type_tips">达成侧滑触发条件后续上下滑不再触发</string>
 </resources>

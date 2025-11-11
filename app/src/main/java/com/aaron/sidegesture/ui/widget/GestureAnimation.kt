@@ -257,7 +257,7 @@ private fun WaveGestureAnimation(
                     Position.Bottom -> size.height - bezierBounds.height + paddingVert + animationStyle.strokeWidth
                 }
                 translate(left = left, top = top) {
-                    val canTriggered = sideGestureState.canDistanceTrigger(button, false)
+                    val canTriggered = sideGestureState.canDistanceTriggered(button, false)
                     draw(
                         size = Size(radius, radius),
                         colorFilter = ColorFilter.tint(Color(animationStyle.iconColor)),
