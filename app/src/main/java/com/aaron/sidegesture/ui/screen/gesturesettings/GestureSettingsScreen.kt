@@ -169,6 +169,12 @@ fun GestureSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.vibration)
                 ) {
+                    MyTextSwitch(
+                        onCheckedChange = { vm.onVibrateImmediatelyChange(it) },
+                        checked = uiState.vibrations.vibrateImmediately,
+                        text = stringResource(id = R.string.vibrate_immediately),
+                        secondaryText = stringResource(id = R.string.vibrate_immediately_hint)
+                    )
                     if (uiState.canShowPredefinedVibration) {
                         MyTextSwitch(
                             onCheckedChange = { vm.onCustomVibrationChange(it) },

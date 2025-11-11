@@ -114,6 +114,13 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onVibrateImmediatelyChange(value: Boolean) {
+        updateUiState {
+            it.copy(vibrations = it.vibrations.copy(vibrateImmediately = value))
+        }
+        saveSettings()
+    }
+
     fun onCustomVibrationChange(value: Boolean) {
         updateUiState {
             it.copy(isCustomVibration = value)

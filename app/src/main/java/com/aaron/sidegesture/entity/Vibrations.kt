@@ -7,6 +7,7 @@ import com.aaron.sidegesture.constant.VibrationDefaults.CustomVibrationMs
 import com.aaron.sidegesture.constant.VibrationDefaults.LongSlideEnabled
 import com.aaron.sidegesture.constant.VibrationDefaults.PredefinedEffect
 import com.aaron.sidegesture.constant.VibrationDefaults.SlideEnabled
+import com.aaron.sidegesture.constant.VibrationDefaults.VibrateImmediately
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,7 +21,9 @@ data class Vibrations(
     val longSlideEnabled: Boolean = LongSlideEnabled,
     val actionPanelEnabled: Boolean = ActionPanelEnabled,
     val predefinedEffect: VibrationEffects = PredefinedEffect,
-    val customVibrationMs: Long = CustomVibrationMs
+    val customVibrationMs: Long = CustomVibrationMs,
+    // 识别到手势立即振动
+    val vibrateImmediately: Boolean = VibrateImmediately
 ) {
     init {
         val min = GlobalSettings.MinVibrationDurationMs

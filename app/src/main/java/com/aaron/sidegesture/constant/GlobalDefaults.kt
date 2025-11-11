@@ -120,6 +120,7 @@ object VibrationDefaults {
     const val ActionPanelEnabled = true
     val PredefinedEffect = VibrationEffects.Click
     const val CustomVibrationMs = 50L
+    const val VibrateImmediately = false
 }
 
 object GestureButtonDefaults {

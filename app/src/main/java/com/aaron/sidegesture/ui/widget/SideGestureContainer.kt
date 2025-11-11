@@ -257,6 +257,8 @@ class SideGestureState(
      */
     private var isOhoGestureEverCanTriggered = false
 
+    private var slideVibrationFlags = false
+
     fun onDragStart(offset: Offset, imePadding: Int) {
         origin = offset
         finger = offset
@@ -297,6 +299,7 @@ class SideGestureState(
      * 长列表表示触发长动作，否则表示触发一个动作
      */
     fun onDrag(dragAmount: Offset): List<Action>? {
+        val gestureSettings = gestureSettings
         calcLongPressJob?.cancel()
         finger += dragAmount
         // 理论上能到这里button不应该为空
@@ -304,7 +307,6 @@ class SideGestureState(
         // 没触发方向，这一轮不再识别手势
         val newDirection = calcDirection(button) ?: return null
         triggerDirection = newDirection
-        val gestureSettings = gestureSettings
 
         if (gestureSettings.isPreciseSlideType) {
             if (newDirection == Center || newDirection == Up || newDirection == Down) {
@@ -320,17 +322,22 @@ class SideGestureState(
             fingerXAnim.snapTo(fingerXAnimVal + dragAmount.x)
             fingerYAnim.snapTo(fingerYAnimVal + dragAmount.y)
         }
+
+        if (gestureSettings.vibrations.vibrateImmediately) {
+            if (!slideVibrationFlags && canDistanceTriggered(button, false)) {
+                slideVibrationFlags = true
+                gestureSettings.vibrations.tryVibrateForSlide()
+            }
+        }
         if (canDistanceTriggered(button, true)) {
             val longSlideDelayMs = gestureSettings.longSlideTriggerDelayMs
             val timeMs = SystemClock.uptimeMillis()
             if (longSlideFirstTriggerMs == 0L) {
                 longSlideFirstTriggerMs = timeMs
             } else if (timeMs - longSlideFirstTriggerMs >= longSlideDelayMs) {
+                val actions = button.longSlideActions.actionsBy(newDirection)
                 if (gestureSettings.longSlideTriggerImmediately) {
-                    val actions = button.longSlideActions.actionsBy(newDirection)
-                    if (actions.isNotEmpty()) {
-                        gestureSettings.vibrations.tryVibrateForLongSlide()
-                    }
+                    gestureSettings.vibrations.tryVibrateForLongSlide()
                     // 要触发ActionPanel，longPressTriggerImmediately必须为true
                     return actions
                 }
@@ -363,7 +370,9 @@ class SideGestureState(
             val actions = button.slideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
             if (action != null && action != Action.NONE) {
-                gestureSettings.vibrations.tryVibrateForSlide()
+                if (!slideVibrationFlags) {
+                    gestureSettings.vibrations.tryVibrateForSlide()
+                }
                 returnAction = action
             }
         }
@@ -389,6 +398,7 @@ class SideGestureState(
         finger = Offset.Unspecified
         longSlideFirstTriggerMs = 0L
         isOhoGestureEverCanTriggered = false
+        slideVibrationFlags = false
 
         val position = button?.position ?: return
         coroutineScope.launch {
