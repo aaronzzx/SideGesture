@@ -32,6 +32,16 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
+    fun onMoveScreenHoverChange(hoverDelayMs: Float) {
+        updateUiState {
+            it.copy(
+                actionSettings = it.actionSettings.copy(
+                    moveScreen = it.actionSettings.moveScreen.copy(hoverDelayMs = hoverDelayMs.toLong())
+                )
+            )
+        }
+    }
+
     fun onPreviousAppOperation(pkgName: String, add: Boolean) {
         updateUiState {
             val pkgNames = it.actionSettings.previousApp.packageNames

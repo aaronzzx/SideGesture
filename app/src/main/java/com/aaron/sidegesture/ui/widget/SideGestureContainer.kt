@@ -82,7 +82,7 @@ fun SideGestureContainer(
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons, advancedSettings, gestureSettings)
     val actionPanelState = rememberActionPanelState()
-    val moveScreenState = rememberMoveScreenState(actionSettings.moveScreen.rate)
+    val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
 
     SideEffect {
         sideGestureState.onLongPress = { action ->
@@ -106,9 +106,9 @@ fun SideGestureContainer(
             }
             if (!sideGestureState.isCanceled) {
                 val actions = sideGestureState.onDrag(dragAmount)
-                if (actions != null) {
-                    val button = sideGestureState.button
-                    if (button != null && actions.size > 1) {
+                val button = sideGestureState.button
+                if (button != null && actions != null) {
+                    if (actions.size > 1) {
                         actionPanelState.onDragStart(sideGestureState.finger)
                         actionPanelState.ready(button.position, actions)
                         sideGestureState.cancel()

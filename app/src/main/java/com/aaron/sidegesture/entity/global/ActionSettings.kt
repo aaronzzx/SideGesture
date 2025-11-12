@@ -1,6 +1,10 @@
 package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
+import com.aaron.sidegesture.constant.ActionSettingsDefaults.GotoBottomStrength
+import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenHoverDelayMs
+import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenRate
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
 
 /**
@@ -16,7 +20,15 @@ data class ActionSettings(
 ) {
     @Serializable
     @Keep
-    data class MoveScreen(val rate: Float = 2f)
+    data class MoveScreen(
+        val rate: Float = MoveScreenRate,
+        val hoverDelayMs: Long = MoveScreenHoverDelayMs,
+        val radius: Int = ConvertUtils.dp2px(12f)
+    ) {
+        enum class Action {
+            Tap, DoubleTap, LongPress
+        }
+    }
 
     @Serializable
     @Keep
@@ -24,5 +36,5 @@ data class ActionSettings(
 
     @Serializable
     @Keep
-    data class GotoBottom(val strength: Int = 10)
+    data class GotoBottom(val strength: Int = GotoBottomStrength)
 }

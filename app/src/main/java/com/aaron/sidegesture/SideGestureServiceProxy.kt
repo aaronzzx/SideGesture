@@ -22,6 +22,8 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.annotation.RequiresApi
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.entity.MoveScreenData
+import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
 import com.aaron.sidegesture.ktx.gotoAlipayPayCode
@@ -34,7 +36,6 @@ import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.launchShortcutInfo
-import com.aaron.sidegesture.ktx.offset
 import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
@@ -43,6 +44,7 @@ import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.BarUtils
@@ -296,12 +298,22 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
                         return@launch
                     }
-                    val offset = action.offset
-                    if (offset != null &&
-                        offset.x in 0..ScreenUtils.getScreenWidth() &&
-                        offset.y in 0..ScreenUtils.getScreenHeight()
+                    val data = JsonHelper.decodeFromString<MoveScreenData>(action.data)
+                    if (data.x in 0..ScreenUtils.getScreenWidth() &&
+                        data.y in 0..ScreenUtils.getScreenHeight()
                     ) {
-                        AccessibilityUtils.click(host, offset.x, offset.y)
+                        when (data.action) {
+                            ActionSettings.MoveScreen.Action.LongPress -> {
+                                AccessibilityUtils.longPress(host, data.x, data.y)
+                            }
+                            ActionSettings.MoveScreen.Action.DoubleTap -> {
+                                AccessibilityUtils.doubleTap(host, data.x, data.y)
+                            }
+                            ActionSettings.MoveScreen.Action.Tap -> {
+                                AccessibilityUtils.click(host, data.x, data.y)
+                            }
+                            else -> Unit
+                        }
                     }
                 }
             }

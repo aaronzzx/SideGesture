@@ -1,3 +1,5 @@
+@file:Suppress("ConstPropertyName")
+
 package com.aaron.sidegesture.constant
 
 import com.aaron.sidegesture.entity.Action
@@ -118,6 +120,7 @@ object VibrationDefaults {
     const val SlideEnabled = true
     const val LongSlideEnabled = true
     const val ActionPanelEnabled = true
+    const val MoveScreenEnabled = true
     val PredefinedEffect = VibrationEffects.Click
     const val CustomVibrationMs = 50L
     const val VibrateImmediately = false
@@ -167,4 +170,11 @@ object GestureButtonDefaults {
             longSlideActions = GestureActions(center = Action.toList(GlobalActions.RECENT))
         )
     )
+}
+
+object ActionSettingsDefaults {
+
+    const val MoveScreenRate = 2f
+    const val MoveScreenHoverDelayMs = 600L
+    const val GotoBottomStrength = 10
 }

@@ -37,8 +37,10 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGotoBottomStrength
+import com.aaron.sidegesture.constant.GlobalSettings.MaxMoveScreenHover
 import com.aaron.sidegesture.constant.GlobalSettings.MaxMoveScreenRate
 import com.aaron.sidegesture.constant.GlobalSettings.MinGotoBottomStrength
+import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenHover
 import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenRate
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
@@ -70,6 +72,14 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     text = stringResource(id = R.string.move_screen_rate),
                     sliderValueHint = stringResource(id = R.string.slow) to stringResource(id = R.string.fast),
                     valueRange = MinMoveScreenRate..MaxMoveScreenRate
+                )
+                MyTextSlider(
+                    value = uiState.actionSettings.moveScreen.hoverDelayMs.toFloat(),
+                    onValueChange = { vm.onMoveScreenHoverChange(it) },
+                    onValueChangeFinished = { vm.saveSettings() },
+                    text = stringResource(id = R.string.hover_trigger_delay),
+                    sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
+                    valueRange = MinMoveScreenHover..MaxMoveScreenHover
                 )
             }
         }

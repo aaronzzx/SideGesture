@@ -5,6 +5,7 @@ import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.constant.VibrationDefaults.ActionPanelEnabled
 import com.aaron.sidegesture.constant.VibrationDefaults.CustomVibrationMs
 import com.aaron.sidegesture.constant.VibrationDefaults.LongSlideEnabled
+import com.aaron.sidegesture.constant.VibrationDefaults.MoveScreenEnabled
 import com.aaron.sidegesture.constant.VibrationDefaults.PredefinedEffect
 import com.aaron.sidegesture.constant.VibrationDefaults.SlideEnabled
 import com.aaron.sidegesture.constant.VibrationDefaults.VibrateImmediately
@@ -20,6 +21,7 @@ data class Vibrations(
     val slideEnabled: Boolean = SlideEnabled,
     val longSlideEnabled: Boolean = LongSlideEnabled,
     val actionPanelEnabled: Boolean = ActionPanelEnabled,
+    val moveScreenEnabled: Boolean = MoveScreenEnabled,
     val predefinedEffect: VibrationEffects = PredefinedEffect,
     val customVibrationMs: Long = CustomVibrationMs,
     // 识别到手势立即振动

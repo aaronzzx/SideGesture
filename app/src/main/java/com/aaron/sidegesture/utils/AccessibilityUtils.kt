@@ -17,9 +17,6 @@ import com.blankj.utilcode.util.ScreenUtils
  */
 object AccessibilityUtils {
 
-    /**
-     * 实现对（x，y）坐标进行点击操作。
-     */
     @RequiresApi(api = Build.VERSION_CODES.N)
     fun click(service: AccessibilityService?, x: Int, y: Int): Boolean {
         if (service == null) {
@@ -27,9 +24,62 @@ object AccessibilityUtils {
         }
         val point = Point(x, y)
         val builder = GestureDescription.Builder()
-        val path = Path()
-        path.moveTo(point.x.toFloat(), point.y.toFloat())
+        val path = Path().apply {
+            moveTo(point.x.toFloat(), point.y.toFloat())
+        }
         builder.addStroke(StrokeDescription(path, 0L, 100L))
+        val gesture = builder.build()
+
+        return service.dispatchGesture(gesture, object : GestureResultCallback() {
+            override fun onCompleted(gestureDescription: GestureDescription?) {
+                super.onCompleted(gestureDescription)
+            }
+
+            override fun onCancelled(gestureDescription: GestureDescription?) {
+                super.onCancelled(gestureDescription)
+            }
+        }, null)
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    fun longPress(service: AccessibilityService?, x: Int, y: Int): Boolean {
+        if (service == null) {
+            return false
+        }
+        val point = Point(x, y)
+        val builder = GestureDescription.Builder()
+        val path = Path().apply {
+            moveTo(point.x.toFloat(), point.y.toFloat())
+        }
+        builder.addStroke(StrokeDescription(path, 0L, 1000L))
+        val gesture = builder.build()
+
+        return service.dispatchGesture(gesture, object : GestureResultCallback() {
+            override fun onCompleted(gestureDescription: GestureDescription?) {
+                super.onCompleted(gestureDescription)
+            }
+
+            override fun onCancelled(gestureDescription: GestureDescription?) {
+                super.onCancelled(gestureDescription)
+            }
+        }, null)
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    fun doubleTap(service: AccessibilityService?, x: Int, y: Int): Boolean {
+        if (service == null) {
+            return false
+        }
+        val point = Point(x, y)
+        val builder = GestureDescription.Builder()
+        val path = Path().apply {
+            moveTo(point.x.toFloat(), point.y.toFloat())
+        }
+        builder.addStroke(StrokeDescription(path, 0L, 100L))
+        val path2 = Path().apply {
+            moveTo(point.x.toFloat(), point.y.toFloat())
+        }
+        builder.addStroke(StrokeDescription(path2, 250L, 100L))
         val gesture = builder.build()
 
         return service.dispatchGesture(gesture, object : GestureResultCallback() {

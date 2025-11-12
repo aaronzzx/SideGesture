@@ -31,3 +31,10 @@ fun Vibrations.tryVibrateForActionPanel() {
         VibrateUtils.vibrate(App.getContext(), this)
     }
 }
+
+@RequiresPermission(VIBRATE)
+fun Vibrations.tryVibrateForMoveScreen() {
+    if (moveScreenEnabled) {
+        VibrateUtils.vibrate(App.getContext(), this)
+    }
+}

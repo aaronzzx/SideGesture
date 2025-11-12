@@ -278,4 +278,7 @@
     <string name="precise_slide_type">滑动防误触</string>
     <string name="precise_slide_type_tips">达成侧滑触发条件后续上下滑不再触发</string>
     <string name="strength">强度</string>
+    <string name="tap">单击</string>
+    <string name="double_tap">双击</string>
+    <string name="hover_trigger_delay">悬停触发延迟</string>
 </resources>
