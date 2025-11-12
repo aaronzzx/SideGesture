@@ -44,7 +44,7 @@ object CrashHandler : Thread.UncaughtExceptionHandler {
         if (string.isNullOrEmpty()) {
             return emptyList()
         }
-        return string.split(SEPARATOR).map { it.trimIndent() }
+        return string.split(SEPARATOR).map { it.trimIndent() }.filter { it.isNotEmpty() }
     }
 
     private fun saveErrorInfo(e: Throwable) {
