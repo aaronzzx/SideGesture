@@ -20,6 +20,7 @@ import android.os.PowerManager
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import androidx.annotation.RequiresApi
+import com.aaron.sidegesture.constant.ActionSettingsDefaults.GotoBottomStrength
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.MoveScreenData
@@ -43,7 +44,6 @@ import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
-import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
@@ -55,7 +55,6 @@ import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -88,7 +87,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     if (isActivity(event.packageName?.toString(), event.className?.toString())) {
                         currActivityName = className
                     }
-                    val prevAppExcludePkgNames = host.prevAppExcludePkgNames
+                    val prevAppExcludePkgNames = host.actionSettings?.previousApp?.packageNames ?: emptyList()
                     if (packageName !in prevAppExcludePkgNames &&
                         hasLaunchIntent(packageName) &&
                         currPackageName != packageName
@@ -267,15 +266,13 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 gotoAlipayPayCode()
             }
             GlobalActions.EXTRA_LAUNCH_APP -> {
+                val advancedSettings = advancedSettings ?: return
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    coroutineScope.launch {
-                        val longPressLaunchPopup =
-                            DataStoreHolder.advancedSettings.data.first().actionPanelAppLongPressLaunchPopup
-                        val triggerType = action.extra as? TriggerType
-                        val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: appInfo.miniWindow
-                        launchAppInfo(appInfo, miniWindow)
-                    }
+                    val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
+                    val triggerType = action.extra as? TriggerType
+                    val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: appInfo.miniWindow
+                    launchAppInfo(appInfo, miniWindow)
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
@@ -289,31 +286,25 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     showVersionTooLowToast(this, R.string.action_move_screen)
                     return
                 }
-                coroutineScope.launch {
-                    val gestureSettings = DataStoreHolder
-                        .gestureSettings
-                        .data
-                        .first()
-                    if (!gestureSettings.longSlideTriggerImmediately) {
-                        showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
-                        return@launch
-                    }
-                    val data = JsonHelper.decodeFromString<MoveScreenData>(action.data)
-                    if (data.x in 0..ScreenUtils.getScreenWidth() &&
-                        data.y in 0..ScreenUtils.getScreenHeight()
-                    ) {
-                        when (data.action) {
-                            ActionSettings.MoveScreen.Action.LongPress -> {
-                                AccessibilityUtils.longPress(host, data.x, data.y)
-                            }
-                            ActionSettings.MoveScreen.Action.DoubleTap -> {
-                                AccessibilityUtils.doubleTap(host, data.x, data.y)
-                            }
-                            ActionSettings.MoveScreen.Action.Tap -> {
-                                AccessibilityUtils.click(host, data.x, data.y)
-                            }
-                            else -> Unit
+                if (gestureSettings?.longSlideTriggerImmediately != true) {
+                    showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
+                    return
+                }
+                val data = JsonHelper.decodeFromString<MoveScreenData>(action.data)
+                if (data.x in 0..ScreenUtils.getScreenWidth() &&
+                    data.y in 0..ScreenUtils.getScreenHeight()
+                ) {
+                    when (data.action) {
+                        ActionSettings.MoveScreen.Action.LongPress -> {
+                            AccessibilityUtils.longPress(host, data.x, data.y)
                         }
+                        ActionSettings.MoveScreen.Action.DoubleTap -> {
+                            AccessibilityUtils.doubleTap(host, data.x, data.y)
+                        }
+                        ActionSettings.MoveScreen.Action.Tap -> {
+                            AccessibilityUtils.click(host, data.x, data.y)
+                        }
+                        else -> Unit
                     }
                 }
             }
@@ -338,7 +329,8 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.GOTO_BOTTOM -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    AccessibilityUtils.fastVerticalScroll(host, false)
+                    val strength = host.actionSettings?.gotoBottom?.strength ?: GotoBottomStrength
+                    AccessibilityUtils.fastVerticalScroll(host, false, strength)
                 } else {
                     showVersionTooLowToast(this, R.string.action_goto_bottom)
                 }

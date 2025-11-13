@@ -8,7 +8,6 @@ import android.graphics.Path
 import android.graphics.Point
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.aaron.sidegesture.SideGestureService
 import com.blankj.utilcode.util.ScreenUtils
 
 /**
@@ -94,7 +93,12 @@ object AccessibilityUtils {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    fun fastVerticalScroll(service: SideGestureService, toTop: Boolean): Boolean {
+    fun fastVerticalScroll(
+        service: AccessibilityService?,
+        toTop: Boolean,
+        gotoBottomStrength: Int = 10
+    ): Boolean {
+        service ?: return false
         val screenWidth = ScreenUtils.getScreenWidth()
         val screenHeight = ScreenUtils.getScreenHeight()
         val point = Point(screenWidth / 2, screenHeight / 2)
@@ -105,7 +109,7 @@ object AccessibilityUtils {
             path.lineTo(point.x.toFloat(), point.y.toFloat() + Int.MAX_VALUE)
             builder.addStroke(StrokeDescription(path, 0L, 100L))
         } else {
-            repeat(service.gotoBottomStrength.coerceIn(1, GestureDescription.getMaxStrokeCount())) { index ->
+            repeat(gotoBottomStrength.coerceIn(1, GestureDescription.getMaxStrokeCount())) { index ->
                 val delay = index * 100L
                 val path = Path()
                 path.moveTo(point.x.toFloat(), point.y.toFloat())

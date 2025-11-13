@@ -37,6 +37,7 @@ import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
+import com.aaron.sidegesture.entity.global.InitialSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -85,15 +86,34 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private var isNowInLockScreenPage = false
 
-    private var isVolumeButtonSwitchSongEnabled = false
     private var volumeButtonSwitchSongJob: Job? = null
 
     val coroutineScope = MainScope()
 
-    var prevAppExcludePkgNames: List<String> = emptyList()
+    var initialSettings: InitialSettings? = null
+        private set
+    var advancedSettings: AdvancedSettings? = null
+        private set
+    var gestureSettings: GestureSettings? = null
+        private set
+    var actionSettings: ActionSettings? = null
         private set
 
-    var gotoBottomStrength = 10
+    private val wallpaperChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Events.post(WallpaperChangedEvent())
+        }
+    }
+    private val screenLockReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                isNowInLockScreenPage = true
+            } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
+                isNowInLockScreenPage = false
+            }
+            updateGestureButtons()
+        }
+    }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -111,10 +131,10 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         val keyCode = event?.keyCode
-        if (isVolumeButtonSwitchSongEnabled &&
+        if (advancedSettings?.volumeButtonSwitchSong == true &&
             audioManager.isMusicActive &&
             powerManager.isInteractive.not() &&
             (keyCode == KEYCODE_VOLUME_UP || keyCode == KEYCODE_VOLUME_DOWN)
@@ -151,9 +171,15 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onInterrupt() {
-        proxy.onRelease()
-        imeInsetObserver.unregister()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         coroutineScope.cancel()
+        proxy.onRelease()
+        unregisterReceiver(screenLockReceiver)
+        unregisterReceiver(wallpaperChangedReceiver)
+        imeInsetObserver.unregister()
     }
 
     override fun onSetOverlay() {
@@ -258,67 +284,56 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
-            // 监听音量键切歌
+
+            // 监听全局配置修改
+            launch {
+                DataStoreHolder
+                    .initialSettings
+                    .data
+                    .collectLatest {
+                        initialSettings = it
+                    }
+            }
             launch {
                 DataStoreHolder
                     .advancedSettings
                     .data
-                    .distinctUntilChangedBy {
-                        it.volumeButtonSwitchSong
-                    }
                     .collectLatest {
-                        isVolumeButtonSwitchSongEnabled = it.volumeButtonSwitchSong
+                        advancedSettings = it
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .gestureSettings
+                    .data
+                    .collectLatest {
+                        gestureSettings = it
                     }
             }
             launch {
                 DataStoreHolder
                     .actionSettings
                     .data
-                    .distinctUntilChangedBy { it.previousApp }
                     .collectLatest {
-                        prevAppExcludePkgNames = it.previousApp.packageNames
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .actionSettings
-                    .data
-                    .distinctUntilChangedBy { it.gotoBottom }
-                    .collectLatest {
-                        gotoBottomStrength = it.gotoBottom.strength
+                        actionSettings = it
                     }
             }
         }
     }
 
     private fun registerScreenLockReceiver() {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                    isNowInLockScreenPage = true
-                } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
-                    isNowInLockScreenPage = false
-                }
-                updateGestureButtons()
-            }
-        }
         val intentFilter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_USER_PRESENT)
         }
-        registerReceiver(receiver, intentFilter)
+        registerReceiver(screenLockReceiver, intentFilter)
     }
 
     private fun registerWallpaperChangedReceiver() {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                Events.post(WallpaperChangedEvent())
-            }
-        }
         val intentFilter = IntentFilter().apply {
             addAction(Intent.ACTION_WALLPAPER_CHANGED)
         }
-        registerReceiver(receiver, intentFilter)
+        registerReceiver(wallpaperChangedReceiver, intentFilter)
     }
 
     private fun registerImeInsetObserver() {
