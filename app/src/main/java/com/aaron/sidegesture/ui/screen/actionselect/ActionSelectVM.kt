@@ -98,6 +98,14 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    fun reorder(newList: List<Any>) {
+        updateUiState {
+            it.copy(
+                selectedRecord = it.selectedRecord.copy(list = newList)
+            )
+        }
+    }
+
     fun toggleMiniWindow(appInfo: AppInfo) {
         val switchToMiniWindow = !appInfo.miniWindow
         updateUiState {

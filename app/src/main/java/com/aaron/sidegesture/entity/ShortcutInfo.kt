@@ -1,8 +1,11 @@
 package com.aaron.sidegesture.entity
 
 import android.graphics.Bitmap
+import android.os.Parcelable
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.ScaleableDefaults.DEFAULT_SCALE
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -18,6 +21,7 @@ data class LauncherInfo (
     val label: String,
     val shortcuts: List<ShortcutInfo> = emptyList(),
 ) {
+    @Parcelize
     @Serializable
     @Keep
     data class ShortcutInfo(
@@ -29,7 +33,8 @@ data class LauncherInfo (
         val iconPath: String? = null,
         val iconScale: Float = DEFAULT_SCALE,
         val iconBgColor: Int = 0,
+        @IgnoredOnParcel
         @Transient
         val iconBitmap: Bitmap? = null
-    )
+    ) : Parcelable
 }

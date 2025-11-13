@@ -13,6 +13,7 @@ compose = "1.7.5"
 colorpicker = "1.1.2"
 pinyin = "1.0.7"
 freereflection = "3.2.2"
+reorderable = "2.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,10 +29,11 @@ material-icons-extended = { group = "androidx.compose.material", name = "materia
 compose-colorpicker = { group = "com.github.skydoves", name = "colorpicker-compose", version.ref = "colorpicker" }
 pinyin = { group = "cn.lalaki", name = "pinyin4j-chinese-simplified", version.ref = "pinyin" }
 com-tiann-freereflection = { group = "com.github.tiann", name = "FreeReflection", version.ref = "freereflection" }
+sh-calvin-reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jetbrains-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-
+jetbrains-kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }

@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.entity
 
+import android.os.Parcelable
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionNone
 import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionValue
@@ -9,6 +10,8 @@ import com.aaron.sidegesture.constant.GestureActionsDefaults.Down
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up2
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -31,14 +34,16 @@ data class GestureActions(
     val down2: List<Action> = Down2
 )
 
+@Parcelize
 @Serializable
 @Keep
 data class Action(
     val value: String = ActionValue,
     val data: String = "",
+    @IgnoredOnParcel
     @Transient
     val extra: Any? = null
-) {
+) : Parcelable {
     companion object {
         val NONE: Action get() = ActionNone
 

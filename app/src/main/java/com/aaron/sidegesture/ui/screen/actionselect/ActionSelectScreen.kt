@@ -6,6 +6,9 @@ import android.content.Intent.ShortcutIconResource
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,21 +19,32 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.Checkbox
@@ -44,6 +58,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,14 +70,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -73,6 +91,7 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
+import com.aaron.compose.ktx.toDp
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
@@ -97,12 +116,14 @@ import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinIconSize
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.ActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.utils.VibrateUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -110,6 +131,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import sh.calvin.reorderable.DragGestureDetector
+import sh.calvin.reorderable.ReorderableCollectionItemScope
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyGridState
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 
 /**
@@ -227,7 +253,9 @@ fun ActionSelectScreen(
                     }
                 }
                 HorizontalPager(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     state = pagerState
                 ) { page ->
                     when (page) {
@@ -501,6 +529,24 @@ fun ActionSelectScreen(
                             }
                         }*/
                     }
+                }
+
+                AnimatedVisibility(
+                    modifier = Modifier.fillMaxWidth(),
+                    visible = uiState.selectedRecord.size > 0
+                ) {
+                    var expanded by remember { mutableStateOf(false) }
+                    SelectedList(
+                        onUnselected = {
+                            vm.select(it, false)
+                        },
+                        onReordered = { newList ->
+                            vm.reorder(newList)
+                        },
+                        onExpandedChange = { expanded = it },
+                        list = uiState.selectedRecord.list,
+                        expanded = expanded
+                    )
                 }
             }
         }
@@ -1014,6 +1060,206 @@ private fun LauncherInfoItem(
     }
 }
 
+@Composable
+private fun SelectedList(
+    onUnselected: (Any) -> Unit,
+    onReordered: (newList: List<Any>) -> Unit,
+    onExpandedChange: (Boolean) -> Unit,
+    list: List<Any>,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    expanded: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(RootPadding),
+    itemPadding: Dp = RootPadding
+) {
+    val context = LocalContext.current
+    val itemSize = MinInteractiveSize
+    val itemComposable: @Composable ReorderableCollectionItemScope.(Any, Any) -> Unit = { reorderableState, item ->
+        val listItem = when (item) {
+            is Action -> {
+                val actionIcon = actionIcon(item)
+                val colorFilter = when (actionIcon) {
+                    R.drawable.wechat_scan,
+                    R.drawable.wechat_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.wechatColor)
+                    R.drawable.alipay_scan,
+                    R.drawable.alipay_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.alipayColor)
+                    else -> null
+                }
+                SelectedListItem(actionIcon, colorFilter)
+            }
+            is AppInfo, is LauncherInfo.ShortcutInfo -> {
+                val icon = when (item) {
+                    is AppInfo -> item.icon
+                    is LauncherInfo.ShortcutInfo -> item.icon
+                    else -> null
+                }
+                val colorFilter = when (icon == null) {
+                    true -> ColorFilter.tint(MaterialTheme.colorScheme.error)
+                    else -> null
+                }
+                SelectedListItem(icon ?: Icons.Default.Error, colorFilter)
+            }
+            else -> throw IllegalArgumentException("Unknown item type: $item")
+        }
+        Box(
+            modifier = Modifier
+                .size(itemSize)
+                .draggableHandle(
+                    dragGestureDetector = DragGestureDetector.LongPress,
+                    onDragStarted = {
+                        VibrateUtils.vibrate(context)
+                    }
+                )
+                .clipToBackground(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(RootPadding)
+                )
+                .onSingleClick {
+                    onUnselected(item)
+                }
+                .let {
+                    if (item !is Action) it else {
+                        it.padding(12.dp)
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (listItem.icon is ImageVector) {
+                Image(
+                    imageVector = listItem.icon,
+                    contentDescription = null,
+                    colorFilter = when (listItem.colorFilter != null) {
+                        true -> listItem.colorFilter
+                        else -> ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                    }
+                )
+            } else {
+                AsyncImage(
+                    model = listItem.icon,
+                    contentDescription = null,
+                    imageLoader = context.imageLoader,
+                    contentScale = ContentScale.Crop,
+                    colorFilter = listItem.colorFilter
+                )
+            }
+        }
+    }
+    Column(
+        modifier = modifier
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(RootPadding)
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onClick {
+                    onExpandedChange(!expanded)
+                }
+                .padding(start = RootPadding, end = RootPadding + 8.dp)
+                .padding(vertical = RootPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.drag_icon_to_reorder_click_to_unselect),
+                style = MaterialTheme.typography.labelMedium,
+                color = contentColorFor(backgroundColor).copy(alpha = 0.5f)
+            )
+
+            val iconRotation = animateFloatAsState(
+                targetValue = when (expanded) {
+                    true -> -180f
+                    else -> 0f
+                }
+            )
+            Icon(
+                modifier = Modifier
+                    .size(MinIconSize)
+                    .graphicsLayer {
+                        rotationZ = iconRotation.value
+                    },
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        val navBarsHeight = WindowInsets.navigationBars.getBottom(LocalDensity.current).toDp()
+        val layoutDirection = LocalLayoutDirection.current
+        AnimatedContent(targetState = expanded) { expandedTargetState ->
+            if (expandedTargetState) {
+                val listState = rememberLazyGridState()
+                val state = rememberReorderableLazyGridState(
+                    lazyGridState = listState,
+                    onMove = { from, to ->
+                        val newList = list.toMutableList().apply {
+                            val fromObj = get(from.index)
+                            val toObj = get(to.index)
+                            set(from.index, toObj)
+                            set(to.index, fromObj)
+                        }
+                        onReordered(newList)
+                    }
+                )
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp, max = 400.dp),
+                    columns = GridCells.Adaptive(itemSize),
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        start = contentPadding.calculateStartPadding(layoutDirection),
+                        top = contentPadding.calculateTopPadding(),
+                        end = contentPadding.calculateEndPadding(layoutDirection),
+                        bottom = contentPadding.calculateBottomPadding() + navBarsHeight
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(itemPadding),
+                    horizontalArrangement = Arrangement.spacedBy(itemPadding)
+                ) {
+                    items(items = list, key = { it }) { item ->
+                        ReorderableItem(state = state, key = item) {
+                            itemComposable(state, item)
+                        }
+                    }
+                }
+            } else {
+                val listState = rememberLazyListState()
+                val state = rememberReorderableLazyListState(
+                    lazyListState = listState,
+                    onMove = { from, to ->
+                        val newList = list.toMutableList().apply {
+                            val fromObj = get(from.index)
+                            val toObj = get(to.index)
+                            set(from.index, toObj)
+                            set(to.index, fromObj)
+                        }
+                        onReordered(newList)
+                    }
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        start = contentPadding.calculateStartPadding(layoutDirection),
+                        top = contentPadding.calculateTopPadding(),
+                        end = contentPadding.calculateEndPadding(layoutDirection),
+                        bottom = contentPadding.calculateBottomPadding() + navBarsHeight
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(itemPadding)
+                ) {
+                    items(items = list, key = { it }) { item ->
+                        ReorderableItem(state = state, key = item) {
+                            itemComposable(state, item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun canActionEnabled(
     selectedRecord: SelectedRecord,
     item: Action,
@@ -1091,3 +1337,8 @@ private const val PAGE_APPS = 1
 private const val PAGE_SHORTCUTS = 2
 
 private val PAGES = listOf(PAGE_ACTION, PAGE_APPS, PAGE_SHORTCUTS)
+
+private data class SelectedListItem(
+    val icon: Any?,
+    val colorFilter: ColorFilter? = null
+)

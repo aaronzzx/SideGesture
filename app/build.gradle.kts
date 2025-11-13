@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.jetbrains.kotlin.parcelize)
 }
 
 android {
@@ -86,4 +87,5 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.compose.colorpicker)
     implementation(libs.material.icons.extended)
+    implementation(libs.sh.calvin.reorderable)
 }

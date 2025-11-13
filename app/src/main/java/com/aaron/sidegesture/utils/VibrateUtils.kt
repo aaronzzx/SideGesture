@@ -17,7 +17,7 @@ import com.aaron.sidegesture.entity.Vibrations
 object VibrateUtils {
 
     @RequiresPermission(VIBRATE)
-    fun vibrate(context: Context, vibrations: Vibrations) {
+    fun vibrate(context: Context, vibrations: Vibrations = Vibrations()) {
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator

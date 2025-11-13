@@ -310,4 +310,5 @@
     <string name="limit_max_intercept_length_hint">跟随系统接口限制为200dp</string>
     <string name="copy_another_side_button">复制对侧触钮</string>
     <string name="copy_another_side_button_tips">将对侧触钮配置复制到当前触钮下。</string>
+    <string name="drag_icon_to_reorder_click_to_unselect">长按拖拽图标进行排序，单击图标取消选中</string>
 </resources>

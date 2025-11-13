@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.BackHand
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material.icons.filled.Forward
 import androidx.compose.material.icons.filled.Gesture
@@ -208,11 +209,11 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.ALIPAY_PAY -> R.drawable.alipay_paycode
     GlobalActions.EXTRA_LAUNCH_APP -> {
         // 一般是应用被卸载，返回个默认图标防止ActionPanel显示空白
-        action.appInfo?.icon ?: Icons.Default.Android
+        action.appInfo?.icon ?: Icons.Default.Error
     }
     GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
         // 一般是应用被卸载，返回个默认图标防止ActionPanel显示空白
-        action.shortcutInfo?.icon ?: Icons.Default.Android
+        action.shortcutInfo?.icon ?: Icons.Default.Error
     }
     GlobalActions.MOVE_SCREEN -> Icons.Default.AddToHomeScreen
     GlobalActions.KEEP_SCREEN_ON -> Icons.Default.WbSunny
