@@ -35,6 +35,7 @@ import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
@@ -373,10 +374,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             } else {
                 DataStoreHolder.bottomGestureButtons
             }
-            DataStoreHolder.gestureSettings.data
+            DataStoreHolder
+                .gestureSettings
+                .data
                 .combine(buttons.data) { f1, f2 ->
                     f1 to f2
                 }
+                .take(1)
                 .collectLatest { (gestureSettings, gestureButtons) ->
                     updateUiState {
                         it.copy(selectSingle = !actionSelect.isLongSlide

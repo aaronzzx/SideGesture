@@ -12,6 +12,7 @@ import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -92,11 +93,15 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.advancedSettings.data.collectLatest { item ->
-                updateUiState {
-                    it.copy(excludeApps = item.excludeApps)
+            DataStoreHolder
+                .advancedSettings
+                .data
+                .take(1)
+                .collectLatest { item ->
+                    updateUiState {
+                        it.copy(excludeApps = item.excludeApps)
+                    }
                 }
-            }
         }
     }
 

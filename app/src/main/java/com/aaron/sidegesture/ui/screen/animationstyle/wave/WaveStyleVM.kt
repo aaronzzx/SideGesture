@@ -9,6 +9,7 @@ import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlin.reflect.KCallable
 
@@ -100,15 +101,19 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.advancedSettings.data.collectLatest { advancedSettings ->
-                updateUiState {
-                    val waveStyle = advancedSettings.animationStyles.value as WaveStyle
-                    it.copy(
-                        animationStyle = waveStyle,
-                        isCustomIconExpanded = it.isCustomIconExpanded || waveStyle.iconType != WaveStyle.ICON_TYPE_ARROW
-                    )
+            DataStoreHolder
+                .advancedSettings
+                .data
+                .take(1)
+                .collectLatest { advancedSettings ->
+                    updateUiState {
+                        val waveStyle = advancedSettings.animationStyles.value as WaveStyle
+                        it.copy(
+                            animationStyle = waveStyle,
+                            isCustomIconExpanded = it.isCustomIconExpanded || waveStyle.iconType != WaveStyle.ICON_TYPE_ARROW
+                        )
+                    }
                 }
-            }
         }
     }
 

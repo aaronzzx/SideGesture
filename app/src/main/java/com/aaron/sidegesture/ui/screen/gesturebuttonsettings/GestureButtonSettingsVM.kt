@@ -195,24 +195,30 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     private fun loadData() {
         viewModelScope.launch {
             if (gestureButtonSettings.isSideButton) {
-                DataStoreHolder.sideGestureButtons.data.collectLatest { items ->
-                    val button = items.find {
-                        it.id == gestureButtonSettings.buttonId &&
-                                it.position == gestureButtonSettings.position
+                DataStoreHolder
+                    .sideGestureButtons
+                    .data
+                    .collectLatest { items ->
+                        val button = items.find {
+                            it.id == gestureButtonSettings.buttonId &&
+                                    it.position == gestureButtonSettings.position
+                        }
+                        updateUiState {
+                            it.copy(
+                                gestureButtons = items,
+                                alignRegion = button?.alignRegion ?: true
+                            )
+                        }
                     }
-                    updateUiState {
-                        it.copy(
-                            gestureButtons = items,
-                            alignRegion = button?.alignRegion ?: true
-                        )
-                    }
-                }
             } else {
-                DataStoreHolder.bottomGestureButtons.data.collectLatest { items ->
-                    updateUiState {
-                        it.copy(gestureButtons = items)
+                DataStoreHolder
+                    .bottomGestureButtons
+                    .data
+                    .collectLatest { items ->
+                        updateUiState {
+                            it.copy(gestureButtons = items)
+                        }
                     }
-                }
             }
         }
     }

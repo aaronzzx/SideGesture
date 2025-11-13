@@ -9,6 +9,7 @@ import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEve
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 /**
@@ -140,24 +141,28 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.advancedSettings.data.collectLatest { item ->
-                updateUiState {
-                    it.copy(
-                        showAnimation = item.animationStyles.isAnimationEnabled,
-                        volumeButtonSwitchSong = item.volumeButtonSwitchSong,
-                        fitSoftKeyboard = item.fitSoftKeyboard,
-                        actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
-                        hideLandscape = item.hideLandscape,
-                        hideQuickPanel = item.hideQuickPanel,
-                        hideScreenLock = item.hideScreenLock,
-                        hideHomeScreen = item.hideHomeScreen,
-                        hideTemporary = item.hideTemporary,
-                        excludeFromRecents = item.excludeFromRecents,
-                        dynamicColor = item.dynamicColor,
-                        dayNightMode = item.dayNightMode
-                    )
+            DataStoreHolder
+                .advancedSettings
+                .data
+                .take(1)
+                .collectLatest { item ->
+                    updateUiState {
+                        it.copy(
+                            showAnimation = item.animationStyles.isAnimationEnabled,
+                            volumeButtonSwitchSong = item.volumeButtonSwitchSong,
+                            fitSoftKeyboard = item.fitSoftKeyboard,
+                            actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
+                            hideLandscape = item.hideLandscape,
+                            hideQuickPanel = item.hideQuickPanel,
+                            hideScreenLock = item.hideScreenLock,
+                            hideHomeScreen = item.hideHomeScreen,
+                            hideTemporary = item.hideTemporary,
+                            excludeFromRecents = item.excludeFromRecents,
+                            dynamicColor = item.dynamicColor,
+                            dayNightMode = item.dayNightMode
+                        )
+                    }
                 }
-            }
         }
     }
 

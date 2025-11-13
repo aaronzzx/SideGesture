@@ -7,6 +7,7 @@ import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -79,11 +80,15 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.actionSettings.data.collectLatest { actionSettings ->
-                updateUiState {
-                    it.copy(actionSettings = actionSettings)
+            DataStoreHolder
+                .actionSettings
+                .data
+                .take(1)
+                .collectLatest { actionSettings ->
+                    updateUiState {
+                        it.copy(actionSettings = actionSettings)
+                    }
                 }
-            }
         }
     }
 

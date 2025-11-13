@@ -131,20 +131,23 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.gestureSettings.data.collectLatest { item ->
-                updateUiState {
-                    it.copy(
-                        slideTriggerDistance = item.slideTriggerDistance.toFloat(),
-                        longPressTriggerDelayMs = item.longPressTriggerDelayMs,
-                        longSlideTriggerImmediately = item.longSlideTriggerImmediately,
-                        longSlideTriggerDistance = item.longSlideTriggerDistance.toFloat(),
-                        longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
-                        isCustomVibration = item.isCustomVibration,
-                        vibrations = item.vibrations,
-                        isPreciseSlideTypeEnabled = item.isPreciseSlideType
-                    )
+            DataStoreHolder
+                .gestureSettings
+                .data
+                .collectLatest { item ->
+                    updateUiState {
+                        it.copy(
+                            slideTriggerDistance = item.slideTriggerDistance.toFloat(),
+                            longPressTriggerDelayMs = item.longPressTriggerDelayMs,
+                            longSlideTriggerImmediately = item.longSlideTriggerImmediately,
+                            longSlideTriggerDistance = item.longSlideTriggerDistance.toFloat(),
+                            longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
+                            isCustomVibration = item.isCustomVibration,
+                            vibrations = item.vibrations,
+                            isPreciseSlideTypeEnabled = item.isPreciseSlideType
+                        )
+                    }
                 }
-            }
         }
     }
 

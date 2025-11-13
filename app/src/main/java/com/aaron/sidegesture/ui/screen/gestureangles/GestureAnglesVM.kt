@@ -10,6 +10,7 @@ import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 /**
@@ -92,14 +93,18 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.gestureSettings.data.collectLatest { item ->
-                leftAngle = item.angles.left
-                rightAngle = item.angles.right
-                bottomAngle = item.angles.bottom
-                updateUiState {
-                    it.copy(angle = getGestureAngle(it.position))
+            DataStoreHolder
+                .gestureSettings
+                .data
+                .take(1)
+                .collectLatest { item ->
+                    leftAngle = item.angles.left
+                    rightAngle = item.angles.right
+                    bottomAngle = item.angles.bottom
+                    updateUiState {
+                        it.copy(angle = getGestureAngle(it.position))
+                    }
                 }
-            }
         }
     }
 

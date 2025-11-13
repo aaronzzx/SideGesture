@@ -15,6 +15,7 @@ import com.aaron.sidegesture.ui.screen.iconresize.IconResizeVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 /**
@@ -139,33 +140,37 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
 
     private fun loadData() {
         viewModelScope.launch {
-            DataStoreHolder.advancedSettings.data.collectLatest { advancedSettings ->
-                val clipApps = advancedSettings.clipApps
-                val clipShortcuts = advancedSettings.clipShortcuts
-                val map = mutableMapOf<String, Float>()
-                val ids = iconResize.ids
-                for (id in ids) {
-                    map[id] = clipApps[id] ?: clipShortcuts[id] ?: DEFAULT_SCALE
-                }
-                updateUiState {
-                    val icons = IconResize.iconCache.toMap()
-                    val bgColors = mutableMapOf<String, UiState.BgColor>()
-                    IconResize.iconBgColorCache.forEach { (id, bgColor) ->
-                        if (bgColor != 0) {
-                            bgColors[id] = UiState.BgColor(true, Color(bgColor))
-                        }
+            DataStoreHolder
+                .advancedSettings
+                .data
+                .take(1)
+                .collectLatest { advancedSettings ->
+                    val clipApps = advancedSettings.clipApps
+                    val clipShortcuts = advancedSettings.clipShortcuts
+                    val map = mutableMapOf<String, Float>()
+                    val ids = iconResize.ids
+                    for (id in ids) {
+                        map[id] = clipApps[id] ?: clipShortcuts[id] ?: DEFAULT_SCALE
                     }
-                    IconResize.iconCache.clear()
-                    IconResize.iconBgColorCache.clear()
-                    it.copy(
-                        ids = ids,
-                        icons = icons,
-                        scaleFactors = map,
-                        selectedId = ids.firstOrNull() ?: "",
-                        bgColors = bgColors
-                    )
+                    updateUiState {
+                        val icons = IconResize.iconCache.toMap()
+                        val bgColors = mutableMapOf<String, UiState.BgColor>()
+                        IconResize.iconBgColorCache.forEach { (id, bgColor) ->
+                            if (bgColor != 0) {
+                                bgColors[id] = UiState.BgColor(true, Color(bgColor))
+                            }
+                        }
+                        IconResize.iconCache.clear()
+                        IconResize.iconBgColorCache.clear()
+                        it.copy(
+                            ids = ids,
+                            icons = icons,
+                            scaleFactors = map,
+                            selectedId = ids.firstOrNull() ?: "",
+                            bgColors = bgColors
+                        )
+                    }
                 }
-            }
         }
     }
 
