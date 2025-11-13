@@ -178,7 +178,7 @@ fun MoveScreen(
 
         val showLocation = remember(state.showMoveScreenActionPopup) { state.finger }
         val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
-        val parentWidth = 80.dp
+        val parentWidth = 70.dp
         val parentHeight = 150.dp
         AnimatedVisibility(
             modifier = Modifier
@@ -238,7 +238,7 @@ fun MoveScreen(
                                     DoubleTap -> stringResource(R.string.double_tap)
                                     LongPress -> stringResource(R.string.long_press)
                                 },
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = colorScheme.onSurface
                             )
                         }
