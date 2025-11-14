@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.media.AudioManager
+import android.os.Build
 import android.os.PowerManager
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
@@ -243,6 +244,40 @@ class SideGestureService : ComponentAccessibilityService() {
         }
 
         coroutineScope.launch(Dispatchers.Main.immediate) {
+            // 监听全局配置修改
+            launch {
+                DataStoreHolder
+                    .initialSettings
+                    .data
+                    .collectLatest {
+                        initialSettings = it
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .advancedSettings
+                    .data
+                    .collectLatest {
+                        advancedSettings = it
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .gestureSettings
+                    .data
+                    .collectLatest {
+                        gestureSettings = it
+                    }
+            }
+            launch {
+                DataStoreHolder
+                    .actionSettings
+                    .data
+                    .collectLatest {
+                        actionSettings = it
+                    }
+            }
+
             // 监听触钮修改
             launch {
                 DataStoreHolder
@@ -282,40 +317,6 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                     .collectLatest {
                         updateGestureButtons()
-                    }
-            }
-
-            // 监听全局配置修改
-            launch {
-                DataStoreHolder
-                    .initialSettings
-                    .data
-                    .collectLatest {
-                        initialSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .advancedSettings
-                    .data
-                    .collectLatest {
-                        advancedSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .gestureSettings
-                    .data
-                    .collectLatest {
-                        gestureSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .actionSettings
-                    .data
-                    .collectLatest {
-                        actionSettings = it
                     }
             }
         }
@@ -374,6 +375,7 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private fun updateGestureButtons() {
         coroutineScope.launch {
+            val advancedSettings = advancedSettings ?: return@launch
             val buttonViews = buttonViews
             buttonViews?.forEach { view ->
                 val button = view.tag as? GestureButton ?: return@forEach
@@ -384,7 +386,6 @@ class SideGestureService : ComponentAccessibilityService() {
                         y += -imePadding
                     }
 
-                    val advancedSettings = DataStoreHolder.advancedSettings.data.first()
                     if (advancedSettings.hideTemporary) {
                         view.setOnClickListener { v ->
                             val lp = v.layoutParams as WindowManager.LayoutParams
@@ -392,7 +393,7 @@ class SideGestureService : ComponentAccessibilityService() {
                             updateLayout(v, lp)
                             v.postDelayed(1000) {
                                 val lp2 = v.layoutParams as WindowManager.LayoutParams
-                                val enabled = (view.tag as? GestureButton)?.enabled ?: false
+                                val enabled = (view.tag as? GestureButton)?.enabled == true
                                 lp2.setFlags(enabled)
                                 updateLayout(v, lp2)
                             }
@@ -419,6 +420,16 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                 }
                 updateLayout(view, lp)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    view.post {
+                        val location = IntArray(2)
+                        view.getLocationOnScreen(location)
+                        val x = location[0]
+                        val y = location[1]
+                        val rect = Rect(x, y, x + view.width, y + view.height)
+                        view.systemGestureExclusionRects = listOf(rect)
+                    }
+                }
             }
         }
     }
