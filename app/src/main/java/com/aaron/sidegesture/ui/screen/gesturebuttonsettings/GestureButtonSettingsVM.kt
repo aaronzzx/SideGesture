@@ -13,6 +13,7 @@ import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettin
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 /**
@@ -198,6 +199,7 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 DataStoreHolder
                     .sideGestureButtons
                     .data
+                    .take(1)
                     .collectLatest { items ->
                         val button = items.find {
                             it.id == gestureButtonSettings.buttonId &&
@@ -214,6 +216,7 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 DataStoreHolder
                     .bottomGestureButtons
                     .data
+                    .take(1)
                     .collectLatest { items ->
                         updateUiState {
                             it.copy(gestureButtons = items)
