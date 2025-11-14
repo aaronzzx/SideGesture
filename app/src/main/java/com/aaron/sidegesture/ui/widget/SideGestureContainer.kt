@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ui.widget
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.SystemClock
+import android.view.ViewConfiguration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalContext
+import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
@@ -259,6 +261,8 @@ class SideGestureState(
 
     private var slideVibrationFlags = false
 
+    private val viewConfiguration = ViewConfiguration.get(App.getContext())
+
     fun onDragStart(offset: Offset, imePadding: Int) {
         origin = offset
         finger = offset
@@ -299,15 +303,24 @@ class SideGestureState(
      * 长列表表示触发长动作，否则表示触发一个动作
      */
     fun onDrag(dragAmount: Offset): List<Action>? {
-        val gestureSettings = gestureSettings
-        calcLongPressJob?.cancel()
         finger += dragAmount
+
+        val touchSlop = viewConfiguration.scaledTouchSlop
+        val minus = finger - origin
+        if (calcLongPressJob?.isActive == true &&
+            (minus.x.absoluteValue > touchSlop ||
+            minus.y.absoluteValue > touchSlop)
+        ) {
+            calcLongPressJob?.cancel()
+        }
+
         // 理论上能到这里button不应该为空
         val button = button ?: return null
         // 没触发方向，这一轮不再识别手势
         val newDirection = calcDirection(button) ?: return null
         triggerDirection = newDirection
 
+        val gestureSettings = gestureSettings
         if (gestureSettings.isPreciseSlideType) {
             if (newDirection == Center || newDirection == Up || newDirection == Down) {
                 if (!isOhoGestureEverCanTriggered) {
