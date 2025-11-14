@@ -171,13 +171,13 @@ fun WaveStyleScreen(
                         onCheckedChange = { vm.onSafeBoundsChange(it) },
                         checked = uiState.animationStyle.safeBounds,
                         text = stringResource(id = R.string.reserved_bounds),
-                        secondaryText = stringResource(id = R.string.reserved_bounds_tips)
+                        secondaryText = stringResource(id = R.string.reserved_bounds_hint)
                     )
                     MyTextSwitch(
                         onCheckedChange = { vm.onTransformEnabledChange(it) },
                         checked = uiState.animationStyle.transformEnabled,
                         text = stringResource(id = R.string.bezier_transform),
-                        secondaryText = stringResource(id = R.string.bezier_transform_tips)
+                        secondaryText = stringResource(id = R.string.bezier_transform_hint)
                     )
                 }
 

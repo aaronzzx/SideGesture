@@ -49,7 +49,7 @@ object GestureSettingsDefaults {
     const val LongSlideTriggerImmediately = true
     const val LongSlideTriggerDelayMs = 100L
     const val IsCustomVibration = false
-    const val IsPreciseSlideType = false
+    const val IsPreciseSlideType = true
     val Vibrations = Vibrations()
 }
 

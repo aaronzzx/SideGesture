@@ -102,7 +102,7 @@ fun GestureSettingsScreen(
                         onCheckedChange = { vm.onPreciseSlideTypeChange(it) },
                         checked = uiState.isPreciseSlideTypeEnabled,
                         text = stringResource(id = R.string.precise_slide_type),
-                        secondaryText = stringResource(id = R.string.precise_slide_type_tips)
+                        secondaryText = stringResource(id = R.string.precise_slide_type_hint)
                     )
                 }
                 MySection(
