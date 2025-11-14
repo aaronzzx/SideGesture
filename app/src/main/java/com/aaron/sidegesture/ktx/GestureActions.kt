@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ktx
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.aaron.sidegesture.App
+import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionNone
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
@@ -82,4 +83,8 @@ fun GestureActions.actionsBy(direction: TriggerDirection): List<Action> {
         TriggerDirection.Center2 -> emptyList()
         TriggerDirection.Down2 -> down2
     }
+}
+
+fun List<Action>.isEmptyOrNone(): Boolean {
+    return isEmpty() || first() == ActionNone
 }

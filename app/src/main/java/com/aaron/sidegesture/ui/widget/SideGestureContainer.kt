@@ -47,6 +47,7 @@ import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
+import com.aaron.sidegesture.ktx.isEmptyOrNone
 import com.aaron.sidegesture.ktx.takeScreenshot
 import com.aaron.sidegesture.ktx.tryVibrateForLongSlide
 import com.aaron.sidegesture.ktx.tryVibrateForSlide
@@ -485,9 +486,9 @@ class SideGestureState(
                 return canDistanceTriggered
             }
             return if (isLongSlide) {
-                canDistanceTriggered && longSlideAction.center.isNotEmpty()
+                canDistanceTriggered && longSlideAction.center.isEmptyOrNone().not()
             } else {
-                canDistanceTriggered && slideAction.center.isNotEmpty()
+                canDistanceTriggered && slideAction.center.isEmptyOrNone().not()
             }
         } else if (triggerDirection == Up || triggerDirection == Down) {
             // 需要计算斜边
@@ -507,15 +508,15 @@ class SideGestureState(
             }
             return if (isLongSlide) {
                 if (triggerDirection == Up) {
-                    canDistanceTriggered && longSlideAction.up.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.up.isEmptyOrNone().not()
                 } else {
-                    canDistanceTriggered && longSlideAction.down.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.down.isEmptyOrNone().not()
                 }
             } else { // Slide
                 if (triggerDirection == Up) {
-                    canDistanceTriggered && slideAction.up.isNotEmpty()
+                    canDistanceTriggered && slideAction.up.isEmptyOrNone().not()
                 } else { // Down
-                    canDistanceTriggered && slideAction.down.isNotEmpty()
+                    canDistanceTriggered && slideAction.down.isEmptyOrNone().not()
                 }
             }
         } else if (triggerDirection == Up2 || triggerDirection == Down2) {
@@ -530,15 +531,15 @@ class SideGestureState(
             }
             return if (isLongSlide) {
                 if (triggerDirection == Up2) {
-                    canDistanceTriggered && longSlideAction.up2.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.up2.isEmptyOrNone().not()
                 } else { // Down2
-                    canDistanceTriggered && longSlideAction.down2.isNotEmpty()
+                    canDistanceTriggered && longSlideAction.down2.isEmptyOrNone().not()
                 }
             } else { // Slide
                 if (triggerDirection == Up2) {
-                    canDistanceTriggered && slideAction.up2.isNotEmpty()
+                    canDistanceTriggered && slideAction.up2.isEmptyOrNone().not()
                 } else { // Down2
-                    canDistanceTriggered && slideAction.down2.isNotEmpty()
+                    canDistanceTriggered && slideAction.down2.isEmptyOrNone().not()
                 }
             }
         }
