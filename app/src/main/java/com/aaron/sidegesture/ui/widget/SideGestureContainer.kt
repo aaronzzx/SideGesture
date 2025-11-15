@@ -323,11 +323,13 @@ class SideGestureState(
 
         val gestureSettings = gestureSettings
         if (gestureSettings.isPreciseSlideType) {
-            if (newDirection == Center || newDirection == Up || newDirection == Down) {
+            if (newDirection == Center) {
                 if (!isOhoGestureEverCanTriggered) {
                     isOhoGestureEverCanTriggered = canDistanceTriggered(button, isLongSlide = false, judgeAction = false)
                 }
-            } else if (isOhoGestureEverCanTriggered) {
+            } else if (isOhoGestureEverCanTriggered &&
+                (newDirection == Up2 || newDirection == Down2)
+            ) {
                 return null
             }
         }
