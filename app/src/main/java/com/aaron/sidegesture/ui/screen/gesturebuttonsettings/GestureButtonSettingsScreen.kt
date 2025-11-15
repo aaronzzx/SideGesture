@@ -135,11 +135,13 @@ fun GestureButtonSettingsScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { vm.showCopyAnotherSideGestureButtonDialog(true) }) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = null
-                            )
+                        if (uiState.gestureButtonSettings.isSideButton) {
+                            IconButton(onClick = { vm.showCopyAnotherSideGestureButtonDialog(true) }) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = null
+                                )
+                            }
                         }
                         if (uiState.gestureButton != null && !uiState.gestureButton.isDefault) {
                             IconButton(onClick = { vm.showDeleteWarningDialog(true) }) {
