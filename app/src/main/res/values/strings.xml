@@ -276,7 +276,7 @@
     <string name="long_press">长按</string>
     <string name="long_press_trigger_delay_ms">长按触发延迟</string>
     <string name="precise_slide_type">滑动防误触</string>
-    <string name="precise_slide_type_hint">满足【屏幕内滑动】手势触发条件后，同一轮触摸事件中【沿边缘滑动】手势不再触发</string>
+    <string name="precise_slide_type_hint">避免取消手势时误触上滑下滑</string>
     <string name="strength">强度</string>
     <string name="tap">单击</string>
     <string name="double_tap">双击</string>
