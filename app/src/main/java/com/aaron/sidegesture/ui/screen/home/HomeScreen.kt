@@ -88,7 +88,7 @@ fun HomeScreen(
     onNavToAbout: () -> Unit,
     onNavToAdvancedSettings: () -> Unit,
     onNavToGestureSettings: () -> Unit,
-    onNavToGestureButtonSettings: (GestureButton, isSideButton: Boolean) -> Unit,
+    onNavToGestureButtonSettings: (GestureButton) -> Unit,
     vm: HomeVM = viewModel()
 ) {
     val scrollState = rememberScrollState()
@@ -319,7 +319,7 @@ fun HomeScreen(
                             uiState.bottomGestureButtons.fastForEach { button ->
                                 key(button) {
                                     MyTextSwitch(
-                                        onTextClick = { onNavToGestureButtonSettings(button, false) },
+                                        onTextClick = { onNavToGestureButtonSettings(button) },
                                         onCheckedChange = { vm.onBottomGestureButtonEnabledChange(button, it) },
                                         checked = button.enabled,
                                         text = button.buttonTextCompose(),
@@ -369,7 +369,7 @@ fun HomeScreen(
                             uiState.sideGestureButtons.fastForEach { button ->
                                 key(button) {
                                     MyTextSwitch(
-                                        onTextClick = { onNavToGestureButtonSettings(button, true) },
+                                        onTextClick = { onNavToGestureButtonSettings(button) },
                                         onCheckedChange = { vm.onSideGestureButtonEnabledChange(button, it) },
                                         checked = button.enabled,
                                         text = button.buttonTextCompose(),

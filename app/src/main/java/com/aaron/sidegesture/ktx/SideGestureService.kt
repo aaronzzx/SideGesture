@@ -15,6 +15,7 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.ui.widget.GestureView
 import com.aaron.sidegesture.utils.MotionEventDispatcher
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -75,7 +76,7 @@ fun SideGestureService.attachGestureButton(button: GestureButton): View {
         updateGestureButton(button)
     }
     @SuppressLint("ClickableViewAccessibility")
-    val view = View(this).apply {
+    val view = GestureView(this, button).apply {
         tag = button
         setOnTouchListener { _, event ->
             MotionEventDispatcher.dispatch(event)

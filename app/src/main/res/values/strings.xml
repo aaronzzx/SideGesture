@@ -281,4 +281,8 @@
     <string name="tap">单击</string>
     <string name="double_tap">双击</string>
     <string name="hover_trigger_delay">悬停触发延迟</string>
+    <string name="intercept_system_back_gesture">拦截系统返回手势</string>
+    <string name="intercept_system_back_gesture_hint">使用系统接口拦截，可能有兼容性问题</string>
+    <string name="limit_max_intercept_length">限制最大拦截长度</string>
+    <string name="limit_max_intercept_length_hint">跟随系统接口限制为200dp</string>
 </resources>

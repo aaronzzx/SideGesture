@@ -9,7 +9,6 @@ import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.media.AudioManager
-import android.os.Build
 import android.os.PowerManager
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
@@ -420,16 +419,6 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                 }
                 updateLayout(view, lp)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    view.post {
-                        val location = IntArray(2)
-                        view.getLocationOnScreen(location)
-                        val x = location[0]
-                        val y = location[1]
-                        val rect = Rect(x, y, x + view.width, y + view.height)
-                        view.systemGestureExclusionRects = listOf(rect)
-                    }
-                }
             }
         }
     }

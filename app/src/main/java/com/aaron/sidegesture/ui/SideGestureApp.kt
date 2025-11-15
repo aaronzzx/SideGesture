@@ -86,8 +86,8 @@ fun SideGestureApp() {
                         onNavToAbout = { navController.navigate(About) },
                         onNavToAdvancedSettings = { navController.navigate(AdvancedSettings) },
                         onNavToGestureSettings = { navController.navigate(GestureSettings) },
-                        onNavToGestureButtonSettings = { button, isSideButton ->
-                            navController.navigate(GestureButtonSettings(button.id, button.position, isSideButton))
+                        onNavToGestureButtonSettings = { button ->
+                            navController.navigate(GestureButtonSettings(button.id, button.position))
                         }
                     )
                 }

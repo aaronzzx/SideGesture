@@ -9,6 +9,8 @@ import com.aaron.sidegesture.constant.GestureButtonDefaults.AlignRegion
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Color
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Enabled
 import com.aaron.sidegesture.constant.GestureButtonDefaults.End
+import com.aaron.sidegesture.constant.GestureButtonDefaults.ExcludeSystemGestureRects
+import com.aaron.sidegesture.constant.GestureButtonDefaults.LimitMaxExcludeSystemGestureLength
 import com.aaron.sidegesture.constant.GestureButtonDefaults.LongSlideActions
 import com.aaron.sidegesture.constant.GestureButtonDefaults.SlideActions
 import com.aaron.sidegesture.constant.GestureButtonDefaults.Start
@@ -32,11 +34,13 @@ data class GestureButton(
     val slideActions: GestureActions = SlideActions,
     val longSlideActions: GestureActions = LongSlideActions,
     val color: Int = Color,
-    val alignRegion: Boolean = AlignRegion
+    val alignRegion: Boolean = AlignRegion,
+    val excludeSystemGestureRects: Boolean = ExcludeSystemGestureRects,
+    val limitMaxExcludeSystemGestureLength: Boolean = LimitMaxExcludeSystemGestureLength
 ) : Comparable<GestureButton> {
 
     companion object {
-        private const val ID_DEFAULT = GestureButtonDefaults.ID_DEFAULT
+        const val ID_DEFAULT = GestureButtonDefaults.ID_DEFAULT
 
         val SideDefaults: List<GestureButton> get() = GestureButtonDefaults.SideDefaults
         val BottomDefaults: List<GestureButton> get() = GestureButtonDefaults.BottomDefaults

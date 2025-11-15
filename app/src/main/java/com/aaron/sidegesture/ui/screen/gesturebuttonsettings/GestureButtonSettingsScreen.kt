@@ -292,6 +292,21 @@ fun GestureButtonSettingsScreen(
                                     secondaryText = stringResource(id = R.string.gesture_button_align_hint)
                                 )
                             }
+                            if (uiState.canShowExcludeSystemGestureRects) {
+                                MyTextSwitch(
+                                    onCheckedChange = { vm.onExcludeSystemGestureRectsChange(it) },
+                                    checked = gestureButton.excludeSystemGestureRects,
+                                    text = stringResource(id = R.string.intercept_system_back_gesture),
+                                    secondaryText = stringResource(id = R.string.intercept_system_back_gesture_hint)
+                                )
+                                MyTextSwitch(
+                                    enabled = gestureButton.excludeSystemGestureRects,
+                                    onCheckedChange = { vm.onLimitMaxExcludeSystemGestureLengthChange(it) },
+                                    checked = gestureButton.limitMaxExcludeSystemGestureLength,
+                                    text = stringResource(id = R.string.limit_max_intercept_length),
+                                    secondaryText = stringResource(id = R.string.limit_max_intercept_length_hint)
+                                )
+                            }
                         }
                         if (!gestureButton.isDefault) {
                             MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {

@@ -143,6 +143,8 @@ object GestureButtonDefaults {
     val Vibrations = GestureSettingsDefaults.Vibrations
     const val Color = android.graphics.Color.TRANSPARENT
     const val AlignRegion = true
+    const val ExcludeSystemGestureRects = false
+    const val LimitMaxExcludeSystemGestureLength = true
     val SideDefaults = listOf(
         GestureButton(
             id = ID_DEFAULT,

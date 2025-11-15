@@ -39,9 +39,11 @@ data object AdjustGestureAngles
 @Keep
 data class GestureButtonSettings(
     val buttonId: String,
-    val position: Position,
+    val position: Position
+) {
     val isSideButton: Boolean
-)
+        get() = position == Position.Left || position == Position.Right
+}
 
 @Keep
 @Serializable

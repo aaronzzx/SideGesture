@@ -1,5 +1,7 @@
 package com.aaron.sidegesture.ui.screen.gesturebuttonsettings
 
+import android.os.Build
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
@@ -9,9 +11,12 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButtonSettings
+import com.aaron.sidegesture.ktx.fraction
+import com.aaron.sidegesture.ktx.rootSize
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -27,6 +32,12 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     override val initialState: UiState = UiState(gestureButtonSettings)
 
     val colorPickerDialog = ColorPickerDialog()
+
+    private val maxExcludeSystemGestureFraction: Float by lazy {
+        val rootSize = rootSize
+        val maxExcludeSystemGestureHeight = ConvertUtils.dp2px(200f)
+        maxExcludeSystemGestureHeight.toFloat() / rootSize.height.toFloat()
+    }
 
     init {
         loadData()
@@ -82,8 +93,13 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     }
 
     fun onGestureButtonPositionChange(start: Float, end: Float) {
+        val button = uiState.gestureButton ?: return
         val fraction = end - start
-        if (fraction < MinGestureButtonLength) {
+        if (fraction < MinGestureButtonLength ||
+            (button.excludeSystemGestureRects &&
+                    button.limitMaxExcludeSystemGestureLength &&
+                    fraction > maxExcludeSystemGestureFraction)
+        ) {
             return
         }
         updateUiState {
@@ -142,15 +158,80 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         saveSettings()
     }
 
+    fun onExcludeSystemGestureRectsChange(value: Boolean) {
+        updateUiState {
+            val l = it.gestureButtons.toMutableList().also { list ->
+                list.forEachIndexed { index, b ->
+                    if (b.id != gestureButtonSettings.buttonId) {
+                        return@forEachIndexed
+                    }
+                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                        val (start, end) = if (value && b.limitMaxExcludeSystemGestureLength) {
+                            val maxFraction = maxExcludeSystemGestureFraction
+                            val half = maxFraction / 2f
+                            val center = b.start + (b.fraction / 2f)
+                            val st = center - half
+                            val ed = center + half
+                            Pair(st, ed)
+                        } else {
+                            Pair(b.start, b.end)
+                        }
+                        list[index] = b.copy(
+                            start = start,
+                            end = end,
+                            excludeSystemGestureRects = value
+                        )
+                    }
+                }
+            }
+            it.copy(gestureButtons = l)
+        }
+        saveSettings()
+    }
+
+    fun onLimitMaxExcludeSystemGestureLengthChange(value: Boolean) {
+        updateUiState {
+            val l = it.gestureButtons.toMutableList().also { list ->
+                list.forEachIndexed { index, b ->
+                    if (b.id != gestureButtonSettings.buttonId) {
+                        return@forEachIndexed
+                    }
+                    if (b.position == gestureButtonSettings.position || it.alignRegion) {
+                        val (start, end) = if (value) {
+                            val maxFraction = maxExcludeSystemGestureFraction
+                            val half = maxFraction / 2f
+                            val center = b.start + (b.fraction / 2f)
+                            val st = center - half
+                            val ed = center + half
+                            Log.d("zzx", "${ed - st}, $maxFraction")
+                            Pair(st, ed)
+                        } else {
+                            Pair(b.start, b.end)
+                        }
+                        list[index] = b.copy(
+                            start = start,
+                            end = end,
+                            limitMaxExcludeSystemGestureLength = value
+                        )
+                    }
+                }
+            }
+            it.copy(gestureButtons = l)
+        }
+        saveSettings()
+    }
+
     fun saveSettings() {
         viewModelScope.launch {
-            if (gestureButtonSettings.isSideButton) {
-                DataStoreHolder.sideGestureButtons.updateData {
-                    uiState.gestureButtons
-                }
-            } else {
-                DataStoreHolder.bottomGestureButtons.updateData {
-                    uiState.gestureButtons
+            launch {
+                if (gestureButtonSettings.isSideButton) {
+                    DataStoreHolder.sideGestureButtons.updateData {
+                        uiState.gestureButtons
+                    }
+                } else {
+                    DataStoreHolder.bottomGestureButtons.updateData {
+                        uiState.gestureButtons
+                    }
                 }
             }
         }
@@ -194,34 +275,45 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     }
 
     private fun loadData() {
+        val gestureButtonSettings = gestureButtonSettings
         viewModelScope.launch {
-            if (gestureButtonSettings.isSideButton) {
-                DataStoreHolder
-                    .sideGestureButtons
-                    .data
-                    .take(1)
-                    .collectLatest { items ->
-                        val button = items.find {
-                            it.id == gestureButtonSettings.buttonId &&
-                                    it.position == gestureButtonSettings.position
+            updateUiState {
+                val canShowExcludeSystemGestureRects = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                        gestureButtonSettings.isSideButton &&
+                        gestureButtonSettings.buttonId == GestureButton.ID_DEFAULT
+                it.copy(
+                    canShowExcludeSystemGestureRects = canShowExcludeSystemGestureRects
+                )
+            }
+            launch {
+                if (gestureButtonSettings.isSideButton) {
+                    DataStoreHolder
+                        .sideGestureButtons
+                        .data
+                        .take(1)
+                        .collectLatest { items ->
+                            val button = items.find {
+                                it.id == gestureButtonSettings.buttonId &&
+                                        it.position == gestureButtonSettings.position
+                            }
+                            updateUiState {
+                                it.copy(
+                                    gestureButtons = items,
+                                    alignRegion = button?.alignRegion ?: true
+                                )
+                            }
                         }
-                        updateUiState {
-                            it.copy(
-                                gestureButtons = items,
-                                alignRegion = button?.alignRegion ?: true
-                            )
+                } else {
+                    DataStoreHolder
+                        .bottomGestureButtons
+                        .data
+                        .take(1)
+                        .collectLatest { items ->
+                            updateUiState {
+                                it.copy(gestureButtons = items)
+                            }
                         }
-                    }
-            } else {
-                DataStoreHolder
-                    .bottomGestureButtons
-                    .data
-                    .take(1)
-                    .collectLatest { items ->
-                        updateUiState {
-                            it.copy(gestureButtons = items)
-                        }
-                    }
+                }
             }
         }
     }
@@ -232,7 +324,8 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
         val alignRegion: Boolean = true,
         val showDeleteWarningDialog: Boolean = false,
         val colorPickerDialog: Pair<Boolean, Color> = Pair(false, Color.Transparent),
-        val isGestureButtonAdjusting: Boolean = false
+        val isGestureButtonAdjusting: Boolean = false,
+        val canShowExcludeSystemGestureRects: Boolean = false
     ) {
         val gestureButton: GestureButton? = gestureButtons.find {
             it.id == gestureButtonSettings.buttonId &&
