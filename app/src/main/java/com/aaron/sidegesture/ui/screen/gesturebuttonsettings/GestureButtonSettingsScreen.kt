@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,6 +85,14 @@ fun GestureButtonSettingsScreen(
                 onConfirmClick = { vm.deleteGestureButton() }
             )
         }
+        if (uiState.showCopyAnotherSideGestureButtonDialog) {
+            MyAlertDialog(
+                onDismissRequest = { vm.showCopyAnotherSideGestureButtonDialog(false) },
+                title = stringResource(id = R.string.copy_another_side_button),
+                text = stringResource(R.string.copy_another_side_button_tips),
+                onConfirmClick = { vm.copyAnotherSideGestureButton() }
+            )
+        }
         if (uiState.colorPickerDialog.first) {
             ColorPickerDialog(
                 onDismissRequest = {
@@ -126,6 +135,12 @@ fun GestureButtonSettingsScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = { vm.showCopyAnotherSideGestureButtonDialog(true) }) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null
+                            )
+                        }
                         if (uiState.gestureButton != null && !uiState.gestureButton.isDefault) {
                             IconButton(onClick = { vm.showDeleteWarningDialog(true) }) {
                                 Icon(

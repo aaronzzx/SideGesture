@@ -285,4 +285,6 @@
     <string name="intercept_system_back_gesture_hint">使用系统接口拦截，可能有兼容性问题</string>
     <string name="limit_max_intercept_length">限制最大拦截长度</string>
     <string name="limit_max_intercept_length_hint">跟随系统接口限制为200dp</string>
+    <string name="copy_another_side_button">复制对侧触钮</string>
+    <string name="copy_another_side_button_tips">将对侧触钮配置复制到当前触钮下。</string>
 </resources>
