@@ -28,9 +28,9 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.AnimationStyle
-import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.SectorStyle
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.entity.TriggerDirection.Center
 import com.aaron.sidegesture.entity.TriggerDirection.Center2
@@ -76,7 +76,7 @@ fun SideGestureContainer(
     modifier: Modifier = Modifier,
     imePadding: Int = 0,
     animationStyle: AnimationStyle? = WaveStyle(),
-    actionPanelStyle: ActionPanelStyle = ArcStyle(),
+    actionPanelStyle: ActionPanelStyle = SectorStyle(),
     actionSettings: ActionSettings = ActionSettings(),
     advancedSettings: AdvancedSettings = AdvancedSettings(),
     gestureSettings: GestureSettings = GestureSettings()

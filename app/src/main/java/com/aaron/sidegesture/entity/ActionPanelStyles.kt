@@ -3,6 +3,7 @@ package com.aaron.sidegesture.entity
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.ActionPanelStylesDefaults
 import com.aaron.sidegesture.constant.ActionPanelStylesDefaults.ArcStyleItemSize
+import com.aaron.sidegesture.constant.ActionPanelStylesDefaults.SectorStyleItemSize
 import com.aaron.sidegesture.constant.ActionPanelStylesDefaults.Type
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.serialization.Serializable
@@ -21,16 +22,23 @@ data class ActionPanelStyles(
 ) {
     companion object {
         const val TYPE_ARC = ActionPanelStylesDefaults.TYPE_ARC
+        const val TYPE_SECTOR = ActionPanelStylesDefaults.TYPE_SECTOR
     }
 
     @Transient
     val value: ActionPanelStyle = run {
         val json = json
-        if (json.isEmpty()) {
-            return@run ArcStyle()
-        }
         when (type) {
-            TYPE_ARC -> JsonHelper.decodeFromString<ArcStyle>(json)
+            TYPE_ARC -> if (json.isEmpty()) {
+                ArcStyle()
+            } else {
+                JsonHelper.decodeFromString<ArcStyle>(json)
+            }
+            TYPE_SECTOR -> if (json.isEmpty()) {
+                SectorStyle()
+            } else {
+                JsonHelper.decodeFromString<SectorStyle>(json)
+            }
             else -> error("Unknown ActionPanelStyle type: $type")
         }
     }
@@ -42,4 +50,10 @@ sealed interface ActionPanelStyle
 @Keep
 data class ArcStyle(
     val itemSize: Int = ArcStyleItemSize
+) : ActionPanelStyle
+
+@Serializable
+@Keep
+data class SectorStyle(
+    val itemSize: Int = SectorStyleItemSize
 ) : ActionPanelStyle

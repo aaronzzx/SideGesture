@@ -51,9 +51,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -67,6 +69,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.SectorStyle
 import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
@@ -84,7 +87,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -162,10 +168,19 @@ fun ActionPanel(
             }
 
             when (actionPanelStyle) {
-                is ArcStyle -> {
-                    ArcActionPanel(
+                is SectorStyle -> {
+                    SectorActionPanel(
                         modifier = Modifier.fillMaxSize(),
                         actionPanelStyle = actionPanelStyle,
+                        actionPanelState = actionPanelState,
+                        vibrations = vibrations
+                    )
+                }
+
+                is ArcStyle -> {
+                    SectorActionPanel(
+                        modifier = Modifier.fillMaxSize(),
+                        actionPanelStyle = SectorStyle(itemSize = actionPanelStyle.itemSize),
                         actionPanelState = actionPanelState,
                         vibrations = vibrations
                     )
@@ -192,6 +207,715 @@ fun ActionPanel(
                 )
             }
         }
+    }
+}
+
+private const val SectorAngleDegree = 180.0
+private const val SectorInitialRadiusRatio = 1.5f
+private const val SectorRadiusStepRatio = 1.25f
+private const val SectorItemSpacingRatio = 1.12f
+private const val SectorSingleLayerMaxCount = 5
+private val SectorEdgePadding = 16.dp
+private val SectorCornerSafePadding = 56.dp
+private val SectorMinItemSize = 32.dp
+
+@Composable
+private fun AnimatedVisibilityScope.SectorActionPanel(
+    actionPanelStyle: SectorStyle,
+    actionPanelState: ActionPanelState,
+    modifier: Modifier = Modifier,
+    vibrations: Vibrations? = null
+) {
+    val density = LocalDensity.current
+    val defaultItemSize = actionPanelStyle.itemSize.toDp()
+    val defaultItemSizePx = defaultItemSize.toPx()
+    val edgePaddingPx = SectorEdgePadding.toPx()
+    val cornerSafePaddingPx = SectorCornerSafePadding.toPx()
+    val minItemSizePx = SectorMinItemSize.toPx()
+    var parentSize by remember { mutableStateOf(Size.Zero) }
+    var stableOrigin by remember { mutableStateOf(Offset.Unspecified) }
+
+    if (actionPanelState.origin.isSpecified) {
+        stableOrigin = actionPanelState.origin
+    }
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .onGloballyPositioned {
+                    parentSize = it.size.toSize()
+                }
+                .matchParentSize()
+        )
+
+        val itemSizePx = remember(
+            parentSize,
+            actionPanelState.actions.size,
+            actionPanelState.position,
+            defaultItemSizePx,
+            cornerSafePaddingPx,
+            minItemSizePx
+        ) {
+            sectorItemSizePx(
+                itemCount = actionPanelState.actions.size,
+                defaultItemSizePx = defaultItemSizePx,
+                minItemSizePx = minItemSizePx,
+                parentSize = parentSize,
+                position = actionPanelState.position,
+                cornerSafePaddingPx = cornerSafePaddingPx
+            )
+        }
+        val itemSize = with(density) { itemSizePx.toDp() }
+        val layouts = remember(
+            actionPanelState.actions.size,
+            itemSizePx
+        ) {
+            sectorLayerLayouts(
+                itemCount = actionPanelState.actions.size,
+                itemSizePx = itemSizePx
+            )
+        }
+        val itemOffsets = remember(
+            actionPanelState.position,
+            layouts
+        ) {
+            sectorItemOffsets(
+                layouts = layouts,
+                position = actionPanelState.position
+            )
+        }
+        val firstLayerOffsets = remember(
+            actionPanelState.position,
+            layouts
+        ) {
+            sectorItemOffsets(
+                layouts = layouts.take(1),
+                position = actionPanelState.position
+            )
+        }
+        val anchor = remember(
+            parentSize,
+            stableOrigin,
+            actionPanelState.position,
+            itemOffsets,
+            firstLayerOffsets,
+            itemSizePx,
+            edgePaddingPx,
+            cornerSafePaddingPx
+        ) {
+            sectorAnchor(
+                parentSize = parentSize,
+                origin = stableOrigin,
+                position = actionPanelState.position,
+                itemOffsets = itemOffsets,
+                firstLayerOffsets = firstLayerOffsets,
+                itemSizePx = itemSizePx,
+                edgePaddingPx = edgePaddingPx,
+                cornerSafePaddingPx = cornerSafePaddingPx
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .graphicsLayer {
+                    if (parentSize.isEmpty()) return@graphicsLayer
+                    val itemSizeHalf = itemSizePx / 2f
+                    translationX = anchor.x - itemSizeHalf
+                    translationY = anchor.y - itemSizeHalf
+                }
+                .size(itemSize)
+        ) {
+            val transition = transition
+            actionPanelState.actions.fastForEachIndexed { index, action ->
+                key(index) {
+                    val targetAnimOffset = itemOffsets.getOrElse(index) { Offset.Zero }
+                    val selectAnim = remember { Animatable(1f) }
+                    var originBounds by remember { mutableStateOf(Rect.Zero) }
+
+                    LaunchedEffect(transition, actionPanelState, index, action, targetAnimOffset) {
+                        snapshotFlow { actionPanelState.finger }
+                            .filter {
+                                it.isSpecified &&
+                                        !transition.isRunning &&
+                                        transition.currentState == Visible
+                            }
+                            .collect { finger ->
+                                val transFinger = finger - targetAnimOffset
+                                if (originBounds.contains(transFinger)) {
+                                    if (!actionPanelState.isSelected(action)) {
+                                        launch { selectAnim.animateTo(1.15f) }
+                                        actionPanelState.select(index, action)
+                                        vibrations?.tryVibrateForActionPanel()
+                                    }
+                                } else {
+                                    if (actionPanelState.isSelected(action)) {
+                                        launch { selectAnim.animateTo(1f) }
+                                        actionPanelState.select(index, Action.NONE)
+                                    }
+                                }
+                            }
+                    }
+
+                    ActionPanelItem(
+                        modifier = Modifier
+                            .onGloballyPositioned {
+                                originBounds = it.boundsInRoot()
+                            }
+                            .graphicsLayer {
+                                translationX = targetAnimOffset.x
+                                translationY = targetAnimOffset.y
+                                scaleX = selectAnim.value
+                                scaleY = selectAnim.value
+                            }
+                            .run animateEnterExit@{
+                                val stiffness = Spring.StiffnessMedium
+                                animateEnterExit(
+                                    enter = scaleIn(spring(stiffness = stiffness)) +
+                                            slideIn(animationSpec = spring(stiffness = stiffness)) {
+                                                -targetAnimOffset.toIntOffset()
+                                            },
+                                    exit = scaleOut(spring(stiffness = stiffness)) +
+                                            slideOut(animationSpec = spring(stiffness = stiffness)) {
+                                                -targetAnimOffset.toIntOffset()
+                                            }
+                                )
+                            }
+                            .matchParentSize(),
+                        action = action
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun sectorItemSizePx(
+    itemCount: Int,
+    defaultItemSizePx: Float,
+    minItemSizePx: Float,
+    parentSize: Size,
+    position: Position,
+    cornerSafePaddingPx: Float
+): Float {
+    if (parentSize.isEmpty() || itemCount <= 0 || defaultItemSizePx <= 0f) {
+        return defaultItemSizePx
+    }
+
+    val defaultOffsets = sectorItemOffsets(
+        itemCount = itemCount,
+        itemSizePx = defaultItemSizePx,
+        position = position
+    )
+    val requiredSize = sectorRequiredSafeAxisSize(
+        itemOffsets = defaultOffsets,
+        itemSizePx = defaultItemSizePx,
+        position = position
+    )
+    val availableSize = when (position) {
+        Position.Left, Position.Right -> parentSize.height
+        Position.Bottom -> parentSize.width
+    } - cornerSafePaddingPx * 2f
+    if (requiredSize <= availableSize || availableSize <= 0f) {
+        return defaultItemSizePx
+    }
+
+    return (defaultItemSizePx * (availableSize / requiredSize))
+        .coerceAtLeast(minItemSizePx)
+}
+
+private fun sectorRequiredSafeAxisSize(
+    itemOffsets: List<Offset>,
+    itemSizePx: Float,
+    position: Position
+): Float {
+    if (itemOffsets.isEmpty()) return itemSizePx
+
+    return when (position) {
+        Position.Left, Position.Right -> {
+            val minY = itemOffsets.minOf { it.y }
+            val maxY = itemOffsets.maxOf { it.y }
+            maxY - minY + itemSizePx
+        }
+
+        Position.Bottom -> {
+            val minX = itemOffsets.minOf { it.x }
+            val maxX = itemOffsets.maxOf { it.x }
+            maxX - minX + itemSizePx
+        }
+    }
+}
+
+private fun sectorItemOffsets(
+    itemCount: Int,
+    itemSizePx: Float,
+    position: Position
+): List<Offset> {
+    if (itemCount <= 0 || itemSizePx <= 0f) return emptyList()
+
+    val layers = sectorLayerLayouts(itemCount, itemSizePx)
+    return sectorItemOffsets(layers, position)
+}
+
+private fun sectorItemOffsets(
+    layouts: List<SectorLayerLayout>,
+    position: Position
+): List<Offset> {
+    val offsets = ArrayList<Offset>(layouts.sumOf { it.angles.size })
+
+    layouts.fastForEach { layer ->
+        layer.angles.fastForEach { angle ->
+            val inward = cos(angle) * layer.radius
+            val cross = sin(angle) * layer.radius
+            offsets += when (position) {
+                Position.Left -> Offset(inward.toFloat(), cross.toFloat())
+                Position.Right -> Offset((-inward).toFloat(), cross.toFloat())
+                Position.Bottom -> Offset(cross.toFloat(), (-inward).toFloat())
+            }
+        }
+    }
+
+    return offsets
+}
+
+private data class SectorLayerLayout(
+    val radius: Float,
+    val angles: List<Double>
+)
+
+private data class SectorLayerCandidate(
+    val layouts: List<SectorLayerLayout>,
+    val countScore: Int,
+    val distanceScore: Float
+)
+
+private fun sectorLayerLayouts(
+    itemCount: Int,
+    itemSizePx: Float
+): List<SectorLayerLayout> {
+    if (itemCount <= 0 || itemSizePx <= 0f) return emptyList()
+
+    val targetSpacing = itemSizePx * SectorItemSpacingRatio
+    if (itemCount <= SectorSingleLayerMaxCount) {
+        val radius = sectorSingleLayerRadius(itemCount, itemSizePx, targetSpacing)
+        return listOf(
+            SectorLayerLayout(
+                radius = radius,
+                angles = sectorLayerAngles(
+                    count = itemCount,
+                    radius = radius,
+                    itemSizePx = itemSizePx,
+                    targetSpacing = targetSpacing
+                )
+            )
+        )
+    }
+
+    val capacities = ArrayList<Int>()
+    var layerCount = 1
+    var bestCandidate: SectorLayerCandidate? = null
+
+    while (layerCount <= itemCount) {
+        capacities += sectorLayerCapacity(
+            layer = layerCount - 1,
+            itemSizePx = itemSizePx,
+            targetSpacing = targetSpacing
+        )
+        val counts = sectorLayerCountsOrNull(
+            itemCount = itemCount,
+            capacities = capacities
+        )
+        if (counts != null) {
+            val layouts = counts.mapIndexed { layer, count ->
+                val radius = sectorLayerRadius(layer, itemSizePx, targetSpacing)
+                SectorLayerLayout(
+                    radius = radius,
+                    angles = sectorLayerAngles(
+                        count = count,
+                        radius = radius,
+                        itemSizePx = itemSizePx,
+                        targetSpacing = targetSpacing
+                    )
+                )
+            }
+            val candidate = SectorLayerCandidate(
+                layouts = layouts,
+                countScore = sectorLayerCountScore(counts),
+                distanceScore = sectorLayerDistanceScore(layouts, targetSpacing)
+            )
+            if (bestCandidate == null ||
+                candidate.countScore < bestCandidate.countScore ||
+                candidate.countScore == bestCandidate.countScore &&
+                candidate.distanceScore < bestCandidate.distanceScore
+            ) {
+                bestCandidate = candidate
+            }
+        }
+        layerCount++
+    }
+
+    return bestCandidate?.layouts ?: listOf(
+        SectorLayerLayout(
+            radius = sectorLayerRadius(0, itemSizePx, targetSpacing),
+            angles = sectorLayerAngles(
+                count = itemCount,
+                radius = sectorLayerRadius(0, itemSizePx, targetSpacing),
+                itemSizePx = itemSizePx,
+                targetSpacing = targetSpacing
+            )
+        )
+    )
+}
+
+private fun sectorLayerCountsOrNull(
+    itemCount: Int,
+    capacities: List<Int>
+): List<Int>? {
+    val layerCount = capacities.size
+    if (layerCount == 1) {
+        return if (itemCount <= capacities.first()) listOf(itemCount) else null
+    }
+
+    val minRequiredCount = layerCount * (layerCount + 1) / 2
+    if (itemCount < minRequiredCount) return null
+
+    val memo = mutableMapOf<Triple<Int, Int, Int>, List<Int>?>()
+    return sectorLayerCountsOrNull(
+        index = 0,
+        previousCount = 0,
+        remainingCount = itemCount,
+        capacities = capacities,
+        memo = memo
+    )
+}
+
+private fun sectorLayerCountsOrNull(
+    index: Int,
+    previousCount: Int,
+    remainingCount: Int,
+    capacities: List<Int>,
+    memo: MutableMap<Triple<Int, Int, Int>, List<Int>?>
+): List<Int>? {
+    val key = Triple(index, previousCount, remainingCount)
+    if (key in memo) return memo[key]
+
+    if (index == capacities.size) {
+        return if (remainingCount == 0) emptyList() else null
+    }
+
+    val remainingLayerCount = capacities.size - index - 1
+    val minCount = previousCount + 1
+    val maxCount = min(capacities[index], remainingCount)
+    var bestCounts: List<Int>? = null
+    var bestScore: Int? = null
+
+    for (count in minCount..maxCount) {
+        val minRemainingCount = remainingLayerCount * count +
+                remainingLayerCount * (remainingLayerCount + 1) / 2
+        if (remainingCount - count < minRemainingCount) continue
+
+        val nextCounts = sectorLayerCountsOrNull(
+            index = index + 1,
+            previousCount = count,
+            remainingCount = remainingCount - count,
+            capacities = capacities,
+            memo = memo
+        ) ?: continue
+        val counts = listOf(count) + nextCounts
+        val score = sectorLayerCountScore(counts)
+        if (bestScore == null || score < bestScore) {
+            bestScore = score
+            bestCounts = counts
+        }
+    }
+
+    memo[key] = bestCounts
+    return bestCounts
+}
+
+private fun sectorLayerCountScore(counts: List<Int>): Int {
+    if (counts.size <= 1) return 0
+    return counts.zipWithNext().sumOf { (innerCount, outerCount) ->
+        val diff = outerCount - innerCount - 1
+        diff * diff
+    }
+}
+
+private fun sectorLayerDistanceScore(
+    layouts: List<SectorLayerLayout>,
+    targetSpacing: Float
+): Float {
+    val points = layouts.flatMap { layer ->
+        layer.angles.map { angle ->
+            Offset(
+                x = (cos(angle) * layer.radius).toFloat(),
+                y = (sin(angle) * layer.radius).toFloat()
+            )
+        }
+    }
+    if (points.size <= 1) return 0f
+
+    val nearestDistances = points.mapIndexed { index, point ->
+        points.indices
+            .filter { it != index }
+            .minOf { otherIndex ->
+                val other = points[otherIndex]
+                sqrt(
+                    (point.x - other.x).pow(2) +
+                            (point.y - other.y).pow(2)
+                )
+            }
+    }
+    val distanceRange = (nearestDistances.maxOrNull() ?: 0f) -
+            (nearestDistances.minOrNull() ?: 0f)
+    val averageDistance = nearestDistances.average().toFloat()
+    return distanceRange + (averageDistance - targetSpacing).let { it * it / targetSpacing }
+}
+
+private fun sectorLayerRadius(
+    layer: Int,
+    itemSizePx: Float,
+    targetSpacing: Float
+): Float {
+    return itemSizePx * SectorInitialRadiusRatio + layer * targetSpacing
+}
+
+private fun sectorSingleLayerRadius(
+    count: Int,
+    itemSizePx: Float,
+    targetSpacing: Float
+): Float {
+    val baseRadius = sectorLayerRadius(0, itemSizePx, targetSpacing)
+    if (count <= 1) return baseRadius
+
+    val satisfiesSpacing: (Float) -> Boolean = { radius ->
+        val preferredAngle = sectorPreferredAngleStep(radius, targetSpacing) * (count - 1)
+        preferredAngle <= sectorAvailableAngle(radius, itemSizePx)
+    }
+    if (satisfiesSpacing(baseRadius)) {
+        return baseRadius
+    }
+
+    var low = baseRadius
+    var high = baseRadius
+    while (!satisfiesSpacing(high) && high < itemSizePx * 32f) {
+        high *= 1.25f
+    }
+    if (!satisfiesSpacing(high)) {
+        return high
+    }
+
+    repeat(20) {
+        val mid = (low + high) / 2f
+        if (satisfiesSpacing(mid)) {
+            high = mid
+        } else {
+            low = mid
+        }
+    }
+    return high
+}
+
+private fun sectorLayerAngles(
+    count: Int,
+    radius: Float,
+    itemSizePx: Float,
+    targetSpacing: Float
+): List<Double> {
+    if (count <= 0) return emptyList()
+    if (count == 1) return listOf(0.0)
+
+    val availableAngle = sectorAvailableAngle(radius, itemSizePx)
+    val preferredAngleStep = sectorPreferredAngleStep(radius, targetSpacing)
+    val preferredAngle = preferredAngleStep * (count - 1)
+    val angleStep = if (preferredAngle <= availableAngle) {
+        preferredAngleStep
+    } else {
+        availableAngle / (count - 1)
+    }
+    val startAngle = -angleStep * (count - 1) / 2.0
+
+    return List(count) { index ->
+        startAngle + angleStep * index
+    }
+}
+
+private fun sectorLayerCapacity(
+    layer: Int,
+    itemSizePx: Float,
+    targetSpacing: Float
+): Int {
+    val radius = sectorLayerRadius(layer, itemSizePx, targetSpacing)
+    val availableAngle = sectorAvailableAngle(radius, itemSizePx)
+    val angleStep = sectorPreferredAngleStep(radius, targetSpacing)
+    if (angleStep <= 0.0) return 1
+    return floor(availableAngle / angleStep).toInt().coerceAtLeast(0) + 1
+}
+
+private fun sectorAvailableAngle(
+    radius: Float,
+    itemSizePx: Float
+): Double {
+    val halfSectorAngle = Math.toRadians(SectorAngleDegree) / 2.0
+    val edgeSafeAngle = min(
+        halfSectorAngle,
+        kotlin.math.acos((itemSizePx / 2f / radius).coerceIn(0f, 1f).toDouble())
+    )
+    return edgeSafeAngle * 2.0
+}
+
+private fun sectorPreferredAngleStep(
+    radius: Float,
+    targetSpacing: Float
+): Double {
+    return 2.0 * kotlin.math.asin(
+        (targetSpacing / (2f * radius)).coerceIn(0f, 1f).toDouble()
+    )
+}
+
+private fun sectorAnchor(
+    parentSize: Size,
+    origin: Offset,
+    position: Position,
+    itemOffsets: List<Offset>,
+    firstLayerOffsets: List<Offset>,
+    itemSizePx: Float,
+    edgePaddingPx: Float,
+    cornerSafePaddingPx: Float
+): Offset {
+    if (parentSize.isEmpty()) return Offset.Zero
+
+    val itemSizeHalf = itemSizePx / 2f
+    val minX = itemOffsets.minOfOrNull { it.x } ?: 0f
+    val maxX = itemOffsets.maxOfOrNull { it.x } ?: 0f
+    val minY = itemOffsets.minOfOrNull { it.y } ?: 0f
+    val maxY = itemOffsets.maxOfOrNull { it.y } ?: 0f
+    val firstLayerMinX = firstLayerOffsets.minOfOrNull { it.x } ?: 0f
+    val firstLayerMaxX = firstLayerOffsets.maxOfOrNull { it.x } ?: 0f
+    val firstLayerMaxY = firstLayerOffsets.maxOfOrNull { it.y } ?: 0f
+    val safeOrigin = if (origin.isSpecified) {
+        origin
+    } else {
+        Offset(parentSize.width / 2f, parentSize.height / 2f)
+    }
+
+    return when (position) {
+        Position.Left -> Offset(
+            x = edgePaddingPx + itemSizeHalf - firstLayerMinX,
+            y = safeOrigin.y.coerceInSafely(
+                minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
+                maximumValue = parentSize.height - cornerSafePaddingPx - itemSizeHalf - maxY
+            )
+        )
+
+        Position.Right -> Offset(
+            x = parentSize.width - edgePaddingPx - itemSizeHalf - firstLayerMaxX,
+            y = safeOrigin.y.coerceInSafely(
+                minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
+                maximumValue = parentSize.height - cornerSafePaddingPx - itemSizeHalf - maxY
+            )
+        )
+
+        Position.Bottom -> Offset(
+            x = safeOrigin.x.coerceInSafely(
+                minimumValue = cornerSafePaddingPx + itemSizeHalf - minX,
+                maximumValue = parentSize.width - cornerSafePaddingPx - itemSizeHalf - maxX
+            ),
+            y = parentSize.height - edgePaddingPx - itemSizeHalf - firstLayerMaxY
+        )
+    }
+}
+
+private fun Float.coerceInSafely(
+    minimumValue: Float,
+    maximumValue: Float
+): Float {
+    if (minimumValue <= maximumValue) {
+        return coerceIn(minimumValue, maximumValue)
+    }
+    return (minimumValue + maximumValue) / 2f
+}
+
+@Composable
+private fun ActionPanelItem(
+    action: Action,
+    modifier: Modifier = Modifier
+) {
+    val actionIcon = actionIcon(action = action)
+    val isWechatAlipay = remember(actionIcon) {
+        actionIcon == R.drawable.wechat_scan ||
+                actionIcon == R.drawable.wechat_paycode ||
+                actionIcon == R.drawable.alipay_scan ||
+                actionIcon == R.drawable.alipay_paycode
+    }
+    Box(
+        modifier = modifier
+            .clipToBackground(
+                color = actionPanelItemColor(action, actionIcon),
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (actionIcon is ImageVector) {
+            Image(
+                imageVector = actionIcon,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+            )
+        } else {
+            AsyncImage(
+                modifier = Modifier
+                    .graphicsLayer {
+                        if (isWechatAlipay) {
+                            scaleX = 0.5f
+                            scaleY = 0.5f
+                        } else {
+                            val appInfo = action.appInfo
+                            if (appInfo != null) {
+                                scaleX = appInfo.iconScale
+                                scaleY = appInfo.iconScale
+                                return@graphicsLayer
+                            }
+                            val shortcutInfo = action.shortcutInfo
+                            if (shortcutInfo != null) {
+                                scaleX = shortcutInfo.iconScale
+                                scaleY = shortcutInfo.iconScale
+                            }
+                        }
+                    },
+                model = actionIcon,
+                contentDescription = null,
+                imageLoader = LocalContext.current.imageLoader,
+                colorFilter = if (!isWechatAlipay) null else {
+                    ColorFilter.tint(Color.White)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun actionPanelItemColor(
+    action: Action,
+    actionIcon: Any?
+): Color {
+    return when (action.value) {
+        GlobalActions.WECHAT_SCAN,
+        GlobalActions.WECHAT_PAY -> MaterialTheme.colorScheme.wechatColor
+
+        GlobalActions.ALIPAY_SCAN,
+        GlobalActions.ALIPAY_PAY -> MaterialTheme.colorScheme.alipayColor
+
+        GlobalActions.EXTRA_LAUNCH_APP -> when (actionIcon is ImageVector) {
+            true -> MaterialTheme.colorScheme.primary
+            else -> Color(action.appInfo!!.iconBgColor)
+        }
+
+        GlobalActions.EXTRA_LAUNCH_SHORTCUT -> when (actionIcon is ImageVector) {
+            true -> MaterialTheme.colorScheme.primary
+            else -> Color(action.shortcutInfo!!.iconBgColor)
+        }
+
+        else -> MaterialTheme.colorScheme.primary
     }
 }
 

@@ -1084,7 +1084,7 @@ private fun canShortcutInfoEnabled(
     return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 
-private const val MAX_SELECT_COUNT = 5
+private const val MAX_SELECT_COUNT = 50
 
 private const val PAGE_ACTION = 0
 private const val PAGE_APPS = 1

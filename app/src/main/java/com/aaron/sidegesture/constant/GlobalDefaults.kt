@@ -62,9 +62,11 @@ object InitialSettingsDefaults {
 object ActionPanelStylesDefaults {
 
     const val TYPE_ARC = 1
+    const val TYPE_SECTOR = 2
 
-    const val Type = TYPE_ARC
+    const val Type = TYPE_SECTOR
     val ArcStyleItemSize = ConvertUtils.dp2px(48f)
+    val SectorStyleItemSize = ConvertUtils.dp2px(48f)
 }
 
 object AnimationStylesDefaults {
