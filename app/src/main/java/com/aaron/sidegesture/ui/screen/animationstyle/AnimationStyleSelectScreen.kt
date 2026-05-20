@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,8 +31,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,10 +43,6 @@ import com.aaron.compose.ktx.clipToBorder
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AnimationStyles
-import com.aaron.sidegesture.entity.CapsuleStyle
-import com.aaron.sidegesture.entity.WaveStyle
-import com.aaron.sidegesture.ktx.getCapsuleIcon
-import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectVM.AnimationStyleItem
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
@@ -73,8 +72,6 @@ fun AnimationStyleSelectScreen(
                     AnimationStyleCard(
                         item = item,
                         selected = item.type == uiState.currentType,
-                        waveStyle = uiState.waveStyle,
-                        capsuleStyle = uiState.capsuleStyle,
                         onClick = { vm.onStyleSelected(item.type) },
                         onSettingsClick = { onNavToStyleConfig(item.type) }
                     )
@@ -88,8 +85,6 @@ fun AnimationStyleSelectScreen(
 private fun AnimationStyleCard(
     item: AnimationStyleItem,
     selected: Boolean,
-    waveStyle: WaveStyle,
-    capsuleStyle: CapsuleStyle,
     onClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
@@ -128,12 +123,10 @@ private fun AnimationStyleCard(
             ) {
                 when (item.type) {
                     AnimationStyles.TYPE_WAVE -> WaveStylePreview(
-                        modifier = Modifier.fillMaxSize(),
-                        style = waveStyle
+                        modifier = Modifier.fillMaxSize()
                     )
                     AnimationStyles.TYPE_CAPSULE -> CapsuleStylePreview(
-                        modifier = Modifier.fillMaxSize(),
-                        style = capsuleStyle
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -189,77 +182,41 @@ private fun AnimationStyleCard(
 
 @Composable
 private fun CapsuleStylePreview(
-    style: CapsuleStyle,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface
-        ) {}
-
-        val arrow = style.getCapsuleIcon()
+    PreviewStage(modifier = modifier) {
+        val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val thickness = style.thickness.toFloat().coerceAtLeast(1f)
-            val strokeWidth = style.strokeWidth.toFloat()
-            val capsuleWidth = (style.maxLength.toFloat() * 0.78f)
-                .coerceAtLeast(thickness)
-            val entryProgress = 0.72f
-            val startX = lerpFloat(
-                start = -capsuleWidth - strokeWidth,
-                stop = 0f,
-                fraction = entryProgress
-            )
-            val previewPaddingVertical = 8.dp.toPx()
-            val previewPaddingRight = 14.dp.toPx()
-            val logicalLeft = startX - strokeWidth / 2f
-            val logicalTop = -strokeWidth / 2f
-            val logicalWidth = capsuleWidth + strokeWidth
-            val logicalHeight = thickness + strokeWidth
-            val availableWidth = (size.width - previewPaddingRight).coerceAtLeast(1f)
-            val availableHeight = (size.height - previewPaddingVertical * 2f).coerceAtLeast(1f)
-            val contentScale = minOf(
-                availableWidth / logicalWidth,
-                availableHeight / logicalHeight
-            )
-            val scaledHeight = logicalHeight * contentScale
-            val translateX = -logicalLeft * contentScale
-            val translateY = (size.height - scaledHeight) / 2f - logicalTop * contentScale
-            val cornerRadius = style.cornerRadius.toFloat().coerceIn(0f, thickness / 2f)
-            scale(scaleX = contentScale, scaleY = contentScale, pivot = Offset.Zero) {
-                translate(
-                    left = translateX / contentScale,
-                    top = translateY / contentScale
-                ) {
-                    drawRoundRect(
-                        color = Color(style.backgroundColor),
-                        topLeft = Offset(startX, 0f),
-                        size = Size(capsuleWidth, thickness),
-                        cornerRadius = CornerRadius(cornerRadius, cornerRadius)
-                    )
-                    if (style.strokeWidth > 0) {
-                        drawRoundRect(
-                            color = Color(style.strokeColor),
-                            topLeft = Offset(startX, 0f),
-                            size = Size(capsuleWidth, thickness),
-                            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                            style = Stroke(width = style.strokeWidth.toFloat())
-                        )
-                    }
+            val thickness = 26.dp.toPx()
+            val strokeWidth = 1.5.dp.toPx()
+            val capsuleWidth = 48.dp.toPx()
+            val cornerRadius = 13.dp.toPx()
+            val startX = -capsuleWidth * 0.20f
+            val top = size.height / 2f - thickness / 2f
+            val center = Offset(startX + capsuleWidth / 2f, top + thickness / 2f)
 
-                    val iconSize = (thickness * style.iconScale).coerceAtLeast(14.dp.toPx())
-                    val center = Offset(startX + capsuleWidth / 2f, thickness / 2f)
-                    rotate(0f, pivot = center) {
-                        translate(left = center.x - iconSize / 2f, top = center.y - iconSize / 2f) {
-                            arrow.run {
-                                draw(
-                                    size = Size(iconSize, iconSize),
-                                    colorFilter = ColorFilter.tint(Color(style.iconColor))
-                                )
-                            }
-                        }
-                    }
+            drawRoundRect(
+                color = FixedCapsuleBackgroundColor,
+                topLeft = Offset(startX, top),
+                size = Size(capsuleWidth, thickness),
+                cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+            )
+            drawRoundRect(
+                color = FixedCapsuleStrokeColor,
+                topLeft = Offset(startX, top),
+                size = Size(capsuleWidth, thickness),
+                cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                style = Stroke(width = strokeWidth)
+            )
+
+            val iconSize = 15.dp.toPx()
+            rotate(0f, pivot = center) {
+                translate(left = center.x - iconSize / 2f, top = center.y - iconSize / 2f) {
+                    drawPreviewIcon(
+                        painter = iconPainter,
+                        iconSize = iconSize,
+                        tint = FixedCapsuleIconColor
+                    )
                 }
             }
         }
@@ -268,25 +225,19 @@ private fun CapsuleStylePreview(
 
 @Composable
 private fun WaveStylePreview(
-    style: WaveStyle,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface
-        ) {}
-
+    PreviewStage(modifier = modifier) {
+        val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val path = Path()
             val width = size.width
             val height = size.height
-            val top = height * 0.04f
-            val bottom = height * 0.96f
+            val top = height * 0.12f
+            val bottom = height * 0.88f
             val centerY = height / 2f
-            val waveX = width * 0.48f
-            val curveHalfHeight = (bottom - top) / 2.6f
+            val waveX = width * 0.42f
+            val curveHalfHeight = (bottom - top) / 2.2f
             val upperCurveY = centerY - curveHalfHeight
             val lowerCurveY = centerY + curveHalfHeight
 
@@ -308,32 +259,67 @@ private fun WaveStylePreview(
                 y3 = bottom
             )
 
-            drawPath(path = path, color = Color(style.backgroundColor))
-            if (style.strokeWidth > 0) {
-                drawPath(
-                    path = path,
-                    color = Color(style.strokeColor),
-                    style = Stroke(width = style.strokeWidth.coerceAtLeast(1).toFloat())
-                )
-            }
+            drawPath(path = path, color = FixedWaveBackgroundColor)
+            drawPath(
+                path = path,
+                color = FixedWaveStrokeColor,
+                style = Stroke(width = 1.5.dp.toPx())
+            )
         }
 
         Image(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 12.dp)
-                .size(20.dp),
-            painter = style.getIcon(),
+                .padding(start = 8.dp)
+                .size(18.dp),
+            painter = iconPainter,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(Color(style.iconColor))
+            colorFilter = ColorFilter.tint(FixedWaveIconColor)
         )
     }
 }
 
-private fun lerpFloat(
-    start: Float,
-    stop: Float,
-    fraction: Float
-): Float {
-    return start + (stop - start) * fraction
+@Composable
+private fun PreviewStage(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = colorScheme.surfaceContainerLowest
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
+                .clipToBorder(
+                    width = 1.dp,
+                    color = colorScheme.outlineVariant.copy(alpha = 0.9f),
+                    shape = MaterialTheme.shapes.small
+                ),
+            content = content
+        )
+    }
 }
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPreviewIcon(
+    painter: Painter,
+    iconSize: Float,
+    tint: Color
+) {
+    with(painter) {
+        draw(
+            size = Size(iconSize, iconSize),
+            colorFilter = ColorFilter.tint(tint)
+        )
+    }
+}
+
+private val FixedWaveBackgroundColor = Color(0xFF171717)
+private val FixedWaveStrokeColor = Color(0x2AFFFFFF)
+private val FixedWaveIconColor = Color(0xCCFFFFFF)
+private val FixedCapsuleBackgroundColor = Color(0xFF161616)
+private val FixedCapsuleStrokeColor = Color(0x24FFFFFF)
+private val FixedCapsuleIconColor = Color(0xE8FFFFFF)
