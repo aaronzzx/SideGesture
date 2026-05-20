@@ -1,11 +1,12 @@
-package com.aaron.sidegesture.ui.screen.animationstyle.wave
+package com.aaron.sidegesture.ui.screen.animationstyle.capsule
 
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.entity.AnimationStyles
+import com.aaron.sidegesture.entity.CapsuleStyle
 import com.aaron.sidegesture.entity.WaveStyle
-import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleVM.UiEvent
-import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleVM.UiState
+import com.aaron.sidegesture.ui.screen.animationstyle.capsule.CapsuleStyleVM.UiEvent
+import com.aaron.sidegesture.ui.screen.animationstyle.capsule.CapsuleStyleVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.coroutines.flow.collectLatest
@@ -14,10 +15,10 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KCallable
 
 /**
- * @author DS-Z
- * @since 2025/11/4
+ * @author OpenAI
+ * @since 2026/5/20
  */
-class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
+class CapsuleStyleVM : BaseComposeVM<UiState, UiEvent>() {
 
     override val initialState: UiState = UiState()
 
@@ -40,42 +41,27 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun onWidthChange(width: Float) {
+    fun onThicknessChange(value: Float) {
         updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(width = width.toInt()))
+            it.copy(animationStyle = it.animationStyle.copy(thickness = value.toInt()))
         }
     }
 
-    fun onStickySlideChange(value: Boolean) {
+    fun onMaxLengthChange(value: Float) {
         updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(stickySlideEnabled = value))
-        }
-        saveSettings()
-    }
-
-    fun onLengthHalfRatioChange(ratio: Float) {
-        updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(bezierLengthHalfRatio = ratio))
+            it.copy(animationStyle = it.animationStyle.copy(maxLength = value.toInt()))
         }
     }
 
-    fun onSafeBoundsChange(value: Boolean) {
+    fun onCornerRadiusChange(value: Float) {
         updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(safeBounds = value))
+            it.copy(animationStyle = it.animationStyle.copy(cornerRadius = value.toInt()))
         }
-        saveSettings()
     }
 
-    fun onTransformEnabledChange(value: Boolean) {
+    fun onIconScaleChange(value: Float) {
         updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(transformEnabled = value))
-        }
-        saveSettings()
-    }
-
-    fun onIconScaleChange(scale: Float) {
-        updateUiState {
-            it.copy(animationStyle = it.animationStyle.copy(iconScale = scale))
+            it.copy(animationStyle = it.animationStyle.copy(iconScale = value))
         }
     }
 
@@ -91,7 +77,7 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.updateData {
                 it.copy(
-                    animationStyles = it.animationStyles.updateStyle(AnimationStyles.TYPE_WAVE, payload)
+                    animationStyles = it.animationStyles.updateStyle(AnimationStyles.TYPE_CAPSULE, payload)
                 )
             }
         }
@@ -104,14 +90,19 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
                 .data
                 .take(1)
                 .collectLatest { advancedSettings ->
-                    val payload = advancedSettings.animationStyles.payloadOf(AnimationStyles.TYPE_WAVE)
+                    val payload = advancedSettings.animationStyles.payloadOf(AnimationStyles.TYPE_CAPSULE)
                     updateUiState {
-                        val waveStyle = runCatching {
-                            if (payload.isEmpty()) WaveStyle() else JsonHelper.decodeFromString<WaveStyle>(payload)
-                        }.getOrDefault(WaveStyle())
+                        val animationStyle = runCatching {
+                            if (payload.isEmpty()) {
+                                CapsuleStyle()
+                            } else {
+                                JsonHelper.decodeFromString<CapsuleStyle>(payload)
+                            }
+                        }.getOrDefault(CapsuleStyle())
                         it.copy(
-                            animationStyle = waveStyle,
-                            isCustomIconExpanded = it.isCustomIconExpanded || waveStyle.iconType != WaveStyle.ICON_TYPE_ARROW
+                            animationStyle = animationStyle,
+                            isCustomIconExpanded = it.isCustomIconExpanded ||
+                                animationStyle.iconType != WaveStyle.ICON_TYPE_ARROW
                         )
                     }
                 }
@@ -166,7 +157,7 @@ class WaveStyleVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     data class UiState(
-        val animationStyle: WaveStyle = WaveStyle(),
+        val animationStyle: CapsuleStyle = CapsuleStyle(),
         val isCustomIconExpanded: Boolean = false,
         val colorPickerDialog: Pair<Boolean, Int> = Pair(false, 0)
     )

@@ -21,10 +21,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,7 +40,9 @@ import com.aaron.compose.ktx.clipToBorder
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AnimationStyles
+import com.aaron.sidegesture.entity.CapsuleStyle
 import com.aaron.sidegesture.entity.WaveStyle
+import com.aaron.sidegesture.ktx.getCapsuleIcon
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectVM.AnimationStyleItem
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
@@ -66,6 +74,7 @@ fun AnimationStyleSelectScreen(
                         item = item,
                         selected = item.type == uiState.currentType,
                         waveStyle = uiState.waveStyle,
+                        capsuleStyle = uiState.capsuleStyle,
                         onClick = { vm.onStyleSelected(item.type) },
                         onSettingsClick = { onNavToStyleConfig(item.type) }
                     )
@@ -80,6 +89,7 @@ private fun AnimationStyleCard(
     item: AnimationStyleItem,
     selected: Boolean,
     waveStyle: WaveStyle,
+    capsuleStyle: CapsuleStyle,
     onClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
@@ -120,6 +130,10 @@ private fun AnimationStyleCard(
                     AnimationStyles.TYPE_WAVE -> WaveStylePreview(
                         modifier = Modifier.fillMaxSize(),
                         style = waveStyle
+                    )
+                    AnimationStyles.TYPE_CAPSULE -> CapsuleStylePreview(
+                        modifier = Modifier.fillMaxSize(),
+                        style = capsuleStyle
                     )
                 }
             }
@@ -167,6 +181,85 @@ private fun AnimationStyleCard(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CapsuleStylePreview(
+    style: CapsuleStyle,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surface
+        ) {}
+
+        val arrow = style.getCapsuleIcon()
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val thickness = style.thickness.toFloat().coerceAtLeast(1f)
+            val strokeWidth = style.strokeWidth.toFloat()
+            val capsuleWidth = (style.maxLength.toFloat() * 0.78f)
+                .coerceAtLeast(thickness)
+            val entryProgress = 0.72f
+            val startX = lerpFloat(
+                start = -capsuleWidth - strokeWidth,
+                stop = 0f,
+                fraction = entryProgress
+            )
+            val previewPaddingVertical = 8.dp.toPx()
+            val previewPaddingRight = 14.dp.toPx()
+            val logicalLeft = startX - strokeWidth / 2f
+            val logicalTop = -strokeWidth / 2f
+            val logicalWidth = capsuleWidth + strokeWidth
+            val logicalHeight = thickness + strokeWidth
+            val availableWidth = (size.width - previewPaddingRight).coerceAtLeast(1f)
+            val availableHeight = (size.height - previewPaddingVertical * 2f).coerceAtLeast(1f)
+            val contentScale = minOf(
+                availableWidth / logicalWidth,
+                availableHeight / logicalHeight
+            )
+            val scaledHeight = logicalHeight * contentScale
+            val translateX = -logicalLeft * contentScale
+            val translateY = (size.height - scaledHeight) / 2f - logicalTop * contentScale
+            val cornerRadius = style.cornerRadius.toFloat().coerceIn(0f, thickness / 2f)
+            scale(scaleX = contentScale, scaleY = contentScale, pivot = Offset.Zero) {
+                translate(
+                    left = translateX / contentScale,
+                    top = translateY / contentScale
+                ) {
+                    drawRoundRect(
+                        color = Color(style.backgroundColor),
+                        topLeft = Offset(startX, 0f),
+                        size = Size(capsuleWidth, thickness),
+                        cornerRadius = CornerRadius(cornerRadius, cornerRadius)
+                    )
+                    if (style.strokeWidth > 0) {
+                        drawRoundRect(
+                            color = Color(style.strokeColor),
+                            topLeft = Offset(startX, 0f),
+                            size = Size(capsuleWidth, thickness),
+                            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                            style = Stroke(width = style.strokeWidth.toFloat())
+                        )
+                    }
+
+                    val iconSize = (thickness * style.iconScale).coerceAtLeast(14.dp.toPx())
+                    val center = Offset(startX + capsuleWidth / 2f, thickness / 2f)
+                    rotate(0f, pivot = center) {
+                        translate(left = center.x - iconSize / 2f, top = center.y - iconSize / 2f) {
+                            arrow.run {
+                                draw(
+                                    size = Size(iconSize, iconSize),
+                                    colorFilter = ColorFilter.tint(Color(style.iconColor))
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -235,4 +328,12 @@ private fun WaveStylePreview(
             colorFilter = ColorFilter.tint(Color(style.iconColor))
         )
     }
+}
+
+private fun lerpFloat(
+    start: Float,
+    stop: Float,
+    fraction: Float
+): Float {
+    return start + (stop - start) * fraction
 }

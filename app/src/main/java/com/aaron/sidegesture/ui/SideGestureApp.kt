@@ -30,6 +30,7 @@ import com.aaron.sidegesture.entity.AnimationStyleSelect
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.AppBlacklist
 import com.aaron.sidegesture.entity.BugCollecting
+import com.aaron.sidegesture.entity.CapsuleAnimationStyle
 import com.aaron.sidegesture.entity.GestureButtonSettings
 import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
@@ -41,6 +42,7 @@ import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectScreen
+import com.aaron.sidegesture.ui.screen.animationstyle.capsule.CapsuleStyleScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
 import com.aaron.sidegesture.ui.screen.bug.BugScreen
@@ -120,6 +122,7 @@ fun SideGestureApp() {
                         onNavToStyleConfig = { type ->
                             when (type) {
                                 AnimationStyles.TYPE_WAVE -> navController.navigate(WaveAnimationStyle)
+                                AnimationStyles.TYPE_CAPSULE -> navController.navigate(CapsuleAnimationStyle)
                             }
                         }
                     )
@@ -156,6 +159,9 @@ fun SideGestureApp() {
                 }
                 myComposable<WaveAnimationStyle> {
                     WaveStyleScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<CapsuleAnimationStyle> {
+                    CapsuleStyleScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

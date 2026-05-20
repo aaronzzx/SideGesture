@@ -78,3 +78,7 @@ data object BugCollecting
 @Keep
 @Serializable
 data object WaveAnimationStyle
+
+@Keep
+@Serializable
+data object CapsuleAnimationStyle

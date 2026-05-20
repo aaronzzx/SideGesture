@@ -2,6 +2,15 @@ package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.AnimationStylesDefaults
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleBackgroundColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleCornerRadius
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleIconColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleIconScale
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleIconType
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleMaxLength
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleStrokeColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleStrokeWidth
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleThickness
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.IsAnimationEnabled
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.Type
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.WaveStyleBackgroundColor
@@ -28,21 +37,52 @@ import kotlinx.serialization.Transient
 data class AnimationStyles(
     val type: Int = Type,
     val json: String = "",
+    val jsonMap: Map<Int, String> = emptyMap(),
     val isAnimationEnabled: Boolean = IsAnimationEnabled
 ) {
     companion object {
         const val TYPE_WAVE = AnimationStylesDefaults.TYPE_WAVE
+        const val TYPE_CAPSULE = AnimationStylesDefaults.TYPE_CAPSULE
+    }
+
+    fun payloadOf(targetType: Int): String {
+        return jsonMap[targetType].orEmpty().ifEmpty {
+            if (targetType == type) json else ""
+        }
+    }
+
+    fun selectType(targetType: Int): AnimationStyles {
+        val nextJsonMap = if (json.isNotEmpty() && jsonMap[type].isNullOrEmpty()) {
+            jsonMap + (type to json)
+        } else {
+            jsonMap
+        }
+        return copy(
+            type = targetType,
+            json = nextJsonMap[targetType].orEmpty(),
+            jsonMap = nextJsonMap
+        )
+    }
+
+    fun updateStyle(targetType: Int, payload: String): AnimationStyles {
+        return copy(
+            type = targetType,
+            json = payload,
+            jsonMap = jsonMap + (targetType to payload)
+        )
     }
 
     @Transient
     val value: AnimationStyle = run {
-        val json = json
-        if (json.isEmpty()) {
-            return@run WaveStyle()
-        }
+        val json = payloadOf(type)
         when (type) {
-            TYPE_WAVE -> JsonHelper.decodeFromString<WaveStyle>(json)
-            else -> error("Unknown AnimationStyle type: $type")
+            TYPE_WAVE -> runCatching {
+                if (json.isEmpty()) WaveStyle() else JsonHelper.decodeFromString<WaveStyle>(json)
+            }.getOrDefault(WaveStyle())
+            TYPE_CAPSULE -> runCatching {
+                if (json.isEmpty()) CapsuleStyle() else JsonHelper.decodeFromString<CapsuleStyle>(json)
+            }.getOrDefault(CapsuleStyle())
+            else -> WaveStyle()
         }
     }
 }
@@ -72,3 +112,17 @@ data class WaveStyle(
         const val ICON_TYPE_ARROW_NEW = 4
     }
 }
+
+@Serializable
+@Keep
+data class CapsuleStyle(
+    val backgroundColor: Int = CapsuleStyleBackgroundColor,
+    val strokeColor: Int = CapsuleStyleStrokeColor,
+    val strokeWidth: Int = CapsuleStyleStrokeWidth,
+    val thickness: Int = CapsuleStyleThickness,
+    val maxLength: Int = CapsuleStyleMaxLength,
+    val cornerRadius: Int = CapsuleStyleCornerRadius,
+    val iconColor: Int = CapsuleStyleIconColor,
+    val iconScale: Float = CapsuleStyleIconScale,
+    val iconType: Int = CapsuleStyleIconType
+) : AnimationStyle

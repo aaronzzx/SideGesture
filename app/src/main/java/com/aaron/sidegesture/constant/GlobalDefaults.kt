@@ -70,6 +70,7 @@ object ActionPanelStylesDefaults {
 object AnimationStylesDefaults {
 
     const val TYPE_WAVE = 1
+    const val TYPE_CAPSULE = 2
 
     const val Type = TYPE_WAVE
     const val IsAnimationEnabled = true
@@ -83,6 +84,15 @@ object AnimationStylesDefaults {
     val WaveStyleIconColor = android.graphics.Color.argb(200, 255, 255, 255)
     const val WaveStyleIconScale = 0.6f
     const val WaveStyleIconType = ICON_TYPE_ARROW
+    val CapsuleStyleBackgroundColor = android.graphics.Color.argb(220, 18, 18, 18)
+    const val CapsuleStyleStrokeColor = android.graphics.Color.TRANSPARENT
+    const val CapsuleStyleStrokeWidth = 0
+    val CapsuleStyleThickness = ConvertUtils.dp2px(36f)
+    val CapsuleStyleMaxLength = ConvertUtils.dp2px(72f)
+    val CapsuleStyleCornerRadius = ConvertUtils.dp2px(18f)
+    val CapsuleStyleIconColor = android.graphics.Color.argb(220, 255, 255, 255)
+    const val CapsuleStyleIconScale = 0.52f
+    const val CapsuleStyleIconType = ICON_TYPE_ARROW
 }
 
 object ScaleableDefaults {

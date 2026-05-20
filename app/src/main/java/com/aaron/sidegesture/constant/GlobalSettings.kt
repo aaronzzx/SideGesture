@@ -27,6 +27,12 @@ object GlobalSettings {
     const val MaxBezierLength = 4.0f
     const val MinIconScale = 0.0f
     const val MaxIconScale = 1.0f
+    val MinCapsuleThickness = ConvertUtils.dp2px(20f)
+    val MaxCapsuleThickness = ConvertUtils.dp2px(56f)
+    val MinCapsuleLength = ConvertUtils.dp2px(40f)
+    val MaxCapsuleLength = ConvertUtils.dp2px(120f)
+    val MinCapsuleCornerRadius = ConvertUtils.dp2px(8f)
+    val MaxCapsuleCornerRadius = ConvertUtils.dp2px(32f)
     const val MinMoveScreenRate = 1f
     const val MaxMoveScreenRate = 3f
     const val MinMoveScreenHover = 300f
