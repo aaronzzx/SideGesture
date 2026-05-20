@@ -101,7 +101,7 @@ fun WaveStyleScreen(
         Column {
             TopBar(
                 onBack = onBack,
-                title = stringResource(id = R.string.animation_style)
+                title = stringResource(id = R.string.animation_style_wave)
             )
             MyColumn(scrollState = scrollState) {
                 MySection(title = stringResource(id = R.string.color_outline)) {

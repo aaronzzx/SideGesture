@@ -33,6 +33,10 @@ data object AppBlacklist
 
 @Keep
 @Serializable
+data object AnimationStyleSelect
+
+@Keep
+@Serializable
 data object AdjustGestureAngles
 
 @Serializable

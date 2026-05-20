@@ -26,6 +26,8 @@ import com.aaron.sidegesture.entity.About
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AdjustGestureAngles
 import com.aaron.sidegesture.entity.AdvancedSettings
+import com.aaron.sidegesture.entity.AnimationStyleSelect
+import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.AppBlacklist
 import com.aaron.sidegesture.entity.BugCollecting
 import com.aaron.sidegesture.entity.GestureButtonSettings
@@ -38,6 +40,7 @@ import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
+import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
 import com.aaron.sidegesture.ui.screen.bug.BugScreen
@@ -107,7 +110,17 @@ fun SideGestureApp() {
                         onBack = { navController.navigateUp() },
                         onNavToAppBlacklist = { navController.navigate(AppBlacklist) },
                         onNavToAnimationStyle = {
-                            navController.navigate(WaveAnimationStyle)
+                            navController.navigate(AnimationStyleSelect)
+                        }
+                    )
+                }
+                myComposable<AnimationStyleSelect> {
+                    AnimationStyleSelectScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToStyleConfig = { type ->
+                            when (type) {
+                                AnimationStyles.TYPE_WAVE -> navController.navigate(WaveAnimationStyle)
+                            }
                         }
                     )
                 }

@@ -65,6 +65,8 @@
     <string name="volume_button_switch_song_hint">音量上切换上一首，音量下切换下一首</string>
     <string name="volume_button_switch_song_warning">如果单击音量键无法调节音量，需要将音量控制权限设置为始终允许</string>
     <string name="animation_style">动画风格</string>
+    <string name="animation_style_wave">波浪</string>
+    <string name="animation_style_wave_desc">边缘波形会随手势拉伸</string>
     <string name="action_panel_style">动作面板风格</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
     <string name="fit_soft_keyboard_hint">软键盘弹出时抬高侧边触钮</string>
