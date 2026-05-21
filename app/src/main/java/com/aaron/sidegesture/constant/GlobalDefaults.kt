@@ -73,6 +73,7 @@ object AnimationStylesDefaults {
 
     const val TYPE_WAVE = 1
     const val TYPE_CAPSULE = 2
+    const val TYPE_BUBBLE = 3
 
     const val Type = TYPE_WAVE
     const val IsAnimationEnabled = true
@@ -95,6 +96,14 @@ object AnimationStylesDefaults {
     val CapsuleStyleIconColor = android.graphics.Color.argb(220, 255, 255, 255)
     const val CapsuleStyleIconScale = 0.52f
     const val CapsuleStyleIconType = ICON_TYPE_ARROW
+    val BubbleStyleBackgroundColor = android.graphics.Color.argb(220, 22, 22, 22)
+    val BubbleStyleStrokeColor = android.graphics.Color.argb(36, 255, 255, 255)
+    const val BubbleStyleStrokeWidth = 0
+    val BubbleStyleDiameter = ConvertUtils.dp2px(44f)
+    val BubbleStyleMaxOffset = ConvertUtils.dp2px(72f)
+    val BubbleStyleIconColor = android.graphics.Color.argb(232, 255, 255, 255)
+    const val BubbleStyleIconScale = 0.52f
+    const val BubbleStyleIconType = ICON_TYPE_ARROW
 }
 
 object ScaleableDefaults {

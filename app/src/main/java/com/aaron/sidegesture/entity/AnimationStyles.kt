@@ -2,6 +2,14 @@ package com.aaron.sidegesture.entity
 
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.AnimationStylesDefaults
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleBackgroundColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleDiameter
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleIconColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleIconScale
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleIconType
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleMaxOffset
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleStrokeColor
+import com.aaron.sidegesture.constant.AnimationStylesDefaults.BubbleStyleStrokeWidth
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleBackgroundColor
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleCornerRadius
 import com.aaron.sidegesture.constant.AnimationStylesDefaults.CapsuleStyleIconColor
@@ -43,6 +51,7 @@ data class AnimationStyles(
     companion object {
         const val TYPE_WAVE = AnimationStylesDefaults.TYPE_WAVE
         const val TYPE_CAPSULE = AnimationStylesDefaults.TYPE_CAPSULE
+        const val TYPE_BUBBLE = AnimationStylesDefaults.TYPE_BUBBLE
     }
 
     fun payloadOf(targetType: Int): String {
@@ -82,6 +91,9 @@ data class AnimationStyles(
             TYPE_CAPSULE -> runCatching {
                 if (json.isEmpty()) CapsuleStyle() else JsonHelper.decodeFromString<CapsuleStyle>(json)
             }.getOrDefault(CapsuleStyle())
+            TYPE_BUBBLE -> runCatching {
+                if (json.isEmpty()) BubbleStyle() else JsonHelper.decodeFromString<BubbleStyle>(json)
+            }.getOrDefault(BubbleStyle())
             else -> WaveStyle()
         }
     }
@@ -125,4 +137,17 @@ data class CapsuleStyle(
     val iconColor: Int = CapsuleStyleIconColor,
     val iconScale: Float = CapsuleStyleIconScale,
     val iconType: Int = CapsuleStyleIconType
+) : AnimationStyle
+
+@Serializable
+@Keep
+data class BubbleStyle(
+    val backgroundColor: Int = BubbleStyleBackgroundColor,
+    val strokeColor: Int = BubbleStyleStrokeColor,
+    val strokeWidth: Int = BubbleStyleStrokeWidth,
+    val diameter: Int = BubbleStyleDiameter,
+    val maxOffset: Int = BubbleStyleMaxOffset,
+    val iconColor: Int = BubbleStyleIconColor,
+    val iconScale: Float = BubbleStyleIconScale,
+    val iconType: Int = BubbleStyleIconType
 ) : AnimationStyle

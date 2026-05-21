@@ -5,12 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AnimationStyles
-import com.aaron.sidegesture.entity.CapsuleStyle
-import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
-import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -32,6 +29,12 @@ class AnimationStyleSelectVM : BaseComposeVM<UiState, UiEvent>() {
                 type = AnimationStyles.TYPE_CAPSULE,
                 nameRes = R.string.animation_style_capsule,
                 descriptionRes = R.string.animation_style_capsule_desc,
+                hasSettings = true
+            ),
+            AnimationStyleItem(
+                type = AnimationStyles.TYPE_BUBBLE,
+                nameRes = R.string.animation_style_bubble,
+                descriptionRes = R.string.animation_style_bubble_desc,
                 hasSettings = true
             )
         )
@@ -60,20 +63,9 @@ class AnimationStyleSelectVM : BaseComposeVM<UiState, UiEvent>() {
                 .advancedSettings
                 .data
                 .collectLatest { advancedSettings ->
-                    val animationStyles = advancedSettings.animationStyles
-                    val waveStyle = runCatching {
-                        val payload = animationStyles.payloadOf(AnimationStyles.TYPE_WAVE)
-                        if (payload.isEmpty()) WaveStyle() else JsonHelper.decodeFromString<WaveStyle>(payload)
-                    }.getOrDefault(WaveStyle())
-                    val capsuleStyle = runCatching {
-                        val payload = animationStyles.payloadOf(AnimationStyles.TYPE_CAPSULE)
-                        if (payload.isEmpty()) CapsuleStyle() else JsonHelper.decodeFromString<CapsuleStyle>(payload)
-                    }.getOrDefault(CapsuleStyle())
                     updateUiState {
                         it.copy(
                             currentType = advancedSettings.animationStyles.type,
-                            waveStyle = waveStyle,
-                            capsuleStyle = capsuleStyle
                         )
                     }
                 }
@@ -83,8 +75,6 @@ class AnimationStyleSelectVM : BaseComposeVM<UiState, UiEvent>() {
     data class UiState(
         val currentType: Int = AnimationStyles.TYPE_WAVE,
         val items: List<AnimationStyleItem> = emptyList(),
-        val waveStyle: WaveStyle = WaveStyle(),
-        val capsuleStyle: CapsuleStyle = CapsuleStyle()
     )
 
     data class AnimationStyleItem(

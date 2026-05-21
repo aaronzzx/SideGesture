@@ -33,6 +33,10 @@ object GlobalSettings {
     val MaxCapsuleLength = ConvertUtils.dp2px(120f)
     val MinCapsuleCornerRadius = ConvertUtils.dp2px(8f)
     val MaxCapsuleCornerRadius = ConvertUtils.dp2px(32f)
+    val MinBubbleDiameter = ConvertUtils.dp2px(28f)
+    val MaxBubbleDiameter = ConvertUtils.dp2px(72f)
+    val MinBubbleOffset = ConvertUtils.dp2px(20f)
+    val MaxBubbleOffset = ConvertUtils.dp2px(120f)
     const val MinMoveScreenRate = 1f
     const val MaxMoveScreenRate = 3f
     const val MinMoveScreenHover = 300f

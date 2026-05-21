@@ -29,6 +29,7 @@ import com.aaron.sidegesture.entity.AdvancedSettings
 import com.aaron.sidegesture.entity.AnimationStyleSelect
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.AppBlacklist
+import com.aaron.sidegesture.entity.BubbleAnimationStyle
 import com.aaron.sidegesture.entity.BugCollecting
 import com.aaron.sidegesture.entity.CapsuleAnimationStyle
 import com.aaron.sidegesture.entity.GestureButtonSettings
@@ -42,6 +43,7 @@ import com.aaron.sidegesture.ui.screen.about.AboutScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectScreen
+import com.aaron.sidegesture.ui.screen.animationstyle.bubble.BubbleStyleScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.capsule.CapsuleStyleScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleScreen
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistScreen
@@ -123,6 +125,7 @@ fun SideGestureApp() {
                             when (type) {
                                 AnimationStyles.TYPE_WAVE -> navController.navigate(WaveAnimationStyle)
                                 AnimationStyles.TYPE_CAPSULE -> navController.navigate(CapsuleAnimationStyle)
+                                AnimationStyles.TYPE_BUBBLE -> navController.navigate(BubbleAnimationStyle)
                             }
                         }
                     )
@@ -162,6 +165,9 @@ fun SideGestureApp() {
                 }
                 myComposable<CapsuleAnimationStyle> {
                     CapsuleStyleScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<BubbleAnimationStyle> {
+                    BubbleStyleScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

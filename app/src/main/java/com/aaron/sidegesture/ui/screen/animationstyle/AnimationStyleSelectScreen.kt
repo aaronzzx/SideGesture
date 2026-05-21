@@ -29,7 +29,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
@@ -128,6 +127,9 @@ private fun AnimationStyleCard(
                     AnimationStyles.TYPE_CAPSULE -> CapsuleStylePreview(
                         modifier = Modifier.fillMaxSize()
                     )
+                    AnimationStyles.TYPE_BUBBLE -> BubbleStylePreview(
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
 
@@ -185,10 +187,10 @@ private fun CapsuleStylePreview(
     modifier: Modifier = Modifier
 ) {
     PreviewStage(modifier = modifier) {
+        val colorScheme = MaterialTheme.colorScheme
         val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val thickness = 26.dp.toPx()
-            val strokeWidth = 1.5.dp.toPx()
             val capsuleWidth = 48.dp.toPx()
             val cornerRadius = 13.dp.toPx()
             val startX = -capsuleWidth * 0.20f
@@ -196,17 +198,10 @@ private fun CapsuleStylePreview(
             val center = Offset(startX + capsuleWidth / 2f, top + thickness / 2f)
 
             drawRoundRect(
-                color = FixedCapsuleBackgroundColor,
+                color = colorScheme.primary,
                 topLeft = Offset(startX, top),
                 size = Size(capsuleWidth, thickness),
                 cornerRadius = CornerRadius(cornerRadius, cornerRadius)
-            )
-            drawRoundRect(
-                color = FixedCapsuleStrokeColor,
-                topLeft = Offset(startX, top),
-                size = Size(capsuleWidth, thickness),
-                cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                style = Stroke(width = strokeWidth)
             )
 
             val iconSize = 15.dp.toPx()
@@ -215,7 +210,7 @@ private fun CapsuleStylePreview(
                     drawPreviewIcon(
                         painter = iconPainter,
                         iconSize = iconSize,
-                        tint = FixedCapsuleIconColor
+                        tint = colorScheme.onPrimary
                     )
                 }
             }
@@ -228,6 +223,7 @@ private fun WaveStylePreview(
     modifier: Modifier = Modifier
 ) {
     PreviewStage(modifier = modifier) {
+        val colorScheme = MaterialTheme.colorScheme
         val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val path = Path()
@@ -259,12 +255,7 @@ private fun WaveStylePreview(
                 y3 = bottom
             )
 
-            drawPath(path = path, color = FixedWaveBackgroundColor)
-            drawPath(
-                path = path,
-                color = FixedWaveStrokeColor,
-                style = Stroke(width = 1.5.dp.toPx())
-            )
+            drawPath(path = path, color = colorScheme.primary)
         }
 
         Image(
@@ -274,7 +265,38 @@ private fun WaveStylePreview(
                 .size(18.dp),
             painter = iconPainter,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(FixedWaveIconColor)
+            colorFilter = ColorFilter.tint(colorScheme.onPrimary)
+        )
+    }
+}
+
+@Composable
+private fun BubbleStylePreview(
+    modifier: Modifier = Modifier
+) {
+    PreviewStage(modifier = modifier) {
+        val colorScheme = MaterialTheme.colorScheme
+        val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val diameter = 34.dp.toPx()
+            val radius = diameter / 2f
+            val center = Offset(x = radius * 0.65f, y = size.height / 2f)
+
+            drawCircle(
+                color = colorScheme.primary,
+                radius = radius,
+                center = center
+            )
+        }
+
+        Image(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 7.dp)
+                .size(18.dp),
+            painter = iconPainter,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colorScheme.onPrimary)
         )
     }
 }
@@ -317,9 +339,3 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPreviewIcon(
     }
 }
 
-private val FixedWaveBackgroundColor = Color(0xFF171717)
-private val FixedWaveStrokeColor = Color(0x2AFFFFFF)
-private val FixedWaveIconColor = Color(0xCCFFFFFF)
-private val FixedCapsuleBackgroundColor = Color(0xFF161616)
-private val FixedCapsuleStrokeColor = Color(0x24FFFFFF)
-private val FixedCapsuleIconColor = Color(0xE8FFFFFF)

@@ -69,6 +69,8 @@
     <string name="animation_style_wave_desc">边缘波形会随手势拉伸</string>
     <string name="animation_style_capsule">胶囊</string>
     <string name="animation_style_capsule_desc">圆角胶囊跟随侧滑展开</string>
+    <string name="animation_style_bubble">圆泡</string>
+    <string name="animation_style_bubble_desc">圆泡会从边缘向内弹出</string>
     <string name="action_panel_style">动作面板风格</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
     <string name="fit_soft_keyboard_hint">软键盘弹出时抬高侧边触钮</string>
@@ -267,6 +269,8 @@
     <string name="width">宽度</string>
     <string name="length">长度</string>
     <string name="corner_radius">圆角</string>
+    <string name="diameter">直径</string>
+    <string name="pop_offset">弹出距离</string>
     <string name="reserved_bounds">预留边界</string>
     <string name="reserved_bounds_hint">防止超出屏幕，需要居中请关闭</string>
     <string name="bezier_transform">形变</string>

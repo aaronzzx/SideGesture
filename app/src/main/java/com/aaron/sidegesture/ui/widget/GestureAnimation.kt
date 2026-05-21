@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.entity.AnimationStyle
+import com.aaron.sidegesture.entity.BubbleStyle
 import com.aaron.sidegesture.entity.CapsuleStyle
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection.Center
@@ -25,6 +26,8 @@ import com.aaron.sidegesture.entity.TriggerDirection.Down2
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.entity.WaveStyle
+import com.aaron.sidegesture.ktx.getBubbleIcon
+import com.aaron.sidegesture.ktx.getBubbleIconInitialRotation
 import com.aaron.sidegesture.ktx.getCapsuleIcon
 import com.aaron.sidegesture.ktx.getCapsuleIconInitialRotation
 import com.aaron.sidegesture.ktx.getIcon
@@ -48,6 +51,11 @@ fun GestureAnimation(
             sideGestureState = SideGestureState
         )
         is CapsuleStyle -> CapsuleGestureAnimation(
+            modifier = modifier,
+            animationStyle = animationStyle,
+            sideGestureState = SideGestureState
+        )
+        is BubbleStyle -> BubbleGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
             sideGestureState = SideGestureState
@@ -153,29 +161,8 @@ private fun CapsuleGestureAnimation(
             )
         }
 
-        val degree = animationStyle.getCapsuleIconInitialRotation(button.position) + when (sideGestureState.triggerDirection) {
-            Up -> when (button.position) {
-                Position.Left -> -45f
-                Position.Right -> 45f
-                Position.Bottom -> -45f
-            }
-            Center, Center2 -> 0f
-            Down -> when (button.position) {
-                Position.Left -> 45f
-                Position.Right -> -45f
-                Position.Bottom -> 45f
-            }
-            Up2 -> when (button.position) {
-                Position.Left -> -90f
-                Position.Right -> 90f
-                Position.Bottom -> -90f
-            }
-            Down2 -> when (button.position) {
-                Position.Left -> 90f
-                Position.Right -> -90f
-                Position.Bottom -> 90f
-            }
-        }
+        val degree = animationStyle.getCapsuleIconInitialRotation(button.position) +
+            getTriggerRotationOffset(sideGestureState.triggerDirection, button.position)
         val iconSize = minOf(rectSize.width, rectSize.height) * animationStyle.iconScale
         val rectCenter = Offset(
             x = topLeft.x + rectSize.width / 2f,
@@ -183,6 +170,95 @@ private fun CapsuleGestureAnimation(
         )
         rotate(degree, pivot = rectCenter) {
             translate(left = rectCenter.x - iconSize / 2f, top = rectCenter.y - iconSize / 2f) {
+                icon.run {
+                    draw(
+                        size = Size(iconSize, iconSize),
+                        colorFilter = ColorFilter.tint(Color(animationStyle.iconColor)),
+                        alpha = activeAlpha
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BubbleGestureAnimation(
+    animationStyle: BubbleStyle,
+    sideGestureState: SideGestureState,
+    modifier: Modifier = Modifier
+) {
+    val button = sideGestureState.button ?: return
+    val icon = animationStyle.getBubbleIcon()
+
+    Canvas(modifier = modifier) {
+        val originXAnimVal = sideGestureState.originXAnimVal
+        val originYAnimVal = sideGestureState.originYAnimVal
+        val fingerXAnimVal = sideGestureState.fingerXAnimVal
+        val fingerYAnimVal = sideGestureState.fingerYAnimVal
+        if (originXAnimVal.isNaN() ||
+            originYAnimVal.isNaN() ||
+            fingerXAnimVal.isNaN() ||
+            fingerYAnimVal.isNaN()
+        ) {
+            return@Canvas
+        }
+
+        val progress = when (button.position) {
+            Position.Left -> fingerXAnimVal
+            Position.Right -> -fingerXAnimVal
+            Position.Bottom -> -fingerYAnimVal
+        }.coerceAtLeast(0f)
+        if (progress <= 1f) {
+            return@Canvas
+        }
+
+        val diameter = animationStyle.diameter.toFloat().coerceAtLeast(1f)
+        val radius = diameter / 2f
+        val strokeWidth = animationStyle.strokeWidth.toFloat()
+        val offset = progress.coerceAtMost(animationStyle.maxOffset.toFloat().coerceAtLeast(radius))
+        val centerShiftRatio = (progress / animationStyle.maxOffset.toFloat().coerceAtLeast(1f))
+            .coerceIn(0f, 1f) * 0.18f
+        val centerX = when (button.position) {
+            Position.Left -> -radius + offset
+            Position.Right -> size.width + radius - offset
+            Position.Bottom -> (originXAnimVal + (fingerXAnimVal - originXAnimVal) * centerShiftRatio)
+                .coerceIn(radius, size.width - radius)
+        }
+        val centerY = when (button.position) {
+            Position.Left, Position.Right -> (originYAnimVal + (fingerYAnimVal - originYAnimVal) * centerShiftRatio)
+                .coerceIn(radius, size.height - radius)
+            Position.Bottom -> size.height + radius - offset
+        }
+        val topLeft = Offset(centerX - radius, centerY - radius)
+        val activeAlpha = if (sideGestureState.canDistanceTriggered(button, false)) 1f else 0.55f
+        val backgroundColor = Color(animationStyle.backgroundColor).copy(
+            alpha = Color(animationStyle.backgroundColor).alpha * activeAlpha
+        )
+        val strokeColor = Color(animationStyle.strokeColor).copy(
+            alpha = Color(animationStyle.strokeColor).alpha * activeAlpha
+        )
+
+        drawCircle(
+            color = backgroundColor,
+            radius = radius,
+            center = Offset(centerX, centerY)
+        )
+        if (animationStyle.strokeWidth > 0) {
+            drawCircle(
+                color = strokeColor,
+                radius = radius - strokeWidth / 2f,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = strokeWidth)
+            )
+        }
+
+        val degree = animationStyle.getBubbleIconInitialRotation(button.position) +
+            getTriggerRotationOffset(sideGestureState.triggerDirection, button.position)
+        val iconSize = diameter * animationStyle.iconScale
+        val bubbleCenter = Offset(centerX, centerY)
+        rotate(degree, pivot = bubbleCenter) {
+            translate(left = topLeft.x + radius - iconSize / 2f, top = topLeft.y + radius - iconSize / 2f) {
                 icon.run {
                     draw(
                         size = Size(iconSize, iconSize),
@@ -374,29 +450,7 @@ private fun WaveGestureAnimation(
         }
         icon.run {
             val initialDegree = animationStyle.getIconInitialRotation(button.position)
-            val degree = initialDegree + when (triggerDirection) {
-                Up -> when (button.position) {
-                    Position.Left -> -45f
-                    Position.Right -> 45f
-                    Position.Bottom -> -45f
-                }
-                Center, Center2 -> 0f
-                Down -> when (button.position) {
-                    Position.Left -> 45f
-                    Position.Right -> -45f
-                    Position.Bottom -> 45f
-                }
-                Up2 -> when (button.position) {
-                    Position.Left -> -90f
-                    Position.Right -> 90f
-                    Position.Bottom -> -90f
-                }
-                Down2 -> when (button.position) {
-                    Position.Left -> 90f
-                    Position.Right -> -90f
-                    Position.Bottom -> 90f
-                }
-            }
+            val degree = initialDegree + getTriggerRotationOffset(triggerDirection, button.position)
             rotate(degree, pivot = bezierBounds.center) {
                 val radius = when (button.position) {
                     Position.Left, Position.Right -> bezierBounds.width * animationStyle.iconScale
@@ -422,6 +476,35 @@ private fun WaveGestureAnimation(
                     )
                 }
             }
+        }
+    }
+}
+
+private fun getTriggerRotationOffset(
+    triggerDirection: com.aaron.sidegesture.entity.TriggerDirection,
+    position: Position
+): Float {
+    return when (triggerDirection) {
+        Up -> when (position) {
+            Position.Left -> -45f
+            Position.Right -> 45f
+            Position.Bottom -> -45f
+        }
+        Center, Center2 -> 0f
+        Down -> when (position) {
+            Position.Left -> 45f
+            Position.Right -> -45f
+            Position.Bottom -> 45f
+        }
+        Up2 -> when (position) {
+            Position.Left -> -90f
+            Position.Right -> 90f
+            Position.Bottom -> -90f
+        }
+        Down2 -> when (position) {
+            Position.Left -> 90f
+            Position.Right -> -90f
+            Position.Bottom -> 90f
         }
     }
 }

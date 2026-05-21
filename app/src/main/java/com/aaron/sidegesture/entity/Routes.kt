@@ -82,3 +82,7 @@ data object WaveAnimationStyle
 @Keep
 @Serializable
 data object CapsuleAnimationStyle
+
+@Keep
+@Serializable
+data object BubbleAnimationStyle
