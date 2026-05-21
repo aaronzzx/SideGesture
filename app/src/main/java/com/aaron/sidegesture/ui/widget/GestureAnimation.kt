@@ -41,24 +41,24 @@ import com.aaron.sidegesture.ktx.getIconInitialRotation
 @Composable
 fun GestureAnimation(
     animationStyle: AnimationStyle,
-    SideGestureState: SideGestureState,
+    sideGestureState: SideGestureState,
     modifier: Modifier = Modifier
 ) {
     when (animationStyle) {
         is WaveStyle -> WaveGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
-            sideGestureState = SideGestureState
+            sideGestureState = sideGestureState
         )
         is CapsuleStyle -> CapsuleGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
-            sideGestureState = SideGestureState
+            sideGestureState = sideGestureState
         )
         is BubbleStyle -> BubbleGestureAnimation(
             modifier = modifier,
             animationStyle = animationStyle,
-            sideGestureState = SideGestureState
+            sideGestureState = sideGestureState
         )
     }
 }
@@ -138,12 +138,8 @@ private fun CapsuleGestureAnimation(
         val radiusCap = minOf(rectSize.width, rectSize.height) / 2f
         val cornerRadius = animationStyle.cornerRadius.toFloat().coerceIn(0f, radiusCap)
         val activeAlpha = if (sideGestureState.canDistanceTriggered(button, false)) 1f else 0.55f
-        val backgroundColor = Color(animationStyle.backgroundColor).copy(
-            alpha = Color(animationStyle.backgroundColor).alpha * activeAlpha
-        )
-        val strokeColor = Color(animationStyle.strokeColor).copy(
-            alpha = Color(animationStyle.strokeColor).alpha * activeAlpha
-        )
+        val backgroundColor = Color(animationStyle.backgroundColor)
+        val strokeColor = Color(animationStyle.strokeColor)
 
         drawRoundRect(
             color = backgroundColor,
@@ -232,12 +228,8 @@ private fun BubbleGestureAnimation(
         }
         val topLeft = Offset(centerX - radius, centerY - radius)
         val activeAlpha = if (sideGestureState.canDistanceTriggered(button, false)) 1f else 0.55f
-        val backgroundColor = Color(animationStyle.backgroundColor).copy(
-            alpha = Color(animationStyle.backgroundColor).alpha * activeAlpha
-        )
-        val strokeColor = Color(animationStyle.strokeColor).copy(
-            alpha = Color(animationStyle.strokeColor).alpha * activeAlpha
-        )
+        val backgroundColor = Color(animationStyle.backgroundColor)
+        val strokeColor = Color(animationStyle.strokeColor)
 
         drawCircle(
             color = backgroundColor,

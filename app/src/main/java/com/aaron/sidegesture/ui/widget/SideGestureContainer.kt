@@ -176,7 +176,7 @@ fun SideGestureContainer(
             GestureAnimation(
                 modifier = Modifier.matchParentSize(),
                 animationStyle = animationStyle,
-                SideGestureState = sideGestureState
+                sideGestureState = sideGestureState
             )
         }
 
