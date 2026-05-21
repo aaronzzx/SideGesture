@@ -206,7 +206,7 @@ private fun CapsuleStylePreview(
 
             val iconSize = 15.dp.toPx()
             rotate(0f, pivot = center) {
-                translate(left = center.x - iconSize / 2f, top = center.y - iconSize / 2f) {
+                translate(left = center.x, top = center.y - iconSize / 2f) {
                     drawPreviewIcon(
                         painter = iconPainter,
                         iconSize = iconSize,
@@ -229,31 +229,32 @@ private fun WaveStylePreview(
             val path = Path()
             val width = size.width
             val height = size.height
-            val top = height * 0.12f
-            val bottom = height * 0.88f
+            val top = height * 0.02f
+            val bottom = height * 0.98f
             val centerY = height / 2f
-            val waveX = width * 0.42f
-            val curveHalfHeight = (bottom - top) / 2.2f
-            val upperCurveY = centerY - curveHalfHeight
-            val lowerCurveY = centerY + curveHalfHeight
+            val neckX = width * 0.06f
+            val peakX = width * 0.4f
 
-            path.moveTo(0f, top)
+            path.moveTo(0f, 0f)
+            path.lineTo(neckX, top)
             path.cubicTo(
-                x1 = 0f,
-                y1 = upperCurveY,
-                x2 = waveX,
-                y2 = upperCurveY,
-                x3 = waveX,
+                x1 = neckX,
+                y1 = height * 0.22f,
+                x2 = peakX,
+                y2 = height * 0.26f,
+                x3 = peakX,
                 y3 = centerY
             )
             path.cubicTo(
-                x1 = waveX,
-                y1 = lowerCurveY,
-                x2 = 0f,
-                y2 = lowerCurveY,
-                x3 = 0f,
+                x1 = peakX,
+                y1 = height * 0.74f,
+                x2 = neckX,
+                y2 = height * 0.78f,
+                x3 = neckX,
                 y3 = bottom
             )
+            path.lineTo(0f, height)
+            path.close()
 
             drawPath(path = path, color = colorScheme.primary)
         }
@@ -261,7 +262,7 @@ private fun WaveStylePreview(
         Image(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 8.dp)
+                .padding(start = 6.dp)
                 .size(18.dp),
             painter = iconPainter,
             contentDescription = null,
@@ -292,7 +293,7 @@ private fun BubbleStylePreview(
         Image(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 7.dp)
+                .padding(start = 4.dp)
                 .size(18.dp),
             painter = iconPainter,
             contentDescription = null,

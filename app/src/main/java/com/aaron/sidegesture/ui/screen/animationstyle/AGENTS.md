@@ -1,0 +1,1 @@
+AnimationStyleSelectScreen 内的预览图不需要读取配置
