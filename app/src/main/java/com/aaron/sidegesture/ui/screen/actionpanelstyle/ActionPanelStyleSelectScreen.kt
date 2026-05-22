@@ -213,13 +213,12 @@ private fun SectorStylePreview(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val color = colorScheme.primary
             val anchor = Offset(
-                x = size.width * 0.06f,
+                x = -size.width * 0.08f,
                 y = size.height * 0.5f
             )
-            val dotRadius = size.minDimension * 0.055f
-            val innerArcRadius = size.minDimension * 0.18f
-            val middleArcRadius = size.minDimension * 0.31f
-            val outerArcRadius = size.minDimension * 0.45f
+            val itemRadius = 4.dp.toPx()
+            val innerArcRadius = size.minDimension * 0.37f
+            val outerArcRadius = size.minDimension * 0.56f
 
             fun pointOnArc(radius: Float, angleDegree: Float): Offset {
                 val radian = Math.toRadians(angleDegree.toDouble())
@@ -229,24 +228,20 @@ private fun SectorStylePreview(
                 )
             }
 
-            fun drawDot(radius: Float, angleDegree: Float) {
+            fun drawItem(radius: Float, angleDegree: Float) {
                 drawCircle(
                     color = color,
-                    radius = dotRadius,
+                    radius = itemRadius,
                     center = pointOnArc(radius, angleDegree)
                 )
             }
 
-            listOf(-20f, 20f).forEach { angle ->
-                drawDot(innerArcRadius, angle)
+            listOf(-30f, 0f, 30f).forEach { angle ->
+                drawItem(innerArcRadius, angle)
             }
 
-            listOf(-32f, 0f, 32f).forEach { angle ->
-                drawDot(middleArcRadius, angle)
-            }
-
-            listOf(-46f, -15f, 15f, 46f).forEach { angle ->
-                drawDot(outerArcRadius, angle)
+            listOf(-30f, -10f, 10f, 30f).forEach { angle ->
+                drawItem(outerArcRadius, angle)
             }
         }
     }
