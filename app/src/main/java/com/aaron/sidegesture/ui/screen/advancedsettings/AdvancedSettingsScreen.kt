@@ -27,6 +27,7 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.getDayNightModeText
+import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
@@ -87,6 +88,65 @@ fun AdvancedSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.action_panel)
                 ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = MinItemHeightNoSecondary)
+                            .onSingleClick {
+                                vm.showActionPanelStyleDropdownMenu(true)
+                            }
+                            .padding(
+                                horizontal = ContentPaddingHorizontal,
+                                vertical = ContentPaddingVerticalWithSection
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(id = R.string.action_panel_style),
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1
+                        )
+                        Box {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = getActionPanelStyleText(uiState.actionPanelStyleType),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null
+                                )
+                            }
+                            DropdownMenu(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                offset = DpOffset(x = -EdgeMenuPadding, y = 0.dp),
+                                shape = MaterialTheme.shapes.medium,
+                                expanded = uiState.showActionPanelStyleDropdownMenu,
+                                onDismissRequest = { vm.showActionPanelStyleDropdownMenu(false) }
+                            ) {
+                                listOf(
+                                    ActionPanelStyles.TYPE_FOLDER,
+                                    ActionPanelStyles.TYPE_SECTOR
+                                ).fastForEach { styleType ->
+                                    key(styleType) {
+                                        DropdownMenuItem(
+                                            onClick = {
+                                                vm.onActionPanelStyleChange(styleType)
+                                                vm.showActionPanelStyleDropdownMenu(false)
+                                            },
+                                            text = {
+                                                Text(text = getActionPanelStyleText(styleType))
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                     MyTextSwitch(
                         onCheckedChange = { vm.onActionPanelAppLongPressLaunchPopupChanged(it) },
                         checked = uiState.actionPanelAppLongPressLaunchPopup,
@@ -206,5 +266,14 @@ fun AdvancedSettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun getActionPanelStyleText(type: Int): String {
+    return when (type) {
+        ActionPanelStyles.TYPE_ARC,
+        ActionPanelStyles.TYPE_SECTOR -> stringResource(id = R.string.action_panel_style_sector)
+        else -> stringResource(id = R.string.action_panel_style_folder)
     }
 }

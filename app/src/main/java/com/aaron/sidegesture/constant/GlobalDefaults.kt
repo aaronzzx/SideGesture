@@ -63,10 +63,18 @@ object ActionPanelStylesDefaults {
 
     const val TYPE_ARC = 1
     const val TYPE_SECTOR = 2
+    const val TYPE_FOLDER = 3
 
-    const val Type = TYPE_SECTOR
+    const val Type = TYPE_FOLDER
     val ArcStyleItemSize = ConvertUtils.dp2px(48f)
-    val SectorStyleItemSize = ConvertUtils.dp2px(48f)
+    val SectorStyleItemSize = ConvertUtils.dp2px(40f)
+    val FolderStyleItemSize = ConvertUtils.dp2px(40f)
+    const val FolderStyleColumns = 4
+    const val FolderStyleMaxRows = 3
+    val FolderStyleItemSpacing = ConvertUtils.dp2px(12f)
+    val FolderStyleHorizontalPadding = ConvertUtils.dp2px(16f)
+    val FolderStyleVerticalPadding = ConvertUtils.dp2px(16f)
+    val FolderStyleCornerRadius = ConvertUtils.dp2px(22f)
 }
 
 object AnimationStylesDefaults {

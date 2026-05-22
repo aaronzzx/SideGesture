@@ -72,6 +72,8 @@
     <string name="animation_style_bubble">圆泡</string>
     <string name="animation_style_bubble_desc">圆泡会从边缘向内弹出</string>
     <string name="action_panel_style">动作面板风格</string>
+    <string name="action_panel_style_folder">文件夹</string>
+    <string name="action_panel_style_sector">扇形</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
     <string name="fit_soft_keyboard_hint">软键盘弹出时抬高侧边触钮</string>
     <string name="exclude_from_recents">在最近任务列表中隐藏</string>

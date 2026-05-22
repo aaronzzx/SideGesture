@@ -7,6 +7,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,14 +17,21 @@ import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,6 +76,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
+import com.aaron.sidegesture.entity.FolderStyle
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.SectorStyle
 import com.aaron.sidegesture.entity.Vibrations
@@ -86,10 +95,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -185,6 +196,15 @@ fun ActionPanel(
                         vibrations = vibrations
                     )
                 }
+
+                is FolderStyle -> {
+                    FolderActionPanel(
+                        modifier = Modifier.fillMaxSize(),
+                        actionPanelStyle = actionPanelStyle,
+                        actionPanelState = actionPanelState,
+                        vibrations = vibrations
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -207,6 +227,273 @@ fun ActionPanel(
                 )
             }
         }
+    }
+}
+
+private val FolderEdgePadding = 16.dp
+private val FolderCornerSafePadding = 56.dp
+private val FolderScrollHotZone = 28.dp
+private const val FolderAutoScrollSpeedPxPerFrame = 12f
+private const val FolderAutoScrollFrameDelayMs = 16L
+
+@Composable
+private fun AnimatedVisibilityScope.FolderActionPanel(
+    actionPanelStyle: FolderStyle,
+    actionPanelState: ActionPanelState,
+    modifier: Modifier = Modifier,
+    vibrations: Vibrations? = null
+) {
+    val density = LocalDensity.current
+    val itemSize = actionPanelStyle.itemSize.toDp()
+    val itemSpacing = actionPanelStyle.itemSpacing.toDp()
+    val horizontalPadding = actionPanelStyle.horizontalPadding.toDp()
+    val verticalPadding = actionPanelStyle.verticalPadding.toDp()
+    val cornerRadius = actionPanelStyle.cornerRadius.toDp()
+    val itemSizePx = itemSize.toPx()
+    val itemSpacingPx = itemSpacing.toPx()
+    val horizontalPaddingPx = horizontalPadding.toPx()
+    val verticalPaddingPx = verticalPadding.toPx()
+    val edgePaddingPx = FolderEdgePadding.toPx()
+    val cornerSafePaddingPx = FolderCornerSafePadding.toPx()
+    val scrollHotZonePx = FolderScrollHotZone.toPx()
+    val columns = actionPanelStyle.columns.coerceAtLeast(1)
+    val maxRows = actionPanelStyle.maxRows.coerceAtLeast(1)
+    val rows = ceil(actionPanelState.actions.size / columns.toFloat()).roundToInt()
+    val visibleRows = rows.coerceAtMost(maxRows).coerceAtLeast(1)
+    val gridWidthPx = columns * itemSizePx + (columns - 1) * itemSpacingPx
+    val gridHeightPx = visibleRows * itemSizePx + (visibleRows - 1) * itemSpacingPx
+    val panelWidthPx = gridWidthPx + horizontalPaddingPx * 2f
+    val panelHeightPx = gridHeightPx + verticalPaddingPx * 2f
+    val panelWidth = with(density) { panelWidthPx.toDp() }
+    val panelHeight = with(density) { panelHeightPx.toDp() }
+    val gridHeight = with(density) { gridHeightPx.toDp() }
+    val scrollState = rememberScrollState()
+    val itemBounds = remember { mutableStateMapOf<Int, Rect>() }
+    var panelBounds by remember { mutableStateOf(Rect.Zero) }
+    var parentSize by remember { mutableStateOf(Size.Zero) }
+    var stableOrigin by remember { mutableStateOf(Offset.Unspecified) }
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var autoScrollDirection by remember { mutableStateOf(0) }
+
+    if (actionPanelState.origin.isSpecified) {
+        stableOrigin = actionPanelState.origin
+    }
+
+    LaunchedEffect(actionPanelState.actions.size) {
+        itemBounds.clear()
+        selectedIndex = null
+        scrollState.scrollTo(0)
+        autoScrollDirection = 0
+    }
+
+    LaunchedEffect(autoScrollDirection, scrollState) {
+        val direction = autoScrollDirection
+        while (direction != 0 && scrollState.maxValue > 0) {
+            val target = (scrollState.value + direction * FolderAutoScrollSpeedPxPerFrame)
+                .roundToInt()
+                .coerceIn(0, scrollState.maxValue)
+            if (target != scrollState.value) {
+                scrollState.scrollTo(target)
+            }
+            delay(FolderAutoScrollFrameDelayMs)
+        }
+    }
+
+    LaunchedEffect(
+        transition,
+        actionPanelState,
+        scrollState,
+        itemBounds,
+        panelBounds,
+        scrollHotZonePx
+    ) {
+        snapshotFlow { actionPanelState.finger }
+            .filter {
+                it.isSpecified &&
+                        !transition.isRunning &&
+                        transition.currentState == Visible
+            }
+            .collect { finger ->
+                val inPanel = panelBounds.contains(finger)
+                val canScroll = scrollState.maxValue > 0
+                autoScrollDirection = when {
+                    !inPanel || !canScroll -> 0
+                    finger.y <= panelBounds.top + scrollHotZonePx -> -1
+                    finger.y >= panelBounds.bottom - scrollHotZonePx -> 1
+                    else -> 0
+                }
+
+                if (!inPanel || autoScrollDirection != 0) {
+                    selectedIndex?.let { index ->
+                        actionPanelState.select(index, Action.NONE)
+                        selectedIndex = null
+                    }
+                    return@collect
+                }
+
+                val hit = itemBounds.entries.firstOrNull { it.value.contains(finger) }
+                if (hit == null) {
+                    selectedIndex?.let { index ->
+                        actionPanelState.select(index, Action.NONE)
+                        selectedIndex = null
+                    }
+                    return@collect
+                }
+
+                val action = actionPanelState.actions.getOrNull(hit.key) ?: return@collect
+                if (selectedIndex != hit.key || !actionPanelState.isSelected(action)) {
+                    selectedIndex?.let { index ->
+                        if (index != hit.key) {
+                            actionPanelState.select(index, Action.NONE)
+                        }
+                    }
+                    selectedIndex = hit.key
+                    actionPanelState.select(hit.key, action)
+                    vibrations?.tryVibrateForActionPanel()
+                }
+            }
+    }
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .onGloballyPositioned {
+                    parentSize = it.size.toSize()
+                }
+                .matchParentSize()
+        )
+
+        val anchor = remember(
+            parentSize,
+            stableOrigin,
+            actionPanelState.position,
+            panelWidthPx,
+            panelHeightPx,
+            edgePaddingPx,
+            cornerSafePaddingPx
+        ) {
+            folderPanelAnchor(
+                parentSize = parentSize,
+                origin = stableOrigin,
+                position = actionPanelState.position,
+                panelWidthPx = panelWidthPx,
+                panelHeightPx = panelHeightPx,
+                edgePaddingPx = edgePaddingPx,
+                cornerSafePaddingPx = cornerSafePaddingPx
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .graphicsLayer {
+                    if (parentSize.isEmpty()) return@graphicsLayer
+                    translationX = anchor.x
+                    translationY = anchor.y
+                }
+                .width(panelWidth)
+                .height(panelHeight)
+                .onGloballyPositioned {
+                    panelBounds = it.boundsInRoot()
+                }
+                .background(
+                    color = Color.White.copy(alpha = 0.28f),
+                    shape = RoundedCornerShape(cornerRadius)
+                )
+                .padding(
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding
+                )
+                .animateEnterExit(
+                    enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
+                            scaleIn(spring(stiffness = Spring.StiffnessMedium), 0.92f),
+                    exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) +
+                            scaleOut(spring(stiffness = Spring.StiffnessMedium), 0.92f)
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .height(gridHeight)
+                    .verticalScroll(scrollState, enabled = false),
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
+                repeat(rows) { rowIndex ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(itemSpacing)
+                    ) {
+                        repeat(columns) { columnIndex ->
+                            val index = rowIndex * columns + columnIndex
+                            val action = actionPanelState.actions.getOrNull(index)
+                            if (action == null) {
+                                Box(modifier = Modifier.size(itemSize))
+                            } else {
+                                key(index) {
+                                    val scale by animateFloatAsState(
+                                        targetValue = if (actionPanelState.isSelected(action)) 1.15f else 1f,
+                                        animationSpec = spring(stiffness = Spring.StiffnessHigh)
+                                    )
+                                    ActionPanelItem(
+                                        modifier = Modifier
+                                            .size(itemSize)
+                                            .onGloballyPositioned {
+                                                itemBounds[index] = it.boundsInRoot()
+                                            }
+                                            .graphicsLayer {
+                                                scaleX = scale
+                                                scaleY = scale
+                                            },
+                                        action = action
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun folderPanelAnchor(
+    parentSize: Size,
+    origin: Offset,
+    position: Position,
+    panelWidthPx: Float,
+    panelHeightPx: Float,
+    edgePaddingPx: Float,
+    cornerSafePaddingPx: Float
+): Offset {
+    if (parentSize.isEmpty()) return Offset.Zero
+
+    val safeOrigin = if (origin.isSpecified) {
+        origin
+    } else {
+        Offset(parentSize.width / 2f, parentSize.height / 2f)
+    }
+
+    return when (position) {
+        Position.Left -> Offset(
+            x = edgePaddingPx,
+            y = (safeOrigin.y - panelHeightPx / 2f).coerceInSafely(
+                minimumValue = cornerSafePaddingPx,
+                maximumValue = parentSize.height - cornerSafePaddingPx - panelHeightPx
+            )
+        )
+
+        Position.Right -> Offset(
+            x = parentSize.width - edgePaddingPx - panelWidthPx,
+            y = (safeOrigin.y - panelHeightPx / 2f).coerceInSafely(
+                minimumValue = cornerSafePaddingPx,
+                maximumValue = parentSize.height - cornerSafePaddingPx - panelHeightPx
+            )
+        )
+
+        Position.Bottom -> Offset(
+            x = (safeOrigin.x - panelWidthPx / 2f).coerceInSafely(
+                minimumValue = cornerSafePaddingPx,
+                maximumValue = parentSize.width - cornerSafePaddingPx - panelWidthPx
+            ),
+            y = parentSize.height - edgePaddingPx - panelHeightPx
+        )
     }
 }
 

@@ -230,6 +230,7 @@ class SideGestureService : ComponentAccessibilityService() {
                                 true -> advancedSettings.animationStyles.value
                                 else -> null
                             },
+                            actionPanelStyle = advancedSettings.actionPanelStyles.value,
                             onAction = { action ->
                                 proxy.onAction(action)
                             },
