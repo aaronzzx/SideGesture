@@ -498,7 +498,6 @@ private fun folderPanelAnchor(
 
 private const val SectorAngleDegree = 180.0
 private const val SectorRadiusStepRatio = 1.25f
-private const val SectorSingleLayerMaxCount = 5
 private val SectorEdgePadding = 16.dp
 private val SectorCornerSafePadding = 56.dp
 private val SectorMinItemSize = 32.dp
@@ -802,7 +801,13 @@ private fun sectorLayerLayouts(
     if (itemCount <= 0 || itemSizePx <= 0f) return emptyList()
 
     val targetSpacing = itemSizePx * itemSpacingRatio
-    if (itemCount <= SectorSingleLayerMaxCount) {
+    val firstLayerCapacity = sectorLayerCapacity(
+        layer = 0,
+        itemSizePx = itemSizePx,
+        targetSpacing = targetSpacing,
+        initialRadiusRatio = initialRadiusRatio
+    )
+    if (itemCount <= firstLayerCapacity) {
         val radius = sectorSingleLayerRadius(
             count = itemCount,
             itemSizePx = itemSizePx,

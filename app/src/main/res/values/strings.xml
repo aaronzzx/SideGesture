@@ -276,7 +276,7 @@
     <string name="scroll_hot_zone_height">滚动热区高度</string>
     <string name="background">背景</string>
     <string name="layout">布局</string>
-    <string name="expand_radius">展开半径</string>
+    <string name="sector_arc_length">扇形弧长</string>
     <string name="expand_spacing">展开疏密</string>
     <string name="stroke_color">轮廓色</string>
     <string name="stroke_width">轮廓宽度</string>

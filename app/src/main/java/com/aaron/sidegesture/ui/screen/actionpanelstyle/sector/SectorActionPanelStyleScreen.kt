@@ -54,7 +54,7 @@ fun SectorActionPanelStyleScreen(
                         value = uiState.style.initialRadiusRatio,
                         onValueChange = vm::onInitialRadiusRatioChange,
                         onValueChangeFinished = vm::saveSettings,
-                        text = stringResource(id = R.string.expand_radius),
+                        text = stringResource(id = R.string.sector_arc_length),
                         valueRange = MinActionPanelInitialRadiusRatio..MaxActionPanelInitialRadiusRatio
                     )
                     MyTextSlider(
