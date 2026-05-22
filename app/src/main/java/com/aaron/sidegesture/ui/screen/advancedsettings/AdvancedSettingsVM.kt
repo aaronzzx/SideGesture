@@ -5,13 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.ActionPanelStyles
+import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 
 /**
@@ -146,11 +146,11 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder
                 .advancedSettings
                 .data
-                .take(1)
                 .collectLatest { item ->
                     updateUiState {
                         it.copy(
                             showAnimation = item.animationStyles.isAnimationEnabled,
+                            animationStyleType = item.animationStyles.type,
                             actionPanelStyleType = normalizeActionPanelStyleType(item.actionPanelStyles.type),
                             volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                             fitSoftKeyboard = item.fitSoftKeyboard,
@@ -172,6 +172,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     data class UiState(
         val volumeButtonSwitchSong: Boolean = false,
         val showAnimation: Boolean = false,
+        val animationStyleType: Int = AnimationStyles.TYPE_WAVE,
         val actionPanelStyleType: Int = ActionPanelStyles.TYPE_FOLDER,
         val fitSoftKeyboard: Boolean = false,
         val actionPanelAppLongPressLaunchPopup: Boolean = false,

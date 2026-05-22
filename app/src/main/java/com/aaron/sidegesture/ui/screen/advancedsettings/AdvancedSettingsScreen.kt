@@ -28,6 +28,7 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.getDayNightModeText
 import com.aaron.sidegesture.entity.ActionPanelStyles
+import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
@@ -77,7 +78,8 @@ fun AdvancedSettingsScreen(
                         onTextClick = onNavToAnimationStyle,
                         onCheckedChange = { vm.onShowAnimation(it) },
                         checked = uiState.showAnimation,
-                        text = stringResource(id = R.string.animation_style)
+                        text = stringResource(id = R.string.animation_style),
+                        secondaryText = getAnimationStyleText(uiState.animationStyleType)
                     )
                     MyTextSwitch(
                         onCheckedChange = { vm.onFitSoftKeyboardChange(it) },
@@ -214,6 +216,16 @@ fun AdvancedSettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun getAnimationStyleText(type: Int): String {
+    return when (type) {
+        AnimationStyles.TYPE_WAVE -> stringResource(id = R.string.animation_style_wave)
+        AnimationStyles.TYPE_CAPSULE -> stringResource(id = R.string.animation_style_capsule)
+        AnimationStyles.TYPE_BUBBLE -> stringResource(id = R.string.animation_style_bubble)
+        else -> stringResource(id = R.string.animation_style_wave)
     }
 }
 
