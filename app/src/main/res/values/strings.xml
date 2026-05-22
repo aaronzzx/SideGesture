@@ -74,8 +74,8 @@
     <string name="action_panel_style">弹出风格</string>
     <string name="action_panel_style_folder">文件夹</string>
     <string name="action_panel_style_sector">扇形</string>
-    <string name="action_panel_style_folder_desc">像桌面文件夹一样显示图标网格</string>
-    <string name="action_panel_style_sector_desc">沿触发方向扇形展开动作图标</string>
+    <string name="action_panel_style_folder_desc">像文件夹一样显示图标网格</string>
+    <string name="action_panel_style_sector_desc">沿触发方向扇形展开图标</string>
     <string name="fit_soft_keyboard">适配软键盘</string>
     <string name="fit_soft_keyboard_hint">软键盘弹出时抬高侧边触钮</string>
     <string name="exclude_from_recents">在最近任务列表中隐藏</string>
