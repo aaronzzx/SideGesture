@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.aaron.sidegesture.entity.About
+import com.aaron.sidegesture.entity.ActionPanelStyleSelect
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AdjustGestureAngles
 import com.aaron.sidegesture.entity.AdvancedSettings
@@ -32,14 +33,19 @@ import com.aaron.sidegesture.entity.AppBlacklist
 import com.aaron.sidegesture.entity.BubbleAnimationStyle
 import com.aaron.sidegesture.entity.BugCollecting
 import com.aaron.sidegesture.entity.CapsuleAnimationStyle
+import com.aaron.sidegesture.entity.FolderActionPanelStyle
 import com.aaron.sidegesture.entity.GestureButtonSettings
 import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
 import com.aaron.sidegesture.entity.IconResize
+import com.aaron.sidegesture.entity.SectorActionPanelStyle
 import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.entity.WaveAnimationStyle
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
+import com.aaron.sidegesture.ui.screen.actionpanelstyle.ActionPanelStyleSelectScreen
+import com.aaron.sidegesture.ui.screen.actionpanelstyle.folder.FolderActionPanelStyleScreen
+import com.aaron.sidegesture.ui.screen.actionpanelstyle.sector.SectorActionPanelStyleScreen
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectScreen
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsScreen
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectScreen
@@ -115,6 +121,24 @@ fun SideGestureApp() {
                         onNavToAppBlacklist = { navController.navigate(AppBlacklist) },
                         onNavToAnimationStyle = {
                             navController.navigate(AnimationStyleSelect)
+                        },
+                        onNavToActionPanelStyle = {
+                            navController.navigate(ActionPanelStyleSelect)
+                        }
+                    )
+                }
+                myComposable<ActionPanelStyleSelect> {
+                    ActionPanelStyleSelectScreen(
+                        onBack = { navController.navigateUp() },
+                        onNavToStyleConfig = { type ->
+                            when (type) {
+                                com.aaron.sidegesture.entity.ActionPanelStyles.TYPE_FOLDER -> {
+                                    navController.navigate(FolderActionPanelStyle)
+                                }
+                                else -> {
+                                    navController.navigate(SectorActionPanelStyle)
+                                }
+                            }
                         }
                     )
                 }
@@ -168,6 +192,12 @@ fun SideGestureApp() {
                 }
                 myComposable<BubbleAnimationStyle> {
                     BubbleStyleScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<FolderActionPanelStyle> {
+                    FolderActionPanelStyleScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<SectorActionPanelStyle> {
+                    SectorActionPanelStyleScreen(onBack = { navController.navigateUp() })
                 }
             }
         }

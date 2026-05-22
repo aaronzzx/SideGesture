@@ -37,6 +37,10 @@ data object AnimationStyleSelect
 
 @Keep
 @Serializable
+data object ActionPanelStyleSelect
+
+@Keep
+@Serializable
 data object AdjustGestureAngles
 
 @Serializable
@@ -86,3 +90,11 @@ data object CapsuleAnimationStyle
 @Keep
 @Serializable
 data object BubbleAnimationStyle
+
+@Keep
+@Serializable
+data object FolderActionPanelStyle
+
+@Keep
+@Serializable
+data object SectorActionPanelStyle

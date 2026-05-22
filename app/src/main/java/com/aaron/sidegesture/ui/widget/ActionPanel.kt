@@ -232,8 +232,6 @@ fun ActionPanel(
 
 private val FolderEdgePadding = 16.dp
 private val FolderCornerSafePadding = 56.dp
-private val FolderScrollHotZone = 28.dp
-private const val FolderAutoScrollSpeedPxPerFrame = 12f
 private const val FolderAutoScrollFrameDelayMs = 16L
 
 @Composable
@@ -255,11 +253,12 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     val verticalPaddingPx = verticalPadding.toPx()
     val edgePaddingPx = FolderEdgePadding.toPx()
     val cornerSafePaddingPx = FolderCornerSafePadding.toPx()
-    val scrollHotZonePx = FolderScrollHotZone.toPx()
+    val scrollHotZonePx = actionPanelStyle.scrollHotZoneHeight.coerceAtLeast(1).toFloat()
+    val autoScrollSpeedPxPerFrame = actionPanelStyle.scrollSpeed.coerceAtLeast(1).toFloat()
     val columns = actionPanelStyle.columns.coerceAtLeast(1)
-    val maxRows = actionPanelStyle.maxRows.coerceAtLeast(1)
-    val rows = ceil(actionPanelState.actions.size / columns.toFloat()).roundToInt()
-    val visibleRows = rows.coerceAtMost(maxRows).coerceAtLeast(1)
+    val rowCount = actionPanelStyle.rows.coerceAtLeast(1)
+    val totalRows = ceil(actionPanelState.actions.size / columns.toFloat()).roundToInt()
+    val visibleRows = totalRows.coerceAtMost(rowCount).coerceAtLeast(1)
     val gridWidthPx = columns * itemSizePx + (columns - 1) * itemSpacingPx
     val gridHeightPx = visibleRows * itemSizePx + (visibleRows - 1) * itemSpacingPx
     val panelWidthPx = gridWidthPx + horizontalPaddingPx * 2f
@@ -286,10 +285,10 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
         autoScrollDirection = 0
     }
 
-    LaunchedEffect(autoScrollDirection, scrollState) {
+    LaunchedEffect(autoScrollDirection, scrollState, autoScrollSpeedPxPerFrame) {
         val direction = autoScrollDirection
         while (direction != 0 && scrollState.maxValue > 0) {
-            val target = (scrollState.value + direction * FolderAutoScrollSpeedPxPerFrame)
+            val target = (scrollState.value + direction * autoScrollSpeedPxPerFrame)
                 .roundToInt()
                 .coerceIn(0, scrollState.maxValue)
             if (target != scrollState.value) {
@@ -416,7 +415,7 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                     .verticalScroll(scrollState, enabled = false),
                 verticalArrangement = Arrangement.spacedBy(itemSpacing)
             ) {
-                repeat(rows) { rowIndex ->
+                repeat(totalRows) { rowIndex ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(itemSpacing)
                     ) {
@@ -498,9 +497,7 @@ private fun folderPanelAnchor(
 }
 
 private const val SectorAngleDegree = 180.0
-private const val SectorInitialRadiusRatio = 1.5f
 private const val SectorRadiusStepRatio = 1.25f
-private const val SectorItemSpacingRatio = 1.12f
 private const val SectorSingleLayerMaxCount = 5
 private val SectorEdgePadding = 16.dp
 private val SectorCornerSafePadding = 56.dp
@@ -516,6 +513,8 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
     val density = LocalDensity.current
     val defaultItemSize = actionPanelStyle.itemSize.toDp()
     val defaultItemSizePx = defaultItemSize.toPx()
+    val initialRadiusRatio = actionPanelStyle.initialRadiusRatio.coerceAtLeast(0.1f)
+    val itemSpacingRatio = actionPanelStyle.itemSpacingRatio.coerceAtLeast(0.1f)
     val edgePaddingPx = SectorEdgePadding.toPx()
     val cornerSafePaddingPx = SectorCornerSafePadding.toPx()
     val minItemSizePx = SectorMinItemSize.toPx()
@@ -540,6 +539,8 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
             actionPanelState.actions.size,
             actionPanelState.position,
             defaultItemSizePx,
+            initialRadiusRatio,
+            itemSpacingRatio,
             cornerSafePaddingPx,
             minItemSizePx
         ) {
@@ -549,17 +550,23 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                 minItemSizePx = minItemSizePx,
                 parentSize = parentSize,
                 position = actionPanelState.position,
-                cornerSafePaddingPx = cornerSafePaddingPx
+                cornerSafePaddingPx = cornerSafePaddingPx,
+                initialRadiusRatio = initialRadiusRatio,
+                itemSpacingRatio = itemSpacingRatio
             )
         }
         val itemSize = with(density) { itemSizePx.toDp() }
         val layouts = remember(
             actionPanelState.actions.size,
-            itemSizePx
+            itemSizePx,
+            initialRadiusRatio,
+            itemSpacingRatio
         ) {
             sectorLayerLayouts(
                 itemCount = actionPanelState.actions.size,
-                itemSizePx = itemSizePx
+                itemSizePx = itemSizePx,
+                initialRadiusRatio = initialRadiusRatio,
+                itemSpacingRatio = itemSpacingRatio
             )
         }
         val itemOffsets = remember(
@@ -682,7 +689,9 @@ private fun sectorItemSizePx(
     minItemSizePx: Float,
     parentSize: Size,
     position: Position,
-    cornerSafePaddingPx: Float
+    cornerSafePaddingPx: Float,
+    initialRadiusRatio: Float,
+    itemSpacingRatio: Float
 ): Float {
     if (parentSize.isEmpty() || itemCount <= 0 || defaultItemSizePx <= 0f) {
         return defaultItemSizePx
@@ -691,7 +700,9 @@ private fun sectorItemSizePx(
     val defaultOffsets = sectorItemOffsets(
         itemCount = itemCount,
         itemSizePx = defaultItemSizePx,
-        position = position
+        position = position,
+        initialRadiusRatio = initialRadiusRatio,
+        itemSpacingRatio = itemSpacingRatio
     )
     val requiredSize = sectorRequiredSafeAxisSize(
         itemOffsets = defaultOffsets,
@@ -735,11 +746,18 @@ private fun sectorRequiredSafeAxisSize(
 private fun sectorItemOffsets(
     itemCount: Int,
     itemSizePx: Float,
-    position: Position
+    position: Position,
+    initialRadiusRatio: Float,
+    itemSpacingRatio: Float
 ): List<Offset> {
     if (itemCount <= 0 || itemSizePx <= 0f) return emptyList()
 
-    val layers = sectorLayerLayouts(itemCount, itemSizePx)
+    val layers = sectorLayerLayouts(
+        itemCount = itemCount,
+        itemSizePx = itemSizePx,
+        initialRadiusRatio = initialRadiusRatio,
+        itemSpacingRatio = itemSpacingRatio
+    )
     return sectorItemOffsets(layers, position)
 }
 
@@ -777,13 +795,20 @@ private data class SectorLayerCandidate(
 
 private fun sectorLayerLayouts(
     itemCount: Int,
-    itemSizePx: Float
+    itemSizePx: Float,
+    initialRadiusRatio: Float,
+    itemSpacingRatio: Float
 ): List<SectorLayerLayout> {
     if (itemCount <= 0 || itemSizePx <= 0f) return emptyList()
 
-    val targetSpacing = itemSizePx * SectorItemSpacingRatio
+    val targetSpacing = itemSizePx * itemSpacingRatio
     if (itemCount <= SectorSingleLayerMaxCount) {
-        val radius = sectorSingleLayerRadius(itemCount, itemSizePx, targetSpacing)
+        val radius = sectorSingleLayerRadius(
+            count = itemCount,
+            itemSizePx = itemSizePx,
+            targetSpacing = targetSpacing,
+            initialRadiusRatio = initialRadiusRatio
+        )
         return listOf(
             SectorLayerLayout(
                 radius = radius,
@@ -805,7 +830,8 @@ private fun sectorLayerLayouts(
         capacities += sectorLayerCapacity(
             layer = layerCount - 1,
             itemSizePx = itemSizePx,
-            targetSpacing = targetSpacing
+            targetSpacing = targetSpacing,
+            initialRadiusRatio = initialRadiusRatio
         )
         val counts = sectorLayerCountsOrNull(
             itemCount = itemCount,
@@ -813,7 +839,12 @@ private fun sectorLayerLayouts(
         )
         if (counts != null) {
             val layouts = counts.mapIndexed { layer, count ->
-                val radius = sectorLayerRadius(layer, itemSizePx, targetSpacing)
+                val radius = sectorLayerRadius(
+                    layer = layer,
+                    itemSizePx = itemSizePx,
+                    targetSpacing = targetSpacing,
+                    initialRadiusRatio = initialRadiusRatio
+                )
                 SectorLayerLayout(
                     radius = radius,
                     angles = sectorLayerAngles(
@@ -842,10 +873,20 @@ private fun sectorLayerLayouts(
 
     return bestCandidate?.layouts ?: listOf(
         SectorLayerLayout(
-            radius = sectorLayerRadius(0, itemSizePx, targetSpacing),
+            radius = sectorLayerRadius(
+                layer = 0,
+                itemSizePx = itemSizePx,
+                targetSpacing = targetSpacing,
+                initialRadiusRatio = initialRadiusRatio
+            ),
             angles = sectorLayerAngles(
                 count = itemCount,
-                radius = sectorLayerRadius(0, itemSizePx, targetSpacing),
+                radius = sectorLayerRadius(
+                    layer = 0,
+                    itemSizePx = itemSizePx,
+                    targetSpacing = targetSpacing,
+                    initialRadiusRatio = initialRadiusRatio
+                ),
                 itemSizePx = itemSizePx,
                 targetSpacing = targetSpacing
             )
@@ -961,17 +1002,24 @@ private fun sectorLayerDistanceScore(
 private fun sectorLayerRadius(
     layer: Int,
     itemSizePx: Float,
-    targetSpacing: Float
+    targetSpacing: Float,
+    initialRadiusRatio: Float
 ): Float {
-    return itemSizePx * SectorInitialRadiusRatio + layer * targetSpacing
+    return itemSizePx * initialRadiusRatio + layer * targetSpacing
 }
 
 private fun sectorSingleLayerRadius(
     count: Int,
     itemSizePx: Float,
-    targetSpacing: Float
+    targetSpacing: Float,
+    initialRadiusRatio: Float
 ): Float {
-    val baseRadius = sectorLayerRadius(0, itemSizePx, targetSpacing)
+    val baseRadius = sectorLayerRadius(
+        layer = 0,
+        itemSizePx = itemSizePx,
+        targetSpacing = targetSpacing,
+        initialRadiusRatio = initialRadiusRatio
+    )
     if (count <= 1) return baseRadius
 
     val satisfiesSpacing: (Float) -> Boolean = { radius ->
@@ -985,7 +1033,7 @@ private fun sectorSingleLayerRadius(
     var low = baseRadius
     var high = baseRadius
     while (!satisfiesSpacing(high) && high < itemSizePx * 32f) {
-        high *= 1.25f
+        high *= SectorRadiusStepRatio
     }
     if (!satisfiesSpacing(high)) {
         return high
@@ -1029,9 +1077,15 @@ private fun sectorLayerAngles(
 private fun sectorLayerCapacity(
     layer: Int,
     itemSizePx: Float,
-    targetSpacing: Float
+    targetSpacing: Float,
+    initialRadiusRatio: Float
 ): Int {
-    val radius = sectorLayerRadius(layer, itemSizePx, targetSpacing)
+    val radius = sectorLayerRadius(
+        layer = layer,
+        itemSizePx = itemSizePx,
+        targetSpacing = targetSpacing,
+        initialRadiusRatio = initialRadiusRatio
+    )
     val availableAngle = sectorAvailableAngle(radius, itemSizePx)
     val angleStep = sectorPreferredAngleStep(radius, targetSpacing)
     if (angleStep <= 0.0) return 1

@@ -6,6 +6,7 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.DayNightMode
+import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -46,19 +47,6 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         updateUiState {
             it.copy(showDayNightModeDropdownMenu = show)
         }
-    }
-
-    fun showActionPanelStyleDropdownMenu(show: Boolean) {
-        updateUiState {
-            it.copy(showActionPanelStyleDropdownMenu = show)
-        }
-    }
-
-    fun onActionPanelStyleChange(type: Int) {
-        updateUiState {
-            it.copy(actionPanelStyleType = type)
-        }
-        saveSettings()
     }
 
     fun onFitSoftKeyboardChange(value: Boolean) {
@@ -137,7 +125,6 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 val uiState = uiState
                 it.copy(
                     animationStyles = it.animationStyles.copy(isAnimationEnabled = uiState.showAnimation),
-                    actionPanelStyles = it.actionPanelStyles.selectType(uiState.actionPanelStyleType),
                     volumeButtonSwitchSong = uiState.volumeButtonSwitchSong,
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
                     actionPanelAppLongPressLaunchPopup = uiState.actionPanelAppLongPressLaunchPopup,
@@ -164,7 +151,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     updateUiState {
                         it.copy(
                             showAnimation = item.animationStyles.isAnimationEnabled,
-                            actionPanelStyleType = item.actionPanelStyles.type,
+                            actionPanelStyleType = normalizeActionPanelStyleType(item.actionPanelStyles.type),
                             volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                             fitSoftKeyboard = item.fitSoftKeyboard,
                             actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
@@ -197,8 +184,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val dynamicColor: Boolean = false,
         val dayNightMode: DayNightMode = DayNightMode.Auto,
         val showDynamicColorOption: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-        val showDayNightModeDropdownMenu: Boolean = false,
-        val showActionPanelStyleDropdownMenu: Boolean = false
+        val showDayNightModeDropdownMenu: Boolean = false
     )
 
     sealed interface UiEvent
