@@ -78,6 +78,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    fun clearSelected() {
+        updateUiState {
+            it.copy(selectedRecord = it.selectedRecord.clear())
+        }
+    }
+
     fun select(obj: Any, selected: Boolean) {
         val uiState = uiState
         if (obj is AppInfo) {
@@ -647,6 +653,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         data class SelectedRecord(val list: List<Any> = emptyList()) {
 
             val size: Int get() = list.size
+
+            fun clear(): SelectedRecord {
+                return this.copy(list = emptyList())
+            }
 
             fun selectAll(actions: List<Action>): SelectedRecord {
                 val newList = list.toMutableList().apply {

@@ -42,6 +42,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ExpandMore
@@ -537,6 +538,9 @@ fun ActionSelectScreen(
                 ) {
                     var expanded by remember { mutableStateOf(false) }
                     SelectedList(
+                        onClear = {
+                            vm.clearSelected()
+                        },
                         onUnselected = {
                             vm.select(it, false)
                         },
@@ -1062,6 +1066,7 @@ private fun LauncherInfoItem(
 
 @Composable
 private fun SelectedList(
+    onClear: () -> Unit,
     onUnselected: (Any) -> Unit,
     onReordered: (newList: List<Any>) -> Unit,
     onExpandedChange: (Boolean) -> Unit,
@@ -1160,13 +1165,23 @@ private fun SelectedList(
                 .padding(start = RootPadding, end = RootPadding + 8.dp)
                 .padding(vertical = RootPadding),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.drag_icon_to_reorder_click_to_unselect),
                 style = MaterialTheme.typography.labelMedium,
                 color = contentColorFor(backgroundColor).copy(alpha = 0.5f)
             )
+
+            IconButton(
+                onClick = onClear
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null
+                )
+            }
 
             val iconRotation = animateFloatAsState(
                 targetValue = when (expanded) {
