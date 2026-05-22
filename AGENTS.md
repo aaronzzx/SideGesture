@@ -58,6 +58,9 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 修改跨进程逻辑时，同时检查主进程调用方、服务进程实现和异常兜底。
 - 修改 DataStore 数据模型时，必须考虑旧配置兼容和默认值。
 - 修改 Compose UI 时，遵循现有 MVVM 分层，不把持久化或系统调用直接塞进 UI 组件。
+- Compose 页面默认遵循 `UDF` 单向数据流：`ViewModel` 输出 `UiState`，`UI` 负责渲染和派发事件，不反向持有一份等价业务状态。
+- UI 界面一般不持有状态；搜索态、筛选结果、加载态、弹窗显隐、权限分支、联动显示等页面状态，默认放进 `ViewModel` 的 `UiState` 统一管理。
+- `remember` / `rememberSaveable` 仅用于少量纯展示、瞬时、与业务无关的本地状态，例如焦点、滚动位置、动画展开态；只要状态会影响页面逻辑、数据派生、跨组件同步或保存行为，就上移到 `UiState`。
 - 新增依赖统一写入 `gradle/libs.versions.toml`，再在模块 `build.gradle.kts` 引用。
 - 不要启用或改写 Release 签名配置，除非明确要求。
 

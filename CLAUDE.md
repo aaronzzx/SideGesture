@@ -84,6 +84,13 @@ SideGesture 是一个 Android 侧边手势控制应用，通过无障碍服务�
 ### 修改 UI 界面
 Compose UI 支持热重载，但涉及 ViewModel 或数据流变更时需重启应用。
 
+### UI 状态管理 / UDF
+
+- 页面实现默认遵循 `UDF` 单向数据流：`ViewModel -> UiState -> UI -> Event -> ViewModel`。
+- `Screen` / `Widget` 负责消费 `UiState` 并派发事件，不要在 Compose 页面里重复维护一份与 `UiState` 等价的业务状态。
+- 搜索态、筛选结果、加载态、弹窗显隐、权限分支、联动显示等页面状态，默认进入 `ViewModel` 的 `UiState` 统一管理。
+- `remember` / `rememberSaveable` 优先只用于焦点、滚动位置、展开动画等纯界面瞬时状态；如果状态会参与页面逻辑、数据派生、保存流程或跨组件同步，就必须上移到 `UiState`。
+
 ### 动画实现约定
 
 - 新动画优先复用现有手势输入模型：`origin`、`finger`、`triggerDirection`、`button.position` 和现有回弹动画值，不重新定义一套手势状态。
