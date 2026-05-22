@@ -36,23 +36,28 @@ fun TopBar(
     showBackIcon: Boolean = true,
     titleStyle: TextStyle = LocalTextStyle.current.copy(fontSize = 18.sp),
     containerColor: Color = Color.Transparent,
-    postfixTitle: (@Composable () -> Unit)? = null
+    postfixTitle: (@Composable () -> Unit)? = null,
+    titleContent: (@Composable () -> Unit)? = null
 ) {
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    modifier = Modifier.let {
-                        if (showBackIcon) it else {
-                            it.padding(start = TopBarPaddingExtra)
-                        }
-                    },
-                    text = title,
-                    style = titleStyle
-                )
-                postfixTitle?.invoke()
+            if (titleContent != null) {
+                titleContent()
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        modifier = Modifier.let {
+                            if (showBackIcon) it else {
+                                it.padding(start = TopBarPaddingExtra)
+                            }
+                        },
+                        text = title,
+                        style = titleStyle
+                    )
+                    postfixTitle?.invoke()
+                }
             }
         },
         navigationIcon = {

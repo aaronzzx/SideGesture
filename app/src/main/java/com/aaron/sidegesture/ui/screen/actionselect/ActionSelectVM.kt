@@ -18,6 +18,7 @@ import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
+import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ktx.getIcon
@@ -62,19 +63,42 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         loadData()
     }
 
+    fun showSearch() {
+        updateUiState {
+            it.copy(isSearching = true)
+        }
+    }
+
+    fun hideSearch() {
+        updateUiState {
+            applySearchResult(
+                it.copy(
+                    isSearching = false,
+                    searchQuery = ""
+                )
+            )
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        updateUiState {
+            applySearchResult(it.copy(searchQuery = query))
+        }
+    }
+
     fun addNewShortcut(launcherInfo: LauncherInfo, shortcutInfo: LauncherInfo.ShortcutInfo) {
         updateUiState {
-            val index = it.createShortcuts.indexOfFirst { info ->
+            val index = it.rawCreateShortcuts.indexOfFirst { info ->
                 info.qualifiedName == launcherInfo.qualifiedName
             }
             if (index < 0) {
                 return@updateUiState it
             }
-            val newList = it.createShortcuts.toMutableList().apply {
-                val cache = it.createShortcuts[index]
+            val newList = it.rawCreateShortcuts.toMutableList().apply {
+                val cache = it.rawCreateShortcuts[index]
                 set(index, cache.copy(shortcuts = cache.shortcuts + shortcutInfo))
             }
-            it.copy(createShortcuts = newList)
+            applySearchResult(it.copy(rawCreateShortcuts = newList))
         }
     }
 
@@ -115,18 +139,25 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     fun toggleMiniWindow(appInfo: AppInfo) {
         val switchToMiniWindow = !appInfo.miniWindow
         updateUiState {
-            val block: (MutableList<Any>) -> MutableList<Any> = { list ->
-                val index = list.indexOf(appInfo)
-                if (index != -1) {
-                    val newAppInfo = appInfo.copy(miniWindow = switchToMiniWindow)
-                    list[index] = newAppInfo
+            val updatedApp = appInfo.copy(miniWindow = switchToMiniWindow)
+            val newRawApps = it.rawApps.map { item ->
+                if (item.qualifiedName == appInfo.qualifiedName) {
+                    updatedApp
+                } else {
+                    item
                 }
-                list
             }
-            it.copy(
-                apps = block(it.apps.toMutableList()) as List<AppInfo>,
-                selectedRecord = it.selectedRecord.copy(
-                    list = block(it.selectedRecord.list.toMutableList())
+            val newSelectedList = it.selectedRecord.list.map { item ->
+                if (item is AppInfo && item.qualifiedName == appInfo.qualifiedName) {
+                    updatedApp
+                } else {
+                    item
+                }
+            }
+            applySearchResult(
+                it.copy(
+                    rawApps = newRawApps,
+                    selectedRecord = it.selectedRecord.copy(list = newSelectedList)
                 )
             )
         }
@@ -134,6 +165,71 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             toast(R.string.enable_mini_window)
         } else {
             toast(R.string.disable_mini_window)
+        }
+    }
+
+    private fun applySearchResult(uiState: UiState): UiState {
+        return uiState.copy(
+            actions = filterActions(uiState.rawActions, uiState.searchQuery),
+            apps = filterAppInfos(uiState.rawApps, uiState.searchQuery),
+            createShortcuts = filterLauncherInfos(uiState.rawCreateShortcuts, uiState.searchQuery),
+            launchShortcuts = filterLauncherInfos(uiState.rawLaunchShortcuts, uiState.searchQuery)
+        )
+    }
+
+    private fun filterActions(actions: List<Action>, query: String): List<Action> {
+        if (query.isBlank()) return actions
+        val context = App.getContext()
+        return actions.filter { action ->
+            matchesSearchQuery(
+                query = query,
+                values = arrayOf(context.actionText(action, emptyIfNone = false))
+            )
+        }
+    }
+
+    private fun filterAppInfos(appInfos: List<AppInfo>, query: String): List<AppInfo> {
+        if (query.isBlank()) return appInfos
+        return appInfos.filter { appInfo ->
+            matchesSearchQuery(
+                query = query,
+                values = arrayOf(appInfo.label, appInfo.packageName)
+            )
+        }
+    }
+
+    private fun filterLauncherInfos(
+        launcherInfos: List<LauncherInfo>,
+        query: String
+    ): List<LauncherInfo> {
+        if (query.isBlank()) return launcherInfos
+        return launcherInfos.mapNotNull { launcherInfo ->
+            val filteredShortcuts = launcherInfo.shortcuts.filter { shortcutInfo ->
+                matchesSearchQuery(
+                    query = query,
+                    values = arrayOf(shortcutInfo.label, shortcutInfo.packageName)
+                )
+            }
+            val launcherMatched = matchesSearchQuery(
+                query = query,
+                values = arrayOf(launcherInfo.label, launcherInfo.packageName)
+            )
+            if (!launcherMatched && filteredShortcuts.isEmpty()) {
+                null
+            } else {
+                launcherInfo.copy(shortcuts = filteredShortcuts)
+            }
+        }
+    }
+
+    private fun matchesSearchQuery(
+        query: String,
+        values: Array<String?>
+    ): Boolean {
+        val normalizedQuery = query.trim()
+        if (normalizedQuery.isEmpty()) return true
+        return values.any { value ->
+            value?.contains(normalizedQuery, ignoreCase = true) == true
         }
     }
 
@@ -199,9 +295,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             }
             if (uiState.selectSingle) {
                 updateUiState {
-                    it.copy(
-                        createShortcuts = createLauncherInfos,
-                        launchShortcuts = launchLauncherInfos
+                    applySearchResult(
+                        it.copy(
+                            rawCreateShortcuts = createLauncherInfos,
+                            rawLaunchShortcuts = launchLauncherInfos
+                        )
                     )
                 }
                 return@launchWithLoading
@@ -261,10 +359,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 list1 + list2
             }
             updateUiState {
-                it.copy(
-                    createShortcuts = finalCreateList,
-                    launchShortcuts = finalLaunchList,
-                    selectedRecord = selectedRecord
+                applySearchResult(
+                    it.copy(
+                        rawCreateShortcuts = finalCreateList,
+                        rawLaunchShortcuts = finalLaunchList,
+                        selectedRecord = selectedRecord
+                    )
                 )
             }
             uiState
@@ -291,7 +391,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             }
             if (uiState.selectSingle) {
                 updateUiState {
-                    it.copy(apps = appInfos)
+                    applySearchResult(it.copy(rawApps = appInfos))
                 }
                 return@launchWithLoading
             }
@@ -334,9 +434,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 list1 + list2
             }
             updateUiState {
-                it.copy(
-                    apps = finalList,
-                    selectedRecord = selectedRecord
+                applySearchResult(
+                    it.copy(
+                        rawApps = finalList,
+                        selectedRecord = selectedRecord
+                    )
                 )
             }
         }
@@ -442,7 +544,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 }
             }
             if (it.selectSingle) {
-                return@updateUiState it.copy(actions = allActions)
+                return@updateUiState applySearchResult(it.copy(rawActions = allActions))
             }
             val allWithoutNone = allActions.apply { removeAt(0) }
             val list1 = mutableListOf<Action>()
@@ -455,7 +557,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 }
             }
             val finalList = list1 + list2
-            it.copy(actions = finalList)
+            applySearchResult(it.copy(rawActions = finalList))
         }
     }
 
@@ -643,6 +745,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
+        val isSearching: Boolean = false,
+        val searchQuery: String = "",
+        val rawActions: List<Action> = emptyList(),
+        val rawApps: List<AppInfo> = emptyList(),
+        val rawCreateShortcuts: List<LauncherInfo> = emptyList(),
+        val rawLaunchShortcuts: List<LauncherInfo> = emptyList(),
         val actions: List<Action> = emptyList(),
         val apps: List<AppInfo> = emptyList(),
         val createShortcuts: List<LauncherInfo> = emptyList(),

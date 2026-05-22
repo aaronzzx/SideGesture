@@ -110,6 +110,10 @@
     <string name="bottom">下</string>
     <string name="fast">快</string>
     <string name="slow">慢</string>
+    <string name="search">搜索</string>
+    <string name="close_search">关闭搜索</string>
+    <string name="clear_search">清空搜索</string>
+    <string name="search_actions_apps_shortcuts">搜索名称/包名</string>
     <string name="long_slide_action">长距离滑动</string>
     <string name="long_slide_trigger_immediately">立即触发</string>
     <string name="long_slide_trigger_immediately_hint">识别到手势立即触发，而不是等到抬手</string>
