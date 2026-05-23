@@ -34,6 +34,29 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
+    fun showSearch() {
+        updateUiState {
+            it.copy(isSearching = true)
+        }
+    }
+
+    fun hideSearch() {
+        updateUiState {
+            applySearchResult(
+                it.copy(
+                    isSearching = false,
+                    searchQuery = ""
+                )
+            )
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        updateUiState {
+            applySearchResult(it.copy(searchQuery = query))
+        }
+    }
+
     fun selectApp(appInfo: AppInfo, selected: Boolean) {
         updateUiState {
             val mutableList = it.excludeApps.toMutableList()
@@ -42,7 +65,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
             } else {
                 mutableList.remove(appInfo.packageName)
             }
-            it.copy(excludeApps = mutableList)
+            applySearchResult(it.copy(excludeApps = mutableList))
         }
     }
 
@@ -68,6 +91,9 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
             }
         }.invokeOnCompletion {
             if (it == null) {
+                updateUiState { uiState ->
+                    applySearchResult(uiState.copy(excludeApps = emptyList()))
+                }
                 toast(R.string.reset_success)
             } else {
                 toast(R.string.reset_failure)
@@ -99,43 +125,101 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
                 .take(1)
                 .collectLatest { item ->
                     updateUiState {
-                        it.copy(excludeApps = item.excludeApps)
+                        applySearchResult(it.copy(excludeApps = item.excludeApps))
                     }
                 }
         }
     }
 
-    private suspend fun arrangeAppInfos(appInfos: List<AppInfo>) {
-        val selectedList = mutableListOf<AppInfo>()
-        val unselectedList = mutableListOf<AppInfo>()
-        val excludeApps = uiState.excludeApps.toMutableList()
-        withContext(Dispatchers.Default) {
-            excludeApps.apply {
-                val packageNames = appInfos.map { app -> app.packageName }
-                removeAll { packageName -> packageName !in packageNames }
-            }
-            appInfos.forEach { info ->
-                if (info.packageName in excludeApps) {
-                    selectedList.add(info)
-                } else {
-                    unselectedList.add(info)
-                }
-            }
-        }
-        updateUiState {
-            it.copy(
-                excludeApps = excludeApps,
-                selectedAppInfos = selectedList,
-                unselectedAppInfos = unselectedList
+    private fun applySearchResult(uiState: UiState): UiState {
+        return arrangeAppInfos(uiState.rawAppInfos, uiState.excludeApps, uiState.searchQuery).let {
+            uiState.copy(
+                excludeApps = it.excludeApps,
+                selectedAppInfos = it.selectedAppInfos,
+                unselectedAppInfos = it.unselectedAppInfos
             )
         }
     }
 
+    private fun filterAppInfos(appInfos: List<AppInfo>, query: String): List<AppInfo> {
+        if (query.isBlank()) return appInfos
+        return appInfos.filter { appInfo ->
+            matchesSearchQuery(
+                query = query,
+                values = arrayOf(appInfo.label, appInfo.packageName)
+            )
+        }
+    }
+
+    private fun matchesSearchQuery(
+        query: String,
+        values: Array<String?>
+    ): Boolean {
+        val normalizedQuery = query.trim()
+        if (normalizedQuery.isEmpty()) return true
+        return values.any { value ->
+            value?.contains(normalizedQuery, ignoreCase = true) == true
+        }
+    }
+
+    private suspend fun arrangeAppInfos(appInfos: List<AppInfo>) {
+        val arrangedState = withContext(Dispatchers.Default) {
+            val arranged = arrangeAppInfos(
+                appInfos = appInfos,
+                excludeApps = uiState.excludeApps,
+                query = uiState.searchQuery
+            )
+            arranged
+        }
+        updateUiState {
+            it.copy(
+                rawAppInfos = appInfos,
+                excludeApps = arrangedState.excludeApps,
+                selectedAppInfos = arrangedState.selectedAppInfos,
+                unselectedAppInfos = arrangedState.unselectedAppInfos
+            )
+        }
+    }
+
+    private fun arrangeAppInfos(
+        appInfos: List<AppInfo>,
+        excludeApps: List<String>,
+        query: String
+    ): ArrangedAppInfos {
+        val selectedList = mutableListOf<AppInfo>()
+        val unselectedList = mutableListOf<AppInfo>()
+        val validExcludeApps = excludeApps.toMutableList().apply {
+            val packageNames = appInfos.map { app -> app.packageName }
+            removeAll { packageName -> packageName !in packageNames }
+        }
+        filterAppInfos(appInfos, query).forEach { info ->
+            if (info.packageName in validExcludeApps) {
+                selectedList.add(info)
+            } else {
+                unselectedList.add(info)
+            }
+        }
+        return ArrangedAppInfos(
+            excludeApps = validExcludeApps,
+            selectedAppInfos = selectedList,
+            unselectedAppInfos = unselectedList
+        )
+    }
+
     data class UiState(
+        val isSearching: Boolean = false,
+        val searchQuery: String = "",
+        val rawAppInfos: List<AppInfo> = emptyList(),
         val selectedAppInfos: List<AppInfo> = emptyList(),
         val unselectedAppInfos: List<AppInfo> = emptyList(),
         val excludeApps: List<String> = emptyList(),
         val showResetWarningDialog: Boolean = false
+    )
+
+    private data class ArrangedAppInfos(
+        val excludeApps: List<String>,
+        val selectedAppInfos: List<AppInfo>,
+        val unselectedAppInfos: List<AppInfo>
     )
 
     sealed interface UiEvent

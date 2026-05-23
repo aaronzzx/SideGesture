@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.ui.screen.appblacklist
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,7 +36,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -58,6 +62,7 @@ import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
+import com.aaron.sidegesture.ui.widget.SearchTopBarField
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -104,15 +109,45 @@ fun AppBlacklistScreen(
                 TopBar(
                     onBack = onBack,
                     title = stringResource(id = R.string.exclude_app),
-                    actions = {
-                        if (permissionState.status.isGranted) {
-                            IconButton(onClick = { vm.showResetWarningDialog(true) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Restore,
-                                    contentDescription = "Reset"
+                    titleContent = {
+                        AnimatedContent(
+                            targetState = uiState.isSearching,
+                            contentAlignment = Alignment.Center
+                        ) { searching ->
+                            if (searching) {
+                                SearchTopBarField(
+                                    query = uiState.searchQuery,
+                                    onQueryChange = vm::updateSearchQuery,
+                                    onClose = vm::hideSearch,
+                                    delayOnClose = false
+                                )
+                            } else {
+                                Text(
+                                    text = stringResource(id = R.string.exclude_app),
+                                    style = TextStyle(fontSize = 18.sp)
                                 )
                             }
-                            IconButton(onClick = { vm.done() }) {
+                        }
+                    },
+                    actions = {
+                        if (permissionState.status.isGranted) {
+                            if (!uiState.isSearching) {
+                                IconButton(onClick = vm::showSearch) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = stringResource(id = R.string.search)
+                                    )
+                                }
+                            }
+                            if (!uiState.isSearching) {
+                                IconButton(onClick = { vm.showResetWarningDialog(true) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Restore,
+                                        contentDescription = "Reset"
+                                    )
+                                }
+                            }
+                            IconButton(onClick = vm::done) {
                                 Icon(
                                     imageVector = Icons.Default.Done,
                                     contentDescription = "Done"
@@ -143,7 +178,10 @@ fun AppBlacklistScreen(
                                 )
                             }
                         ) {
-                            listOf(uiState.selectedAppInfos, uiState.unselectedAppInfos).fastForEach { list ->
+                            listOf(
+                                uiState.selectedAppInfos,
+                                uiState.unselectedAppInfos
+                            ).fastForEach { list ->
                                 items(
                                     items = list,
                                     key = { it.qualifiedName }
