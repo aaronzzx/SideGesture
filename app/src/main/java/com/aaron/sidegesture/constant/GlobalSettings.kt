@@ -59,6 +59,8 @@ object GlobalSettings {
     const val MaxMoveScreenHover = 1000f
     const val MinGotoBottomStrength = 1f
     const val MaxGotoBottomStrength = 20f
+    const val MinShellCommandTimeoutSec = 3f
+    const val MaxShellCommandTimeoutSec = 30f
     const val MinGestureButtonPosition = 0f
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f

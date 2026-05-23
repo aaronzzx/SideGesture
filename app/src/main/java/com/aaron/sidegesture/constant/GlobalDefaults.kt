@@ -212,4 +212,6 @@ object ActionSettingsDefaults {
     const val MoveScreenRate = 2f
     const val MoveScreenHoverDelayMs = 600L
     const val GotoBottomStrength = 10
+    const val ShellCommandTimeoutMs = 10_000L
+    const val ShellCommandMaxOutputLength = 4096
 }

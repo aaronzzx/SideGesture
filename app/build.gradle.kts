@@ -54,6 +54,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -64,6 +65,7 @@ android {
         jvmTarget = "17"
     }
     buildFeatures {
+        aidl = true
         compose = true
         buildConfig = true
     }
@@ -88,4 +90,7 @@ dependencies {
     implementation(libs.compose.colorpicker)
     implementation(libs.material.icons.extended)
     implementation(libs.sh.calvin.reorderable)
+    implementation(libs.dev.rikka.shizuku.api)
+    implementation(libs.dev.rikka.shizuku.provider)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

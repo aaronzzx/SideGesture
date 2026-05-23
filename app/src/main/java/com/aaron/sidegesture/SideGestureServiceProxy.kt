@@ -38,10 +38,12 @@ import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
 import com.aaron.sidegesture.ktx.launchShortcutInfo
 import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
+import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
+import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.JsonHelper
@@ -333,6 +335,33 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     AccessibilityUtils.fastVerticalScroll(host, false, strength)
                 } else {
                     showVersionTooLowToast(this, R.string.action_goto_bottom)
+                }
+            }
+            GlobalActions.SHIZUKU_SHELL -> {
+                val command = action.shellCommandActionData?.command.orEmpty()
+                if (command.isBlank()) {
+                    showToast(R.string.shell_command_empty)
+                    return
+                }
+                coroutineScope.launch(Dispatchers.IO) {
+                    val result = ShizukuShellManager.execute(command)
+                    if (result.isSuccess) {
+                        return@launch
+                    }
+                    val message = when {
+                        result.timedOut -> getString(R.string.shell_execute_timeout)
+                        result.errorMessage == "Shizuku permission denied" ||
+                                result.errorMessage == "Shizuku binder unavailable" -> {
+                            getString(R.string.shizuku_permission_required)
+                        }
+                        result.errorMessage.isNotBlank() -> {
+                            getString(R.string.shell_execute_failed, result.errorMessage)
+                        }
+                        else -> {
+                            getString(R.string.shell_execute_failed, result.stderr.ifBlank { "-" })
+                        }
+                    }
+                    showToast(message)
                 }
             }
         }

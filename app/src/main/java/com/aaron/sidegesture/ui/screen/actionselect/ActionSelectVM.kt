@@ -16,6 +16,7 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.ktx.actionText
@@ -24,8 +25,11 @@ import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.qualifiedNameWithIntents
+import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.subscribeEvent
+import com.aaron.sidegesture.shizuku.ShellResult
+import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -57,9 +61,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     private val eventHandler = EventHandler()
 
     val actionSettingsDialog = ActionSettingsDialog()
+    val shellActionDialog = ShellActionDialog()
 
     init {
         eventHandler.init()
+        observeShizukuStatus()
         loadData()
     }
 
@@ -248,6 +254,82 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     private fun selectAction(action: Action, selected: Boolean) {
         updateUiState {
             it.copy(selectedRecord = it.selectedRecord.selectAction(action, selected))
+        }
+    }
+
+    fun updateShellCommand(command: String) {
+        updateUiState {
+            it.copy(shellActionDialog = it.shellActionDialog.copy(command = command))
+        }
+    }
+
+    fun requestShizukuPermission() {
+        viewModelScope.launch {
+            val granted = ShizukuShellManager.requestPermission()
+            if (!granted) {
+                toast(R.string.shizuku_permission_required)
+            }
+        }
+    }
+
+    fun testShellCommand() {
+        val command = uiState.shellActionDialog.command
+        if (command.isBlank()) {
+            toast(R.string.shell_command_empty)
+            return
+        }
+        viewModelScope.launch {
+            updateUiState {
+                it.copy(
+                    shellActionDialog = it.shellActionDialog.copy(
+                        isTesting = true,
+                        testResult = null
+                    )
+                )
+            }
+            val result = ShizukuShellManager.execute(command)
+            updateUiState {
+                it.copy(
+                    shellActionDialog = it.shellActionDialog.copy(
+                        isTesting = false,
+                        testResult = result
+                    )
+                )
+            }
+        }
+    }
+
+    fun saveShellAction() {
+        val command = uiState.shellActionDialog.command
+        if (command.isBlank()) {
+            toast(R.string.shell_command_empty)
+            return
+        }
+        val action = Action(
+            value = GlobalActions.SHIZUKU_SHELL,
+            data = JsonHelper.encodeToString(ShellCommandActionData(command = command))
+        )
+        updateUiState {
+            it.copy(
+                selectedRecord = it.selectedRecord.upsertAction(action),
+                shellActionDialog = UiState.ShellActionDialogValue()
+            )
+        }
+        assembleData()
+        if (uiState.selectSingle) {
+            saveSettings()
+        }
+    }
+
+    private fun observeShizukuStatus() {
+        viewModelScope.launch {
+            ShizukuShellManager.statusFlow.collectLatest { status ->
+                updateUiState {
+                    it.copy(
+                        shellActionDialog = it.shellActionDialog.copy(status = status)
+                    )
+                }
+            }
         }
     }
 
@@ -742,6 +824,26 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    inner class ShellActionDialog {
+
+        fun show(show: Boolean, action: Action = Action(value = GlobalActions.SHIZUKU_SHELL)) {
+            updateUiState {
+                if (!show) {
+                    return@updateUiState it.copy(shellActionDialog = UiState.ShellActionDialogValue())
+                }
+                val selectedAction = it.selectedRecord.findAction(action.value) ?: action
+                it.copy(
+                    shellActionDialog = UiState.ShellActionDialogValue(
+                        show = true,
+                        action = selectedAction,
+                        command = selectedAction.shellCommandActionData?.command.orEmpty(),
+                        status = ShizukuShellManager.currentStatus()
+                    )
+                )
+            }
+        }
+    }
+
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
@@ -757,6 +859,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val launchShortcuts: List<LauncherInfo> = emptyList(),
         val selectedRecord: SelectedRecord = SelectedRecord(),
         val actionSettingsDialog: ActionSettingsDialogValue = ActionSettingsDialogValue(false, Action.NONE),
+        val shellActionDialog: ShellActionDialogValue = ShellActionDialogValue(),
     ) {
         data class SelectedRecord(val list: List<Any> = emptyList()) {
 
@@ -782,14 +885,15 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             }
 
             fun selectAction(action: Action, selected: Boolean): SelectedRecord {
-                val newList = list.toMutableList().apply {
-                    if (selected) {
-                        add(action)
-                    } else {
-                        remove(action)
-                    }
+                return if (selected) {
+                    upsertAction(action)
+                } else {
+                    this.copy(
+                        list = list.filterNot {
+                            it is Action && it.value == action.value
+                        }
+                    )
                 }
-                return this.copy(list = newList)
             }
 
             fun selectAppInfo(app: AppInfo, selected: Boolean): SelectedRecord {
@@ -852,14 +956,42 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         it is LauncherInfo.ShortcutInfo &&
                                 it.qualifiedNameWithIntents == obj.qualifiedNameWithIntents
                     } != null
+                } else if (obj is Action) {
+                    return list.any {
+                        it is Action && it.value == obj.value
+                    }
                 }
                 return obj in list
+            }
+
+            fun findAction(value: String): Action? {
+                return list.filterIsInstance<Action>().find { it.value == value }
+            }
+
+            fun upsertAction(action: Action): SelectedRecord {
+                val index = list.indexOfFirst { it is Action && it.value == action.value }
+                if (index == -1) {
+                    return copy(list = list + action)
+                }
+                val newList = list.toMutableList().apply {
+                    set(index, action)
+                }
+                return copy(list = newList)
             }
         }
 
         data class ActionSettingsDialogValue(
             val show: Boolean,
             val action: Action
+        )
+
+        data class ShellActionDialogValue(
+            val show: Boolean = false,
+            val action: Action = Action(value = GlobalActions.SHIZUKU_SHELL),
+            val command: String = "",
+            val status: ShizukuShellManager.ShizukuStatus = ShizukuShellManager.currentStatus(),
+            val isTesting: Boolean = false,
+            val testResult: ShellResult? = null
         )
     }
 

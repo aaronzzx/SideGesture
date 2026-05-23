@@ -9,6 +9,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.LauncherInfo
+import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.utils.JsonHelper
 
@@ -19,14 +20,27 @@ import com.aaron.sidegesture.utils.JsonHelper
 
 val Action.appInfo: AppInfo? get() {
     if (value == GlobalActions.EXTRA_LAUNCH_APP) {
-        return JsonHelper.decodeFromString<AppInfo>(data)
+        return runCatching {
+            JsonHelper.decodeFromString<AppInfo>(data)
+        }.getOrNull()
     }
     return null
 }
 
 val Action.shortcutInfo: LauncherInfo.ShortcutInfo? get() {
     if (value == GlobalActions.EXTRA_LAUNCH_SHORTCUT) {
-        return JsonHelper.decodeFromString<LauncherInfo.ShortcutInfo>(data)
+        return runCatching {
+            JsonHelper.decodeFromString<LauncherInfo.ShortcutInfo>(data)
+        }.getOrNull()
+    }
+    return null
+}
+
+val Action.shellCommandActionData: ShellCommandActionData? get() {
+    if (value == GlobalActions.SHIZUKU_SHELL) {
+        return runCatching {
+            JsonHelper.decodeFromString<ShellCommandActionData>(data)
+        }.getOrNull()
     }
     return null
 }

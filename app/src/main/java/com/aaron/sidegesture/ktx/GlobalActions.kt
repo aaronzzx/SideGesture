@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Splitscreen
 import androidx.compose.material.icons.filled.SportsBaseball
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material.icons.filled.ViewCarousel
@@ -47,6 +48,14 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ui.theme.icons.PlayPause
+
+private fun Action.shellPreview(): String {
+    val command = shellCommandActionData?.command.orEmpty().trim()
+    if (command.isEmpty()) {
+        return ""
+    }
+    return command.lineSequence().firstOrNull().orEmpty().take(24)
+}
 
 /**
  * @author aaronzzxup@gmail.com
@@ -104,6 +113,10 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
     GlobalActions.KEEP_SCREEN_ON -> getString(R.string.action_keep_screen_on)
     GlobalActions.BACK_TO_TOP -> getString(R.string.action_back_to_top)
     GlobalActions.GOTO_BOTTOM -> getString(R.string.action_goto_bottom)
+    GlobalActions.SHIZUKU_SHELL -> action.shellPreview()
+        .takeIf { it.isNotEmpty() }
+        ?.let { preview -> getString(R.string.action_shizuku_shell_preview, preview) }
+        ?: getString(R.string.action_shizuku_shell)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -159,6 +172,10 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
     GlobalActions.KEEP_SCREEN_ON -> stringResource(R.string.action_keep_screen_on)
     GlobalActions.BACK_TO_TOP -> stringResource(R.string.action_back_to_top)
     GlobalActions.GOTO_BOTTOM -> stringResource(R.string.action_goto_bottom)
+    GlobalActions.SHIZUKU_SHELL -> action.shellPreview()
+        .takeIf { it.isNotEmpty() }
+        ?.let { preview -> stringResource(R.string.action_shizuku_shell_preview, preview) }
+        ?: stringResource(R.string.action_shizuku_shell)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -219,5 +236,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.KEEP_SCREEN_ON -> Icons.Default.WbSunny
     GlobalActions.BACK_TO_TOP -> Icons.Default.VerticalAlignTop
     GlobalActions.GOTO_BOTTOM -> Icons.Default.VerticalAlignBottom
+    GlobalActions.SHIZUKU_SHELL -> Icons.Default.Terminal
     else -> null
 }

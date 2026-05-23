@@ -18,7 +18,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -62,9 +64,13 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
+import com.aaron.sidegesture.ktx.shellCommandActionData
+import com.aaron.sidegesture.shizuku.ShellResult
+import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
+import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.ShellActionDialogValue
 import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
 import com.aaron.sidegesture.ui.theme.DialogTitlePadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
@@ -509,5 +515,127 @@ fun ActionSettingsDialog(
         },
         dismissButton = {
         }
+    )
+}
+
+@Composable
+fun ShellActionSettingsDialog(
+    onDismissRequest: () -> Unit,
+    value: ShellActionDialogValue,
+    onCommandChange: (String) -> Unit,
+    onRequestPermission: () -> Unit,
+    onTest: () -> Unit,
+    onSave: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = stringResource(R.string.action_shizuku_shell))
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+            ) {
+                Text(
+                    text = shellDialogStatusText(value.status),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = value.command,
+                    onValueChange = onCommandChange,
+                    label = {
+                        Text(text = stringResource(R.string.shell_command))
+                    },
+                    placeholder = {
+                        Text(text = stringResource(R.string.shell_command_hint))
+                    },
+                    minLines = 4
+                )
+                value.action.shellCommandActionData?.command
+                    ?.takeIf { it.isNotBlank() && it != value.command }
+                    ?.let {
+                        Text(
+                            text = stringResource(R.string.shell_command_previous_preview, it.lineSequence().firstOrNull().orEmpty()),
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                value.testResult?.let { result ->
+                    Text(
+                        text = shellResultText(result),
+                        color = if (result.isSuccess) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onRequestPermission) {
+                    Text(text = stringResource(R.string.shizuku_request_permission))
+                }
+                TextButton(
+                    onClick = onTest,
+                    enabled = !value.isTesting
+                ) {
+                    Text(
+                        text = if (value.isTesting) {
+                            stringResource(R.string.testing)
+                        } else {
+                            stringResource(R.string.shell_test)
+                        }
+                    )
+                }
+                TextButton(onClick = onSave) {
+                    Text(text = stringResource(R.string.save))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun shellDialogStatusText(status: ShizukuShellManager.ShizukuStatus): String {
+    val stateText = when {
+        status.permissionGranted -> stringResource(R.string.shizuku_status_ready)
+        status.binderAlive -> stringResource(R.string.shizuku_status_no_permission)
+        status.installed -> stringResource(R.string.shizuku_status_not_running)
+        else -> stringResource(R.string.shizuku_status_not_installed)
+    }
+    return stringResource(
+        R.string.shizuku_status_summary,
+        stateText,
+        status.executorLabel
+    )
+}
+
+@Composable
+private fun shellResultText(result: ShellResult): String {
+    val stderr = result.stderr.ifBlank { "-" }
+    val stdout = result.stdout.ifBlank { "-" }
+    val error = result.errorMessage.ifBlank { "-" }
+    return stringResource(
+        R.string.shell_test_result,
+        result.exitCode.toString(),
+        result.timedOut.toString(),
+        error,
+        stdout,
+        stderr
     )
 }

@@ -135,6 +135,7 @@
     <string name="reset_gesture_angles_warning_desc">这将会清除现有的全局手势角度设置，并恢复到初始设置，不包含触钮自定义的部分。</string>
     <string name="cancel">取消</string>
     <string name="confirm">确认</string>
+    <string name="save">保存</string>
     <string name="save_success">保存成功</string>
     <string name="save_failure">保存失败</string>
     <string name="reset_success">重置成功</string>
@@ -259,6 +260,8 @@
     <string name="action_keep_screen_on">屏幕常亮</string>
     <string name="action_back_to_top">快速回顶部(7.0+ 模拟滑动)</string>
     <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>
+    <string name="action_shizuku_shell">执行 Shell 命令</string>
+    <string name="action_shizuku_shell_preview">Shell: %1$s</string>
 
     <string name="bug_collecting">异常收集</string>
     <string name="cannot_find_app_for_open_this_file">没有找到可以打开该文件的应用</string>
@@ -315,4 +318,20 @@
     <string name="copy_another_side_button">复制对侧触钮</string>
     <string name="copy_another_side_button_tips">将对侧触钮配置复制到当前触钮下。</string>
     <string name="drag_icon_to_reorder_click_to_unselect">长按拖拽图标进行排序，单击图标取消选中</string>
+    <string name="shell_command">Shell 命令</string>
+    <string name="shell_command_hint">例如：pm list packages | head</string>
+    <string name="shell_command_empty">命令不能为空</string>
+    <string name="shell_command_previous_preview">当前已保存：%1$s</string>
+    <string name="shell_test">测试</string>
+    <string name="testing">测试中</string>
+    <string name="shell_test_result">exit=%1$s timedOut=%2$s\nerror=%3$s\nstdout:\n%4$s\n\nstderr:\n%5$s</string>
+    <string name="shell_execute_timeout">Shell 命令执行超时</string>
+    <string name="shell_execute_failed">Shell 执行失败：%1$s</string>
+    <string name="shizuku_request_permission">请求授权</string>
+    <string name="shizuku_permission_required">请先连接并授权 Shizuku</string>
+    <string name="shizuku_status_ready">已就绪</string>
+    <string name="shizuku_status_no_permission">未授权</string>
+    <string name="shizuku_status_not_running">未连接</string>
+    <string name="shizuku_status_not_installed">未安装</string>
+    <string name="shizuku_status_summary">Shizuku：%1$s · %2$s</string>
 </resources>

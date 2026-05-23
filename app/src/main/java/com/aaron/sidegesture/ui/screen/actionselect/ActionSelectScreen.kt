@@ -128,6 +128,7 @@ import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.ActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.SearchTopBarField
+import com.aaron.sidegesture.ui.widget.ShellActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.utils.VibrateUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -168,6 +169,16 @@ fun ActionSelectScreen(
             ActionSettingsDialog(
                 onDismissRequest = { vm.actionSettingsDialog.show(false) },
                 action = uiState.actionSettingsDialog.action
+            )
+        }
+        if (uiState.shellActionDialog.show) {
+            ShellActionSettingsDialog(
+                onDismissRequest = { vm.shellActionDialog.show(false) },
+                value = uiState.shellActionDialog,
+                onCommandChange = vm::updateShellCommand,
+                onRequestPermission = vm::requestShizukuPermission,
+                onTest = vm::testShellCommand,
+                onSave = vm::saveShellAction
             )
         }
 
@@ -313,7 +324,11 @@ fun ActionSelectScreen(
                                     vm.select(action, selected)
                                 },
                                 onSettingsClick = { action ->
-                                    vm.actionSettingsDialog.show(true, action)
+                                    if (action.value == GlobalActions.SHIZUKU_SHELL) {
+                                        vm.shellActionDialog.show(true, action)
+                                    } else {
+                                        vm.actionSettingsDialog.show(true, action)
+                                    }
                                 }
                             )
                         }
@@ -617,11 +632,17 @@ private fun ActionPage(
                 selectSingle = selectSingle,
                 enabled = canActionEnabled(selectedRecord, item, maxSelectCount),
                 onSelect = { selected ->
-                    onSelect(item, selected)
+                    val isShellAction = item.value == GlobalActions.SHIZUKU_SHELL
+                    val isSelected = selectedRecord.isSelected(item)
+                    when {
+                        isShellAction && (selectSingle || !isSelected) -> onSettingsClick(item)
+                        else -> onSelect(item, selected)
+                    }
                 },
                 showSettings = item.value == GlobalActions.MOVE_SCREEN ||
                     item.value == GlobalActions.PREVIOUS_APP ||
-                    item.value == GlobalActions.GOTO_BOTTOM,
+                    item.value == GlobalActions.GOTO_BOTTOM ||
+                    item.value == GlobalActions.SHIZUKU_SHELL,
                 onSettingsClick = {
                     onSettingsClick(item)
                 }

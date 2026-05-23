@@ -7,6 +7,7 @@ import com.aaron.compose.component.UDFComponentDefaults
 import com.aaron.sidegesture.defaults.UDFComponentDefaultsImpl
 import com.aaron.sidegesture.utils.CrashHandler
 import me.weishu.reflection.Reflection
+import rikka.shizuku.ShizukuProvider
 
 /**
  * @author aaronzzxup@gmail.com
@@ -25,6 +26,7 @@ class App : Application() {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
+        ShizukuProvider.enableMultiProcessSupport(true)
         Reflection.unseal(base)
     }
 
