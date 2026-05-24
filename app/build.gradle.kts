@@ -14,8 +14,8 @@ android {
         applicationId = "gulu.gulugulu"
         minSdk = 23
         targetSdk = 35
-        versionCode = 10405
-        versionName = "1.4.5"
+        versionCode = 10500
+        versionName = "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
