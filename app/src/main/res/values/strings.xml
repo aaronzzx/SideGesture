@@ -337,7 +337,7 @@
     <string name="quick_tools_shizuku_required">需要先连接并授权 Shizuku</string>
     <string name="quick_tools_write_settings_required">需要允许修改系统设置</string>
     <string name="quick_tools_open_write_settings">去授权修改系统设置</string>
-    <string name="quick_tools_open_listener_settings">去开启通知使用权</string>
+    <string name="quick_tools_open_listener_settings">点击前往授权媒体控制</string>
     <string name="quick_tools_media_permission_title">通知使用权未开启</string>
     <string name="quick_tools_media_permission_hint">开启后才能读取当前媒体信息并控制播放</string>
     <string name="quick_tools_no_media">暂无可控制的媒体会话</string>

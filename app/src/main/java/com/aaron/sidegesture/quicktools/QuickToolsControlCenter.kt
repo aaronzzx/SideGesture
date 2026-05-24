@@ -583,34 +583,29 @@ private fun CompactMediaCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 if (!info.permissionGranted) {
-                    Text(
-                        text = stringResource(R.string.quick_tools_media_permission_title),
-                        fontSize = 11.sp,
-                        color = colors.onPanel,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = stringResource(R.string.quick_tools_media_permission_hint),
-                        fontSize = 10.sp,
-                        color = colors.subText,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Surface(
-                        modifier = Modifier.shapedClickable(RoundedCornerShape(12.dp)) {
-                            onInteraction()
-                            onOpenPermission()
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        color = colors.primary
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            text = stringResource(R.string.quick_tools_open_listener_settings),
-                            fontSize = 10.sp,
-                            color = colors.onPrimary,
-                            maxLines = 1
-                        )
+                        Surface(
+                            modifier = Modifier.shapedClickable(RoundedCornerShape(12.dp)) {
+                                onInteraction()
+                                onOpenPermission()
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = colors.primary
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                text = stringResource(R.string.quick_tools_open_listener_settings),
+                                color = colors.onPrimary,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                     return@Column
                 }
