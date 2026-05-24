@@ -29,6 +29,14 @@ data object AdvancedSettings
 
 @Keep
 @Serializable
+data object ShizukuSettings
+
+@Keep
+@Serializable
+data object QuickToolsConfig
+
+@Keep
+@Serializable
 data object AppBlacklist
 
 @Keep

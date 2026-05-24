@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material.icons.filled.RotateRight
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Screenshot
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Splitscreen
@@ -194,8 +192,8 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.NEXT_SONG -> Icons.Default.SkipNext
     GlobalActions.PREVIOUS_APP -> Icons.Default.Android
     GlobalActions.WEB_FORWARD -> Icons.Default.Forward
-    GlobalActions.OPEN_NOTIFICATION_PANEL -> Icons.Default.Notifications
-    GlobalActions.OPEN_QUICK_PANEL -> Icons.Default.Settings
+    GlobalActions.OPEN_NOTIFICATION_PANEL -> systemPanelIcon(SystemPanelIconType.NotificationPanel)
+    GlobalActions.OPEN_QUICK_PANEL -> systemPanelIcon(SystemPanelIconType.QuickSettingsPanel)
     GlobalActions.LOCK_SCREEN -> Icons.Default.ScreenLockPortrait
     GlobalActions.KILL_APP -> Icons.Default.Close
     GlobalActions.FLASHLIGHT -> Icons.Default.FlashlightOn

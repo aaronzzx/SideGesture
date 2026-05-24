@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.provider.Settings.SettingNotFoundException
 import android.text.TextUtils
 import android.view.KeyEvent
 import androidx.annotation.RequiresApi
@@ -252,6 +253,67 @@ fun Context.gotoOverlaySettings() {
 
 fun Context.gotoAppDetailSettings() {
     AppUtils.launchAppDetailsSettings(packageName)
+}
+
+fun Context.canWriteSystemSettings(): Boolean {
+    return Settings.System.canWrite(this)
+}
+
+fun Context.gotoManageWriteSettings() {
+    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+        data = Uri.parse("package:$packageName")
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching { startActivity(intent) }
+        .onFailure {
+            startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+}
+
+fun Context.gotoNotificationListenerSettings() {
+    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching { startActivity(intent) }
+        .onFailure {
+            startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+}
+
+fun Context.isNotificationListenerEnabled(clazz: Class<*>): Boolean {
+    val enabledListeners = Settings.Secure.getString(
+        contentResolver,
+        "enabled_notification_listeners"
+    ).orEmpty()
+    if (enabledListeners.isEmpty()) {
+        return false
+    }
+    val expected = ComponentName(this, clazz).flattenToString()
+    return enabledListeners.split(':').any { it.equals(expected, ignoreCase = true) }
+}
+
+fun Context.launchPackage(packageName: String): Boolean {
+    val intent = packageManager.getLaunchIntentForPackage(packageName) ?: return false
+    return runCatching {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }.isSuccess
+}
+
+fun Context.readSystemInt(name: String, defaultValue: Int = 0): Int {
+    return try {
+        Settings.System.getInt(contentResolver, name)
+    } catch (_: SettingNotFoundException) {
+        defaultValue
+    }
+}
+
+fun Context.readGlobalInt(name: String, defaultValue: Int = 0): Int {
+    return try {
+        Settings.Global.getInt(contentResolver, name)
+    } catch (_: SettingNotFoundException) {
+        defaultValue
+    }
 }
 
 fun Context.isAccessibilitySettingsOn(clazz: Class<out AccessibilityService?>): Boolean {

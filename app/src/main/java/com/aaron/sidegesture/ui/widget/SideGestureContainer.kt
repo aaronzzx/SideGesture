@@ -8,6 +8,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -51,6 +52,8 @@ import com.aaron.sidegesture.ktx.isEmptyOrNone
 import com.aaron.sidegesture.ktx.takeScreenshot
 import com.aaron.sidegesture.ktx.tryVibrateForLongSlide
 import com.aaron.sidegesture.ktx.tryVibrateForSlide
+import com.aaron.sidegesture.quicktools.QuickToolsControlCenter
+import com.aaron.sidegesture.quicktools.rememberQuickToolsControlCenterState
 import com.aaron.sidegesture.utils.DragGestureHandler
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.ConvertUtils
@@ -79,23 +82,44 @@ fun SideGestureContainer(
     actionPanelStyle: ActionPanelStyle = FolderStyle(),
     actionSettings: ActionSettings = ActionSettings(),
     advancedSettings: AdvancedSettings = AdvancedSettings(),
-    gestureSettings: GestureSettings = GestureSettings()
+    gestureSettings: GestureSettings = GestureSettings(),
+    onOverlayTouchChange: (Boolean) -> Unit = {},
+    hideQuickToolsSignal: Int = 0
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons, advancedSettings, gestureSettings)
     val actionPanelState = rememberActionPanelState()
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
+    val quickToolsState = rememberQuickToolsControlCenterState()
+
+    LaunchedEffect(hideQuickToolsSignal) {
+        if (hideQuickToolsSignal != 0) {
+            quickToolsState.hide()
+        }
+    }
+
+    fun handleAction(action: Action, finger: Offset, position: Position?) {
+        if (action == Action.NONE) {
+            return
+        }
+        if (action.value == GlobalActions.QUICK_TOOLS && position != null) {
+            quickToolsState.show(finger, position)
+            return
+        }
+        curOnAction(action)
+    }
 
     SideEffect {
         sideGestureState.onLongPress = { action ->
-            curOnAction(action)
+            handleAction(action, sideGestureState.finger, sideGestureState.button?.position)
             sideGestureState.cancel()
         }
     }
 
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
+            quickToolsState.hide()
             sideGestureState.onDragStart(offset, imePadding)
         },
         onDrag = onDrag@{ dragAmount ->
@@ -125,7 +149,11 @@ fun SideGestureContainer(
                             moveScreenState.onDragStart(sideGestureState.finger)
                             sideGestureState.cancel()
                         } else {
-                            curOnAction(actions.first())
+                            handleAction(
+                                actions.first(),
+                                sideGestureState.finger,
+                                button.position
+                            )
                             sideGestureState.cancel()
                         }
                     }
@@ -136,9 +164,11 @@ fun SideGestureContainer(
         },
         onDragEnd = onDragEnd@{
             if (actionPanelState.visible) {
+                val actionPanelFinger = actionPanelState.finger
+                val actionPanelPosition = actionPanelState.position
                 val action = actionPanelState.done()
                 actionPanelState.onDragEnd()
-                curOnAction(action)
+                handleAction(action, actionPanelFinger, actionPanelPosition)
             }
             if (moveScreenState.visible) {
                 val action = moveScreenState.done()
@@ -147,8 +177,10 @@ fun SideGestureContainer(
             }
 
             if (!sideGestureState.isCanceled) {
+                val sideGestureFinger = sideGestureState.finger
+                val sideGesturePosition = sideGestureState.button?.position
                 val action = sideGestureState.onDragEnd()
-                curOnAction(action)
+                handleAction(action, sideGestureFinger, sideGesturePosition)
             } else {
                 sideGestureState.reset()
             }
@@ -196,6 +228,14 @@ fun SideGestureContainer(
                 )
             }
         }
+
+        QuickToolsControlCenter(
+            modifier = Modifier.matchParentSize(),
+            service = context as SideGestureService,
+            settings = actionSettings.quickTools,
+            state = quickToolsState,
+            onOverlayTouchChange = onOverlayTouchChange
+        )
     }
 }
 

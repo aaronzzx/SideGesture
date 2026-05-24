@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.ActionSettings
@@ -87,8 +88,10 @@ class SideGestureService : ComponentAccessibilityService() {
     private var isNowInLockScreenPage = false
 
     private var volumeButtonSwitchSongJob: Job? = null
+    private val _quickToolsDismissSignal = MutableStateFlow(0)
 
     val coroutineScope = MainScope()
+    val quickToolsDismissSignal: StateFlow<Int> = _quickToolsDismissSignal.asStateFlow()
 
     var initialSettings: InitialSettings? = null
         private set
@@ -108,6 +111,7 @@ class SideGestureService : ComponentAccessibilityService() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                 isNowInLockScreenPage = true
+                dismissQuickTools()
             } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
                 isNowInLockScreenPage = false
             }
@@ -222,6 +226,8 @@ class SideGestureService : ComponentAccessibilityService() {
                             .actionSettings
                             .data
                             .collectAsStateWithLifecycle(initialValue = ActionSettings())
+                        val quickToolsDismissSignalState by quickToolsDismissSignal
+                            .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = sideButtons + bottomButtons,
@@ -234,9 +240,11 @@ class SideGestureService : ComponentAccessibilityService() {
                             onAction = { action ->
                                 proxy.onAction(action)
                             },
+                            onOverlayTouchChange = ::setOverlayTouchEnabled,
                             actionSettings = actionSettings,
                             advancedSettings = advancedSettings,
-                            gestureSettings = gestureSettings
+                            gestureSettings = gestureSettings,
+                            hideQuickToolsSignal = quickToolsDismissSignalState
                         )
                     }
                 }
@@ -440,6 +448,22 @@ class SideGestureService : ComponentAccessibilityService() {
                 packageManager.getLaunchIntentForPackage(it.activityInfo.packageName ?: "") == null
             }
         return resolves.any { it.activityInfo?.packageName == pkgName }
+    }
+
+    fun performAction(action: Action) {
+        proxy.onAction(action)
+    }
+
+    fun dismissQuickTools() {
+        _quickToolsDismissSignal.value++
+    }
+
+    fun setOverlayTouchEnabled(enabled: Boolean) {
+        val mainView = mainView ?: return
+        val lp = (mainView.layoutParams as WindowManager.LayoutParams).apply {
+            setFlags(enabled)
+        }
+        updateLayout(mainView, lp)
     }
 
     private class ImeInsetObserver(val context: Context) {

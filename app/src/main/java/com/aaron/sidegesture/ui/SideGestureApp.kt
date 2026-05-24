@@ -38,7 +38,9 @@ import com.aaron.sidegesture.entity.GestureButtonSettings
 import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
 import com.aaron.sidegesture.entity.IconResize
+import com.aaron.sidegesture.entity.QuickToolsConfig
 import com.aaron.sidegesture.entity.SectorActionPanelStyle
+import com.aaron.sidegesture.entity.ShizukuSettings
 import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.entity.WaveAnimationStyle
 import com.aaron.sidegesture.ktx.LocalNavController
@@ -59,6 +61,8 @@ import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettin
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
 import com.aaron.sidegesture.ui.screen.home.HomeScreen
 import com.aaron.sidegesture.ui.screen.iconresize.IconResizeScreen
+import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
+import com.aaron.sidegesture.ui.screen.shizuku.ShizukuSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import kotlin.reflect.KType
@@ -124,8 +128,15 @@ fun SideGestureApp() {
                         },
                         onNavToActionPanelStyle = {
                             navController.navigate(ActionPanelStyleSelect)
-                        }
+                        },
+                        onNavToShizuku = { navController.navigate(ShizukuSettings) }
                     )
+                }
+                myComposable<QuickToolsConfig> {
+                    QuickToolsSettingsScreen(onBack = { navController.navigateUp() })
+                }
+                myComposable<ShizukuSettings> {
+                    ShizukuSettingsScreen(onBack = { navController.navigateUp() })
                 }
                 myComposable<ActionPanelStyleSelect> {
                     ActionPanelStyleSelectScreen(
@@ -175,7 +186,9 @@ fun SideGestureApp() {
                 myComposable<ActionSelect> {
                     ActionSelectScreen(
                         onBack = { navController.navigateUp() },
-                        onNavToIconResize = { navController.navigate(it) }
+                        onNavToIconResize = { navController.navigate(it) },
+                        onNavToQuickTools = { navController.navigate(QuickToolsConfig) },
+                        onNavToShizukuSettings = { navController.navigate(ShizukuSettings) }
                     )
                 }
                 myComposable<IconResize> {

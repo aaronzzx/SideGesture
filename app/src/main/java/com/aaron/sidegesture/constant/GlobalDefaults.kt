@@ -214,4 +214,18 @@ object ActionSettingsDefaults {
     const val GotoBottomStrength = 10
     const val ShellCommandTimeoutMs = 10_000L
     const val ShellCommandMaxOutputLength = 4096
+    val QuickToolItems = listOf(
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.MediaControl),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Volume),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Brightness),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Wifi),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Bluetooth),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Flashlight),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Mute),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.NotificationPanel),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.QuickSettingsPanel),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.LockScreen),
+        com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Screenshot)
+    )
+    val QuickTools = com.aaron.sidegesture.entity.global.QuickToolsSettings()
 }

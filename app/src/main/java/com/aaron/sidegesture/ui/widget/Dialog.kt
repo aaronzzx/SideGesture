@@ -65,8 +65,8 @@ import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.shellCommandActionData
+import com.aaron.sidegesture.ktx.shizukuStatusSummary
 import com.aaron.sidegesture.shizuku.ShellResult
-import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
@@ -523,11 +523,12 @@ fun ShellActionSettingsDialog(
     onDismissRequest: () -> Unit,
     value: ShellActionDialogValue,
     onCommandChange: (String) -> Unit,
-    onRequestPermission: () -> Unit,
+    onOpenShizukuSettings: () -> Unit,
     onTest: () -> Unit,
     onSave: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     AlertDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismissRequest,
@@ -542,7 +543,7 @@ fun ShellActionSettingsDialog(
                 verticalArrangement = Arrangement.spacedBy(ItemPadding)
             ) {
                 Text(
-                    text = shellDialogStatusText(value.status),
+                    text = context.shizukuStatusSummary(value.status),
                     color = MaterialTheme.colorScheme.secondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -582,8 +583,8 @@ fun ShellActionSettingsDialog(
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onRequestPermission) {
-                    Text(text = stringResource(R.string.shizuku_request_permission))
+                TextButton(onClick = onOpenShizukuSettings) {
+                    Text(text = stringResource(R.string.shizuku_open_settings))
                 }
                 TextButton(
                     onClick = onTest,
@@ -607,21 +608,6 @@ fun ShellActionSettingsDialog(
                 Text(text = stringResource(R.string.cancel))
             }
         }
-    )
-}
-
-@Composable
-private fun shellDialogStatusText(status: ShizukuShellManager.ShizukuStatus): String {
-    val stateText = when {
-        status.permissionGranted -> stringResource(R.string.shizuku_status_ready)
-        status.binderAlive -> stringResource(R.string.shizuku_status_no_permission)
-        status.installed -> stringResource(R.string.shizuku_status_not_running)
-        else -> stringResource(R.string.shizuku_status_not_installed)
-    }
-    return stringResource(
-        R.string.shizuku_status_summary,
-        stateText,
-        status.executorLabel
     )
 }
 

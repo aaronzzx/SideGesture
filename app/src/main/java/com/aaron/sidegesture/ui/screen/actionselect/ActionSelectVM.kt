@@ -263,15 +263,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
-    fun requestShizukuPermission() {
-        viewModelScope.launch {
-            val granted = ShizukuShellManager.requestPermission()
-            if (!granted) {
-                toast(R.string.shizuku_permission_required)
-            }
-        }
-    }
-
     fun testShellCommand() {
         val command = uiState.shellActionDialog.command
         if (command.isBlank()) {
@@ -319,6 +310,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         if (uiState.selectSingle) {
             saveSettings()
         }
+    }
+
+    fun openShizukuSettings() {
+        sendUiEvent(UiEvent.GotoShizukuSettings)
     }
 
     private fun observeShizukuStatus() {
@@ -997,5 +992,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     sealed interface UiEvent {
         data class GotoIconResize(val iconResize: IconResize) : UiEvent
+        data object GotoShizukuSettings : UiEvent
     }
 }

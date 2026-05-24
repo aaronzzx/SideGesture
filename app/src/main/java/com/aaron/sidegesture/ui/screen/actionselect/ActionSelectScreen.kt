@@ -155,6 +155,8 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun ActionSelectScreen(
     onBack: () -> Unit,
     onNavToIconResize: (IconResize) -> Unit,
+    onNavToQuickTools: () -> Unit,
+    onNavToShizukuSettings: () -> Unit,
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
@@ -162,6 +164,7 @@ fun ActionSelectScreen(
         onEvent = { event ->
             when (event) {
                 is UiEvent.GotoIconResize -> onNavToIconResize(event.iconResize)
+                UiEvent.GotoShizukuSettings -> onNavToShizukuSettings()
             }
         }
     ) { uiState ->
@@ -176,7 +179,7 @@ fun ActionSelectScreen(
                 onDismissRequest = { vm.shellActionDialog.show(false) },
                 value = uiState.shellActionDialog,
                 onCommandChange = vm::updateShellCommand,
-                onRequestPermission = vm::requestShizukuPermission,
+                onOpenShizukuSettings = vm::openShizukuSettings,
                 onTest = vm::testShellCommand,
                 onSave = vm::saveShellAction
             )
@@ -324,10 +327,14 @@ fun ActionSelectScreen(
                                     vm.select(action, selected)
                                 },
                                 onSettingsClick = { action ->
-                                    if (action.value == GlobalActions.SHIZUKU_SHELL) {
-                                        vm.shellActionDialog.show(true, action)
-                                    } else {
-                                        vm.actionSettingsDialog.show(true, action)
+                                    when (action.value) {
+                                        GlobalActions.QUICK_TOOLS -> onNavToQuickTools()
+                                        GlobalActions.SHIZUKU_SHELL -> {
+                                            vm.shellActionDialog.show(true, action)
+                                        }
+                                        else -> {
+                                            vm.actionSettingsDialog.show(true, action)
+                                        }
                                     }
                                 }
                             )

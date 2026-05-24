@@ -46,12 +46,12 @@ import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
+import com.aaron.sidegesture.utils.FlashlightController
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
-import com.blankj.utilcode.util.FlashlightUtils
 import com.blankj.utilcode.util.PermissionUtils
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
@@ -165,15 +165,12 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.FLASHLIGHT -> {
-                if (FlashlightUtils.isFlashlightEnable()) {
+                if (FlashlightController.isAvailable(this)) {
                     val block = {
                         coroutineScope.launch(Dispatchers.Default) {
-                            val turnOn = !FlashlightUtils.isFlashlightOn()
-                            if (turnOn) {
-                                FlashlightUtils.setFlashlightStatus(true)
-                            } else {
-                                FlashlightUtils.setFlashlightStatus(false)
-                                FlashlightUtils.destroy()
+                            val success = FlashlightController.toggle(this@onAction)
+                            if (!success) {
+                                showToast(R.string.flashlight_failed)
                             }
                         }
                     }
