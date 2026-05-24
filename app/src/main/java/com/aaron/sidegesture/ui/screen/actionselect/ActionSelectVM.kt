@@ -312,8 +312,17 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
-    fun openShizukuSettings() {
-        sendUiEvent(UiEvent.GotoShizukuSettings)
+    fun requestShizukuPermission() {
+        viewModelScope.launch {
+            val status = ShizukuShellManager.currentStatus()
+            when {
+                !status.installed -> toast(R.string.shizuku_not_installed_hint)
+                !status.binderAlive -> toast(R.string.shizuku_not_running_hint)
+                status.permissionGranted -> toast(R.string.shizuku_status_ready)
+                ShizukuShellManager.requestPermission() -> Unit
+                else -> toast(R.string.shizuku_permission_required)
+            }
+        }
     }
 
     private fun observeShizukuStatus() {
@@ -992,6 +1001,5 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     sealed interface UiEvent {
         data class GotoIconResize(val iconResize: IconResize) : UiEvent
-        data object GotoShizukuSettings : UiEvent
     }
 }

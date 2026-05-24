@@ -156,7 +156,7 @@ fun HomeScreen(
         val lifecycleOwner = LocalLifecycleOwner.current
         LaunchedEffect(key1 = lifecycleOwner) {
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                vm.updatePermissionState()
+                vm.onHomeResumed()
             }
         }
 

@@ -156,7 +156,6 @@ fun ActionSelectScreen(
     onBack: () -> Unit,
     onNavToIconResize: (IconResize) -> Unit,
     onNavToQuickTools: () -> Unit,
-    onNavToShizukuSettings: () -> Unit,
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
@@ -164,7 +163,6 @@ fun ActionSelectScreen(
         onEvent = { event ->
             when (event) {
                 is UiEvent.GotoIconResize -> onNavToIconResize(event.iconResize)
-                UiEvent.GotoShizukuSettings -> onNavToShizukuSettings()
             }
         }
     ) { uiState ->
@@ -179,7 +177,7 @@ fun ActionSelectScreen(
                 onDismissRequest = { vm.shellActionDialog.show(false) },
                 value = uiState.shellActionDialog,
                 onCommandChange = vm::updateShellCommand,
-                onOpenShizukuSettings = vm::openShizukuSettings,
+                onRequestShizukuPermission = vm::requestShizukuPermission,
                 onTest = vm::testShellCommand,
                 onSave = vm::saveShellAction
             )

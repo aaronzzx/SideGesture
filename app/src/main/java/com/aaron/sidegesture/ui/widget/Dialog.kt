@@ -523,7 +523,7 @@ fun ShellActionSettingsDialog(
     onDismissRequest: () -> Unit,
     value: ShellActionDialogValue,
     onCommandChange: (String) -> Unit,
-    onOpenShizukuSettings: () -> Unit,
+    onRequestShizukuPermission: () -> Unit,
     onTest: () -> Unit,
     onSave: () -> Unit
 ) {
@@ -583,8 +583,8 @@ fun ShellActionSettingsDialog(
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onOpenShizukuSettings) {
-                    Text(text = stringResource(R.string.shizuku_open_settings))
+                TextButton(onClick = onRequestShizukuPermission) {
+                    Text(text = stringResource(R.string.shizuku_request_permission))
                 }
                 TextButton(
                     onClick = onTest,

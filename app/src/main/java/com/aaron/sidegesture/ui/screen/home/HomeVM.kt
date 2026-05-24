@@ -10,6 +10,7 @@ import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ktx.isIgnoringBatteryOptimizations
+import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.BackupHelper
@@ -180,17 +181,14 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
 
     fun updatePermissionState() {
         viewModelScope.launch {
-            val app = App.getContext()
-            val isGestureEnabled = DataStoreHolder.initialSettings.data.first().gestureEnabled
-            val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
-            val isIgnoringBatteryOptimizations = app.isIgnoringBatteryOptimizations()
-            updateUiState {
-                it.copy(
-                    isGestureEnabled = isAccessibilityEnabled && isGestureEnabled,
-                    isAccessibilityEnabled = isAccessibilityEnabled,
-                    isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations
-                )
-            }
+            syncPermissionState()
+        }
+    }
+
+    fun onHomeResumed() {
+        viewModelScope.launch {
+            syncPermissionState()
+            ShizukuShellManager.autoRequestPermissionIfNeeded()
         }
     }
 
@@ -217,6 +215,20 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
                     uiState.bottomGestureButtons
                 }
             }
+        }
+    }
+
+    private suspend fun syncPermissionState() {
+        val app = App.getContext()
+        val isGestureEnabled = DataStoreHolder.initialSettings.data.first().gestureEnabled
+        val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
+        val isIgnoringBatteryOptimizations = app.isIgnoringBatteryOptimizations()
+        updateUiState {
+            it.copy(
+                isGestureEnabled = isAccessibilityEnabled && isGestureEnabled,
+                isAccessibilityEnabled = isAccessibilityEnabled,
+                isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations
+            )
         }
     }
 

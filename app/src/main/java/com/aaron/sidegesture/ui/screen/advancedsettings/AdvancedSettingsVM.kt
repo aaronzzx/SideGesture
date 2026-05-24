@@ -8,7 +8,6 @@ import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
-import com.aaron.sidegesture.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.advancedsettings.AdvancedSettingsVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -25,7 +24,6 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     init {
         loadData()
-        observeShizukuStatus()
     }
 
     fun onVolumeButtonSwitchSong(volumeButtonSwitchSong: Boolean) {
@@ -171,16 +169,6 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    private fun observeShizukuStatus() {
-        viewModelScope.launch {
-            ShizukuShellManager.statusFlow.collectLatest { status ->
-                updateUiState {
-                    it.copy(shizukuStatus = status)
-                }
-            }
-        }
-    }
-
     data class UiState(
         val volumeButtonSwitchSong: Boolean = false,
         val showAnimation: Boolean = false,
@@ -197,8 +185,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val dynamicColor: Boolean = false,
         val dayNightMode: DayNightMode = DayNightMode.Auto,
         val showDynamicColorOption: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-        val showDayNightModeDropdownMenu: Boolean = false,
-        val shizukuStatus: ShizukuShellManager.ShizukuStatus = ShizukuShellManager.currentStatus()
+        val showDayNightModeDropdownMenu: Boolean = false
     )
 
     sealed interface UiEvent

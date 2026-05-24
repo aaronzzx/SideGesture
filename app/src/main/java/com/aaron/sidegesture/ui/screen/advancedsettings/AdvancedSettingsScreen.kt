@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -32,7 +31,6 @@ import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
-import com.aaron.sidegesture.ktx.shizukuStatusSummary
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
@@ -56,11 +54,9 @@ fun AdvancedSettingsScreen(
     onNavToAppBlacklist: () -> Unit,
     onNavToAnimationStyle: () -> Unit,
     onNavToActionPanelStyle: () -> Unit,
-    onNavToShizuku: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
-        val context = LocalContext.current
         Column {
             TopBar(
                 onBack = onBack,
@@ -137,11 +133,6 @@ fun AdvancedSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.app_settings)
                 ) {
-                    MyTextButton(
-                        onClick = onNavToShizuku,
-                        text = stringResource(id = R.string.shizuku_settings),
-                        secondaryText = context.shizukuStatusSummary(uiState.shizukuStatus)
-                    )
                     MyTextSwitch(
                         onCheckedChange = { vm.onVolumeButtonSwitchSong(it) },
                         checked = uiState.volumeButtonSwitchSong,

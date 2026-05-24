@@ -23,6 +23,7 @@ object ShizukuShellManager {
     private const val ShizukuPackageName = "moe.shizuku.privileged.api"
 
     private val bindMutex = Mutex()
+    private val autoPermissionMutex = Mutex()
     private val permissionMutex = Mutex()
     private val statusMutableStateFlow = MutableStateFlow(snapshot())
 
@@ -34,6 +35,9 @@ object ShizukuShellManager {
 
     @Volatile
     private var permissionResult: CompletableDeferred<Boolean>? = null
+
+    @Volatile
+    private var autoPermissionRequested = false
 
     private val userServiceArgs by lazy {
         Shizuku.UserServiceArgs(
@@ -92,6 +96,22 @@ object ShizukuShellManager {
 
     fun updateStatus() {
         statusMutableStateFlow.value = snapshot()
+    }
+
+    suspend fun autoRequestPermissionIfNeeded(): Boolean {
+        updateStatus()
+        if (!shouldAutoRequest(currentStatus())) {
+            return false
+        }
+        return autoPermissionMutex.withLock {
+            updateStatus()
+            val status = currentStatus()
+            if (!shouldAutoRequest(status)) {
+                return@withLock false
+            }
+            autoPermissionRequested = true
+            requestPermission()
+        }
     }
 
     suspend fun requestPermission(): Boolean {
@@ -188,6 +208,13 @@ object ShizukuShellManager {
         return runCatching {
             Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
         }.getOrDefault(false)
+    }
+
+    private fun shouldAutoRequest(status: ShizukuStatus): Boolean {
+        return status.installed &&
+            status.binderAlive &&
+            !status.permissionGranted &&
+            !autoPermissionRequested
     }
 
     data class ShizukuStatus(

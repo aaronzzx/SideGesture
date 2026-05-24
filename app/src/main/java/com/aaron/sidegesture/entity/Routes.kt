@@ -29,10 +29,6 @@ data object AdvancedSettings
 
 @Keep
 @Serializable
-data object ShizukuSettings
-
-@Keep
-@Serializable
 data object QuickToolsConfig
 
 @Keep
