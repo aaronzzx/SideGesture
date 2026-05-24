@@ -131,7 +131,10 @@ class IconResizeVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, 
             }
             val bgColors = mutableMapOf<String, Int>()
             uiState.bgColors.forEach { (id, bgColor) ->
-                bgColors[id] = bgColor.color?.toArgb() ?: 0
+                bgColors[id] = when (bgColor.enabled) {
+                    true -> bgColor.color?.toArgb() ?: 0
+                    false -> 0
+                }
             }
             Events.post(IconResizeEvent(scaleFactors, bgColors))
             finish()
