@@ -53,6 +53,7 @@ import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
+import com.aaron.sidegesture.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.ui.widget.SideGestureContainer
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -86,12 +87,16 @@ class SideGestureService : ComponentAccessibilityService() {
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
 
     private var isNowInLockScreenPage = false
+    private var currentButtons: List<GestureButton> = emptyList()
 
     private var volumeButtonSwitchSongJob: Job? = null
     private val _quickToolsDismissSignal = MutableStateFlow(0)
+    private val _screenshotEditorDismissSignal = MutableStateFlow(0)
 
     val coroutineScope = MainScope()
     val quickToolsDismissSignal: StateFlow<Int> = _quickToolsDismissSignal.asStateFlow()
+    val screenshotEditorDismissSignal: StateFlow<Int> = _screenshotEditorDismissSignal.asStateFlow()
+    val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
     var initialSettings: InitialSettings? = null
         private set
@@ -112,8 +117,11 @@ class SideGestureService : ComponentAccessibilityService() {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                 isNowInLockScreenPage = true
                 dismissQuickTools()
+                dismissScreenshotEditor()
+                pinnedScreenshotManager.setScreenLocked(true)
             } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
                 isNowInLockScreenPage = false
+                pinnedScreenshotManager.setScreenLocked(false)
             }
             updateGestureButtons()
         }
@@ -124,6 +132,7 @@ class SideGestureService : ComponentAccessibilityService() {
         if (orientation != newConfig.orientation) {
             orientation = newConfig.orientation
             updateLayout()
+            pinnedScreenshotManager.onEnvironmentChanged(currentButtons)
         }
     }
 
@@ -181,6 +190,7 @@ class SideGestureService : ComponentAccessibilityService() {
         super.onDestroy()
         coroutineScope.cancel()
         proxy.onRelease()
+        pinnedScreenshotManager.release()
         unregisterReceiver(screenLockReceiver)
         unregisterReceiver(wallpaperChangedReceiver)
         imeInsetObserver.unregister()
@@ -228,6 +238,8 @@ class SideGestureService : ComponentAccessibilityService() {
                             .collectAsStateWithLifecycle(initialValue = ActionSettings())
                         val quickToolsDismissSignalState by quickToolsDismissSignal
                             .collectAsStateWithLifecycle()
+                        val screenshotEditorDismissSignalState by screenshotEditorDismissSignal
+                            .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = sideButtons + bottomButtons,
@@ -244,7 +256,8 @@ class SideGestureService : ComponentAccessibilityService() {
                             actionSettings = actionSettings,
                             advancedSettings = advancedSettings,
                             gestureSettings = gestureSettings,
-                            hideQuickToolsSignal = quickToolsDismissSignalState
+                            hideQuickToolsSignal = quickToolsDismissSignalState,
+                            hideScreenshotEditorSignal = screenshotEditorDismissSignalState
                         )
                     }
                 }
@@ -295,11 +308,13 @@ class SideGestureService : ComponentAccessibilityService() {
                         l1 + l2
                     }
                     .collectLatest { buttons ->
+                        currentButtons = buttons
                         val buttonViews = buttonViews
                         if (buttonViews != null) {
                             removeWindows(buttonViews)
                         }
                         this@SideGestureService.buttonViews = attachGestureButtons(buttons)
+                        pinnedScreenshotManager.onEnvironmentChanged(buttons)
                         updateGestureButtons()
                     }
             }
@@ -456,6 +471,10 @@ class SideGestureService : ComponentAccessibilityService() {
 
     fun dismissQuickTools() {
         _quickToolsDismissSignal.value++
+    }
+
+    fun dismissScreenshotEditor() {
+        _screenshotEditorDismissSignal.value++
     }
 
     fun setOverlayTouchEnabled(enabled: Boolean) {

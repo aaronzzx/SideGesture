@@ -54,14 +54,21 @@ import com.aaron.sidegesture.ktx.tryVibrateForLongSlide
 import com.aaron.sidegesture.ktx.tryVibrateForSlide
 import com.aaron.sidegesture.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.quicktools.rememberQuickToolsControlCenterState
+import com.aaron.sidegesture.screenshot.MultiShapeScreenshotEditor
+import com.aaron.sidegesture.screenshot.MultiShapeScreenshotState
+import com.aaron.sidegesture.screenshot.ScreenshotCropper
+import com.aaron.sidegesture.screenshot.ScreenshotStorage
 import com.aaron.sidegesture.utils.DragGestureHandler
+import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.atan
@@ -84,7 +91,8 @@ fun SideGestureContainer(
     advancedSettings: AdvancedSettings = AdvancedSettings(),
     gestureSettings: GestureSettings = GestureSettings(),
     onOverlayTouchChange: (Boolean) -> Unit = {},
-    hideQuickToolsSignal: Int = 0
+    hideQuickToolsSignal: Int = 0,
+    hideScreenshotEditorSignal: Int = 0
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -92,6 +100,8 @@ fun SideGestureContainer(
     val actionPanelState = rememberActionPanelState()
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
     val quickToolsState = rememberQuickToolsControlCenterState()
+    val multiShapeScreenshotState = remember { MultiShapeScreenshotState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(hideQuickToolsSignal) {
         if (hideQuickToolsSignal != 0) {
@@ -99,8 +109,26 @@ fun SideGestureContainer(
         }
     }
 
+    LaunchedEffect(hideScreenshotEditorSignal) {
+        if (hideScreenshotEditorSignal != 0) {
+            multiShapeScreenshotState.dismiss()
+            multiShapeScreenshotState.cancelCapture()
+            onOverlayTouchChange(false)
+        }
+    }
+
     fun handleAction(action: Action, finger: Offset, position: Position?) {
         if (action == Action.NONE) {
+            return
+        }
+        if (action.value == GlobalActions.MULTI_SHAPE_SCREENSHOT) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                showVersionTooLowToast(context, R.string.action_multi_shape_screenshot)
+                sideGestureState.cancel()
+                return
+            }
+            quickToolsState.hide()
+            multiShapeScreenshotState.startCapture()
             return
         }
         if (action.value == GlobalActions.QUICK_TOOLS && position != null) {
@@ -204,7 +232,11 @@ fun SideGestureContainer(
             vibrations = gestureSettings.vibrations
         )
 
-        if (!moveScreenState.visible && animationStyle != null) {
+        if (!moveScreenState.visible &&
+            !multiShapeScreenshotState.visible &&
+            !multiShapeScreenshotState.isCapturing &&
+            animationStyle != null
+        ) {
             GestureAnimation(
                 modifier = Modifier.matchParentSize(),
                 animationStyle = animationStyle,
@@ -212,14 +244,29 @@ fun SideGestureContainer(
             )
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && multiShapeScreenshotState.isCapturing) {
+            LaunchedEffect(multiShapeScreenshotState.isCapturing) {
+                val service = context as SideGestureService
+                delay(20)
+                val screenshot = service.takeScreenshot()
+                if (screenshot == null) {
+                    multiShapeScreenshotState.cancelCapture()
+                    showToast(R.string.screenshot_capture_failed)
+                } else {
+                    onOverlayTouchChange(true)
+                    multiShapeScreenshotState.show(screenshot, ConvertUtils.dp2px(96f))
+                }
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && moveScreenState.visible) {
-            val screenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
+            val moveScreenScreenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
                 // 16ms为屏幕一帧，等待一帧防止截到手势
                 delay(20)
                 val service = context as SideGestureService
                 value = service.takeScreenshot()
             }
-            val screenshot = screenshotState.value
+            val screenshot = moveScreenScreenshotState.value
             if (screenshot != null) {
                 MoveScreen(
                     modifier = Modifier.matchParentSize(),
@@ -227,6 +274,100 @@ fun SideGestureContainer(
                     state = moveScreenState
                 )
             }
+        }
+
+        val screenshot = multiShapeScreenshotState.screenshot
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            multiShapeScreenshotState.visible &&
+            screenshot != null
+        ) {
+            MultiShapeScreenshotEditor(
+                modifier = Modifier.matchParentSize(),
+                bitmap = screenshot,
+                state = multiShapeScreenshotState,
+                onCancel = {
+                    multiShapeScreenshotState.dismiss()
+                    onOverlayTouchChange(false)
+                },
+                onSave = {
+                    coroutineScope.launch {
+                        val output = withContext(Dispatchers.Default) {
+                            ScreenshotCropper.crop(
+                                bitmap = screenshot,
+                                selectionRect = multiShapeScreenshotState.selectionRect,
+                                shape = multiShapeScreenshotState.shape
+                            )
+                        }
+                        val saved = withContext(Dispatchers.IO) {
+                            ScreenshotStorage.saveToGallery(context, output)
+                        }
+                        if (saved != null) {
+                            showToast(R.string.screenshot_save_success)
+                        } else {
+                            showToast(R.string.screenshot_save_failed)
+                        }
+                        output.recycle()
+                    }
+                },
+                onCopy = {
+                    coroutineScope.launch {
+                        val output = withContext(Dispatchers.Default) {
+                            ScreenshotCropper.crop(
+                                bitmap = screenshot,
+                                selectionRect = multiShapeScreenshotState.selectionRect,
+                                shape = multiShapeScreenshotState.shape
+                            )
+                        }
+                        val uri = withContext(Dispatchers.IO) {
+                            ScreenshotStorage.createClipboardUri(context, output)
+                        }
+                        val copied = if (uri == null) {
+                            false
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                ScreenshotStorage.copyToClipboard(context, uri)
+                            }
+                        }
+                        if (copied) {
+                            showToast(R.string.screenshot_copy_success)
+                        } else {
+                            showToast(R.string.screenshot_copy_failed)
+                        }
+                        output.recycle()
+                    }
+                },
+                onShare = {
+                    coroutineScope.launch {
+                        val output = withContext(Dispatchers.Default) {
+                            ScreenshotCropper.crop(
+                                bitmap = screenshot,
+                                selectionRect = multiShapeScreenshotState.selectionRect,
+                                shape = multiShapeScreenshotState.shape
+                            )
+                        }
+                        multiShapeScreenshotState.dismiss()
+                        onOverlayTouchChange(false)
+                        val uri = withContext(Dispatchers.IO) {
+                            ScreenshotStorage.createShareUri(context, output)
+                        }
+                        val shared = uri != null && ScreenshotStorage.share(context, uri)
+                        if (!shared) {
+                            showToast(R.string.screenshot_share_failed)
+                        }
+                        output.recycle()
+                    }
+                },
+                onPin = {
+                    val output = ScreenshotCropper.crop(
+                        bitmap = screenshot,
+                        selectionRect = multiShapeScreenshotState.selectionRect,
+                        shape = multiShapeScreenshotState.shape
+                    )
+                    (context as SideGestureService).pinnedScreenshotManager.pin(output, buttons)
+                    multiShapeScreenshotState.dismiss()
+                    onOverlayTouchChange(false)
+                }
+            )
         }
 
         QuickToolsControlCenter(

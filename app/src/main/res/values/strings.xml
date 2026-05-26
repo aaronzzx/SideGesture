@@ -134,8 +134,10 @@
     <string name="custom">自定义</string>
     <string name="reset_gesture_angles_warning_desc">这将会清除现有的全局手势角度设置，并恢复到初始设置，不包含触钮自定义的部分。</string>
     <string name="cancel">取消</string>
+    <string name="copy">复制</string>
     <string name="confirm">确认</string>
     <string name="save">保存</string>
+    <string name="share">分享</string>
     <string name="save_success">保存成功</string>
     <string name="save_failure">保存失败</string>
     <string name="reset_success">重置成功</string>
@@ -262,6 +264,17 @@
     <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>
     <string name="action_shizuku_shell">执行 Shell 命令</string>
     <string name="action_shizuku_shell_preview">Shell: %1$s</string>
+    <string name="action_multi_shape_screenshot">多形状截图(11.0+)</string>
+    <string name="screenshot_save_success">截图已保存</string>
+    <string name="screenshot_save_failed">截图保存失败</string>
+    <string name="screenshot_copy_success">截图已复制到剪贴板</string>
+    <string name="screenshot_copy_failed">截图复制失败</string>
+    <string name="screenshot_share_failed">截图分享失败</string>
+    <string name="screenshot_capture_failed">截图失败，请稍后重试</string>
+    <string name="screenshot_pin">钉到屏幕</string>
+    <string name="screenshot_rectangle">矩形</string>
+    <string name="screenshot_oval">圆形</string>
+    <string name="screenshot_force_square_crop">强制裁剪1:1</string>
 
     <string name="bug_collecting">异常收集</string>
     <string name="cannot_find_app_for_open_this_file">没有找到可以打开该文件的应用</string>

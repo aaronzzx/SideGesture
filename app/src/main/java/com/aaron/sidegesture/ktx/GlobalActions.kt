@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.BackHand
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material.icons.filled.Forward
@@ -115,6 +116,7 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
         .takeIf { it.isNotEmpty() }
         ?.let { preview -> getString(R.string.action_shizuku_shell_preview, preview) }
         ?: getString(R.string.action_shizuku_shell)
+    GlobalActions.MULTI_SHAPE_SCREENSHOT -> getString(R.string.action_multi_shape_screenshot)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -174,6 +176,7 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
         .takeIf { it.isNotEmpty() }
         ?.let { preview -> stringResource(R.string.action_shizuku_shell_preview, preview) }
         ?: stringResource(R.string.action_shizuku_shell)
+    GlobalActions.MULTI_SHAPE_SCREENSHOT -> stringResource(R.string.action_multi_shape_screenshot)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -235,5 +238,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.BACK_TO_TOP -> Icons.Default.VerticalAlignTop
     GlobalActions.GOTO_BOTTOM -> Icons.Default.VerticalAlignBottom
     GlobalActions.SHIZUKU_SHELL -> Icons.Default.Terminal
+    GlobalActions.MULTI_SHAPE_SCREENSHOT -> Icons.Default.CropFree
     else -> null
 }

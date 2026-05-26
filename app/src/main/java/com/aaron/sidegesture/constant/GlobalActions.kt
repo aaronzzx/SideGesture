@@ -108,6 +108,8 @@ object GlobalActions {
     const val GOTO_BOTTOM = "48"
     /** 执行 Shell 命令 */
     const val SHIZUKU_SHELL = "49"
+    /** 多形状截图 */
+    const val MULTI_SHAPE_SCREENSHOT = "50"
 
     /** 启动应用 */
     const val EXTRA_LAUNCH_APP = "101"
@@ -120,6 +122,7 @@ object GlobalActions {
         OPEN_QUICK_PANEL, LOCK_SCREEN,  FLASHLIGHT, ASSIST_APP, SCREENSHOT, POWER_BUTTON,
         QUICK_TOOLS,
         KEEP_SCREEN_ON, POPUP_SCREEN, MOVE_SCREEN, BACK_TO_TOP, GOTO_BOTTOM, SHIZUKU_SHELL,
+        MULTI_SHAPE_SCREENSHOT,
         WECHAT_SCAN, WECHAT_PAY, ALIPAY_SCAN, ALIPAY_PAY
     )
 }
