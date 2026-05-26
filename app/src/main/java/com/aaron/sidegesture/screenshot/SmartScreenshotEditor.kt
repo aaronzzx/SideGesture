@@ -1,5 +1,6 @@
 package com.aaron.sidegesture.screenshot
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.PushPin
@@ -37,12 +37,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -69,10 +71,11 @@ import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun MultiShapeScreenshotEditor(
+fun SmartScreenshotEditor(
     bitmap: Bitmap,
-    state: MultiShapeScreenshotState,
+    state: SmartScreenshotState,
     onCancel: () -> Unit,
     onSave: () -> Unit,
     onCopy: () -> Unit,
@@ -130,8 +133,6 @@ fun MultiShapeScreenshotEditor(
         val toolbarVisible = interaction == null
         val topToolbarEnabled = toolbarVisible && topToolbarReady
         val bottomToolbarEnabled = toolbarVisible && bottomToolbarReady
-        val safeTopDp = with(density) { safeTopPx.toDp() }
-        val safeRightDp = with(density) { safeRightPx.toDp() }
         val topToolbarOffset = calculateToolbarOffset(
             rect = selectionRect,
             toolbarSize = topToolbarSize,
@@ -154,6 +155,11 @@ fun MultiShapeScreenshotEditor(
             gapPx = toolbarGapPx,
             placeAbove = false
         )
+        val topToolbarBounds = toolbarBounds(topToolbarOffset, topToolbarSize)
+        val bottomToolbarBounds = toolbarBounds(bottomToolbarOffset, bottomToolbarSize)
+        val latestTopToolbarBounds = rememberUpdatedState(topToolbarBounds)
+        val latestBottomToolbarBounds = rememberUpdatedState(bottomToolbarBounds)
+        val dimTapSlopPx = with(density) { 8.dp.toPx() }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawImage(imageBitmap)
@@ -270,18 +276,30 @@ fun MultiShapeScreenshotEditor(
                         interaction = resolveInteraction(
                             position = down.position,
                             rect = state.selectionRect,
-                            handleRadius = 36.dp.toPx()
+                            handleRadius = 36.dp.toPx(),
+                            shape = state.shape
                         )
-                        if (interaction == null) {
-                            return@awaitEachGesture
+                        val isDimTapCandidate = interaction == null &&
+                                !containsSelection(state.selectionRect, state.shape, down.position) &&
+                                !latestTopToolbarBounds.value.containsPoint(down.position) &&
+                                !latestBottomToolbarBounds.value.containsPoint(down.position)
+                        if (interaction != null || isDimTapCandidate) {
+                            down.consume()
                         }
-
                         var last = down.position
+                        var moved = false
+                        var pointerCountMax = 1
                         var event = awaitPointerEvent(pass = PointerEventPass.Main)
                         while (event.changes.any { it.pressed && !it.changedToUpIgnoreConsumed() }) {
+                            pointerCountMax = maxOf(pointerCountMax, event.changes.size)
                             val change = event.changes.firstOrNull { it.id == down.id } ?: event.changes.first()
                             val current = change.position
                             val delta = current - last
+                            if (abs(current.x - down.position.x) > dimTapSlopPx ||
+                                abs(current.y - down.position.y) > dimTapSlopPx
+                            ) {
+                                moved = true
+                            }
                             last = current
                             val currentRect = state.selectionRect
                             val nextRect = when (val mode = interaction) {
@@ -295,11 +313,18 @@ fun MultiShapeScreenshotEditor(
                                 )
                                 null -> currentRect
                             }
-                            state.updateSelection(nextRect)
-                            event.changes.forEach { if (it.pressed) it.consume() }
+                            if (interaction != null) {
+                                state.updateSelection(nextRect)
+                                event.changes.forEach { if (it.pressed) it.consume() }
+                            } else if (isDimTapCandidate) {
+                                event.changes.forEach { if (it.pressed) it.consume() }
+                            }
                             event = awaitPointerEvent(pass = PointerEventPass.Main)
                         }
                         idleTick++
+                        if (isDimTapCandidate && pointerCountMax == 1 && !moved) {
+                            onCancel()
+                        }
                         interaction = null
                     }
                 }
@@ -412,19 +437,6 @@ fun MultiShapeScreenshotEditor(
             }
         }
 
-        ToolIconButton(
-            modifier = Modifier
-                .zIndex(2f)
-                .align(Alignment.TopEnd)
-                .padding(top = safeTopDp, end = safeRightDp),
-            contentDescription = stringResource(R.string.cancel),
-            onClick = {
-                idleTick++
-                onCancel()
-            }
-        ) {
-            Icon(Icons.Default.Close, contentDescription = null)
-        }
     }
 }
 
@@ -614,7 +626,8 @@ private enum class VerticalHandle { Top, Bottom }
 private fun resolveInteraction(
     position: Offset,
     rect: Rect,
-    handleRadius: Float
+    handleRadius: Float,
+    shape: ScreenshotShape
 ): SelectionInteraction? {
     val handles = listOf(
         Triple(rect.topLeft, HorizontalHandle.Left, VerticalHandle.Top),
@@ -628,10 +641,50 @@ private fun resolveInteraction(
     if (hitHandle != null) {
         return SelectionInteraction.Resize(hitHandle.second, hitHandle.third)
     }
-    if (rect.contains(position)) {
+    if (containsSelection(rect, shape, position)) {
         return SelectionInteraction.Move
     }
     return null
+}
+
+private fun containsSelection(
+    rect: Rect,
+    shape: ScreenshotShape,
+    position: Offset
+): Boolean {
+    return when (shape) {
+        ScreenshotShape.Rectangle -> rect.contains(position)
+        ScreenshotShape.Oval -> rect.contains(position) && pointInsideOval(rect, position)
+    }
+}
+
+private fun pointInsideOval(
+    rect: Rect,
+    position: Offset
+): Boolean {
+    val radiusX = rect.width / 2f
+    val radiusY = rect.height / 2f
+    if (radiusX <= 0f || radiusY <= 0f) {
+        return false
+    }
+    val center = rect.center
+    val normalizedX = (position.x - center.x) / radiusX
+    val normalizedY = (position.y - center.y) / radiusY
+    return normalizedX * normalizedX + normalizedY * normalizedY <= 1f
+}
+
+private fun toolbarBounds(
+    offset: Offset,
+    size: IntSize
+): Rect? {
+    if (size == IntSize.Zero) {
+        return null
+    }
+    return Rect(offset, Size(size.width.toFloat(), size.height.toFloat()))
+}
+
+private fun Rect?.containsPoint(point: Offset): Boolean {
+    return this?.contains(point) == true
 }
 
 private const val EDITOR_AUTO_DISMISS_DELAY_MS = 8_000L

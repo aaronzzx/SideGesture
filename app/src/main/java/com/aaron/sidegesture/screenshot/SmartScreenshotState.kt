@@ -11,7 +11,7 @@ import androidx.compose.ui.geometry.Rect
 import kotlin.math.min
 
 @Stable
-class MultiShapeScreenshotState {
+class SmartScreenshotState {
 
     var visible: Boolean by mutableStateOf(false)
         private set

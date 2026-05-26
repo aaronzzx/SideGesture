@@ -54,10 +54,10 @@ import com.aaron.sidegesture.ktx.tryVibrateForLongSlide
 import com.aaron.sidegesture.ktx.tryVibrateForSlide
 import com.aaron.sidegesture.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.quicktools.rememberQuickToolsControlCenterState
-import com.aaron.sidegesture.screenshot.MultiShapeScreenshotEditor
-import com.aaron.sidegesture.screenshot.MultiShapeScreenshotState
 import com.aaron.sidegesture.screenshot.ScreenshotCropper
 import com.aaron.sidegesture.screenshot.ScreenshotStorage
+import com.aaron.sidegesture.screenshot.SmartScreenshotEditor
+import com.aaron.sidegesture.screenshot.SmartScreenshotState
 import com.aaron.sidegesture.utils.DragGestureHandler
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
@@ -92,7 +92,7 @@ fun SideGestureContainer(
     gestureSettings: GestureSettings = GestureSettings(),
     onOverlayTouchChange: (Boolean) -> Unit = {},
     hideQuickToolsSignal: Int = 0,
-    hideScreenshotEditorSignal: Int = 0
+    hideSmartScreenshotSignal: Int = 0
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -100,7 +100,7 @@ fun SideGestureContainer(
     val actionPanelState = rememberActionPanelState()
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
     val quickToolsState = rememberQuickToolsControlCenterState()
-    val multiShapeScreenshotState = remember { MultiShapeScreenshotState() }
+    val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(hideQuickToolsSignal) {
@@ -109,10 +109,10 @@ fun SideGestureContainer(
         }
     }
 
-    LaunchedEffect(hideScreenshotEditorSignal) {
-        if (hideScreenshotEditorSignal != 0) {
-            multiShapeScreenshotState.dismiss()
-            multiShapeScreenshotState.cancelCapture()
+    LaunchedEffect(hideSmartScreenshotSignal) {
+        if (hideSmartScreenshotSignal != 0) {
+            smartScreenshotState.dismiss()
+            smartScreenshotState.cancelCapture()
             onOverlayTouchChange(false)
         }
     }
@@ -121,14 +121,14 @@ fun SideGestureContainer(
         if (action == Action.NONE) {
             return
         }
-        if (action.value == GlobalActions.MULTI_SHAPE_SCREENSHOT) {
+        if (action.value == GlobalActions.SMART_SCREENSHOT) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                showVersionTooLowToast(context, R.string.action_multi_shape_screenshot)
+                showVersionTooLowToast(context, R.string.action_smart_screenshot)
                 sideGestureState.cancel()
                 return
             }
             quickToolsState.hide()
-            multiShapeScreenshotState.startCapture()
+            smartScreenshotState.startCapture()
             return
         }
         if (action.value == GlobalActions.QUICK_TOOLS && position != null) {
@@ -233,8 +233,8 @@ fun SideGestureContainer(
         )
 
         if (!moveScreenState.visible &&
-            !multiShapeScreenshotState.visible &&
-            !multiShapeScreenshotState.isCapturing &&
+            !smartScreenshotState.visible &&
+            !smartScreenshotState.isCapturing &&
             animationStyle != null
         ) {
             GestureAnimation(
@@ -244,17 +244,17 @@ fun SideGestureContainer(
             )
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && multiShapeScreenshotState.isCapturing) {
-            LaunchedEffect(multiShapeScreenshotState.isCapturing) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && smartScreenshotState.isCapturing) {
+            LaunchedEffect(smartScreenshotState.isCapturing) {
                 val service = context as SideGestureService
                 delay(20)
                 val screenshot = service.takeScreenshot()
                 if (screenshot == null) {
-                    multiShapeScreenshotState.cancelCapture()
+                    smartScreenshotState.cancelCapture()
                     showToast(R.string.screenshot_capture_failed)
                 } else {
                     onOverlayTouchChange(true)
-                    multiShapeScreenshotState.show(screenshot, ConvertUtils.dp2px(96f))
+                    smartScreenshotState.show(screenshot, ConvertUtils.dp2px(96f))
                 }
             }
         }
@@ -276,17 +276,17 @@ fun SideGestureContainer(
             }
         }
 
-        val screenshot = multiShapeScreenshotState.screenshot
+        val screenshot = smartScreenshotState.screenshot
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            multiShapeScreenshotState.visible &&
+            smartScreenshotState.visible &&
             screenshot != null
         ) {
-            MultiShapeScreenshotEditor(
+            SmartScreenshotEditor(
                 modifier = Modifier.matchParentSize(),
                 bitmap = screenshot,
-                state = multiShapeScreenshotState,
+                state = smartScreenshotState,
                 onCancel = {
-                    multiShapeScreenshotState.dismiss()
+                    smartScreenshotState.dismiss()
                     onOverlayTouchChange(false)
                 },
                 onSave = {
@@ -294,8 +294,8 @@ fun SideGestureContainer(
                         val output = withContext(Dispatchers.Default) {
                             ScreenshotCropper.crop(
                                 bitmap = screenshot,
-                                selectionRect = multiShapeScreenshotState.selectionRect,
-                                shape = multiShapeScreenshotState.shape
+                                selectionRect = smartScreenshotState.selectionRect,
+                                shape = smartScreenshotState.shape
                             )
                         }
                         val saved = withContext(Dispatchers.IO) {
@@ -314,8 +314,8 @@ fun SideGestureContainer(
                         val output = withContext(Dispatchers.Default) {
                             ScreenshotCropper.crop(
                                 bitmap = screenshot,
-                                selectionRect = multiShapeScreenshotState.selectionRect,
-                                shape = multiShapeScreenshotState.shape
+                                selectionRect = smartScreenshotState.selectionRect,
+                                shape = smartScreenshotState.shape
                             )
                         }
                         val uri = withContext(Dispatchers.IO) {
@@ -341,11 +341,11 @@ fun SideGestureContainer(
                         val output = withContext(Dispatchers.Default) {
                             ScreenshotCropper.crop(
                                 bitmap = screenshot,
-                                selectionRect = multiShapeScreenshotState.selectionRect,
-                                shape = multiShapeScreenshotState.shape
+                                selectionRect = smartScreenshotState.selectionRect,
+                                shape = smartScreenshotState.shape
                             )
                         }
-                        multiShapeScreenshotState.dismiss()
+                        smartScreenshotState.dismiss()
                         onOverlayTouchChange(false)
                         val uri = withContext(Dispatchers.IO) {
                             ScreenshotStorage.createShareUri(context, output)
@@ -360,11 +360,11 @@ fun SideGestureContainer(
                 onPin = {
                     val output = ScreenshotCropper.crop(
                         bitmap = screenshot,
-                        selectionRect = multiShapeScreenshotState.selectionRect,
-                        shape = multiShapeScreenshotState.shape
+                        selectionRect = smartScreenshotState.selectionRect,
+                        shape = smartScreenshotState.shape
                     )
                     (context as SideGestureService).pinnedScreenshotManager.pin(output, buttons)
-                    multiShapeScreenshotState.dismiss()
+                    smartScreenshotState.dismiss()
                     onOverlayTouchChange(false)
                 }
             )

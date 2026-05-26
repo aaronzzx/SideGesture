@@ -264,7 +264,7 @@
     <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>
     <string name="action_shizuku_shell">执行 Shell 命令</string>
     <string name="action_shizuku_shell_preview">Shell: %1$s</string>
-    <string name="action_multi_shape_screenshot">多形状截图(11.0+)</string>
+    <string name="action_smart_screenshot">智能截图(11.0+)</string>
     <string name="screenshot_save_success">截图已保存</string>
     <string name="screenshot_save_failed">截图保存失败</string>
     <string name="screenshot_copy_success">截图已复制到剪贴板</string>

@@ -116,7 +116,7 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
         .takeIf { it.isNotEmpty() }
         ?.let { preview -> getString(R.string.action_shizuku_shell_preview, preview) }
         ?: getString(R.string.action_shizuku_shell)
-    GlobalActions.MULTI_SHAPE_SCREENSHOT -> getString(R.string.action_multi_shape_screenshot)
+    GlobalActions.SMART_SCREENSHOT -> getString(R.string.action_smart_screenshot)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -176,7 +176,7 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
         .takeIf { it.isNotEmpty() }
         ?.let { preview -> stringResource(R.string.action_shizuku_shell_preview, preview) }
         ?: stringResource(R.string.action_shizuku_shell)
-    GlobalActions.MULTI_SHAPE_SCREENSHOT -> stringResource(R.string.action_multi_shape_screenshot)
+    GlobalActions.SMART_SCREENSHOT -> stringResource(R.string.action_smart_screenshot)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -238,6 +238,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.BACK_TO_TOP -> Icons.Default.VerticalAlignTop
     GlobalActions.GOTO_BOTTOM -> Icons.Default.VerticalAlignBottom
     GlobalActions.SHIZUKU_SHELL -> Icons.Default.Terminal
-    GlobalActions.MULTI_SHAPE_SCREENSHOT -> Icons.Default.CropFree
+    GlobalActions.SMART_SCREENSHOT -> Icons.Default.CropFree
     else -> null
 }

@@ -63,6 +63,7 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - `remember` / `rememberSaveable` 仅用于少量纯展示、瞬时、与业务无关的本地状态，例如焦点、滚动位置、动画展开态；只要状态会影响页面逻辑、数据派生、跨组件同步或保存行为，就上移到 `UiState`。
 - 新增依赖统一写入 `gradle/libs.versions.toml`，再在模块 `build.gradle.kts` 引用。
 - 不要启用或改写 Release 签名配置，除非明确要求。
+- 优先使用项目已有的api，风格优先按项目已有风格做
 
 ## 动画实现约定
 

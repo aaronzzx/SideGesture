@@ -1,29 +1,40 @@
 package com.aaron.sidegesture.screenshot
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.SystemClock
 import android.view.Gravity
+import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.animation.PathInterpolator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculatePan
-import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,23 +44,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.aaron.compose.ktx.clipToBackground
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.rootSize
+import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.blankj.utilcode.util.ConvertUtils
 import kotlin.math.max
 import kotlin.math.min
@@ -62,24 +79,31 @@ class PinnedScreenshotManager(
 
     private val windowManager = ContextCompat.getSystemService(service, WindowManager::class.java)!!
     private val windows = linkedMapOf<String, PinWindow>()
+    private val deleteTargetState = PinDeleteTargetState()
+    private var deleteTargetWindow: DeleteTargetWindow? = null
     private var isScreenLocked = false
 
     fun pin(bitmap: Bitmap, buttons: List<GestureButton>) {
+        ensureDeleteTargetWindow()
         val safeInsets = PinSafeInsets.from(service, windowManager, buttons)
         val root = rootSize
+        val minScale = minScale(bitmap)
+        val chromeSize = pinChromeSizePx()
         val initialScale = min(
             1f,
             min(
-                root.width * 0.45f / bitmap.width,
-                root.height * 0.45f / bitmap.height
+                (root.width * 0.45f - chromeSize * 2f) / bitmap.width,
+                (root.height * 0.45f - chromeSize * 2f) / bitmap.height
             )
-        ).coerceIn(MIN_SCALE, maxScale(bitmap))
+        ).coerceIn(minScale, maxScale(bitmap))
+        val initialWindowWidth = bitmap.width * initialScale + chromeSize * 2f
+        val initialWindowHeight = bitmap.height * initialScale + chromeSize * 2f
         val state = PinWindowState(
             id = SystemClock.uptimeMillis().toString(),
             bitmap = bitmap,
             scale = initialScale,
-            x = ((root.width - bitmap.width * initialScale) / 2f).coerceAtLeast(0f),
-            y = ((root.height - bitmap.height * initialScale) / 2f).coerceAtLeast(0f),
+            x = ((root.width - initialWindowWidth) / 2f).coerceAtLeast(0f),
+            y = ((root.height - initialWindowHeight) / 2f).coerceAtLeast(0f),
             safeInsets = safeInsets
         )
         state.anchoredEdge = nearestEdge(state)
@@ -88,15 +112,23 @@ class PinnedScreenshotManager(
             setViewTreeViewModelStoreOwner(service)
             setViewTreeSavedStateRegistryOwner(service)
             setContent {
-                MaterialTheme {
+                SideGestureTheme {
                     PinnedScreenshotWindow(
                         state = state,
-                        onClose = { remove(state.id) },
-                        onTransform = { pan, zoom, pointerCount, time ->
-                            handleTransform(state, pan, zoom, pointerCount, time)
+                        onGestureStart = {
+                            cancelLayoutAnimation(state)
                         },
-                        onGestureEnd = { pointerCount, moved ->
-                            handleGestureEnd(state, pointerCount, moved)
+                        onDrag = { pan, localPosition, time ->
+                            handleDrag(state, pan, localPosition, time)
+                        },
+                        onResizeStart = { localPosition ->
+                            handleResizeStart(state, localPosition)
+                        },
+                        onResize = { localPosition ->
+                            handleResize(state, localPosition)
+                        },
+                        onGestureEnd = { mode, moved ->
+                            handleGestureEnd(state, mode, moved)
                         },
                         onCollapsedTap = {
                             restore(state)
@@ -106,22 +138,28 @@ class PinnedScreenshotManager(
             }
         }
         val layoutParams = createLayoutParams(state)
+        if (isScreenLocked) {
+            view.visibility = View.INVISIBLE
+            layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        }
         windowManager.addView(view, layoutParams)
-        view.alpha = if (isScreenLocked) 0f else 1f
         windows[state.id] = PinWindow(state, view, layoutParams)
     }
 
     fun onEnvironmentChanged(buttons: List<GestureButton>) {
         val safeInsets = PinSafeInsets.from(service, windowManager, buttons)
+        updateDeleteTargetLayout()
         windows.values.forEach { window ->
             val state = window.state
+            cancelLayoutAnimation(state)
             state.safeInsets = safeInsets
             val maxScale = maxScale(state.bitmap)
-            if (state.scale > maxScale) {
-                state.scale = maxScale
+            val minScale = minScale(state.bitmap)
+            if (state.scale !in minScale..maxScale) {
+                state.scale = state.scale.coerceIn(minScale, maxScale)
             }
-            if (state.normalScale > maxScale) {
-                state.normalScale = maxScale
+            if (state.normalScale !in minScale..maxScale) {
+                state.normalScale = state.normalScale.coerceIn(minScale, maxScale)
             }
             if (state.collapsedEdge != null) {
                 snapToEdge(state, collapsed = true)
@@ -137,14 +175,24 @@ class PinnedScreenshotManager(
             return
         }
         isScreenLocked = locked
-        val alpha = if (locked) 0f else 1f
+        if (locked) {
+            hideDeleteTarget()
+        }
         windows.values.forEach { window ->
-            window.view.alpha = alpha
+            applyLockedState(window)
         }
     }
 
     fun release() {
+        deleteTargetWindow?.let { window ->
+            try {
+                windowManager.removeViewImmediate(window.view)
+            } catch (_: Exception) {
+            }
+        }
+        deleteTargetWindow = null
         windows.values.toList().forEach { window ->
+            cancelLayoutAnimation(window.state)
             try {
                 windowManager.removeViewImmediate(window.view)
             } catch (_: Exception) {
@@ -156,6 +204,8 @@ class PinnedScreenshotManager(
 
     private fun remove(id: String) {
         val window = windows.remove(id) ?: return
+        cancelLayoutAnimation(window.state)
+        hideDeleteTarget(window.state)
         try {
             windowManager.removeViewImmediate(window.view)
         } catch (_: Exception) {
@@ -163,55 +213,176 @@ class PinnedScreenshotManager(
         window.state.bitmap.recycle()
     }
 
-    private fun handleTransform(
+    private fun ensureDeleteTargetWindow() {
+        if (deleteTargetWindow != null) {
+            return
+        }
+        val view = ComposeView(service).apply {
+            setViewTreeLifecycleOwner(service)
+            setViewTreeViewModelStoreOwner(service)
+            setViewTreeSavedStateRegistryOwner(service)
+            setContent {
+                SideGestureTheme {
+                    PinDeleteTarget(state = deleteTargetState)
+                }
+            }
+        }
+        val layoutParams = WindowManager.LayoutParams().apply {
+            width = WindowManager.LayoutParams.MATCH_PARENT
+            height = deleteTargetHeightPx()
+            x = 0
+            y = rootSize.height - height
+            type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            format = PixelFormat.RGBA_8888
+            flags = baseWindowFlags() or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            gravity = Gravity.LEFT or Gravity.TOP
+        }
+        try {
+            windowManager.addView(view, layoutParams)
+            deleteTargetWindow = DeleteTargetWindow(view, layoutParams)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun showDeleteTarget() {
+        ensureDeleteTargetWindow()
+        if (!isScreenLocked) {
+            deleteTargetState.visible = true
+        }
+    }
+
+    private fun hideDeleteTarget(state: PinWindowState? = null) {
+        state?.overDeleteTarget = false
+        deleteTargetState.active = false
+        deleteTargetState.visible = false
+    }
+
+    private fun isOverDeleteTarget(pointer: Offset): Boolean {
+        return pointer.y >= rootSize.height - deleteTargetHeightPx()
+    }
+
+    private fun handleDrag(
         state: PinWindowState,
         pan: Offset,
-        zoom: Float,
-        pointerCount: Int,
+        localPosition: Offset,
         uptimeMillis: Long
     ) {
-        state.scale = (state.scale * zoom).coerceIn(MIN_SCALE, maxScale(state.bitmap))
+        showDeleteTarget()
         state.x += pan.x
         state.y += pan.y
         clampVisible(state)
-        if (pointerCount == 1 && pan != Offset.Zero) {
+        val finger = Offset(state.x + localPosition.x, state.y + localPosition.y)
+        val overDeleteTarget = isOverDeleteTarget(finger)
+        state.overDeleteTarget = overDeleteTarget
+        deleteTargetState.active = overDeleteTarget
+        if (pan != Offset.Zero) {
             state.dragSamples += PinDragSample(uptimeMillis, state.center())
             trimSamples(state.dragSamples, uptimeMillis)
         }
         updateLayout(state.id)
     }
 
+    private fun handleResizeStart(
+        state: PinWindowState,
+        localPosition: Offset
+    ) {
+        if (state.collapsedEdge != null) {
+            return
+        }
+        val edge = state.anchoredEdge
+        val chromeSize = pinChromeSizePx().toFloat()
+        val width = state.contentWidth().toFloat()
+        val anchor = when (edge) {
+            PinEdge.Left -> Offset(state.x + chromeSize, state.y + chromeSize)
+            PinEdge.Right -> Offset(state.x + chromeSize + width, state.y + chromeSize)
+        }
+        val pointer = Offset(state.x + localPosition.x, state.y + localPosition.y)
+        val distance = pointer.distanceTo(anchor).coerceAtLeast(1f)
+        state.resizeStart = PinResizeStart(
+            edge = edge,
+            anchor = anchor,
+            scale = state.scale,
+            x = state.x,
+            y = state.y,
+            distance = distance
+        )
+        state.normalScale = state.scale
+        state.normalX = state.x
+        state.normalY = state.y
+    }
+
+    private fun handleResize(
+        state: PinWindowState,
+        localPosition: Offset
+    ) {
+        val start = state.resizeStart ?: return
+        val pointer = Offset(state.x + localPosition.x, state.y + localPosition.y)
+        val scale = (start.scale * pointer.distanceTo(start.anchor) / start.distance)
+            .coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
+        state.scale = scale
+        state.y = start.y
+        val chromeSize = pinChromeSizePx()
+        state.x = when (start.edge) {
+            PinEdge.Left -> start.x
+            PinEdge.Right -> start.anchor.x - chromeSize - state.contentWidth()
+        }
+        clampVisible(state)
+        updateLayout(state.id)
+    }
+
     private fun handleGestureEnd(
         state: PinWindowState,
-        pointerCount: Int,
+        mode: PinGestureMode,
         moved: Boolean
     ) {
-        val isTap = pointerCount == 1 && !moved
+        val isTap = mode == PinGestureMode.Drag && !moved
         if (isTap && state.collapsedEdge != null) {
+            hideDeleteTarget(state)
             restore(state)
             return
         }
 
-        if (state.collapsedEdge != null) {
-            snapToEdge(state, collapsed = true)
+        if (mode == PinGestureMode.Resize) {
+            hideDeleteTarget(state)
+            val resizedToMin = isAtMinScale(state)
+            state.resizeStart = null
+            if (resizedToMin) {
+                collapseToEdge(state, targetScale = minScale(state.bitmap), animate = true)
+            } else {
+                snapToEdge(state, collapsed = false, animate = true)
+            }
+        } else if (state.overDeleteTarget) {
+            hideDeleteTarget(state)
+            state.dragSamples.clear()
+            remove(state.id)
+            return
+        } else if (state.collapsedEdge != null) {
+            snapToEdge(state, collapsed = true, animate = moved)
+            if (!moved) {
+                updateLayout(state.id)
+            }
         } else if (shouldCollapse(state)) {
             state.normalScale = state.scale
             state.normalX = state.x
             state.normalY = state.y
-            state.scale = max(MIN_SCALE, state.scale * 0.35f)
-            snapToEdge(state, collapsed = true)
+            collapseToEdge(
+                state = state,
+                targetScale = max(minScale(state.bitmap), state.scale * COLLAPSE_SCALE_FACTOR),
+                animate = true
+            )
         } else {
-            snapToEdge(state, collapsed = false)
+            snapToEdge(state, collapsed = false, animate = moved)
         }
-        updateLayout(state.id)
+        hideDeleteTarget(state)
         state.dragSamples.clear()
     }
 
     private fun restore(state: PinWindowState) {
         val edge = state.collapsedEdge ?: return
+        val start = state.snapshot()
         val targetY = state.y
         state.collapsedEdge = null
-        state.scale = state.normalScale.coerceIn(MIN_SCALE, maxScale(state.bitmap))
+        state.scale = state.normalScale.coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
         val xRange = allowedXRange(state)
         val yRange = allowedYRange(state)
         state.x = when (edge) {
@@ -222,7 +393,27 @@ class PinnedScreenshotManager(
         clampVisible(state)
         state.normalX = state.x
         state.normalY = state.y
-        updateLayout(state.id)
+        val target = state.snapshot()
+        state.applySnapshot(start)
+        animateTo(state, target)
+    }
+
+    private fun collapseToEdge(
+        state: PinWindowState,
+        targetScale: Float,
+        animate: Boolean
+    ) {
+        val start = state.snapshot()
+        state.scale = targetScale.coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
+        snapToEdge(state, collapsed = true)
+        val target = state.snapshot()
+        state.applySnapshot(start)
+        if (animate) {
+            animateTo(state, target)
+        } else {
+            state.applySnapshot(target)
+            updateLayout(state.id)
+        }
     }
 
     private fun shouldCollapse(state: PinWindowState): Boolean {
@@ -257,8 +448,10 @@ class PinnedScreenshotManager(
 
     private fun snapToEdge(
         state: PinWindowState,
-        collapsed: Boolean
+        collapsed: Boolean,
+        animate: Boolean = false
     ) {
+        val start = state.snapshot()
         val edge = nearestEdge(state)
         val xRange = allowedXRange(state)
         val yRange = allowedYRange(state)
@@ -270,6 +463,11 @@ class PinnedScreenshotManager(
         state.collapsedEdge = if (collapsed) edge else null
         state.anchoredEdge = edge
         clampVisible(state)
+        if (animate) {
+            val target = state.snapshot()
+            state.applySnapshot(start)
+            animateTo(state, target)
+        }
     }
 
     private fun clampVisible(state: PinWindowState) {
@@ -281,12 +479,21 @@ class PinnedScreenshotManager(
 
     private fun maxScale(bitmap: Bitmap): Float {
         val root = rootSize
+        val chromeSize = pinChromeSizePx() * 2f
         return min(
             MAX_SCALE,
             min(
-                root.width * 0.85f / bitmap.width,
-                root.height * 0.85f / bitmap.height
+                (root.width * 0.85f - chromeSize) / bitmap.width,
+                (root.height * 0.85f - chromeSize) / bitmap.height
             )
+        ).coerceAtLeast(minScale(bitmap))
+    }
+
+    private fun minScale(bitmap: Bitmap): Float {
+        val shortEdge = min(bitmap.width, bitmap.height).coerceAtLeast(1)
+        return max(
+            MIN_SCALE,
+            ConvertUtils.dp2px(MIN_VISIBLE_SHORT_EDGE_DP).toFloat() / shortEdge
         )
     }
 
@@ -296,10 +503,59 @@ class PinnedScreenshotManager(
         }
     }
 
+    private fun isAtMinScale(state: PinWindowState): Boolean {
+        return state.scale <= minScale(state.bitmap) + MIN_SCALE_EPSILON
+    }
+
+    private fun cancelLayoutAnimation(state: PinWindowState) {
+        val animator = state.layoutAnimator
+        state.layoutAnimator = null
+        animator?.cancel()
+    }
+
+    private fun animateTo(
+        state: PinWindowState,
+        target: PinLayoutSnapshot
+    ) {
+        cancelLayoutAnimation(state)
+        val start = state.snapshot()
+        state.collapsedEdge = target.collapsedEdge
+        state.anchoredEdge = target.anchoredEdge
+        val animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = LAYOUT_ANIMATION_DURATION_MS.toLong()
+            interpolator = PathInterpolator(0.4f, 0f, 0.2f, 1f)
+            addUpdateListener { animation ->
+                val fraction = animation.animatedValue as Float
+                state.scale = lerp(start.scale, target.scale, fraction)
+                state.x = lerp(start.x, target.x, fraction)
+                state.y = lerp(start.y, target.y, fraction)
+                updateLayout(state.id)
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    if (state.layoutAnimator == animation) {
+                        state.applySnapshot(target)
+                        updateLayout(state.id)
+                        state.layoutAnimator = null
+                    }
+                }
+
+                override fun onAnimationCancel(animation: Animator) {
+                    if (state.layoutAnimator == animation) {
+                        state.layoutAnimator = null
+                    }
+                }
+            })
+        }
+        state.layoutAnimator = animator
+        animator.start()
+    }
+
     private fun allowedXRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
         val root = rootSize
-        val minX = state.safeInsets.left.toFloat()
-        val maxX = (root.width - state.safeInsets.right - state.displayWidth()).toFloat()
+        val handleOutset = pinHandleOutsetPx().toFloat()
+        val minX = state.safeInsets.left - handleOutset
+        val maxX = root.width - state.safeInsets.right - state.displayWidth() + handleOutset
         return if (maxX >= minX) {
             minX..maxX
         } else {
@@ -309,8 +565,9 @@ class PinnedScreenshotManager(
 
     private fun allowedYRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
         val root = rootSize
-        val minY = state.safeInsets.top.toFloat()
-        val maxY = (root.height - state.safeInsets.bottom - state.displayHeight()).toFloat()
+        val handleOutset = pinHandleOutsetPx().toFloat()
+        val minY = state.safeInsets.top - handleOutset
+        val maxY = root.height - state.safeInsets.bottom - state.displayHeight() + handleOutset
         return if (maxY >= minY) {
             minY..maxY
         } else {
@@ -335,6 +592,26 @@ class PinnedScreenshotManager(
         }
     }
 
+    private fun applyLockedState(window: PinWindow) {
+        window.view.visibility = if (isScreenLocked) View.INVISIBLE else View.VISIBLE
+        window.layoutParams.flags = baseWindowFlags() or
+                if (isScreenLocked) WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE else 0
+        try {
+            windowManager.updateViewLayout(window.view, window.layoutParams)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun updateDeleteTargetLayout() {
+        val window = deleteTargetWindow ?: return
+        window.layoutParams.height = deleteTargetHeightPx()
+        window.layoutParams.y = rootSize.height - window.layoutParams.height
+        try {
+            windowManager.updateViewLayout(window.view, window.layoutParams)
+        } catch (_: Exception) {
+        }
+    }
+
     @SuppressLint("RtlHardcoded")
     private fun createLayoutParams(state: PinWindowState): WindowManager.LayoutParams {
         return WindowManager.LayoutParams().apply {
@@ -344,12 +621,16 @@ class PinnedScreenshotManager(
             y = state.y.roundToInt()
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
             format = PixelFormat.RGBA_8888
-            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN
+            flags = baseWindowFlags()
             gravity = Gravity.LEFT or Gravity.TOP
         }
+    }
+
+    private fun baseWindowFlags(): Int {
+        return WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
     }
 
     private data class PinWindow(
@@ -360,14 +641,22 @@ class PinnedScreenshotManager(
 
     private companion object {
         const val MIN_SCALE = 0.35f
+        const val MIN_VISIBLE_SHORT_EDGE_DP = 96f
         const val MAX_SCALE = 2.5f
+        const val COLLAPSE_SCALE_FACTOR = 0.35f
         const val FLING_VELOCITY_THRESHOLD = 1800f
         const val FLING_WINDOW_MS = 120L
+        const val LAYOUT_ANIMATION_DURATION_MS = 180
+        const val MIN_SCALE_EPSILON = 0.005f
     }
 }
 
 private enum class PinEdge {
     Left, Right
+}
+
+private enum class PinGestureMode {
+    Drag, Resize
 }
 
 private data class PinSafeInsets(
@@ -443,6 +732,33 @@ private data class PinDragSample(
     val center: Offset
 )
 
+private data class PinResizeStart(
+    val edge: PinEdge,
+    val anchor: Offset,
+    val scale: Float,
+    val x: Float,
+    val y: Float,
+    val distance: Float
+)
+
+private data class PinLayoutSnapshot(
+    val scale: Float,
+    val x: Float,
+    val y: Float,
+    val collapsedEdge: PinEdge?,
+    val anchoredEdge: PinEdge
+)
+
+private data class DeleteTargetWindow(
+    val view: ComposeView,
+    val layoutParams: WindowManager.LayoutParams
+)
+
+private class PinDeleteTargetState {
+    var visible by mutableStateOf(false)
+    var active by mutableStateOf(false)
+}
+
 private class PinWindowState(
     val id: String,
     val bitmap: Bitmap,
@@ -460,26 +776,60 @@ private class PinWindowState(
     var collapsedEdge by mutableStateOf<PinEdge?>(null)
     var anchoredEdge by mutableStateOf(PinEdge.Right)
     var safeInsets by mutableStateOf(safeInsets)
+    var resizeStart: PinResizeStart? = null
+    var layoutAnimator: ValueAnimator? = null
+    var overDeleteTarget by mutableStateOf(false)
     val dragSamples: MutableList<PinDragSample> = mutableListOf()
 
-    fun displayWidth(): Int = (bitmap.width * scale).roundToInt().coerceAtLeast(1)
-    fun displayHeight(): Int = (bitmap.height * scale).roundToInt().coerceAtLeast(1)
+    fun contentWidth(): Int = (bitmap.width * scale).roundToInt().coerceAtLeast(1)
+    fun contentHeight(): Int = (bitmap.height * scale).roundToInt().coerceAtLeast(1)
+    fun displayWidth(): Int = contentWidth() + pinChromeSizePx() * 2
+    fun displayHeight(): Int = contentHeight() + pinChromeSizePx() * 2
     fun center(): Offset = Offset(x + displayWidth() / 2f, y + displayHeight() / 2f)
+    fun snapshot(): PinLayoutSnapshot = PinLayoutSnapshot(
+        scale = scale,
+        x = x,
+        y = y,
+        collapsedEdge = collapsedEdge,
+        anchoredEdge = anchoredEdge
+    )
+
+    fun applySnapshot(snapshot: PinLayoutSnapshot) {
+        scale = snapshot.scale
+        x = snapshot.x
+        y = snapshot.y
+        collapsedEdge = snapshot.collapsedEdge
+        anchoredEdge = snapshot.anchoredEdge
+    }
 }
 
 @Composable
 private fun PinnedScreenshotWindow(
     state: PinWindowState,
-    onClose: () -> Unit,
-    onTransform: (Offset, Float, Int, Long) -> Unit,
-    onGestureEnd: (Int, Boolean) -> Unit,
+    onGestureStart: () -> Unit,
+    onDrag: (Offset, Offset, Long) -> Unit,
+    onResizeStart: (Offset) -> Unit,
+    onResize: (Offset) -> Unit,
+    onGestureEnd: (PinGestureMode, Boolean) -> Unit,
     onCollapsedTap: () -> Unit
 ) {
     val bitmap = remember(state.bitmap) { state.bitmap.asImageBitmap() }
-    val latestOnTransform = rememberUpdatedState(onTransform)
+    val pinScale by animateFloatAsState(
+        targetValue = if (state.overDeleteTarget) DELETE_TARGET_PIN_SCALE else 1f,
+        animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+        label = "pinDeleteScale"
+    )
+    val pinAlpha by animateFloatAsState(
+        targetValue = if (state.overDeleteTarget) DELETE_TARGET_PIN_ALPHA else 1f,
+        animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+        label = "pinDeleteAlpha"
+    )
+    val latestOnGestureStart = rememberUpdatedState(onGestureStart)
+    val latestOnDrag = rememberUpdatedState(onDrag)
+    val latestOnResizeStart = rememberUpdatedState(onResizeStart)
+    val latestOnResize = rememberUpdatedState(onResize)
     val latestOnGestureEnd = rememberUpdatedState(onGestureEnd)
     val latestOnCollapsedTap = rememberUpdatedState(onCollapsedTap)
-    val imageShape = remember { androidx.compose.foundation.shape.RoundedCornerShape(18.dp) }
 
     Box(
         modifier = Modifier
@@ -487,64 +837,254 @@ private fun PinnedScreenshotWindow(
             .pointerInput(state.id) {
                 awaitEachGesture {
                     val down = awaitFirstDown(pass = PointerEventPass.Initial)
-                    var pointerCountMax = 1
+                    latestOnGestureStart.value()
+                    val touchTarget = PIN_RESIZE_TOUCH_TARGET_DP.dp.toPx()
+                    val mode = if (
+                        state.collapsedEdge == null &&
+                        isInResizeHandle(
+                            position = down.position,
+                            edge = state.anchoredEdge,
+                            width = size.width,
+                            height = size.height,
+                            touchTarget = touchTarget
+                        )
+                    ) {
+                        latestOnResizeStart.value(down.position)
+                        PinGestureMode.Resize
+                    } else {
+                        PinGestureMode.Drag
+                    }
                     var moved = false
                     var event = awaitPointerEvent(pass = PointerEventPass.Main)
                     while (event.changes.any { it.pressed && !it.changedToUpIgnoreConsumed() }) {
-                        pointerCountMax = max(pointerCountMax, event.changes.size)
-                        val pan = event.calculatePan()
-                        val zoom = event.calculateZoom()
-                        if (pan != Offset.Zero || zoom != 1f) {
-                            moved = true
-                            latestOnTransform.value(pan, zoom, event.changes.size, SystemClock.uptimeMillis())
-                            event.changes.forEach { if (it.pressed) it.consume() }
+                        val pressedChanges = event.changes.filter { it.pressed }
+                        if (pressedChanges.size == 1) {
+                            val change = pressedChanges.first()
+                            val pan = change.position - change.previousPosition
+                            if (mode == PinGestureMode.Resize) {
+                                if (pan != Offset.Zero) {
+                                    moved = true
+                                    latestOnResize.value(change.position)
+                                    change.consume()
+                                }
+                            } else if (pan != Offset.Zero) {
+                                moved = true
+                                latestOnDrag.value(pan, change.position, SystemClock.uptimeMillis())
+                                change.consume()
+                            }
                         }
                         event = awaitPointerEvent(pass = PointerEventPass.Main)
                     }
                     if (!moved && state.collapsedEdge != null) {
                         latestOnCollapsedTap.value()
                     } else {
-                        latestOnGestureEnd.value(pointerCountMax, moved)
+                        latestOnGestureEnd.value(mode, moved)
                     }
                 }
-            }
+        }
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .shadow(elevation = 18.dp, shape = imageShape, clip = false)
-                .clip(imageShape)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.08f))
+                .graphicsLayer {
+                    scaleX = pinScale
+                    scaleY = pinScale
+                    alpha = pinAlpha
+                }
         ) {
-            Image(
-                modifier = Modifier.fillMaxSize(),
-                bitmap = bitmap,
-                contentDescription = null
-            )
+            val shape = RoundedCornerShape(8.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(PIN_HANDLE_OUTSET_DP.dp)
+                    .clipToBackground(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.32f),
+                        shape = shape
+                    )
+            ) {
+                Image(
+                    modifier = Modifier
+                        .padding(PIN_IMAGE_INSET_DP.dp)
+                        .fillMaxSize()
+                        .clip(shape),
+                    bitmap = bitmap,
+                    contentDescription = null
+                )
+            }
+            AnimatedVisibility(
+                visible = state.collapsedEdge == null,
+                modifier = Modifier.align(pinResizeHandleAlignment(state.anchoredEdge)),
+                enter = fadeIn(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS)),
+                exit = fadeOut(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS))
+            ) {
+                PinResizeHandle(edge = state.anchoredEdge)
+            }
         }
-        FilledIconButton(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(closeButtonPadding(state.anchoredEdge))
-                .size(28.dp),
-            onClick = onClose,
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = Color.Black.copy(alpha = 0.72f),
-                contentColor = Color.White
+    }
+}
+
+@Composable
+private fun PinResizeHandle(edge: PinEdge) {
+    val color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+    Canvas(
+        modifier = Modifier
+            .padding(2.dp)
+            .size(PIN_RESIZE_HANDLE_SIZE_DP.dp)
+    ) {
+        val stroke = Stroke(
+            width = 5.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        val width = size.width
+        val height = size.height
+        val path = Path()
+        if (edge == PinEdge.Left) {
+            path.moveTo(width, height * 0.18f)
+            path.cubicTo(
+                width,
+                height * 0.72f,
+                width * 0.72f,
+                height,
+                width * 0.18f,
+                height
             )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = null
+            drawPath(
+                color = color,
+                path = path,
+                style = stroke
+            )
+        } else {
+            path.moveTo(0f, height * 0.18f)
+            path.cubicTo(
+                0f,
+                height * 0.72f,
+                width * 0.28f,
+                height,
+                width * 0.82f,
+                height
+            )
+            drawPath(
+                color = color,
+                path = path,
+                style = stroke
             )
         }
     }
 }
 
-private fun closeButtonPadding(edge: PinEdge): androidx.compose.foundation.layout.PaddingValues {
-    val endPadding = if (edge == PinEdge.Right) 2.dp else 4.dp
-    return androidx.compose.foundation.layout.PaddingValues(
-        top = 2.dp,
-        end = endPadding
-    )
+private fun pinResizeHandleAlignment(edge: PinEdge): Alignment {
+    return when (edge) {
+        PinEdge.Left -> Alignment.BottomEnd
+        PinEdge.Right -> Alignment.BottomStart
+    }
 }
+
+@Composable
+private fun PinDeleteTarget(state: PinDeleteTargetState) {
+    AnimatedVisibility(
+        visible = state.visible,
+        enter = fadeIn(animationSpec = tween(DELETE_TARGET_FADE_DURATION_MS)),
+        exit = fadeOut(animationSpec = tween(DELETE_TARGET_FADE_DURATION_MS))
+    ) {
+        val containerColor = if (state.active) {
+            MaterialTheme.colorScheme.error.copy(alpha = 0.72f)
+        } else {
+            Color.Black.copy(alpha = 0.58f)
+        }
+        val contentColor = Color.White.copy(alpha = if (state.active) 1f else 0.9f)
+        val iconScale by animateFloatAsState(
+            targetValue = if (state.active) DELETE_TARGET_ACTIVE_SCALE else 1f,
+            animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+            label = "deleteTargetScale"
+        )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(DELETE_TARGET_WIDTH_DP.dp)
+                    .clipToBackground(
+                        color = containerColor,
+                        shape = RoundedCornerShape(DELETE_TARGET_CORNER_DP.dp)
+                    )
+                    .padding(vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                        },
+                    imageVector = Icons.Default.Delete,
+                    tint = contentColor,
+                    contentDescription = null
+                )
+                Text(
+                    text = "拖到此处删除",
+                    color = contentColor,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+private fun isInResizeHandle(
+    position: Offset,
+    edge: PinEdge,
+    width: Int,
+    height: Int,
+    touchTarget: Float
+): Boolean {
+    if (position.y < height - touchTarget) {
+        return false
+    }
+    return when (edge) {
+        PinEdge.Left -> position.x >= width - touchTarget
+        PinEdge.Right -> position.x <= touchTarget
+    }
+}
+
+private fun Offset.distanceTo(other: Offset): Float {
+    val x = x - other.x
+    val y = y - other.y
+    return sqrt(x * x + y * y)
+}
+
+private fun lerp(
+    start: Float,
+    stop: Float,
+    fraction: Float
+): Float {
+    return start + (stop - start) * fraction
+}
+
+private fun pinChromeSizePx(): Int {
+    return ConvertUtils.dp2px(PIN_HANDLE_OUTSET_DP + PIN_IMAGE_INSET_DP)
+}
+
+private fun pinHandleOutsetPx(): Int {
+    return ConvertUtils.dp2px(PIN_HANDLE_OUTSET_DP)
+}
+
+private fun deleteTargetHeightPx(): Int {
+    return ConvertUtils.dp2px(DELETE_TARGET_HEIGHT_DP)
+}
+
+private const val PIN_HANDLE_OUTSET_DP = 8f
+private const val PIN_IMAGE_INSET_DP = 4f
+private const val PIN_RESIZE_TOUCH_TARGET_DP = 24f
+private const val PIN_RESIZE_HANDLE_SIZE_DP = 16f
+private const val PIN_HANDLE_FADE_DURATION_MS = 140
+private const val DELETE_TARGET_HEIGHT_DP = 144f
+private const val DELETE_TARGET_WIDTH_DP = 208f
+private const val DELETE_TARGET_CORNER_DP = 30f
+private const val DELETE_TARGET_FADE_DURATION_MS = 140
+private const val DELETE_TARGET_PIN_ANIMATION_MS = 140
+private const val DELETE_TARGET_PIN_SCALE = 1.08f
+private const val DELETE_TARGET_PIN_ALPHA = 0.62f
+private const val DELETE_TARGET_ACTIVE_SCALE = 1.12f
