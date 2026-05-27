@@ -386,17 +386,26 @@ class PinnedScreenshotManager(
             restore(state)
             return
         }
+        if (isTap) {
+            hideDeleteTarget(state)
+            state.normalScale = state.scale
+            state.normalX = state.x
+            state.normalY = state.y
+            collapseToEdge(
+                state = state,
+                targetScale = max(minScale(state.bitmap), state.scale * COLLAPSE_SCALE_FACTOR),
+                animate = true
+            )
+            state.dragSamples.clear()
+            return
+        }
 
         if (mode == PinGestureMode.Resize) {
             hideDeleteTarget(state)
             val resizedToMin = isAtMinScale(state)
             state.resizeStart = null
             if (!moved) {
-                collapseToEdge(
-                    state = state,
-                    targetScale = max(minScale(state.bitmap), state.scale * COLLAPSE_SCALE_FACTOR),
-                    animate = true
-                )
+                settleExpanded(state, animate = false)
             } else if (resizedToMin) {
                 collapseToEdge(state, targetScale = minScale(state.bitmap), animate = true)
             } else {
