@@ -1254,8 +1254,7 @@ private fun SelectedList(
                 .onClick {
                     onExpandedChange(!expanded)
                 }
-                .padding(start = RootPadding, end = RootPadding + 8.dp)
-                .padding(vertical = RootPadding),
+                .padding(start = RootPadding, end = RootPadding + 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {

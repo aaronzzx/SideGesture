@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -128,44 +128,46 @@ fun IconResizeScreen(
                         items = uiState.ids,
                         key = { _, item -> item }
                     ) { _, id ->
-                        BadgedBox(
+                        Box(
                             modifier = Modifier
                                 .size(MinInteractiveSize)
                                 .onClick(enableRipple = false) {
                                     vm.onSelectedIdChange(id)
-                                },
-                            badge = {
-                                val curScaleFactors by rememberUpdatedState(newValue = uiState.scaleFactors)
-                                val curBgColors by rememberUpdatedState(newValue = uiState.bgColors)
-                                val visible by remember(id) {
-                                    derivedStateOf {
-                                        val scale = curScaleFactors[id]
-                                        (scale != null && scale != DEFAULT_SCALE) ||
-                                                (curBgColors[id]?.enabled == true)
-                                    }
                                 }
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = visible,
-                                    enter = fadeIn() + scaleIn(),
-                                    exit = fadeOut() + scaleOut()
-                                ) {
-                                    Badge(
-                                        modifier = Modifier.requiredSize(16.dp),
-                                        containerColor = MaterialTheme.colorScheme.primary
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null
-                                        )
-                                    }
-                                }
-                            }
                         ) {
                             AsyncImage(
                                 modifier = Modifier.matchParentSize(),
                                 model = uiState.icons[id],
                                 contentDescription = null
                             )
+
+                            val curScaleFactors by rememberUpdatedState(newValue = uiState.scaleFactors)
+                            val curBgColors by rememberUpdatedState(newValue = uiState.bgColors)
+                            val visible by remember(id) {
+                                derivedStateOf {
+                                    val scale = curScaleFactors[id]
+                                    (scale != null && scale != DEFAULT_SCALE) ||
+                                            (curBgColors[id]?.enabled == true)
+                                }
+                            }
+                            androidx.compose.animation.AnimatedVisibility(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 4.dp, y = (-4).dp),
+                                visible = visible,
+                                enter = fadeIn() + scaleIn(),
+                                exit = fadeOut() + scaleOut()
+                            ) {
+                                Badge(
+                                    modifier = Modifier.requiredSize(16.dp),
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
                         }
                     }
                 }
