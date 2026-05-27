@@ -57,6 +57,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -64,12 +65,14 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.compose.ktx.clipToBackground
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.rootSize
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.blankj.utilcode.util.ConvertUtils
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -122,9 +125,16 @@ class PinnedScreenshotManager(
             clampVisible(state)
         }
         val start = state.snapshot()
-        val targetEdge = chooseInitialEdge(state)
         state.scale = targetScale
-        applyEdgeTarget(state, targetEdge)
+        if (sourceRect != null) {
+            state.x = sourceRect.center.x - state.displayWidth() / 2f
+            state.y = sourceRect.center.y - state.displayHeight() / 2f
+            clampInitialTargetVisible(state)
+        } else {
+            clampVisible(state)
+        }
+        state.collapsedEdge = null
+        state.anchoredEdge = nearestEdge(state)
         state.normalScale = state.scale
         state.normalX = state.x
         state.normalY = state.y
@@ -144,8 +154,8 @@ class PinnedScreenshotManager(
                         onDrag = { pan, localPosition, time ->
                             handleDrag(state, pan, localPosition, time)
                         },
-                        onResizeStart = { localPosition ->
-                            handleResizeStart(state, localPosition)
+                        onResizeStart = { localPosition, handleSide ->
+                            handleResizeStart(state, localPosition, handleSide)
                         },
                         onResize = { localPosition ->
                             handleResize(state, localPosition)
@@ -319,22 +329,22 @@ class PinnedScreenshotManager(
 
     private fun handleResizeStart(
         state: PinWindowState,
-        localPosition: Offset
+        localPosition: Offset,
+        handleSide: PinResizeHandleSide
     ) {
         if (state.collapsedEdge != null) {
             return
         }
-        val edge = state.anchoredEdge
         val chromeSize = pinChromeSizePx().toFloat()
         val width = state.contentWidth().toFloat()
-        val anchor = when (edge) {
-            PinEdge.Left -> Offset(state.x + chromeSize, state.y + chromeSize)
-            PinEdge.Right -> Offset(state.x + chromeSize + width, state.y + chromeSize)
+        val anchor = when (handleSide) {
+            PinResizeHandleSide.Left -> Offset(state.x + chromeSize + width, state.y + chromeSize)
+            PinResizeHandleSide.Right -> Offset(state.x + chromeSize, state.y + chromeSize)
         }
         val pointer = Offset(state.x + localPosition.x, state.y + localPosition.y)
         val distance = pointer.distanceTo(anchor).coerceAtLeast(1f)
         state.resizeStart = PinResizeStart(
-            edge = edge,
+            handleSide = handleSide,
             anchor = anchor,
             scale = state.scale,
             x = state.x,
@@ -357,9 +367,9 @@ class PinnedScreenshotManager(
         state.scale = scale
         state.y = start.y
         val chromeSize = pinChromeSizePx()
-        state.x = when (start.edge) {
-            PinEdge.Left -> start.x
-            PinEdge.Right -> start.anchor.x - chromeSize - state.contentWidth()
+        state.x = when (start.handleSide) {
+            PinResizeHandleSide.Left -> start.anchor.x - chromeSize - state.contentWidth()
+            PinResizeHandleSide.Right -> start.x
         }
         clampVisible(state)
         updateLayout(state.id)
@@ -381,10 +391,16 @@ class PinnedScreenshotManager(
             hideDeleteTarget(state)
             val resizedToMin = isAtMinScale(state)
             state.resizeStart = null
-            if (resizedToMin) {
+            if (!moved) {
+                collapseToEdge(
+                    state = state,
+                    targetScale = max(minScale(state.bitmap), state.scale * COLLAPSE_SCALE_FACTOR),
+                    animate = true
+                )
+            } else if (resizedToMin) {
                 collapseToEdge(state, targetScale = minScale(state.bitmap), animate = true)
             } else {
-                snapToEdge(state, collapsed = false, animate = true)
+                settleExpanded(state, animate = moved)
             }
         } else if (state.overDeleteTarget) {
             hideDeleteTarget(state)
@@ -406,26 +422,24 @@ class PinnedScreenshotManager(
                 animate = true
             )
         } else {
-            snapToEdge(state, collapsed = false, animate = moved)
+            settleExpanded(state, animate = moved)
         }
         hideDeleteTarget(state)
         state.dragSamples.clear()
     }
 
     private fun restore(state: PinWindowState) {
-        val edge = state.collapsedEdge ?: return
+        if (state.collapsedEdge == null) {
+            return
+        }
         val start = state.snapshot()
-        val targetY = state.y
         state.collapsedEdge = null
         state.scale = state.normalScale.coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
-        val xRange = allowedXRange(state)
-        val yRange = allowedYRange(state)
-        state.x = when (edge) {
-            PinEdge.Left -> xRange.start
-            PinEdge.Right -> xRange.endInclusive
-        }
-        state.y = targetY.coerceIn(yRange.start, yRange.endInclusive)
+        state.x = state.normalX
+        state.y = state.normalY
         clampVisible(state)
+        state.anchoredEdge = nearestEdge(state)
+        state.normalScale = state.scale
         state.normalX = state.x
         state.normalY = state.y
         val target = state.snapshot()
@@ -439,14 +453,35 @@ class PinnedScreenshotManager(
         animate: Boolean
     ) {
         val start = state.snapshot()
+        val targetEdge = nearestEdge(state)
         state.scale = targetScale.coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
-        snapToEdge(state, collapsed = true)
+        snapToEdge(state, collapsed = true, edge = targetEdge)
         val target = state.snapshot()
         state.applySnapshot(start)
         if (animate) {
             animateTo(state, target)
         } else {
             state.applySnapshot(target)
+            updateLayout(state.id)
+        }
+    }
+
+    private fun settleExpanded(
+        state: PinWindowState,
+        animate: Boolean
+    ) {
+        val start = state.snapshot()
+        state.collapsedEdge = null
+        state.anchoredEdge = nearestEdge(state)
+        clampVisible(state)
+        state.normalScale = state.scale
+        state.normalX = state.x
+        state.normalY = state.y
+        val target = state.snapshot()
+        if (animate && target != start) {
+            state.applySnapshot(start)
+            animateTo(state, target)
+        } else {
             updateLayout(state.id)
         }
     }
@@ -481,59 +516,23 @@ class PinnedScreenshotManager(
         return if (leftDistance <= rightDistance) PinEdge.Left else PinEdge.Right
     }
 
-    private fun chooseInitialEdge(state: PinWindowState): PinEdge {
-        val leftScore = initialEdgeScore(state, PinEdge.Left)
-        val rightScore = initialEdgeScore(state, PinEdge.Right)
-        return when {
-            leftScore < rightScore -> PinEdge.Left
-            rightScore < leftScore -> PinEdge.Right
-            else -> nearestEdge(state)
-        }
-    }
-
-    private fun initialEdgeScore(state: PinWindowState, edge: PinEdge): Float {
-        val safeInset = when (edge) {
-            PinEdge.Left -> state.safeInsets.left
-            PinEdge.Right -> state.safeInsets.right
-        }
-        val pinnedCount = windows.values.count { window ->
-            (window.state.collapsedEdge ?: window.state.anchoredEdge) == edge
-        }
-        return safeInset * INITIAL_EDGE_SAFE_INSET_WEIGHT +
-                pinnedCount * state.displayWidth().toFloat()
-    }
-
-    private fun applyEdgeTarget(state: PinWindowState, edge: PinEdge) {
-        val centerY = state.center().y
-        val xRange = allowedXRange(state)
-        val yRange = allowedYRange(state)
-        state.x = when (edge) {
-            PinEdge.Left -> xRange.start
-            PinEdge.Right -> xRange.endInclusive
-        }
-        state.y = (centerY - state.displayHeight() / 2f)
-            .coerceIn(yRange.start, yRange.endInclusive)
-        state.collapsedEdge = null
-        state.anchoredEdge = edge
-        clampVisible(state)
-    }
-
     private fun snapToEdge(
         state: PinWindowState,
         collapsed: Boolean,
-        animate: Boolean = false
+        animate: Boolean = false,
+        edge: PinEdge? = null
     ) {
         val start = state.snapshot()
-        val edge = nearestEdge(state)
+        val targetEdge = edge ?: nearestEdge(state)
         val xRange = allowedXRange(state)
         val yRange = allowedYRange(state)
-        state.x = when (edge) {
+        state.x = when (targetEdge) {
             PinEdge.Left -> xRange.start
             PinEdge.Right -> xRange.endInclusive
         }
         state.y = state.y.coerceIn(yRange.start, yRange.endInclusive)
-        state.collapsedEdge = if (collapsed) edge else null
-        state.anchoredEdge = edge
+        state.collapsedEdge = if (collapsed) targetEdge else null
+        state.anchoredEdge = targetEdge
         clampVisible(state)
         if (animate) {
             val target = state.snapshot()
@@ -545,6 +544,13 @@ class PinnedScreenshotManager(
     private fun clampVisible(state: PinWindowState) {
         val xRange = allowedXRange(state)
         val yRange = allowedYRange(state)
+        state.x = state.x.coerceIn(xRange.start, xRange.endInclusive)
+        state.y = state.y.coerceIn(yRange.start, yRange.endInclusive)
+    }
+
+    private fun clampInitialTargetVisible(state: PinWindowState) {
+        val xRange = twoHandleVisibleXRange(state)
+        val yRange = twoHandleVisibleYRange(state)
         state.x = state.x.coerceIn(xRange.start, xRange.endInclusive)
         state.y = state.y.coerceIn(yRange.start, yRange.endInclusive)
     }
@@ -624,15 +630,7 @@ class PinnedScreenshotManager(
     }
 
     private fun allowedXRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
-        val root = rootSize
-        val handleOutset = pinHandleOutsetPx().toFloat()
-        val minX = state.safeInsets.left - handleOutset
-        val maxX = root.width - state.safeInsets.right - state.displayWidth() + handleOutset
-        return if (maxX >= minX) {
-            minX..maxX
-        } else {
-            minX..minX
-        }
+        return pinAllowedXRange(state)
     }
 
     private fun allowedYRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
@@ -718,13 +716,16 @@ class PinnedScreenshotManager(
         const val COLLAPSE_SCALE_FACTOR = 0.35f
         const val FLING_VELOCITY_THRESHOLD = 1800f
         const val FLING_WINDOW_MS = 120L
-        const val INITIAL_EDGE_SAFE_INSET_WEIGHT = 2f
         const val LAYOUT_ANIMATION_DURATION_MS = 180
         const val MIN_SCALE_EPSILON = 0.005f
     }
 }
 
 private enum class PinEdge {
+    Left, Right
+}
+
+private enum class PinResizeHandleSide {
     Left, Right
 }
 
@@ -806,7 +807,7 @@ private data class PinDragSample(
 )
 
 private data class PinResizeStart(
-    val edge: PinEdge,
+    val handleSide: PinResizeHandleSide,
     val anchor: Offset,
     val scale: Float,
     val x: Float,
@@ -881,7 +882,7 @@ private fun PinnedScreenshotWindow(
     state: PinWindowState,
     onGestureStart: () -> Unit,
     onDrag: (Offset, Offset, Long) -> Unit,
-    onResizeStart: (Offset) -> Unit,
+    onResizeStart: (Offset, PinResizeHandleSide) -> Unit,
     onResize: (Offset) -> Unit,
     onGestureEnd: (PinGestureMode, Boolean) -> Unit,
     onCollapsedTap: () -> Unit
@@ -912,17 +913,18 @@ private fun PinnedScreenshotWindow(
                     val down = awaitFirstDown(pass = PointerEventPass.Initial)
                     latestOnGestureStart.value()
                     val touchTarget = PIN_RESIZE_TOUCH_TARGET_DP.dp.toPx()
+                    val resizeHandleSide = pinResizeHandleAt(
+                        position = down.position,
+                        state = state,
+                        width = size.width,
+                        height = size.height,
+                        touchTarget = touchTarget
+                    )
                     val mode = if (
                         state.collapsedEdge == null &&
-                        isInResizeHandle(
-                            position = down.position,
-                            edge = state.anchoredEdge,
-                            width = size.width,
-                            height = size.height,
-                            touchTarget = touchTarget
-                        )
+                        resizeHandleSide != null
                     ) {
-                        latestOnResizeStart.value(down.position)
+                        latestOnResizeStart.value(down.position, resizeHandleSide)
                         PinGestureMode.Resize
                     } else {
                         PinGestureMode.Drag
@@ -984,21 +986,23 @@ private fun PinnedScreenshotWindow(
                     contentDescription = null
                 )
             }
-            AnimatedVisibility(
-                visible = state.collapsedEdge == null,
-                modifier = Modifier.align(pinResizeHandleAlignment(state.anchoredEdge)),
-                enter = fadeIn(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS)),
-                exit = fadeOut(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS))
-            ) {
-                PinResizeHandle(edge = state.anchoredEdge)
+            PinResizeHandleSide.entries.forEach { handleSide ->
+                AnimatedVisibility(
+                    visible = handleSide in visibleResizeHandleSides(state),
+                    modifier = Modifier.align(pinResizeHandleAlignment(handleSide)),
+                    enter = fadeIn(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS)),
+                    exit = fadeOut(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS))
+                ) {
+                    PinResizeHandle(handleSide = handleSide)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PinResizeHandle(edge: PinEdge) {
-    val color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+private fun PinResizeHandle(handleSide: PinResizeHandleSide) {
+    val color = Color(0xFFA7A7A7)
     Canvas(
         modifier = Modifier
             .padding(2.dp)
@@ -1011,7 +1015,7 @@ private fun PinResizeHandle(edge: PinEdge) {
         val width = size.width
         val height = size.height
         val path = Path()
-        if (edge == PinEdge.Left) {
+        if (handleSide == PinResizeHandleSide.Right) {
             path.moveTo(width, height * 0.18f)
             path.cubicTo(
                 width,
@@ -1045,10 +1049,10 @@ private fun PinResizeHandle(edge: PinEdge) {
     }
 }
 
-private fun pinResizeHandleAlignment(edge: PinEdge): Alignment {
-    return when (edge) {
-        PinEdge.Left -> Alignment.BottomEnd
-        PinEdge.Right -> Alignment.BottomStart
+private fun pinResizeHandleAlignment(handleSide: PinResizeHandleSide): Alignment {
+    return when (handleSide) {
+        PinResizeHandleSide.Left -> Alignment.BottomStart
+        PinResizeHandleSide.Right -> Alignment.BottomEnd
     }
 }
 
@@ -1098,7 +1102,7 @@ private fun PinDeleteTarget(state: PinDeleteTargetState) {
                     contentDescription = null
                 )
                 Text(
-                    text = "拖到此处删除",
+                    text = stringResource(id = R.string.pinned_screenshot_delete_target),
                     color = contentColor,
                     fontWeight = FontWeight.Medium
                 )
@@ -1107,19 +1111,88 @@ private fun PinDeleteTarget(state: PinDeleteTargetState) {
     }
 }
 
-private fun isInResizeHandle(
+private fun pinResizeHandleAt(
     position: Offset,
-    edge: PinEdge,
+    state: PinWindowState,
     width: Int,
     height: Int,
     touchTarget: Float
-): Boolean {
+): PinResizeHandleSide? {
     if (position.y < height - touchTarget) {
-        return false
+        return null
     }
-    return when (edge) {
-        PinEdge.Left -> position.x >= width - touchTarget
-        PinEdge.Right -> position.x <= touchTarget
+    val visibleSides = visibleResizeHandleSides(state)
+    return when {
+        PinResizeHandleSide.Left in visibleSides && position.x <= touchTarget -> {
+            PinResizeHandleSide.Left
+        }
+        PinResizeHandleSide.Right in visibleSides && position.x >= width - touchTarget -> {
+            PinResizeHandleSide.Right
+        }
+        else -> null
+    }
+}
+
+private fun visibleResizeHandleSides(state: PinWindowState): List<PinResizeHandleSide> {
+    if (state.collapsedEdge != null) {
+        return emptyList()
+    }
+    return buildList {
+        if (!isPinnedToLeftEdge(state)) {
+            add(PinResizeHandleSide.Left)
+        }
+        if (!isPinnedToRightEdge(state)) {
+            add(PinResizeHandleSide.Right)
+        }
+    }
+}
+
+private fun isPinnedToLeftEdge(state: PinWindowState): Boolean {
+    return abs(state.x - pinAllowedXRange(state).start) <= EDGE_SNAP_EPSILON_PX
+}
+
+private fun isPinnedToRightEdge(state: PinWindowState): Boolean {
+    return abs(state.x - pinAllowedXRange(state).endInclusive) <= EDGE_SNAP_EPSILON_PX
+}
+
+private fun pinAllowedXRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
+    val root = rootSize
+    val handleOutset = pinHandleOutsetPx().toFloat()
+    val minX = state.safeInsets.left - handleOutset
+    val maxX = root.width - state.safeInsets.right - state.displayWidth() + handleOutset
+    return if (maxX >= minX) {
+        minX..maxX
+    } else {
+        minX..minX
+    }
+}
+
+private fun twoHandleVisibleXRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
+    val root = rootSize
+    val minX = state.safeInsets.left.toFloat()
+    val maxX = root.width - state.safeInsets.right - state.displayWidth().toFloat()
+    return if (maxX >= minX) {
+        minX..maxX
+    } else {
+        pinAllowedXRange(state)
+    }
+}
+
+private fun twoHandleVisibleYRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
+    val root = rootSize
+    val minY = state.safeInsets.top.toFloat()
+    val maxY = root.height - state.safeInsets.bottom - state.displayHeight().toFloat()
+    return if (maxY >= minY) {
+        minY..maxY
+    } else {
+        val handleOutset = pinHandleOutsetPx().toFloat()
+        val fallbackMinY = state.safeInsets.top - handleOutset
+        val fallbackMaxY = root.height - state.safeInsets.bottom - state.displayHeight() + handleOutset
+        if (fallbackMaxY >= fallbackMinY) {
+            fallbackMinY..fallbackMaxY
+        } else {
+            fallbackMinY..fallbackMinY
+        }
     }
 }
 
@@ -1162,6 +1235,7 @@ private const val PIN_IMAGE_INSET_DP = 4f
 private const val PIN_RESIZE_TOUCH_TARGET_DP = 24f
 private const val PIN_RESIZE_HANDLE_SIZE_DP = 16f
 private const val PIN_HANDLE_FADE_DURATION_MS = 140
+private const val EDGE_SNAP_EPSILON_PX = 1f
 private const val DELETE_TARGET_HEIGHT_DP = 144f
 private const val DELETE_TARGET_WIDTH_DP = 208f
 private const val DELETE_TARGET_CARD_HEIGHT_DP = 88f

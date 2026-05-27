@@ -99,13 +99,13 @@ fun GestureAnglesScreen(
                     IconButton(onClick = { vm.showResetWarningDialog(true) }) {
                         Icon(
                             imageVector = Icons.Default.Restore,
-                            contentDescription = "Reset"
+                            contentDescription = stringResource(id = R.string.reset_settings)
                         )
                     }
                     IconButton(onClick = { vm.saveSettings() }) {
                         Icon(
                             imageVector = Icons.Default.Done,
-                            contentDescription = "Save"
+                            contentDescription = stringResource(id = R.string.save_settings)
                         )
                     }
                 }

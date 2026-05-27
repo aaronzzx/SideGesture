@@ -6,6 +6,11 @@
     <string name="accessibility_description">辅助服务用于模拟返回、主页、等按键操作，实现侧滑手势的各种自定义操控，不会收集任何数据。</string>
     <string name="more">更多</string>
     <string name="delete">删除</string>
+    <string name="go_back">返回</string>
+    <string name="reset_settings">恢复设置</string>
+    <string name="save_settings">保存设置</string>
+    <string name="done">完成</string>
+    <string name="pinned_screenshot_delete_target">拖到此处删除</string>
     <string name="initial_settings">初始设置</string>
     <string name="gesture_switch">手势开关</string>
     <string name="system_overlay">在其他应用上层显示</string>

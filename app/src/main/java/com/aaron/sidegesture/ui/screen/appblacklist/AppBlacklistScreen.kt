@@ -143,14 +143,14 @@ fun AppBlacklistScreen(
                                 IconButton(onClick = { vm.showResetWarningDialog(true) }) {
                                     Icon(
                                         imageVector = Icons.Default.Restore,
-                                        contentDescription = "Reset"
+                                        contentDescription = stringResource(id = R.string.reset_settings)
                                     )
                                 }
                             }
                             IconButton(onClick = vm::done) {
                                 Icon(
                                     imageVector = Icons.Default.Done,
-                                    contentDescription = "Done"
+                                    contentDescription = stringResource(id = R.string.done)
                                 )
                             }
                         }
