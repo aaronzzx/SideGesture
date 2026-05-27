@@ -416,6 +416,9 @@ fun ActionSelectScreen(
                                     onSelect = { shortcutInfo, selected ->
                                         vm.select(shortcutInfo, selected)
                                     },
+                                    onLongClick = { shortcutInfo ->
+                                        vm.toggleMiniWindow(shortcutInfo)
+                                    },
                                     onClick = { launcherInfo ->
                                         try {
                                             currentLauncherInfo = launcherInfo
@@ -808,6 +811,7 @@ private fun AppPage(
 @Composable
 private fun ShortcutPage(
     onClick: (LauncherInfo) -> Unit,
+    onLongClick: (LauncherInfo.ShortcutInfo) -> Unit,
     onSelect: (LauncherInfo.ShortcutInfo, Boolean) -> Unit,
     createShortcuts: List<LauncherInfo>,
     launchShortcuts: List<LauncherInfo>,
@@ -851,6 +855,9 @@ private fun ShortcutPage(
                         isShortcutInfoSelected = { shortcutInfo ->
                             selectedRecord.isSelected(shortcutInfo)
                         },
+                        onLongClick = { shortcutInfo ->
+                            onLongClick(shortcutInfo)
+                        },
                         onSelect = { shortcutInfo, selected ->
                             onSelect(shortcutInfo, selected)
                         },
@@ -884,6 +891,9 @@ private fun ShortcutPage(
                         canShortcutInfoEnabled = { canShortcutInfoEnabled(selectedRecord, it, maxSelectCount) },
                         isShortcutInfoSelected = { shortcutInfo ->
                             selectedRecord.isSelected(shortcutInfo)
+                        },
+                        onLongClick = { shortcutInfo ->
+                            onLongClick(shortcutInfo)
                         },
                         onSelect = { shortcutInfo, selected ->
                             onSelect(shortcutInfo, selected)
@@ -1016,12 +1026,14 @@ private fun AppItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LauncherInfoItem(
     canLauncherInfoEnabled: (LauncherInfo) -> Boolean,
     canShortcutInfoEnabled: (LauncherInfo.ShortcutInfo) -> Boolean,
     isShortcutInfoSelected: (LauncherInfo.ShortcutInfo) -> Boolean,
     onClick: () -> Unit,
+    onLongClick: (LauncherInfo.ShortcutInfo) -> Unit,
     onSelect: (LauncherInfo.ShortcutInfo, Boolean) -> Unit,
     launcherInfo: LauncherInfo,
     selectSingle: Boolean
@@ -1081,9 +1093,15 @@ private fun LauncherInfoItem(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .onClick(enabled = canShortcutInfoEnabled(shortcutInfo)) {
-                                onSelect(shortcutInfo, !selected)
-                            }
+                            .combinedClickable(
+                                enabled = canShortcutInfoEnabled(shortcutInfo),
+                                onLongClick = {
+                                    onLongClick(shortcutInfo)
+                                },
+                                onClick = {
+                                    onSelect(shortcutInfo, !selected)
+                                }
+                            )
                         /*.padding(start = ContentPaddingHorizontal * 2 + MinInteractiveSize)*/,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1101,12 +1119,25 @@ private fun LauncherInfoItem(
                                 .padding(start = IconTextPadding, end = ItemPadding)
                                 .weight(1f)
                         ) {
-                            Text(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                text = shortcutInfo.label,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (shortcutInfo.miniWindow) {
+                                    Icon(
+                                        modifier = Modifier.size(16.dp),
+                                        imageVector = Icons.Default.Window,
+                                        contentDescription = null
+                                    )
+                                }
+                                Text(
+                                    modifier = Modifier.weight(1f),
+                                    text = shortcutInfo.label,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                         if (!selectSingle) {
                             Checkbox(

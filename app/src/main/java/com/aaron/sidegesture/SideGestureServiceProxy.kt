@@ -275,9 +275,13 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
+                val advancedSettings = advancedSettings ?: return
                 val shortcutInfo = action.shortcutInfo
                 if (shortcutInfo != null) {
-                    launchShortcutInfo(shortcutInfo)
+                    val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
+                    val triggerType = action.extra as? TriggerType
+                    val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: shortcutInfo.miniWindow
+                    launchShortcutInfo(shortcutInfo, miniWindow)
                 }
             }
             GlobalActions.MOVE_SCREEN -> {

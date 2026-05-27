@@ -174,6 +174,52 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    fun toggleMiniWindow(shortcutInfo: LauncherInfo.ShortcutInfo) {
+        val switchToMiniWindow = !shortcutInfo.miniWindow
+        updateUiState {
+            val updatedShortcut = shortcutInfo.copy(miniWindow = switchToMiniWindow)
+            val newRawCreateShortcuts = it.rawCreateShortcuts.replaceShortcutInfo(updatedShortcut)
+            val newRawLaunchShortcuts = it.rawLaunchShortcuts.replaceShortcutInfo(updatedShortcut)
+            val newSelectedList = it.selectedRecord.list.map { item ->
+                if (item is LauncherInfo.ShortcutInfo &&
+                    item.qualifiedNameWithIntents == shortcutInfo.qualifiedNameWithIntents
+                ) {
+                    updatedShortcut
+                } else {
+                    item
+                }
+            }
+            applySearchResult(
+                it.copy(
+                    rawCreateShortcuts = newRawCreateShortcuts,
+                    rawLaunchShortcuts = newRawLaunchShortcuts,
+                    selectedRecord = it.selectedRecord.copy(list = newSelectedList)
+                )
+            )
+        }
+        if (switchToMiniWindow) {
+            toast(R.string.enable_mini_window)
+        } else {
+            toast(R.string.disable_mini_window)
+        }
+    }
+
+    private fun List<LauncherInfo>.replaceShortcutInfo(
+        updatedShortcut: LauncherInfo.ShortcutInfo
+    ): List<LauncherInfo> {
+        return map { launcherInfo ->
+            launcherInfo.copy(
+                shortcuts = launcherInfo.shortcuts.map { shortcutInfo ->
+                    if (shortcutInfo.qualifiedNameWithIntents == updatedShortcut.qualifiedNameWithIntents) {
+                        updatedShortcut
+                    } else {
+                        shortcutInfo
+                    }
+                }
+            )
+        }
+    }
+
     private fun applySearchResult(uiState: UiState): UiState {
         return uiState.copy(
             actions = filterActions(uiState.rawActions, uiState.searchQuery),
@@ -367,6 +413,24 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    private fun LauncherInfo.withSelectedShortcutInfoCache(
+        selectedShortcutInfos: List<LauncherInfo.ShortcutInfo>
+    ): LauncherInfo {
+        return copy(
+            shortcuts = shortcuts.map { shortcutInfo ->
+                val cache = selectedShortcutInfos.find { selected ->
+                    selected.qualifiedNameWithIntents == shortcutInfo.qualifiedNameWithIntents
+                } ?: return@map shortcutInfo
+                shortcutInfo.copy(
+                    iconPath = cache.iconPath,
+                    iconScale = cache.iconScale,
+                    miniWindow = cache.miniWindow,
+                    iconBgColor = cache.iconBgColor
+                )
+            }
+        )
+    }
+
     fun updateShortcutInfos() {
         viewModelScope.launchWithLoading {
             val createLauncherInfos = withContext(Dispatchers.IO) {
@@ -421,7 +485,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         info.packageName == launcherInfo.packageName
                     }
                     if (cache != null) {
-                        list1.add(launcherInfo)
+                        list1.add(launcherInfo.withSelectedShortcutInfoCache(selectedShortcutInfos))
                     } else {
                         list2.add(launcherInfo)
                     }
@@ -437,7 +501,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         info.packageName == launcherInfo.packageName
                     }
                     if (cache != null) {
-                        list1.add(launcherInfo)
+                        list1.add(launcherInfo.withSelectedShortcutInfoCache(selectedShortcutInfos))
                     } else {
                         list2.add(launcherInfo)
                     }

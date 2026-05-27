@@ -62,7 +62,10 @@ fun Context.launchAssist(): Boolean {
     }
 }
 
-fun Context.launchShortcutInfo(shortcutInfo: LauncherInfo.ShortcutInfo): Boolean {
+fun Context.launchShortcutInfo(
+    shortcutInfo: LauncherInfo.ShortcutInfo,
+    miniWindow: Boolean = shortcutInfo.miniWindow
+): Boolean {
     return try {
         val intents = shortcutInfo
             .intents
@@ -72,7 +75,21 @@ fun Context.launchShortcutInfo(shortcutInfo: LauncherInfo.ShortcutInfo): Boolean
                 }
             }
             .toTypedArray()
-        startActivities(intents)
+        var launchMiniWindowSucceed = false
+        if (miniWindow) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                launchMiniWindowSucceed = MiniWindowUtils.startActivities(
+                    context = this,
+                    intents = intents,
+                    showFailureToast = false
+                )
+            } else {
+                showVersionTooLowToast(this)
+            }
+        }
+        if (!launchMiniWindowSucceed) {
+            startActivities(intents)
+        }
         true
     } catch (ignored: Exception) {
         showToast(getString(R.string.launch_shortcut_info_failed, shortcutInfo.label))

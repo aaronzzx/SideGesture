@@ -32,6 +32,7 @@ data class LauncherInfo (
         val iconRes: Int = 0,
         val iconPath: String? = null,
         val iconScale: Float = DEFAULT_SCALE,
+        val miniWindow: Boolean = false,
         val iconBgColor: Int = 0,
         @IgnoredOnParcel
         @Transient

@@ -142,7 +142,8 @@ fun ActionPanel(
                     .align(Alignment.Center)
                     .displayCutoutPadding()
                     .padding(RootPadding),
-                visible = selectedAction.value == GlobalActions.EXTRA_LAUNCH_APP,
+                visible = selectedAction.value == GlobalActions.EXTRA_LAUNCH_APP ||
+                        selectedAction.value == GlobalActions.EXTRA_LAUNCH_SHORTCUT,
                 enter = enter,
                 exit = ExitTransition.None
             ) {

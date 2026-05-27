@@ -29,18 +29,47 @@ object MiniWindowUtils {
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun startActivity(context: Context, component: ComponentName): Boolean {
+        val intent = Intent().apply {
+            setComponent(component)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return startActivity(context, intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun startActivity(
+        context: Context,
+        intent: Intent,
+        showFailureToast: Boolean = true
+    ): Boolean {
         return try {
-            val intent = Intent().apply {
-                setComponent(component)
-                setAction(Intent.ACTION_MAIN)
-                addCategory(Intent.CATEGORY_LAUNCHER)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
             val activityOptions = getActivityOptions()
             context.startActivity(intent, activityOptions.toBundle())
             true
         } catch (ignored: Exception) {
-            showToast(context.getString(R.string.launch_mini_window_failed))
+            if (showFailureToast) {
+                showToast(context.getString(R.string.launch_mini_window_failed))
+            }
+            false
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun startActivities(
+        context: Context,
+        intents: Array<Intent>,
+        showFailureToast: Boolean = true
+    ): Boolean {
+        return try {
+            val activityOptions = getActivityOptions()
+            context.startActivities(intents, activityOptions.toBundle())
+            true
+        } catch (ignored: Exception) {
+            if (showFailureToast) {
+                showToast(context.getString(R.string.launch_mini_window_failed))
+            }
             false
         }
     }
