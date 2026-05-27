@@ -363,7 +363,11 @@ fun SideGestureContainer(
                         selectionRect = smartScreenshotState.selectionRect,
                         shape = smartScreenshotState.shape
                     )
-                    (context as SideGestureService).pinnedScreenshotManager.pin(output, buttons)
+                    (context as SideGestureService).pinnedScreenshotManager.pin(
+                        bitmap = output,
+                        buttons = buttons,
+                        sourceRect = smartScreenshotState.selectionRect
+                    )
                     smartScreenshotState.dismiss()
                     onOverlayTouchChange(false)
                 }

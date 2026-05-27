@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -83,30 +84,51 @@ class PinnedScreenshotManager(
     private var deleteTargetWindow: DeleteTargetWindow? = null
     private var isScreenLocked = false
 
-    fun pin(bitmap: Bitmap, buttons: List<GestureButton>) {
+    fun pin(
+        bitmap: Bitmap,
+        buttons: List<GestureButton>,
+        sourceRect: Rect? = null
+    ) {
         ensureDeleteTargetWindow()
         val safeInsets = PinSafeInsets.from(service, windowManager, buttons)
         val root = rootSize
         val minScale = minScale(bitmap)
         val chromeSize = pinChromeSizePx()
-        val initialScale = min(
+        val targetScale = min(
             1f,
             min(
                 (root.width * 0.45f - chromeSize * 2f) / bitmap.width,
                 (root.height * 0.45f - chromeSize * 2f) / bitmap.height
             )
         ).coerceIn(minScale, maxScale(bitmap))
-        val initialWindowWidth = bitmap.width * initialScale + chromeSize * 2f
-        val initialWindowHeight = bitmap.height * initialScale + chromeSize * 2f
+        val startScale = sourceRect?.let { rect ->
+            min(rect.width / bitmap.width, rect.height / bitmap.height)
+                .coerceAtLeast(0.01f)
+        } ?: targetScale
+        val startWindowWidth = bitmap.width * startScale + chromeSize * 2f
+        val startWindowHeight = bitmap.height * startScale + chromeSize * 2f
         val state = PinWindowState(
             id = SystemClock.uptimeMillis().toString(),
             bitmap = bitmap,
-            scale = initialScale,
-            x = ((root.width - initialWindowWidth) / 2f).coerceAtLeast(0f),
-            y = ((root.height - initialWindowHeight) / 2f).coerceAtLeast(0f),
+            scale = startScale,
+            x = sourceRect?.let { it.left - chromeSize }
+                ?: ((root.width - startWindowWidth) / 2f).coerceAtLeast(0f),
+            y = sourceRect?.let { it.top - chromeSize }
+                ?: ((root.height - startWindowHeight) / 2f).coerceAtLeast(0f),
             safeInsets = safeInsets
         )
-        state.anchoredEdge = nearestEdge(state)
+        if (sourceRect == null) {
+            clampVisible(state)
+        }
+        val start = state.snapshot()
+        val targetEdge = chooseInitialEdge(state)
+        state.scale = targetScale
+        applyEdgeTarget(state, targetEdge)
+        state.normalScale = state.scale
+        state.normalX = state.x
+        state.normalY = state.y
+        val target = state.snapshot()
+        state.applySnapshot(start)
         val view = ComposeView(service).apply {
             setViewTreeLifecycleOwner(service)
             setViewTreeViewModelStoreOwner(service)
@@ -144,6 +166,12 @@ class PinnedScreenshotManager(
         }
         windowManager.addView(view, layoutParams)
         windows[state.id] = PinWindow(state, view, layoutParams)
+        if (sourceRect != null && start != target) {
+            animateTo(state, target)
+        } else {
+            state.applySnapshot(target)
+            updateLayout(state.id)
+        }
     }
 
     fun onEnvironmentChanged(buttons: List<GestureButton>) {
@@ -446,6 +474,43 @@ class PinnedScreenshotManager(
         return if (leftDistance <= rightDistance) PinEdge.Left else PinEdge.Right
     }
 
+    private fun chooseInitialEdge(state: PinWindowState): PinEdge {
+        val leftScore = initialEdgeScore(state, PinEdge.Left)
+        val rightScore = initialEdgeScore(state, PinEdge.Right)
+        return when {
+            leftScore < rightScore -> PinEdge.Left
+            rightScore < leftScore -> PinEdge.Right
+            else -> nearestEdge(state)
+        }
+    }
+
+    private fun initialEdgeScore(state: PinWindowState, edge: PinEdge): Float {
+        val safeInset = when (edge) {
+            PinEdge.Left -> state.safeInsets.left
+            PinEdge.Right -> state.safeInsets.right
+        }
+        val pinnedCount = windows.values.count { window ->
+            (window.state.collapsedEdge ?: window.state.anchoredEdge) == edge
+        }
+        return safeInset * INITIAL_EDGE_SAFE_INSET_WEIGHT +
+                pinnedCount * state.displayWidth().toFloat()
+    }
+
+    private fun applyEdgeTarget(state: PinWindowState, edge: PinEdge) {
+        val centerY = state.center().y
+        val xRange = allowedXRange(state)
+        val yRange = allowedYRange(state)
+        state.x = when (edge) {
+            PinEdge.Left -> xRange.start
+            PinEdge.Right -> xRange.endInclusive
+        }
+        state.y = (centerY - state.displayHeight() / 2f)
+            .coerceIn(yRange.start, yRange.endInclusive)
+        state.collapsedEdge = null
+        state.anchoredEdge = edge
+        clampVisible(state)
+    }
+
     private fun snapToEdge(
         state: PinWindowState,
         collapsed: Boolean,
@@ -646,6 +711,7 @@ class PinnedScreenshotManager(
         const val COLLAPSE_SCALE_FACTOR = 0.35f
         const val FLING_VELOCITY_THRESHOLD = 1800f
         const val FLING_WINDOW_MS = 120L
+        const val INITIAL_EDGE_SAFE_INSET_WEIGHT = 2f
         const val LAYOUT_ANIMATION_DURATION_MS = 180
         const val MIN_SCALE_EPSILON = 0.005f
     }
