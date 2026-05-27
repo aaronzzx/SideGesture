@@ -270,7 +270,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 if (appInfo != null) {
                     val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
                     val triggerType = action.extra as? TriggerType
-                    val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: appInfo.miniWindow
+                    val miniWindow = triggerType?.isMiniWindow(!appInfo.miniWindow && longPressLaunchPopup) ?: false
                     launchAppInfo(appInfo, miniWindow)
                 }
             }
@@ -280,7 +280,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 if (shortcutInfo != null) {
                     val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
                     val triggerType = action.extra as? TriggerType
-                    val miniWindow = triggerType?.isMiniWindow(longPressLaunchPopup) ?: shortcutInfo.miniWindow
+                    val miniWindow = triggerType?.isMiniWindow(!shortcutInfo.miniWindow && longPressLaunchPopup) ?: false
                     launchShortcutInfo(shortcutInfo, miniWindow)
                 }
             }

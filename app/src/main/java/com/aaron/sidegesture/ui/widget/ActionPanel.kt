@@ -153,7 +153,15 @@ fun ActionPanel(
                     Box(
                         modifier = Modifier
                             .let { thisModifier ->
-                                val miniWindow = actionPanelState.triggerType.isMiniWindow(longPressLaunchPopup)
+                                val miniWindowInConfig = remember(selectedAction) {
+                                    selectedAction
+                                        .appInfo
+                                        ?.miniWindow
+                                        ?: selectedAction
+                                            .shortcutInfo
+                                            ?.miniWindow ?: false
+                                }
+                                val miniWindow = actionPanelState.triggerType.isMiniWindow(!miniWindowInConfig && longPressLaunchPopup)
                                 val maxWidth = this@BoxWithConstraints.maxWidth
                                 val maxHeight = this@BoxWithConstraints.maxHeight
                                 val spec = spring<Dp>(stiffness = 5000f)
