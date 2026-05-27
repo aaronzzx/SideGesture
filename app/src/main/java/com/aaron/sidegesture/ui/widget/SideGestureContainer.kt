@@ -74,6 +74,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.atan
 import kotlin.math.hypot
 
+
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/15
@@ -102,6 +103,7 @@ fun SideGestureContainer(
     val quickToolsState = rememberQuickToolsControlCenterState()
     val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
+    var suppressGestureAnimationForScreenshot by remember { mutableStateOf(false) }
 
     LaunchedEffect(hideQuickToolsSignal) {
         if (hideQuickToolsSignal != 0) {
@@ -117,6 +119,17 @@ fun SideGestureContainer(
         }
     }
 
+    suspend fun takeCleanSystemScreenshot(service: SideGestureService): Bitmap? {
+        suppressGestureAnimationForScreenshot = true
+        return try {
+            sideGestureState.cancelAnimationForSystemScreenshot()
+            delay(20)
+            service.takeScreenshot()
+        } finally {
+            suppressGestureAnimationForScreenshot = false
+        }
+    }
+
     fun handleAction(action: Action, finger: Offset, position: Position?) {
         if (action == Action.NONE) {
             return
@@ -128,6 +141,7 @@ fun SideGestureContainer(
                 return
             }
             quickToolsState.hide()
+            sideGestureState.cancelAnimationImmediately()
             smartScreenshotState.startCapture()
             return
         }
@@ -232,23 +246,10 @@ fun SideGestureContainer(
             vibrations = gestureSettings.vibrations
         )
 
-        if (!moveScreenState.visible &&
-            !smartScreenshotState.visible &&
-            !smartScreenshotState.isCapturing &&
-            animationStyle != null
-        ) {
-            GestureAnimation(
-                modifier = Modifier.matchParentSize(),
-                animationStyle = animationStyle,
-                sideGestureState = sideGestureState
-            )
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && smartScreenshotState.isCapturing) {
             LaunchedEffect(smartScreenshotState.isCapturing) {
                 val service = context as SideGestureService
-                delay(20)
-                val screenshot = service.takeScreenshot()
+                val screenshot = takeCleanSystemScreenshot(service)
                 if (screenshot == null) {
                     smartScreenshotState.cancelCapture()
                     showToast(R.string.screenshot_capture_failed)
@@ -261,10 +262,8 @@ fun SideGestureContainer(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && moveScreenState.visible) {
             val moveScreenScreenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
-                // 16ms为屏幕一帧，等待一帧防止截到手势
-                delay(20)
                 val service = context as SideGestureService
-                value = service.takeScreenshot()
+                value = takeCleanSystemScreenshot(service)
             }
             val screenshot = moveScreenScreenshotState.value
             if (screenshot != null) {
@@ -381,6 +380,14 @@ fun SideGestureContainer(
             state = quickToolsState,
             onOverlayTouchChange = onOverlayTouchChange
         )
+
+        if (animationStyle != null && !suppressGestureAnimationForScreenshot) {
+            GestureAnimation(
+                modifier = Modifier.matchParentSize(),
+                animationStyle = animationStyle,
+                sideGestureState = sideGestureState
+            )
+        }
     }
 }
 
@@ -589,6 +596,43 @@ class SideGestureState(
         if (isCanceled) return
         reset()
         isCanceled = true
+    }
+
+    fun cancelAnimationImmediately() {
+        clearGestureAnimationState()
+        coroutineScope.launch {
+            stopAndClearAnimationValues()
+        }
+    }
+
+    suspend fun cancelAnimationForSystemScreenshot() {
+        clearGestureAnimationState()
+        stopAndClearAnimationValues()
+    }
+
+    private fun clearGestureAnimationState() {
+        calcLongPressJob?.cancel()
+        calcLongPressJob = null
+        isCanceled = true
+        origin = Offset.Unspecified
+        finger = Offset.Unspecified
+        button = null
+        buttonBounds = null
+        triggerDirection = Center2
+        longSlideFirstTriggerMs = 0L
+        isOhoGestureEverCanTriggered = false
+        slideVibrationFlags = false
+    }
+
+    private suspend fun stopAndClearAnimationValues() {
+        originXAnim.stop()
+        originYAnim.stop()
+        fingerXAnim.stop()
+        fingerYAnim.stop()
+        originXAnim.snapTo(Float.NaN)
+        originYAnim.snapTo(Float.NaN)
+        fingerXAnim.snapTo(Float.NaN)
+        fingerYAnim.snapTo(Float.NaN)
     }
 
     fun reset() {
