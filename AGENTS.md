@@ -64,6 +64,7 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 新增依赖统一写入 `gradle/libs.versions.toml`，再在模块 `build.gradle.kts` 引用。
 - 不要启用或改写 Release 签名配置，除非明确要求。
 - 优先使用项目已有的api，风格优先按项目已有风格做
+- 优先使用fastcompose库的api
 
 ## 动画实现约定
 
