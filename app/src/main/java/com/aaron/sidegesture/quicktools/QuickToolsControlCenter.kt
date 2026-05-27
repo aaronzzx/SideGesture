@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -228,9 +229,8 @@ fun QuickToolsControlCenter(
                 shadowElevation = if (isDarkTheme) 10.dp else 14.dp
             ) {
                 QuickToolsGrid(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(QuickToolsGridSpec.PanelInnerPadding),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(QuickToolsGridSpec.PanelInnerPadding),
                     types = enabledTypes,
                     mediaState = mediaState,
                     brightness = brightness,
@@ -347,6 +347,7 @@ private suspend fun handleQuickToolClick(
 @Composable
 private fun QuickToolsGrid(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
     types: List<QuickToolType>,
     mediaState: QuickToolsMediaControllerState,
     brightness: Float,
@@ -364,6 +365,7 @@ private fun QuickToolsGrid(
 ) {
     LazyVerticalGrid(
         modifier = modifier,
+        contentPadding = contentPadding,
         columns = GridCells.Fixed(QuickToolsGridSpec.Columns),
         horizontalArrangement = Arrangement.spacedBy(QuickToolsGridSpec.ItemSpacing),
         verticalArrangement = Arrangement.spacedBy(QuickToolsGridSpec.ItemSpacing)

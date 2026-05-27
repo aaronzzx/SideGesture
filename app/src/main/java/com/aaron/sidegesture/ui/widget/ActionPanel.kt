@@ -17,21 +17,23 @@ import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -267,7 +269,7 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     val panelWidth = with(density) { panelWidthPx.toDp() }
     val panelHeight = with(density) { panelHeightPx.toDp() }
     val gridHeight = with(density) { gridHeightPx.toDp() }
-    val scrollState = rememberScrollState()
+    val gridState = rememberLazyGridState()
     val itemBounds = remember { mutableStateMapOf<Int, Rect>() }
     var panelBounds by remember { mutableStateOf(Rect.Zero) }
     var parentSize by remember { mutableStateOf(Size.Zero) }
@@ -282,27 +284,32 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     LaunchedEffect(actionPanelState.actions.size) {
         itemBounds.clear()
         selectedIndex = null
-        scrollState.scrollTo(0)
+        gridState.scrollToItem(0)
         autoScrollDirection = 0
     }
 
-    LaunchedEffect(autoScrollDirection, scrollState, autoScrollSpeedPxPerFrame) {
+    LaunchedEffect(autoScrollDirection, gridState, autoScrollSpeedPxPerFrame) {
         val direction = autoScrollDirection
-        while (direction != 0 && scrollState.maxValue > 0) {
-            val target = (scrollState.value + direction * autoScrollSpeedPxPerFrame)
-                .roundToInt()
-                .coerceIn(0, scrollState.maxValue)
-            if (target != scrollState.value) {
-                scrollState.scrollTo(target)
-            }
+        while (direction != 0 && gridState.canScroll(direction)) {
+            gridState.scrollBy(direction * autoScrollSpeedPxPerFrame)
             delay(FolderAutoScrollFrameDelayMs)
         }
+    }
+
+    LaunchedEffect(gridState, itemBounds) {
+        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.map { it.index } }
+            .collect { visibleIndexes ->
+                val visibleIndexSet = visibleIndexes.toSet()
+                itemBounds.keys
+                    .filter { it !in visibleIndexSet }
+                    .fastForEach { itemBounds.remove(it) }
+            }
     }
 
     LaunchedEffect(
         transition,
         actionPanelState,
-        scrollState,
+        gridState,
         itemBounds,
         panelBounds,
         scrollHotZonePx
@@ -315,11 +322,12 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
             }
             .collect { finger ->
                 val inPanel = panelBounds.contains(finger)
-                val canScroll = scrollState.maxValue > 0
                 autoScrollDirection = when {
-                    !inPanel || !canScroll -> 0
-                    finger.y <= panelBounds.top + scrollHotZonePx -> -1
-                    finger.y >= panelBounds.bottom - scrollHotZonePx -> 1
+                    !inPanel -> 0
+                    finger.y <= panelBounds.top + scrollHotZonePx &&
+                            gridState.canScrollBackward -> -1
+                    finger.y >= panelBounds.bottom - scrollHotZonePx &&
+                            gridState.canScrollForward -> 1
                     else -> 0
                 }
 
@@ -399,10 +407,6 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                     color = Color.White.copy(alpha = 0.28f),
                     shape = RoundedCornerShape(cornerRadius)
                 )
-                .padding(
-                    horizontal = horizontalPadding,
-                    vertical = verticalPadding
-                )
                 .animateEnterExit(
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
                             scaleIn(spring(stiffness = Spring.StiffnessMedium), 0.92f),
@@ -410,46 +414,49 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                             scaleOut(spring(stiffness = Spring.StiffnessMedium), 0.92f)
                 )
         ) {
-            Column(
-                modifier = Modifier
-                    .height(gridHeight)
-                    .verticalScroll(scrollState, enabled = false),
+            LazyVerticalGrid(
+                modifier = Modifier.fillMaxSize(),
+                columns = GridCells.Fixed(columns),
+                state = gridState,
+                contentPadding = PaddingValues(
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding
+                ),
+                userScrollEnabled = false,
+                horizontalArrangement = Arrangement.spacedBy(itemSpacing),
                 verticalArrangement = Arrangement.spacedBy(itemSpacing)
             ) {
-                repeat(totalRows) { rowIndex ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(itemSpacing)
-                    ) {
-                        repeat(columns) { columnIndex ->
-                            val index = rowIndex * columns + columnIndex
-                            val action = actionPanelState.actions.getOrNull(index)
-                            if (action == null) {
-                                Box(modifier = Modifier.size(itemSize))
-                            } else {
-                                key(index) {
-                                    val scale by animateFloatAsState(
-                                        targetValue = if (actionPanelState.isSelected(action)) 1.15f else 1f,
-                                        animationSpec = spring(stiffness = Spring.StiffnessHigh)
-                                    )
-                                    ActionPanelItem(
-                                        modifier = Modifier
-                                            .size(itemSize)
-                                            .onGloballyPositioned {
-                                                itemBounds[index] = it.boundsInRoot()
-                                            }
-                                            .graphicsLayer {
-                                                scaleX = scale
-                                                scaleY = scale
-                                            },
-                                        action = action
-                                    )
-                                }
+                itemsIndexed(
+                    items = actionPanelState.actions,
+                    key = { index, _ -> index }
+                ) { index, action ->
+                    val scale by animateFloatAsState(
+                        targetValue = if (actionPanelState.isSelected(action)) 1.15f else 1f,
+                        animationSpec = spring(stiffness = Spring.StiffnessHigh)
+                    )
+                    ActionPanelItem(
+                        modifier = Modifier
+                            .size(itemSize)
+                            .onGloballyPositioned {
+                                itemBounds[index] = it.boundsInRoot()
                             }
-                        }
-                    }
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                            },
+                        action = action
+                    )
                 }
             }
         }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.grid.LazyGridState.canScroll(direction: Int): Boolean {
+    return when {
+        direction < 0 -> canScrollBackward
+        direction > 0 -> canScrollForward
+        else -> false
     }
 }
 
