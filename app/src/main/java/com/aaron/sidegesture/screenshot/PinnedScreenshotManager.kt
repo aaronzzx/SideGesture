@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -286,7 +287,13 @@ class PinnedScreenshotManager(
     }
 
     private fun isOverDeleteTarget(pointer: Offset): Boolean {
-        return pointer.y >= rootSize.height - deleteTargetHeightPx()
+        val root = rootSize
+        val width = deleteTargetWidthPx().toFloat()
+        val height = deleteTargetCardHeightPx().toFloat()
+        val left = (root.width - width) / 2f
+        val top = root.height - deleteTargetHeightPx() + (deleteTargetHeightPx() - height) / 2f
+        return pointer.x in left..(left + width) &&
+                pointer.y in top..(top + height)
     }
 
     private fun handleDrag(
@@ -1070,6 +1077,7 @@ private fun PinDeleteTarget(state: PinDeleteTargetState) {
             Column(
                 modifier = Modifier
                     .width(DELETE_TARGET_WIDTH_DP.dp)
+                    .height(DELETE_TARGET_CARD_HEIGHT_DP.dp)
                     .clipToBackground(
                         color = containerColor,
                         shape = RoundedCornerShape(DELETE_TARGET_CORNER_DP.dp)
@@ -1141,6 +1149,14 @@ private fun deleteTargetHeightPx(): Int {
     return ConvertUtils.dp2px(DELETE_TARGET_HEIGHT_DP)
 }
 
+private fun deleteTargetWidthPx(): Int {
+    return ConvertUtils.dp2px(DELETE_TARGET_WIDTH_DP)
+}
+
+private fun deleteTargetCardHeightPx(): Int {
+    return ConvertUtils.dp2px(DELETE_TARGET_CARD_HEIGHT_DP)
+}
+
 private const val PIN_HANDLE_OUTSET_DP = 8f
 private const val PIN_IMAGE_INSET_DP = 4f
 private const val PIN_RESIZE_TOUCH_TARGET_DP = 24f
@@ -1148,6 +1164,7 @@ private const val PIN_RESIZE_HANDLE_SIZE_DP = 16f
 private const val PIN_HANDLE_FADE_DURATION_MS = 140
 private const val DELETE_TARGET_HEIGHT_DP = 144f
 private const val DELETE_TARGET_WIDTH_DP = 208f
+private const val DELETE_TARGET_CARD_HEIGHT_DP = 88f
 private const val DELETE_TARGET_CORNER_DP = 30f
 private const val DELETE_TARGET_FADE_DURATION_MS = 140
 private const val DELETE_TARGET_PIN_ANIMATION_MS = 140
