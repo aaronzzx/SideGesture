@@ -73,8 +73,11 @@ import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ktx.toDp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
+import com.aaron.sidegesture.constant.GlobalSettings.MaxActionPanelAppSwitchWindowModeDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelAppSwitchWindowModeDelayMs
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
@@ -1508,11 +1511,17 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
 }
 
 @Composable
-fun rememberActionPanelState(): ActionPanelState {
+fun rememberActionPanelState(
+    windowModeSwitchDelayMs: Long = AdvancedSettingsDefaults.ActionPanelAppSwitchWindowModeDelayMs
+): ActionPanelState {
     val coroutineScope = rememberCoroutineScope()
-    return remember {
+    val state = remember {
         ActionPanelState(coroutineScope)
     }
+    LaunchedEffect(state, windowModeSwitchDelayMs) {
+        state.updateWindowModeSwitchDelayMs(windowModeSwitchDelayMs)
+    }
+    return state
 }
 
 class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideState() {
@@ -1531,6 +1540,7 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
     var triggerType: TriggerType by mutableStateOf(TriggerType.Press)
         private set
     private var delayTriggerTypeChangedJob: Job? = null
+    private var windowModeSwitchDelayMs: Long = AdvancedSettingsDefaults.ActionPanelAppSwitchWindowModeDelayMs
 
     override fun onDragStart(offset: Offset) {
         super.onDragStart(offset)
@@ -1559,9 +1569,16 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         delayTriggerTypeChangedJob?.cancel()
         triggerType = TriggerType.Press
         delayTriggerTypeChangedJob = coroutineScope.launch {
-            delay(500)
+            delay(windowModeSwitchDelayMs)
             triggerType = TriggerType.LongPress
         }
+    }
+
+    fun updateWindowModeSwitchDelayMs(value: Long) {
+        windowModeSwitchDelayMs = value.coerceIn(
+            MinActionPanelAppSwitchWindowModeDelayMs,
+            MaxActionPanelAppSwitchWindowModeDelayMs
+        )
     }
 
     override fun reset() {

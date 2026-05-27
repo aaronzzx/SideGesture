@@ -84,6 +84,7 @@
     <string name="gesture_button_extension">触钮扩展</string>
     <string name="action_panel_launch_app">启动应用</string>
     <string name="action_panel_launch_app_hint">默认短按小窗长按全屏，调换顺序请打开</string>
+    <string name="action_panel_app_switch_window_mode_delay_ms">小窗全屏切换延迟</string>
     <string name="hide_gesture_button">隐藏触钮</string>
     <string name="landscape">横屏模式</string>
     <string name="quick_settings">快捷面板</string>

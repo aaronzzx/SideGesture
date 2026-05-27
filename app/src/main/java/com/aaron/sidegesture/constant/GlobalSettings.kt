@@ -68,6 +68,8 @@ object GlobalSettings {
     const val MaxLongSlideTriggerDelayMs = 250L
     const val MinLongPressTriggerDelayMs = 100L
     const val MaxLongPressTriggerDelayMs = 1000L
+    const val MinActionPanelAppSwitchWindowModeDelayMs = 500L
+    const val MaxActionPanelAppSwitchWindowModeDelayMs = 2000L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
     const val GestureButtonColorAlpha = 0.36f

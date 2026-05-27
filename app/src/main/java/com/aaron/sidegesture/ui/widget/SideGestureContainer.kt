@@ -98,7 +98,9 @@ fun SideGestureContainer(
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
     val sideGestureState = rememberSideGestureState(buttons, advancedSettings, gestureSettings)
-    val actionPanelState = rememberActionPanelState()
+    val actionPanelState = rememberActionPanelState(
+        windowModeSwitchDelayMs = advancedSettings.actionPanelAppSwitchWindowModeDelayMs
+    )
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
     val quickToolsState = rememberQuickToolsControlCenterState()
     val smartScreenshotState = remember { SmartScreenshotState() }

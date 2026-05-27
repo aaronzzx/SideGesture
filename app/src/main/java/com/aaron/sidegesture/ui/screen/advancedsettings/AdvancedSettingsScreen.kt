@@ -26,6 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GlobalSettings.MaxActionPanelAppSwitchWindowModeDelayMs
+import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelAppSwitchWindowModeDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.getDayNightModeText
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
@@ -40,6 +42,7 @@ import com.aaron.sidegesture.ui.theme.SectionPadding
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
+import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 
@@ -102,6 +105,14 @@ fun AdvancedSettingsScreen(
                         checked = uiState.actionPanelAppLongPressLaunchPopup,
                         text = stringResource(id = R.string.action_panel_launch_app),
                         secondaryText = stringResource(id = R.string.action_panel_launch_app_hint)
+                    )
+                    MyTextSlider(
+                        value = uiState.actionPanelAppSwitchWindowModeDelayMs.toFloat(),
+                        onValueChange = { vm.onActionPanelAppSwitchWindowModeDelayMsChange(it) },
+                        onValueChangeFinished = vm::onActionPanelAppSwitchWindowModeDelayMsChangeFinished,
+                        text = stringResource(id = R.string.action_panel_app_switch_window_mode_delay_ms),
+                        sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
+                        valueRange = MinActionPanelAppSwitchWindowModeDelayMs.toFloat()..MaxActionPanelAppSwitchWindowModeDelayMs.toFloat()
                     )
                 }
                 MySection(

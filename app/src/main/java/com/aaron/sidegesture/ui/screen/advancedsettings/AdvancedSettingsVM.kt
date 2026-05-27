@@ -63,6 +63,16 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onActionPanelAppSwitchWindowModeDelayMsChange(value: Float) {
+        updateUiState {
+            it.copy(actionPanelAppSwitchWindowModeDelayMs = value.toLong())
+        }
+    }
+
+    fun onActionPanelAppSwitchWindowModeDelayMsChangeFinished() {
+        saveSettings()
+    }
+
     fun onExcludeFromRecentsChange(value: Boolean) {
         updateUiState {
             it.copy(excludeFromRecents = value)
@@ -128,6 +138,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     volumeButtonSwitchSong = uiState.volumeButtonSwitchSong,
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
                     actionPanelAppLongPressLaunchPopup = uiState.actionPanelAppLongPressLaunchPopup,
+                    actionPanelAppSwitchWindowModeDelayMs = uiState.actionPanelAppSwitchWindowModeDelayMs,
                     hideLandscape = uiState.hideLandscape,
                     hideQuickPanel = uiState.hideQuickPanel,
                     hideScreenLock = uiState.hideScreenLock,
@@ -155,6 +166,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                             volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                             fitSoftKeyboard = item.fitSoftKeyboard,
                             actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
+                            actionPanelAppSwitchWindowModeDelayMs = item.actionPanelAppSwitchWindowModeDelayMs,
                             hideLandscape = item.hideLandscape,
                             hideQuickPanel = item.hideQuickPanel,
                             hideScreenLock = item.hideScreenLock,
@@ -176,6 +188,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val actionPanelStyleType: Int = ActionPanelStyles.TYPE_FOLDER,
         val fitSoftKeyboard: Boolean = false,
         val actionPanelAppLongPressLaunchPopup: Boolean = false,
+        val actionPanelAppSwitchWindowModeDelayMs: Long = 500L,
         val hideLandscape: Boolean = false,
         val hideQuickPanel: Boolean = false,
         val hideScreenLock: Boolean = false,

@@ -28,6 +28,7 @@ object AdvancedSettingsDefaults {
     const val VolumeButtonSwitchSong = false
     const val FitSoftKeyboard = true
     const val ActionPanelAppLongPressLaunchPopup = false
+    const val ActionPanelAppSwitchWindowModeDelayMs = 500L
     const val HideLandscape = false
     const val HideQuickPanel = false
     const val HideScreenLock = false
