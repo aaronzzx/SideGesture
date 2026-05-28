@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -120,7 +121,8 @@ fun ActionPanel(
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
     longPressLaunchPopup: Boolean = false,
-    vibrations: Vibrations? = null
+    vibrations: Vibrations? = null,
+    onHidden: () -> Unit = {}
 ) {
     AnimatedVisibility(
         modifier = modifier,
@@ -128,6 +130,12 @@ fun ActionPanel(
         enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
         exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
+        DisposableEffect(Unit) {
+            onDispose {
+                onHidden()
+            }
+        }
+
         Box {
             Box(
                 modifier = Modifier

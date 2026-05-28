@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -80,6 +81,8 @@ import kotlin.math.hypot
  * @since 2024/11/15
  */
 
+private const val SystemScreenshotOverlaySettleFrameCount = 2
+
 @Composable
 fun SideGestureContainer(
     onAction: (Action) -> Unit,
@@ -105,7 +108,8 @@ fun SideGestureContainer(
     val quickToolsState = rememberQuickToolsControlCenterState()
     val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
-    var suppressGestureAnimationForScreenshot by remember { mutableStateOf(false) }
+    var hideSystemScreenshotOverlays by remember { mutableStateOf(false) }
+    var pendingSmartScreenshotAfterActionPanelHidden by remember { mutableStateOf(false) }
 
     LaunchedEffect(hideQuickToolsSignal) {
         if (hideQuickToolsSignal != 0) {
@@ -115,6 +119,7 @@ fun SideGestureContainer(
 
     LaunchedEffect(hideSmartScreenshotSignal) {
         if (hideSmartScreenshotSignal != 0) {
+            pendingSmartScreenshotAfterActionPanelHidden = false
             smartScreenshotState.dismiss()
             smartScreenshotState.cancelCapture()
             onOverlayTouchChange(false)
@@ -122,17 +127,29 @@ fun SideGestureContainer(
     }
 
     suspend fun takeCleanSystemScreenshot(service: SideGestureService): Bitmap? {
-        suppressGestureAnimationForScreenshot = true
+        hideSystemScreenshotOverlays = true
         return try {
-            sideGestureState.cancelAnimationForSystemScreenshot()
-            delay(20)
+            repeat(SystemScreenshotOverlaySettleFrameCount) {
+                withFrameNanos { }
+            }
             service.takeScreenshot()
         } finally {
-            suppressGestureAnimationForScreenshot = false
+            hideSystemScreenshotOverlays = false
         }
     }
 
-    fun handleAction(action: Action, finger: Offset, position: Position?) {
+    fun startSmartScreenshotCapture() {
+        quickToolsState.hide()
+        hideSystemScreenshotOverlays = true
+        smartScreenshotState.startCapture()
+    }
+
+    fun handleAction(
+        action: Action,
+        finger: Offset,
+        position: Position?,
+        waitActionPanelHidden: Boolean = false
+    ) {
         if (action == Action.NONE) {
             return
         }
@@ -142,9 +159,11 @@ fun SideGestureContainer(
                 sideGestureState.cancel()
                 return
             }
-            quickToolsState.hide()
-            sideGestureState.cancelAnimationImmediately()
-            smartScreenshotState.startCapture()
+            if (waitActionPanelHidden) {
+                pendingSmartScreenshotAfterActionPanelHidden = true
+            } else {
+                startSmartScreenshotCapture()
+            }
             return
         }
         if (action.value == GlobalActions.QUICK_TOOLS && position != null) {
@@ -190,6 +209,7 @@ fun SideGestureContainer(
                                 sideGestureState.cancel()
                                 return@onDrag
                             }
+                            hideSystemScreenshotOverlays = true
                             moveScreenState.onDragStart(sideGestureState.finger)
                             sideGestureState.cancel()
                         } else {
@@ -212,7 +232,12 @@ fun SideGestureContainer(
                 val actionPanelPosition = actionPanelState.position
                 val action = actionPanelState.done()
                 actionPanelState.onDragEnd()
-                handleAction(action, actionPanelFinger, actionPanelPosition)
+                handleAction(
+                    action = action,
+                    finger = actionPanelFinger,
+                    position = actionPanelPosition,
+                    waitActionPanelHidden = true
+                )
             }
             if (moveScreenState.visible) {
                 val action = moveScreenState.done()
@@ -240,14 +265,6 @@ fun SideGestureContainer(
         }
     )
     Box(modifier = modifier) {
-        ActionPanel(
-            actionPanelStyle = actionPanelStyle,
-            actionPanelState = actionPanelState,
-            modifier = Modifier.matchParentSize(),
-            longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
-            vibrations = gestureSettings.vibrations
-        )
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && smartScreenshotState.isCapturing) {
             LaunchedEffect(smartScreenshotState.isCapturing) {
                 val service = context as SideGestureService
@@ -268,7 +285,7 @@ fun SideGestureContainer(
                 value = takeCleanSystemScreenshot(service)
             }
             val screenshot = moveScreenScreenshotState.value
-            if (screenshot != null) {
+            if (screenshot != null && !hideSystemScreenshotOverlays) {
                 MoveScreen(
                     modifier = Modifier.matchParentSize(),
                     screenshot = screenshot,
@@ -383,7 +400,23 @@ fun SideGestureContainer(
             onOverlayTouchChange = onOverlayTouchChange
         )
 
-        if (animationStyle != null && !suppressGestureAnimationForScreenshot) {
+        if (!hideSystemScreenshotOverlays) {
+            ActionPanel(
+                actionPanelStyle = actionPanelStyle,
+                actionPanelState = actionPanelState,
+                modifier = Modifier.matchParentSize(),
+                longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
+                vibrations = gestureSettings.vibrations,
+                onHidden = {
+                    if (pendingSmartScreenshotAfterActionPanelHidden) {
+                        pendingSmartScreenshotAfterActionPanelHidden = false
+                        startSmartScreenshotCapture()
+                    }
+                }
+            )
+        }
+
+        if (animationStyle != null && !hideSystemScreenshotOverlays) {
             GestureAnimation(
                 modifier = Modifier.matchParentSize(),
                 animationStyle = animationStyle,
@@ -598,43 +631,6 @@ class SideGestureState(
         if (isCanceled) return
         reset()
         isCanceled = true
-    }
-
-    fun cancelAnimationImmediately() {
-        clearGestureAnimationState()
-        coroutineScope.launch {
-            stopAndClearAnimationValues()
-        }
-    }
-
-    suspend fun cancelAnimationForSystemScreenshot() {
-        clearGestureAnimationState()
-        stopAndClearAnimationValues()
-    }
-
-    private fun clearGestureAnimationState() {
-        calcLongPressJob?.cancel()
-        calcLongPressJob = null
-        isCanceled = true
-        origin = Offset.Unspecified
-        finger = Offset.Unspecified
-        button = null
-        buttonBounds = null
-        triggerDirection = Center2
-        longSlideFirstTriggerMs = 0L
-        isOhoGestureEverCanTriggered = false
-        slideVibrationFlags = false
-    }
-
-    private suspend fun stopAndClearAnimationValues() {
-        originXAnim.stop()
-        originYAnim.stop()
-        fingerXAnim.stop()
-        fingerYAnim.stop()
-        originXAnim.snapTo(Float.NaN)
-        originYAnim.snapTo(Float.NaN)
-        fingerXAnim.snapTo(Float.NaN)
-        fingerYAnim.snapTo(Float.NaN)
     }
 
     fun reset() {
