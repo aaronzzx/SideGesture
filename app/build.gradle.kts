@@ -77,6 +77,7 @@ android {
 }
 
 dependencies {
+    implementation(files("libs/tinypinyin-2.0.3.jar"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)

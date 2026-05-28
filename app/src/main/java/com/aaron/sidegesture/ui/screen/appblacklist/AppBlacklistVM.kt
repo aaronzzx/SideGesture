@@ -10,6 +10,7 @@ import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiEvent
 import com.aaron.sidegesture.ui.screen.appblacklist.AppBlacklistVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.PinyinSearchUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.take
@@ -111,6 +112,7 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
                             // 排除自己
                             it.packageName != App.getContext().packageName
                         }
+                        .let { appInfos -> PinyinSearchUtils.sortAppInfos(appInfos) }
                 }
             }
             arrangeAppInfos(appInfos)
@@ -144,21 +146,11 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
     private fun filterAppInfos(appInfos: List<AppInfo>, query: String): List<AppInfo> {
         if (query.isBlank()) return appInfos
         return appInfos.filter { appInfo ->
-            matchesSearchQuery(
+            PinyinSearchUtils.matches(
                 query = query,
-                values = arrayOf(appInfo.label, appInfo.packageName)
+                label = appInfo.label,
+                packageName = appInfo.packageName
             )
-        }
-    }
-
-    private fun matchesSearchQuery(
-        query: String,
-        values: Array<String?>
-    ): Boolean {
-        val normalizedQuery = query.trim()
-        if (normalizedQuery.isEmpty()) return true
-        return values.any { value ->
-            value?.contains(normalizedQuery, ignoreCase = true) == true
         }
     }
 
@@ -201,8 +193,8 @@ class AppBlacklistVM : BaseComposeVM<UiState, UiEvent>() {
         }
         return ArrangedAppInfos(
             excludeApps = validExcludeApps,
-            selectedAppInfos = selectedList,
-            unselectedAppInfos = unselectedList
+            selectedAppInfos = PinyinSearchUtils.sortAppInfos(selectedList),
+            unselectedAppInfos = PinyinSearchUtils.sortAppInfos(unselectedList)
         )
     }
 

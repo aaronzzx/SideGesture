@@ -35,6 +35,7 @@ import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.JsonHelper
+import com.aaron.sidegesture.utils.PinyinSearchUtils
 import com.aaron.sidegesture.utils.ShortcutUtils
 import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -233,9 +234,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         if (query.isBlank()) return actions
         val context = App.getContext()
         return actions.filter { action ->
-            matchesSearchQuery(
+            PinyinSearchUtils.matches(
                 query = query,
-                values = arrayOf(context.actionText(action, emptyIfNone = false))
+                label = context.actionText(action, emptyIfNone = false)
             )
         }
     }
@@ -243,9 +244,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     private fun filterAppInfos(appInfos: List<AppInfo>, query: String): List<AppInfo> {
         if (query.isBlank()) return appInfos
         return appInfos.filter { appInfo ->
-            matchesSearchQuery(
+            PinyinSearchUtils.matches(
                 query = query,
-                values = arrayOf(appInfo.label, appInfo.packageName)
+                label = appInfo.label,
+                packageName = appInfo.packageName
             )
         }
     }
@@ -257,31 +259,22 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         if (query.isBlank()) return launcherInfos
         return launcherInfos.mapNotNull { launcherInfo ->
             val filteredShortcuts = launcherInfo.shortcuts.filter { shortcutInfo ->
-                matchesSearchQuery(
+                PinyinSearchUtils.matches(
                     query = query,
-                    values = arrayOf(shortcutInfo.label, shortcutInfo.packageName)
+                    label = shortcutInfo.label,
+                    packageName = shortcutInfo.packageName
                 )
             }
-            val launcherMatched = matchesSearchQuery(
+            val launcherMatched = PinyinSearchUtils.matches(
                 query = query,
-                values = arrayOf(launcherInfo.label, launcherInfo.packageName)
+                label = launcherInfo.label,
+                packageName = launcherInfo.packageName
             )
             if (!launcherMatched && filteredShortcuts.isEmpty()) {
                 null
             } else {
                 launcherInfo.copy(shortcuts = filteredShortcuts)
             }
-        }
-    }
-
-    private fun matchesSearchQuery(
-        query: String,
-        values: Array<String?>
-    ): Boolean {
-        val normalizedQuery = query.trim()
-        if (normalizedQuery.isEmpty()) return true
-        return values.any { value ->
-            value?.contains(normalizedQuery, ignoreCase = true) == true
         }
     }
 
@@ -435,12 +428,16 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         viewModelScope.launchWithLoading {
             val createLauncherInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(250) {
-                    AppInfoUtils.queryCreateShortcutActivities(App.getContext())
+                    PinyinSearchUtils.sortLauncherInfos(
+                        AppInfoUtils.queryCreateShortcutActivities(App.getContext())
+                    )
                 }
             }
             val launchLauncherInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(250) {
-                    ShortcutUtils.getAllAppsWithShortcut(App.getContext())
+                    PinyinSearchUtils.sortLauncherInfos(
+                        ShortcutUtils.getAllAppsWithShortcut(App.getContext())
+                    )
                 }
             }
             if (uiState.selectSingle) {
@@ -490,7 +487,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         list2.add(launcherInfo)
                     }
                 }
-                list1 + list2
+                PinyinSearchUtils.sortLauncherInfos(list1) + PinyinSearchUtils.sortLauncherInfos(list2)
             }
             val finalLaunchList = withContext(Dispatchers.Default) {
                 val list1 = mutableListOf<LauncherInfo>()
@@ -506,7 +503,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         list2.add(launcherInfo)
                     }
                 }
-                list1 + list2
+                PinyinSearchUtils.sortLauncherInfos(list1) + PinyinSearchUtils.sortLauncherInfos(list2)
             }
             updateUiState {
                 applySearchResult(
@@ -536,7 +533,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(500) {
-                    AppInfoUtils.queryLauncherActivities(App.getContext())
+                    PinyinSearchUtils.sortAppInfos(
+                        AppInfoUtils.queryLauncherActivities(App.getContext())
+                    )
                 }
             }
             if (uiState.selectSingle) {
@@ -581,7 +580,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         list2.add(appInfo)
                     }
                 }
-                list1 + list2
+                PinyinSearchUtils.sortAppInfos(list1) + PinyinSearchUtils.sortAppInfos(list2)
             }
             updateUiState {
                 applySearchResult(

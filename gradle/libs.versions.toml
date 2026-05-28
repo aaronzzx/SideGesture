@@ -11,7 +11,6 @@ kotlinSerialization = "1.7.3"
 dataStore = "1.1.1"
 compose = "1.7.5"
 colorpicker = "1.1.2"
-pinyin = "1.0.7"
 freereflection = "3.2.2"
 reorderable = "2.5.1"
 shizuku = "13.1.5"
@@ -29,7 +28,6 @@ jetbrains-kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotl
 androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose" }
 compose-colorpicker = { group = "com.github.skydoves", name = "colorpicker-compose", version.ref = "colorpicker" }
-pinyin = { group = "cn.lalaki", name = "pinyin4j-chinese-simplified", version.ref = "pinyin" }
 com-tiann-freereflection = { group = "com.github.tiann", name = "FreeReflection", version.ref = "freereflection" }
 sh-calvin-reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 dev-rikka-shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
