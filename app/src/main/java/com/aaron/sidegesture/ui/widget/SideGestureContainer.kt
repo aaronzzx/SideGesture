@@ -95,8 +95,7 @@ fun SideGestureContainer(
     advancedSettings: AdvancedSettings = AdvancedSettings(),
     gestureSettings: GestureSettings = GestureSettings(),
     onOverlayTouchChange: (Boolean) -> Unit = {},
-    hideQuickToolsSignal: Int = 0,
-    hideSmartScreenshotSignal: Int = 0
+    overlaysDismissSignal: Int = 0
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
@@ -111,18 +110,19 @@ fun SideGestureContainer(
     var hideSystemScreenshotOverlays by remember { mutableStateOf(false) }
     var pendingSmartScreenshotAfterActionPanelHidden by remember { mutableStateOf(false) }
 
-    LaunchedEffect(hideQuickToolsSignal) {
-        if (hideQuickToolsSignal != 0) {
-            quickToolsState.hide()
-        }
-    }
 
-    LaunchedEffect(hideSmartScreenshotSignal) {
-        if (hideSmartScreenshotSignal != 0) {
+    LaunchedEffect(overlaysDismissSignal) {
+        if (overlaysDismissSignal != 0) {
+            //region 快速工具
+            quickToolsState.hide()
+            //endregion
+
+            //region 智能截图
             pendingSmartScreenshotAfterActionPanelHidden = false
             smartScreenshotState.dismiss()
             smartScreenshotState.cancelCapture()
             onOverlayTouchChange(false)
+            //endregion
         }
     }
 
@@ -183,6 +183,7 @@ fun SideGestureContainer(
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
             quickToolsState.hide()
+            smartScreenshotState.dismiss()
             sideGestureState.onDragStart(offset, imePadding)
         },
         onDrag = onDrag@{ dragAmount ->

@@ -90,12 +90,10 @@ class SideGestureService : ComponentAccessibilityService() {
     private var currentButtons: List<GestureButton> = emptyList()
 
     private var volumeButtonSwitchSongJob: Job? = null
-    private val _quickToolsDismissSignal = MutableStateFlow(0)
-    private val _smartScreenshotDismissSignal = MutableStateFlow(0)
+    private val _overlaysDismissSignal = MutableStateFlow(0)
 
     val coroutineScope = MainScope()
-    val quickToolsDismissSignal: StateFlow<Int> = _quickToolsDismissSignal.asStateFlow()
-    val smartScreenshotDismissSignal: StateFlow<Int> = _smartScreenshotDismissSignal.asStateFlow()
+    val overlaysDismissSignal: StateFlow<Int> = _overlaysDismissSignal.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
     var initialSettings: InitialSettings? = null
@@ -116,8 +114,7 @@ class SideGestureService : ComponentAccessibilityService() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                 isNowInLockScreenPage = true
-                dismissQuickTools()
-                dismissSmartScreenshot()
+                dismissActionOverlays()
                 pinnedScreenshotManager.setScreenLocked(true)
             } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
                 isNowInLockScreenPage = false
@@ -236,9 +233,7 @@ class SideGestureService : ComponentAccessibilityService() {
                             .actionSettings
                             .data
                             .collectAsStateWithLifecycle(initialValue = ActionSettings())
-                        val quickToolsDismissSignalState by quickToolsDismissSignal
-                            .collectAsStateWithLifecycle()
-                        val smartScreenshotDismissSignalState by smartScreenshotDismissSignal
+                        val overlaysDismissSignal by this@SideGestureService.overlaysDismissSignal
                             .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
@@ -256,8 +251,7 @@ class SideGestureService : ComponentAccessibilityService() {
                             actionSettings = actionSettings,
                             advancedSettings = advancedSettings,
                             gestureSettings = gestureSettings,
-                            hideQuickToolsSignal = quickToolsDismissSignalState,
-                            hideSmartScreenshotSignal = smartScreenshotDismissSignalState
+                            overlaysDismissSignal = overlaysDismissSignal
                         )
                     }
                 }
@@ -469,12 +463,8 @@ class SideGestureService : ComponentAccessibilityService() {
         proxy.onAction(action)
     }
 
-    fun dismissQuickTools() {
-        _quickToolsDismissSignal.value++
-    }
-
-    fun dismissSmartScreenshot() {
-        _smartScreenshotDismissSignal.value++
+    fun dismissActionOverlays() {
+        _overlaysDismissSignal.value++
     }
 
     fun setOverlayTouchEnabled(enabled: Boolean) {
