@@ -46,13 +46,20 @@ import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ktx.GESTURE_ANGLE_BASE
 import com.aaron.sidegesture.ktx.actionsBy
+import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.bounds
 import com.aaron.sidegesture.ktx.find
 import com.aaron.sidegesture.ktx.getTriggerDirection
 import com.aaron.sidegesture.ktx.isEmptyOrNone
+import com.aaron.sidegesture.ktx.launchAppInfo
+import com.aaron.sidegesture.ktx.launchShortcutInfo
+import com.aaron.sidegesture.ktx.quickLauncherActionData
+import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.takeScreenshot
 import com.aaron.sidegesture.ktx.tryVibrateForLongSlide
 import com.aaron.sidegesture.ktx.tryVibrateForSlide
+import com.aaron.sidegesture.quicklauncher.QuickLauncherPanel
+import com.aaron.sidegesture.quicklauncher.rememberQuickLauncherPanelState
 import com.aaron.sidegesture.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.quicktools.rememberQuickToolsControlCenterState
 import com.aaron.sidegesture.screenshot.ScreenshotCropper
@@ -105,6 +112,7 @@ fun SideGestureContainer(
     )
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
     val quickToolsState = rememberQuickToolsControlCenterState()
+    val quickLauncherState = rememberQuickLauncherPanelState()
     val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
     var hideSystemScreenshotOverlays by remember { mutableStateOf(false) }
@@ -115,6 +123,10 @@ fun SideGestureContainer(
         if (overlaysDismissSignal != 0) {
             //region 快速工具
             quickToolsState.hide()
+            //endregion
+
+            //region 快速启动器
+            quickLauncherState.hide()
             //endregion
 
             //region 智能截图
@@ -170,6 +182,13 @@ fun SideGestureContainer(
             quickToolsState.show(finger, position)
             return
         }
+        if (action.value == GlobalActions.QUICK_LAUNCHER) {
+            val data = action.quickLauncherActionData
+            if (data != null && data.items.isNotEmpty()) {
+                quickLauncherState.show(data.items, finger, position ?: Position.Left)
+            }
+            return
+        }
         curOnAction(action)
     }
 
@@ -182,6 +201,7 @@ fun SideGestureContainer(
 
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
+            quickLauncherState.hide()
             quickToolsState.hide()
             smartScreenshotState.dismiss()
             sideGestureState.onDragStart(offset, imePadding)
@@ -399,6 +419,21 @@ fun SideGestureContainer(
             settings = actionSettings.quickTools,
             state = quickToolsState,
             onOverlayTouchChange = onOverlayTouchChange
+        )
+
+        QuickLauncherPanel(
+            modifier = Modifier.matchParentSize(),
+            state = quickLauncherState,
+            onOverlayTouchChange = onOverlayTouchChange,
+            onLaunch = { action, miniWindow ->
+                val appInfo = action.appInfo
+                val shortcutInfo = action.shortcutInfo
+                if (appInfo != null) {
+                    (context as SideGestureService).launchAppInfo(appInfo, miniWindow)
+                } else if (shortcutInfo != null) {
+                    (context as SideGestureService).launchShortcutInfo(shortcutInfo, miniWindow)
+                }
+            }
         )
 
         if (!hideSystemScreenshotOverlays) {

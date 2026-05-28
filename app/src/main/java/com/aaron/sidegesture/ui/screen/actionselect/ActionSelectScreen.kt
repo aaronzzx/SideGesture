@@ -101,6 +101,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
+import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
@@ -156,6 +157,7 @@ fun ActionSelectScreen(
     onBack: () -> Unit,
     onNavToIconResize: (IconResize) -> Unit,
     onNavToQuickTools: () -> Unit,
+    onNavToQuickLauncher: (ActionSelect) -> Unit = {},
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
@@ -163,6 +165,7 @@ fun ActionSelectScreen(
         onEvent = { event ->
             when (event) {
                 is UiEvent.GotoIconResize -> onNavToIconResize(event.iconResize)
+                is UiEvent.GotoQuickLauncherConfig -> onNavToQuickLauncher(event.route)
             }
         }
     ) { uiState ->
@@ -232,7 +235,8 @@ fun ActionSelectScreen(
             }
         ) { contentPadding ->
             Column(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
-                val pagerState = rememberPagerState { PAGES.size }
+                val pages = if (uiState.isQuickLauncher) PAGES_QUICK_LAUNCHER else PAGES
+                val pagerState = rememberPagerState { pages.size }
                 val coroutineScope = rememberCoroutineScope()
                 TabRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -241,13 +245,13 @@ fun ActionSelectScreen(
                     contentColor = MaterialTheme.colorScheme.onBackground,
                     divider = { }
                 ) {
-                    PAGES.fastForEach { tabIndex ->
+                    pages.fastForEach { tabIndex ->
                         Tab(
                             modifier = Modifier.height(48.dp),
-                            selected = tabIndex == pagerState.currentPage,
+                            selected = tabIndex == pages[pagerState.currentPage],
                             onClick = {
                                 coroutineScope.launch {
-                                    pagerState.animateScrollToPage(tabIndex)
+                                    pagerState.animateScrollToPage(pages.indexOf(tabIndex))
                                 }
                             }
                         ) {
@@ -269,12 +273,19 @@ fun ActionSelectScreen(
                         vm.updateShortcutInfos()
                     }
                 }
-                LaunchedEffect(vm, pagerState, permissionState) {
+                LaunchedEffect(vm, pagerState, permissionState, pages) {
+                    if (uiState.isQuickLauncher) {
+                        if (!permissionState.status.isGranted) {
+                            permissionState.launchPermissionRequest()
+                        } else {
+                            vm.updateAppInfos()
+                        }
+                    }
                     launch {
                         var init = true
                         snapshotFlow { pagerState.currentPage }
                             .drop(1)
-                            .filter { init && it == PAGE_APPS }
+                            .filter { init && pages[it] == PAGE_APPS }
                             .collectLatest {
                                 if (!permissionState.status.isGranted) {
                                     permissionState.launchPermissionRequest()
@@ -288,7 +299,7 @@ fun ActionSelectScreen(
                         var init = true
                         snapshotFlow { pagerState.currentPage }
                             .drop(1)
-                            .filter { init && it == PAGE_SHORTCUTS }
+                            .filter { init && pages[it] == PAGE_SHORTCUTS }
                             .collectLatest {
                                 if (!permissionState.status.isGranted) {
                                     permissionState.launchPermissionRequest()
@@ -306,7 +317,7 @@ fun ActionSelectScreen(
                         .weight(1f),
                     state = pagerState
                 ) { page ->
-                    when (page) {
+                    when (pages[page]) {
                         PAGE_ACTION -> {
                             ActionPage(
                                 modifier = Modifier.fillMaxSize(),
@@ -327,6 +338,9 @@ fun ActionSelectScreen(
                                 onSettingsClick = { action ->
                                     when (action.value) {
                                         GlobalActions.QUICK_TOOLS -> onNavToQuickTools()
+                                        GlobalActions.QUICK_LAUNCHER -> {
+                                            onNavToQuickLauncher(vm.getQuickLauncherRoute())
+                                        }
                                         GlobalActions.SHIZUKU_SHELL -> {
                                             vm.shellActionDialog.show(true, action)
                                         }
@@ -505,7 +519,8 @@ private fun ActionPage(
                 showSettings = item.value == GlobalActions.MOVE_SCREEN ||
                     item.value == GlobalActions.PREVIOUS_APP ||
                     item.value == GlobalActions.GOTO_BOTTOM ||
-                    item.value == GlobalActions.SHIZUKU_SHELL,
+                    item.value == GlobalActions.SHIZUKU_SHELL ||
+                    item.value == GlobalActions.QUICK_LAUNCHER,
                 onSettingsClick = {
                     onSettingsClick(item)
                 }
@@ -1298,6 +1313,8 @@ private const val PAGE_APPS = 1
 private const val PAGE_SHORTCUTS = 2
 
 private val PAGES = listOf(PAGE_ACTION, PAGE_APPS, PAGE_SHORTCUTS)
+
+private val PAGES_QUICK_LAUNCHER = listOf(PAGE_APPS, PAGE_SHORTCUTS)
 
 private data class SelectedListItem(
     val icon: Any?,

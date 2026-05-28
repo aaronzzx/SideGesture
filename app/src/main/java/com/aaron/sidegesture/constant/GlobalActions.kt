@@ -110,6 +110,8 @@ object GlobalActions {
     const val SHIZUKU_SHELL = "49"
     /** 智能截图 */
     const val SMART_SCREENSHOT = "50"
+    /** 快速启动器 */
+    const val QUICK_LAUNCHER = "51"
 
     /** 启动应用 */
     const val EXTRA_LAUNCH_APP = "101"
@@ -122,7 +124,7 @@ object GlobalActions {
         OPEN_QUICK_PANEL, LOCK_SCREEN,  FLASHLIGHT, ASSIST_APP, SCREENSHOT, POWER_BUTTON,
         QUICK_TOOLS,
         KEEP_SCREEN_ON, POPUP_SCREEN, MOVE_SCREEN, BACK_TO_TOP, GOTO_BOTTOM, SHIZUKU_SHELL,
-        SMART_SCREENSHOT,
+        SMART_SCREENSHOT, QUICK_LAUNCHER,
         WECHAT_SCAN, WECHAT_PAY, ALIPAY_SCAN, ALIPAY_PAY
     )
 }

@@ -16,9 +16,11 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.QuickLauncherActionData
 import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
+import com.aaron.sidegesture.event.QuickLauncherConfigEvent
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
@@ -34,6 +36,7 @@ import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.Events
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.PinyinSearchUtils
 import com.aaron.sidegesture.utils.ShortcutUtils
@@ -56,7 +59,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     override val initialState: UiState = UiState(
         title = createTitle(),
-        selectSingle = !actionSelect.isLongSlide
+        selectSingle = !actionSelect.isLongSlide,
+        isQuickLauncher = actionSelect.isQuickLauncher
     )
 
     private val eventHandler = EventHandler()
@@ -128,6 +132,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 saveSettings()
             }
         } else if (obj is Action) {
+            if (obj.value == GlobalActions.QUICK_LAUNCHER && selected) {
+                sendUiEvent(UiEvent.GotoQuickLauncherConfig(actionSelect.copy(isQuickLauncher = true)))
+                return
+            }
             selectAction(obj, selected)
             if (uiState.selectSingle) {
                 saveSettings()
@@ -376,7 +384,15 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         }
     }
 
+    fun getQuickLauncherRoute(): ActionSelect {
+        return actionSelect.copy(isQuickLauncher = true)
+    }
+
     fun done() {
+        if (actionSelect.isQuickLauncher) {
+            saveQuickLauncherSettings()
+            return
+        }
         val appInfos = uiState
             .selectedRecord
             .list
@@ -595,6 +611,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun createTitle(): String {
         val context = App.getContext()
+        if (actionSelect.isQuickLauncher) {
+            return context.getString(R.string.action_quick_launcher)
+        }
         val actionSelect = actionSelect
         val str1 = when (actionSelect.direction) {
             TriggerDirection.Center -> when (actionSelect.position) {
@@ -648,8 +667,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 .take(1)
                 .collectLatest { (gestureSettings, gestureButtons) ->
                     updateUiState {
-                        it.copy(selectSingle = !actionSelect.isLongSlide
-                                || !gestureSettings.longSlideTriggerImmediately)
+                        val selectSingle = if (actionSelect.isQuickLauncher) {
+                            false
+                        } else {
+                            !actionSelect.isLongSlide || !gestureSettings.longSlideTriggerImmediately
+                        }
+                        it.copy(selectSingle = selectSingle)
                     }
 
                     val button = gestureButtons.find {
@@ -670,12 +693,27 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             TriggerDirection.Down2 -> gestureActions.down2
                         }
                         updateUiState {
-                            val selectedActions = when (it.selectSingle) {
-                                true -> emptyList()
-                                else -> actions
+                            if (actionSelect.isQuickLauncher) {
+                                val quickLauncherAction = actions.find { a ->
+                                    a.value == GlobalActions.QUICK_LAUNCHER
+                                }
+                                val quickLauncherData = quickLauncherAction
+                                    ?.let { a ->
+                                        runCatching {
+                                            JsonHelper.decodeFromString<QuickLauncherActionData>(a.data)
+                                        }.getOrNull()
+                                    }
+                                val selectedActions = quickLauncherData?.items ?: emptyList()
+                                val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
+                                it.copy(selectedRecord = newSelectedRecord)
+                            } else {
+                                val selectedActions = when (it.selectSingle) {
+                                    true -> emptyList()
+                                    else -> actions
+                                }
+                                val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
+                                it.copy(selectedRecord = newSelectedRecord)
                             }
-                            val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
-                            it.copy(selectedRecord = newSelectedRecord)
                         }
                         assembleData()
                     }
@@ -708,6 +746,30 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             val finalList = list1 + list2
             applySearchResult(it.copy(rawActions = finalList))
         }
+    }
+
+    private fun saveQuickLauncherSettings() {
+        val selectedList = uiState.selectedRecord.list
+        val items = selectedList.map { obj ->
+            when (obj) {
+                is AppInfo -> {
+                    val data = JsonHelper.encodeToString(obj)
+                    Action(value = GlobalActions.EXTRA_LAUNCH_APP, data = data)
+                }
+                is LauncherInfo.ShortcutInfo -> {
+                    val data = JsonHelper.encodeToString(obj)
+                    Action(value = GlobalActions.EXTRA_LAUNCH_SHORTCUT, data = data)
+                }
+                else -> obj as Action
+            }
+        }
+        val quickLauncherData = QuickLauncherActionData(items = items)
+        val quickLauncherAction = Action(
+            value = GlobalActions.QUICK_LAUNCHER,
+            data = JsonHelper.encodeToString(quickLauncherData)
+        )
+        Events.post(QuickLauncherConfigEvent(quickLauncherAction))
+        finish()
     }
 
     private fun saveSettings() {
@@ -821,6 +883,24 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     private inner class EventHandler {
 
         fun init() {
+            subscribeEvent(QuickLauncherConfigEvent::class) { event ->
+                if (actionSelect.isQuickLauncher) return@subscribeEvent
+                updateUiState {
+                    val newList = it.selectedRecord.list.toMutableList()
+                    val existingIndex = newList.indexOfFirst { obj ->
+                        obj is Action && obj.value == GlobalActions.QUICK_LAUNCHER
+                    }
+                    if (existingIndex != -1) {
+                        newList[existingIndex] = event.quickLauncherAction
+                    } else {
+                        newList.add(event.quickLauncherAction)
+                    }
+                    it.copy(selectedRecord = UiState.SelectedRecord(newList))
+                }
+                if (uiState.selectSingle) {
+                    saveSettings()
+                }
+            }
             subscribeEvent(IconResizeEvent::class) { event ->
                 val scaleFactors = event.scaleFactors
                 val bgColors = event.bgColors
@@ -914,6 +994,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     data class UiState(
         val title: String = "",
         val selectSingle: Boolean = true,
+        val isQuickLauncher: Boolean = false,
         val isSearching: Boolean = false,
         val searchQuery: String = "",
         val rawActions: List<Action> = emptyList(),
@@ -1064,5 +1145,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     sealed interface UiEvent {
         data class GotoIconResize(val iconResize: IconResize) : UiEvent
+        data class GotoQuickLauncherConfig(val route: ActionSelect) : UiEvent
     }
 }

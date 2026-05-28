@@ -271,6 +271,7 @@
     <string name="action_shizuku_shell">执行 Shell 命令</string>
     <string name="action_shizuku_shell_preview">Shell: %1$s</string>
     <string name="action_smart_screenshot">智能截图(11.0+)</string>
+    <string name="action_quick_launcher">快速启动器</string>
     <string name="screenshot_save_success">截图已保存</string>
     <string name="screenshot_save_failed">截图保存失败</string>
     <string name="screenshot_copy_success">截图已复制到剪贴板</string>

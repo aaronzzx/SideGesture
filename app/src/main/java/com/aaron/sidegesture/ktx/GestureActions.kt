@@ -9,6 +9,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.LauncherInfo
+import com.aaron.sidegesture.entity.QuickLauncherActionData
 import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.utils.JsonHelper
@@ -40,6 +41,15 @@ val Action.shellCommandActionData: ShellCommandActionData? get() {
     if (value == GlobalActions.SHIZUKU_SHELL) {
         return runCatching {
             JsonHelper.decodeFromString<ShellCommandActionData>(data)
+        }.getOrNull()
+    }
+    return null
+}
+
+val Action.quickLauncherActionData: QuickLauncherActionData? get() {
+    if (value == GlobalActions.QUICK_LAUNCHER) {
+        return runCatching {
+            JsonHelper.decodeFromString<QuickLauncherActionData>(data)
         }.getOrNull()
     }
     return null

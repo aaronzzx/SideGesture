@@ -117,6 +117,7 @@ fun Context.actionText(action: Action, emptyIfNone: Boolean = true): String = wh
         ?.let { preview -> getString(R.string.action_shizuku_shell_preview, preview) }
         ?: getString(R.string.action_shizuku_shell)
     GlobalActions.SMART_SCREENSHOT -> getString(R.string.action_smart_screenshot)
+    GlobalActions.QUICK_LAUNCHER -> getString(R.string.action_quick_launcher)
     else -> if (emptyIfNone) "" else getString(R.string.action_none)
 }
 
@@ -177,6 +178,7 @@ fun actionText(action: Action, emptyIfNone: Boolean = true): String = when (acti
         ?.let { preview -> stringResource(R.string.action_shizuku_shell_preview, preview) }
         ?: stringResource(R.string.action_shizuku_shell)
     GlobalActions.SMART_SCREENSHOT -> stringResource(R.string.action_smart_screenshot)
+    GlobalActions.QUICK_LAUNCHER -> stringResource(R.string.action_quick_launcher)
     else -> if (emptyIfNone) "" else stringResource(R.string.action_none)
 }
 
@@ -239,5 +241,6 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.GOTO_BOTTOM -> Icons.Default.VerticalAlignBottom
     GlobalActions.SHIZUKU_SHELL -> Icons.Default.Terminal
     GlobalActions.SMART_SCREENSHOT -> Icons.Default.CropFree
+    GlobalActions.QUICK_LAUNCHER -> Icons.Default.Apps
     else -> null
 }

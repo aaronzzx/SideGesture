@@ -181,7 +181,8 @@ fun SideGestureApp() {
                     ActionSelectScreen(
                         onBack = { navController.navigateUp() },
                         onNavToIconResize = { navController.navigate(it) },
-                        onNavToQuickTools = { navController.navigate(QuickToolsConfig) }
+                        onNavToQuickTools = { navController.navigate(QuickToolsConfig) },
+                        onNavToQuickLauncher = { navController.navigate(it) }
                     )
                 }
                 myComposable<IconResize> {
