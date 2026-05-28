@@ -27,7 +27,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Window
+import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -257,7 +257,7 @@ private fun QuickLauncherItem(
             )
             if (hasMiniWindow) {
                 Icon(
-                    imageVector = Icons.Default.Window,
+                    imageVector = Icons.Default.BrandingWatermark,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.primary

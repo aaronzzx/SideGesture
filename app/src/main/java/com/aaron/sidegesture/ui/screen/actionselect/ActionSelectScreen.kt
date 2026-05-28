@@ -43,13 +43,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -865,7 +865,7 @@ private fun AppItem(
                 if (appInfo.miniWindow) {
                     Icon(
                         modifier = Modifier.size(16.dp),
-                        imageVector = Icons.Default.Window,
+                        imageVector = Icons.Default.BrandingWatermark,
                         contentDescription = null
                     )
                 }
@@ -997,7 +997,7 @@ private fun LauncherInfoItem(
                                 if (shortcutInfo.miniWindow) {
                                     Icon(
                                         modifier = Modifier.size(16.dp),
-                                        imageVector = Icons.Default.Window,
+                                        imageVector = Icons.Default.BrandingWatermark,
                                         contentDescription = null
                                     )
                                 }

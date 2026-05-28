@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.filled.Window
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.aaron.sidegesture.R
@@ -218,7 +217,7 @@ fun actionIcon(action: Action): Any? = when (action.value) {
     GlobalActions.INVERSE_COLOR -> Icons.Default.InvertColors
     GlobalActions.QUICK_APP_PANEL -> Icons.Default.Apps
     GlobalActions.LAUNCH_APP -> Icons.Default.Android
-    GlobalActions.LAUNCH_APP_IN_POPUP -> Icons.Default.Window
+    GlobalActions.LAUNCH_APP_IN_POPUP -> Icons.Default.BrandingWatermark
     GlobalActions.TASK_SWITCHER -> Icons.Default.ViewCarousel
     GlobalActions.QUICK_TOOLS -> Icons.Default.Handyman
     GlobalActions.FLOAT_BALL-> Icons.Default.SportsBaseball
