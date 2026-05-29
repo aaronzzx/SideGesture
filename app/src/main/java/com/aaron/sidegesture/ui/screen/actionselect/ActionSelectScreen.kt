@@ -461,7 +461,9 @@ fun ActionSelectScreen(
 
                 AnimatedVisibility(
                     modifier = Modifier.fillMaxWidth(),
-                    visible = uiState.selectedRecord.size > 0 && !uiState.isSearching
+                    visible = !uiState.selectSingle &&
+                            uiState.selectedRecord.size > 0 &&
+                            !uiState.isSearching
                 ) {
                     var expanded by remember { mutableStateOf(false) }
                     SelectedList(

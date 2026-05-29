@@ -707,11 +707,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                                 val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
                                 it.copy(selectedRecord = newSelectedRecord)
                             } else {
-                                val selectedActions = when (it.selectSingle) {
-                                    true -> emptyList()
-                                    else -> actions
-                                }
-                                val newSelectedRecord = it.selectedRecord.selectAll(selectedActions)
+                                val newSelectedRecord = it.selectedRecord.selectAll(actions)
                                 it.copy(selectedRecord = newSelectedRecord)
                             }
                         }
