@@ -56,9 +56,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -83,8 +80,6 @@ import com.aaron.sidegesture.ui.widget.MySlider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-
-private const val AUTO_HIDE_DELAY_MS = 8_000L
 
 @Composable
 fun QuickToolsControlCenter(
@@ -127,12 +122,6 @@ fun QuickToolsControlCenter(
         if (state.visible) {
             mediaState.refresh()
         }
-    }
-
-    LaunchedEffect(state.visible, state.interactionTick) {
-        if (!state.visible) return@LaunchedEffect
-        delay(AUTO_HIDE_DELAY_MS)
-        state.hide()
     }
 
     AnimatedVisibility(
@@ -195,20 +184,8 @@ fun QuickToolsControlCenter(
                         indication = null
                     ) {
                         state.hide()
-                    }
-            )
-
-            val interactionModifier = Modifier.pointerInput(state.visible) {
-                if (!state.visible) return@pointerInput
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.changes.any { it.changedToDownIgnoreConsumed() }) {
-                            state.markInteraction()
-                        }
-                    }
                 }
-            }
+            )
 
             Surface(
                 modifier = Modifier
@@ -217,7 +194,6 @@ fun QuickToolsControlCenter(
                     .width(QuickToolsGridSpec.PanelWidth)
                     .height(QuickToolsGridSpec.PanelHeight)
                     .clip(RoundedCornerShape(QuickToolsGridSpec.PanelCornerRadius))
-                    .then(interactionModifier)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -241,14 +217,11 @@ fun QuickToolsControlCenter(
                     muteEnabled = muteEnabled,
                     flashlightEnabled = flashlightEnabled,
                     onOpenPermission = {
-                        state.markInteraction()
                         service.gotoNotificationListenerSettings()
                         state.hide()
                     },
-                    onInteraction = state::markInteraction,
                     onBrightnessChange = { value ->
                         brightness = value
-                        state.markInteraction()
                         scope.launch {
                             when (QuickToolsExecutor.setBrightnessRatio(service, value)) {
                                 QuickToolsOperationResult.Success -> state.refresh()
@@ -261,12 +234,10 @@ fun QuickToolsControlCenter(
                     },
                     onVolumeChange = { value ->
                         volume = value
-                        state.markInteraction()
                         QuickToolsExecutor.setVolumeRatio(service, value)
                     },
                     onClick = { type ->
                         scope.launch {
-                            state.markInteraction()
                             handleQuickToolClick(
                                 type = type,
                                 service = service,
@@ -358,7 +329,6 @@ private fun QuickToolsGrid(
     muteEnabled: Boolean,
     flashlightEnabled: Boolean,
     onOpenPermission: () -> Unit,
-    onInteraction: () -> Unit,
     onBrightnessChange: (Float) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onClick: (QuickToolType) -> Unit
@@ -389,7 +359,6 @@ private fun QuickToolsGrid(
                 muteEnabled = muteEnabled,
                 flashlightEnabled = flashlightEnabled,
                 onOpenPermission = onOpenPermission,
-                onInteraction = onInteraction,
                 onBrightnessChange = onBrightnessChange,
                 onVolumeChange = onVolumeChange,
                 onClick = onClick
@@ -410,7 +379,6 @@ private fun QuickToolGridItem(
     muteEnabled: Boolean,
     flashlightEnabled: Boolean,
     onOpenPermission: () -> Unit,
-    onInteraction: () -> Unit,
     onBrightnessChange: (Float) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onClick: (QuickToolType) -> Unit,
@@ -422,7 +390,6 @@ private fun QuickToolGridItem(
             state = mediaState,
             colors = colors,
             onOpenPermission = onOpenPermission,
-            onInteraction = onInteraction
         )
         QuickToolType.Brightness -> CompactSliderRow(
             modifier = modifier,
@@ -430,7 +397,6 @@ private fun QuickToolGridItem(
             contentDescription = stringResource(R.string.quick_tool_brightness),
             value = brightness,
             colors = colors,
-            onInteraction = onInteraction,
             onValueChange = onBrightnessChange
         )
         QuickToolType.Volume -> CompactSliderRow(
@@ -439,7 +405,6 @@ private fun QuickToolGridItem(
             contentDescription = stringResource(R.string.quick_tool_volume),
             value = volume,
             colors = colors,
-            onInteraction = onInteraction,
             onValueChange = onVolumeChange
         )
         else -> QuickToolCircleButton(
@@ -471,7 +436,6 @@ private fun QuickToolGridItem(
                 else -> null
             },
             onClick = {
-                onInteraction()
                 onClick(type)
             }
         )
@@ -484,7 +448,6 @@ private fun CompactSliderRow(
     contentDescription: String,
     value: Float,
     colors: QuickToolsPanelColors,
-    onInteraction: () -> Unit,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -521,7 +484,6 @@ private fun CompactSliderRow(
                     .height(20.dp),
                 value = value,
                 onValueChange = {
-                    onInteraction()
                     onValueChange(it)
                 }
             )
@@ -534,7 +496,6 @@ private fun CompactMediaCard(
     state: QuickToolsMediaControllerState,
     colors: QuickToolsPanelColors,
     onOpenPermission: () -> Unit,
-    onInteraction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val info = state.info
@@ -593,7 +554,6 @@ private fun CompactMediaCard(
                     ) {
                         Surface(
                             modifier = Modifier.shapedClickable(RoundedCornerShape(12.dp)) {
-                                onInteraction()
                                 onOpenPermission()
                             },
                             shape = RoundedCornerShape(12.dp),
@@ -647,7 +607,6 @@ private fun CompactMediaCard(
                                 imageVector = Icons.Default.SkipPrevious,
                                 contentDescription = stringResource(R.string.quick_tool_media_control),
                                 onClick = {
-                                    onInteraction()
                                     state.skipPrevious()
                                 },
                                 size = 28.dp,
@@ -666,7 +625,6 @@ private fun CompactMediaCard(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .shapedClickable(CircleShape) {
-                                            onInteraction()
                                             state.togglePlayPause()
                                         },
                                     contentAlignment = Alignment.Center
@@ -685,7 +643,6 @@ private fun CompactMediaCard(
                                 imageVector = Icons.Default.SkipNext,
                                 contentDescription = stringResource(R.string.quick_tool_media_control),
                                 onClick = {
-                                    onInteraction()
                                     state.skipNext()
                                 },
                                 size = 28.dp,

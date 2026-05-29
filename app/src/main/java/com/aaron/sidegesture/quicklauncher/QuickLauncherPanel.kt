@@ -61,10 +61,8 @@ import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.utils.VibrateUtils
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-private const val AUTO_HIDE_DELAY_MS = 8_000L
 private const val GRID_COLUMNS = 4
 private val ITEM_ICON_SIZE = 44.dp
 private val PANEL_CORNER_RADIUS = 20.dp
@@ -88,12 +86,6 @@ fun QuickLauncherPanel(
 
     LaunchedEffect(state.visible) {
         onOverlayTouchChange(state.visible)
-    }
-
-    LaunchedEffect(state.visible, state.interactionTick) {
-        if (!state.visible) return@LaunchedEffect
-        delay(AUTO_HIDE_DELAY_MS)
-        state.hide()
     }
 
     AnimatedVisibility(
@@ -188,11 +180,7 @@ fun QuickLauncherPanel(
                     ) { action ->
                         QuickLauncherItem(
                             action = action,
-                            onInteraction = {
-                                state.markInteraction()
-                            },
                             onClick = {
-                                state.markInteraction()
                                 val appInfo = action.appInfo
                                 val shortcutInfo = action.shortcutInfo
                                 val hasMiniWindow = appInfo?.miniWindow
@@ -201,7 +189,6 @@ fun QuickLauncherPanel(
                                 state.hide()
                             },
                             onLongClick = {
-                                state.markInteraction()
                                 VibrateUtils.vibrate(context)
                                 val appInfo = action.appInfo
                                 val shortcutInfo = action.shortcutInfo
@@ -221,7 +208,6 @@ fun QuickLauncherPanel(
 @Composable
 private fun QuickLauncherItem(
     action: Action,
-    onInteraction: () -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -235,7 +221,6 @@ private fun QuickLauncherItem(
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onPress = { onInteraction() },
                     onTap = { onClick() },
                     onLongPress = { onLongClick() }
                 )

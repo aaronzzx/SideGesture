@@ -23,15 +23,11 @@ class QuickToolsControlCenterState {
     var refreshTick: Int by mutableIntStateOf(0)
         private set
 
-    var interactionTick: Int by mutableIntStateOf(0)
-        private set
-
     fun show(anchor: Offset, edge: Position) {
         fingerAnchor = anchor
         triggerEdge = edge
         visible = true
         refresh()
-        markInteraction()
     }
 
     fun hide() {
@@ -40,10 +36,6 @@ class QuickToolsControlCenterState {
 
     fun refresh() {
         refreshTick++
-    }
-
-    fun markInteraction() {
-        interactionTick++
     }
 }
 
