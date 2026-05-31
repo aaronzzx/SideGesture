@@ -217,7 +217,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                         .firstOrNull()
                     val className = resolveInfo?.activityInfo?.name
                     if (!className.isNullOrEmpty()) {
-                        launchAppInPopup(curPkgName, className)
+                        launchAppInPopup(curPkgName, className, actionSettings?.miniWindow ?: ActionSettings.MiniWindow())
                     }
                 } else {
                     showVersionTooLowToast(this, R.string.action_popup_screen)
@@ -271,7 +271,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
                     val triggerType = action.extra as? TriggerType
                     val miniWindow = triggerType?.isMiniWindow(!appInfo.miniWindow && longPressLaunchPopup) ?: false
-                    launchAppInfo(appInfo, miniWindow)
+                    launchAppInfo(appInfo, miniWindow, actionSettings?.miniWindow ?: ActionSettings.MiniWindow())
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
@@ -281,7 +281,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
                     val triggerType = action.extra as? TriggerType
                     val miniWindow = triggerType?.isMiniWindow(!shortcutInfo.miniWindow && longPressLaunchPopup) ?: false
-                    launchShortcutInfo(shortcutInfo, miniWindow)
+                    launchShortcutInfo(shortcutInfo, miniWindow, actionSettings?.miniWindow ?: ActionSettings.MiniWindow())
                 }
             }
             GlobalActions.MOVE_SCREEN -> {

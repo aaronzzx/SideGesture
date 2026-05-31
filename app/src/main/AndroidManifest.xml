@@ -50,6 +50,20 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".MiniWindowShareProxyActivity"
+            android:exported="true"
+            android:label="@string/action_popup_screen"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".SideGestureService"
             android:exported="false"

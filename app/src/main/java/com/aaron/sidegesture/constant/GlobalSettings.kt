@@ -59,6 +59,10 @@ object GlobalSettings {
     const val MaxMoveScreenHover = 1000f
     const val MinGotoBottomStrength = 1f
     const val MaxGotoBottomStrength = 20f
+    const val MinMiniWindowSizeRatio = 0.30f
+    const val MaxMiniWindowSizeRatio = 1.00f
+    const val MinMiniWindowPositionRatio = 0.00f
+    const val MaxMiniWindowPositionRatio = 1.00f
     const val MinShellCommandTimeoutSec = 3f
     const val MaxShellCommandTimeoutSec = 30f
     const val MinGestureButtonPosition = 0f

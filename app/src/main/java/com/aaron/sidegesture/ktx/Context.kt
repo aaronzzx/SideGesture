@@ -18,6 +18,7 @@ import androidx.annotation.RequiresApi
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.LauncherInfo
+import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.utils.MiniWindowUtils
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
@@ -64,7 +65,8 @@ fun Context.launchAssist(): Boolean {
 
 fun Context.launchShortcutInfo(
     shortcutInfo: LauncherInfo.ShortcutInfo,
-    miniWindow: Boolean = shortcutInfo.miniWindow
+    miniWindow: Boolean = shortcutInfo.miniWindow,
+    miniWindowSettings: ActionSettings.MiniWindow = ActionSettings.MiniWindow()
 ): Boolean {
     return try {
         val intents = shortcutInfo
@@ -81,6 +83,7 @@ fun Context.launchShortcutInfo(
                 launchMiniWindowSucceed = MiniWindowUtils.startActivities(
                     context = this,
                     intents = intents,
+                    miniWindowSettings = miniWindowSettings,
                     showFailureToast = false
                 )
             } else {
@@ -97,20 +100,29 @@ fun Context.launchShortcutInfo(
     }
 }
 
-fun Context.launchAppInfo(appInfo: AppInfo, miniWindow: Boolean = appInfo.miniWindow): Boolean {
-    val launchSucceed = launchApp(appInfo.packageName, appInfo.className, miniWindow)
+fun Context.launchAppInfo(
+    appInfo: AppInfo,
+    miniWindow: Boolean = appInfo.miniWindow,
+    miniWindowSettings: ActionSettings.MiniWindow = ActionSettings.MiniWindow()
+): Boolean {
+    val launchSucceed = launchApp(appInfo.packageName, appInfo.className, miniWindow, miniWindowSettings)
     if (!launchSucceed) {
         showToast(getString(R.string.launch_app_info_failed, appInfo.label))
     }
     return launchSucceed
 }
 
-fun Context.launchApp(packageName: String, className: String, miniWindow: Boolean = false): Boolean {
+fun Context.launchApp(
+    packageName: String,
+    className: String,
+    miniWindow: Boolean = false,
+    miniWindowSettings: ActionSettings.MiniWindow = ActionSettings.MiniWindow()
+): Boolean {
     return try {
         var launchMiniWindowSucceed = false
         if (miniWindow) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                launchMiniWindowSucceed = launchAppInPopup(packageName, className)
+                launchMiniWindowSucceed = launchAppInPopup(packageName, className, miniWindowSettings)
             } else {
                 showVersionTooLowToast(this)
             }
@@ -134,9 +146,13 @@ fun Context.launchApp(packageName: String, className: String, miniWindow: Boolea
 }
 
 @RequiresApi(Build.VERSION_CODES.N)
-fun Context.launchAppInPopup(packageName: String, className: String): Boolean {
+fun Context.launchAppInPopup(
+    packageName: String,
+    className: String,
+    miniWindowSettings: ActionSettings.MiniWindow = ActionSettings.MiniWindow()
+): Boolean {
     val componentName = ComponentName.createRelative(packageName, className)
-    return MiniWindowUtils.startActivity(this, componentName)
+    return MiniWindowUtils.startActivity(this, componentName, miniWindowSettings)
 }
 
 fun Context.volumeUp() {

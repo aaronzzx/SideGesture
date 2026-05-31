@@ -68,6 +68,7 @@ import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shizukuStatusSummary
 import com.aaron.sidegesture.shizuku.ShellResult
 import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
+import com.aaron.sidegesture.ui.dialog.MiniWindowSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.ShellActionDialogValue
@@ -508,6 +509,10 @@ fun ActionSettingsDialog(
 
                 GlobalActions.GOTO_BOTTOM -> {
                     GotoBottomSettingsContent()
+                }
+
+                GlobalActions.POPUP_SCREEN -> {
+                    MiniWindowSettingsContent()
                 }
             }
         },

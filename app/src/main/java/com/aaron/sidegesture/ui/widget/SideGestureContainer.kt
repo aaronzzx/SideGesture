@@ -429,9 +429,9 @@ fun SideGestureContainer(
                 val appInfo = action.appInfo
                 val shortcutInfo = action.shortcutInfo
                 if (appInfo != null) {
-                    (context as SideGestureService).launchAppInfo(appInfo, miniWindow)
+                    (context as SideGestureService).launchAppInfo(appInfo, miniWindow, actionSettings.miniWindow)
                 } else if (shortcutInfo != null) {
-                    (context as SideGestureService).launchShortcutInfo(shortcutInfo, miniWindow)
+                    (context as SideGestureService).launchShortcutInfo(shortcutInfo, miniWindow, actionSettings.miniWindow)
                 }
             }
         )
