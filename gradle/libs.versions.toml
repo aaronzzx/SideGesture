@@ -15,6 +15,7 @@ freereflection = "3.2.2"
 reorderable = "2.5.1"
 shizuku = "13.1.5"
 desugarJdkLibs = "2.1.5"
+ahocorasick = "0.6.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,7 @@ sh-calvin-reorderable = { group = "sh.calvin.reorderable", name = "reorderable",
 dev-rikka-shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
 dev-rikka-shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+org-ahocorasick = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "ahocorasick" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -14,8 +14,8 @@ android {
         applicationId = "gulu.gulugulu"
         minSdk = 23
         targetSdk = 35
-        versionCode = 10500
-        versionName = "1.5.0"
+        versionCode = 10501
+        versionName = "1.5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -78,6 +78,7 @@ android {
 
 dependencies {
     implementation(files("libs/tinypinyin-2.0.3.jar"))
+    implementation(libs.org.ahocorasick)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
