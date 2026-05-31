@@ -1,7 +1,5 @@
 package com.aaron.sidegesture.ui.dialog
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -25,25 +21,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.imageLoader
 import com.aaron.compose.component.LoadingComponent
 import com.aaron.compose.component.UDFComponent
+import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGotoBottomStrength
@@ -56,17 +50,25 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinMiniWindowPositionRatio
 import com.aaron.sidegesture.constant.GlobalSettings.MinMiniWindowSizeRatio
 import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenHover
 import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenRate
+import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
+import com.aaron.sidegesture.ktx.icon
+import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
+import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
+import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 
 /**
  * @author DS-Z
  * @since 2025/6/30
  */
+
+private val PreviousAppListHeight = 280.dp
 
 @Composable
 fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
@@ -109,6 +111,12 @@ fun PreviousAppSettingsContent(vm: ActionSettingsVM = viewModel()) {
         component = vm.udfComponent,
         onEvent = {}
     ) { uiState ->
+        LaunchedEffect(uiState.actionSettingsLoaded) {
+            if (uiState.actionSettingsLoaded) {
+                vm.updatePreviousAppSearchQuery("")
+                vm.updatePreviousAppInfos()
+            }
+        }
         LoadingComponent(
             modifier = Modifier.fillMaxWidth(),
             component = vm.loadingComponent
@@ -117,70 +125,42 @@ fun PreviousAppSettingsContent(vm: ActionSettingsVM = viewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(ItemPadding)
             ) {
-                var inputPkgName by remember {
-                    mutableStateOf(TextFieldValue())
-                }
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = inputPkgName,
-                    onValueChange = { inputPkgName = it },
+                    value = uiState.previousAppSearchQuery,
+                    onValueChange = vm::updatePreviousAppSearchQuery,
                     singleLine = true,
                     label = {
                         Text(
-                            text = stringResource(R.string.exclude_app),
+                            text = stringResource(R.string.search),
                             maxLines = 1,
                             color = MaterialTheme.colorScheme.secondary
                         )
                     },
                     placeholder = {
                         Text(
-                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                            text = stringResource(R.string.typing_package_name_and_click_done),
-                            fontSize = 14.sp,
+                            text = stringResource(R.string.search_apps_or_package_name),
                             maxLines = 1,
                             color = MaterialTheme.colorScheme.secondary
                         )
-                    },
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            vm.onPreviousAppOperation(inputPkgName.text, true)
-                            inputPkgName = TextFieldValue()
-                        }
-                    )
+                    }
                 )
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(PreviousAppListHeight)
                 ) {
                     items(
-                        items = uiState.actionSettings.previousApp.packageNames,
-                        key = { it }
+                        items = uiState.previousAppVisibleAppInfos,
+                        key = { it.qualifiedName }
                     ) { item ->
-                        Row(
-                            modifier = Modifier.fillParentMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = item,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Image(
-                                modifier = Modifier
-                                    .size(MinInteractiveSize)
-                                    .clip(CircleShape)
-                                    .onSingleClick {
-                                        vm.onPreviousAppOperation(item, false)
-                                    },
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
-                                contentScale = ContentScale.Inside,
-                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-                            )
-                        }
+                        PreviousAppItem(
+                            appInfo = item,
+                            selected = item.packageName in uiState.actionSettings.previousApp.packageNames,
+                            onSelect = { selected ->
+                                vm.selectPreviousApp(item, selected)
+                            }
+                        )
                     }
                 }
             }
@@ -331,5 +311,56 @@ private fun miniWindowModeText(mode: MiniWindowMode): String {
         MiniWindowMode.Oppo -> stringResource(id = R.string.mini_window_mode_oppo)
         MiniWindowMode.Huawei -> stringResource(id = R.string.mini_window_mode_huawei)
         MiniWindowMode.Vivo -> stringResource(id = R.string.mini_window_mode_vivo)
+    }
+}
+
+@Composable
+private fun PreviousAppItem(
+    appInfo: AppInfo,
+    selected: Boolean,
+    onSelect: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onClick {
+                onSelect(!selected)
+            }
+            .padding(vertical = ContentPaddingVertical),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val context = LocalContext.current
+        AsyncImage(
+            modifier = Modifier.size(MinInteractiveSize),
+            model = appInfo.icon,
+            contentDescription = null,
+            imageLoader = context.imageLoader,
+            contentScale = ContentScale.Crop
+        )
+        Column(
+            modifier = Modifier
+                .padding(start = IconTextPadding)
+                .weight(1f)
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = appInfo.label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = appInfo.packageName,
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Checkbox(
+            modifier = Modifier.padding(end = TopBarPaddingExtra),
+            checked = selected,
+            onCheckedChange = onSelect
+        )
     }
 }
