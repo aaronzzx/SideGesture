@@ -39,6 +39,7 @@ import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.PinyinSearchUtils
+import com.aaron.sidegesture.utils.ShellActionExecutor
 import com.aaron.sidegesture.utils.ShortcutUtils
 import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -325,7 +326,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     )
                 )
             }
-            val result = ShizukuShellManager.execute(command)
+            val result = ShellActionExecutor.execute(command)
             updateUiState {
                 it.copy(
                     shellActionDialog = it.shellActionDialog.copy(
