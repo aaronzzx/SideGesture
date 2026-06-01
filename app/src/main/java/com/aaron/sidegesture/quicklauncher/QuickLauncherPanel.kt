@@ -69,7 +69,7 @@ private val PANEL_CORNER_RADIUS = 20.dp
 private val PANEL_PADDING = 12.dp
 private val PANEL_WIDTH = 260.dp
 private val PANEL_MIN_HEIGHT = 200.dp
-private val PANEL_MAX_HEIGHT = 500.dp
+private val PANEL_MAX_HEIGHT = 360.dp
 private val EDGE_PADDING = 16.dp
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
