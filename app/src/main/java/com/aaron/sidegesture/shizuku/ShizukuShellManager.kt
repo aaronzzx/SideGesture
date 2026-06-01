@@ -20,7 +20,10 @@ object ShizukuShellManager {
 
     private const val RequestCode = 41051
     private const val ServiceTag = "sidegesture_shell"
-    private const val ShizukuPackageName = "moe.shizuku.privileged.api"
+    private val ShizukuCompatPackages = listOf(
+        "moe.shizuku.privileged.api",
+        "roro.stellar.manager"
+    )
 
     private val bindMutex = Mutex()
     private val autoPermissionMutex = Mutex()
@@ -187,10 +190,11 @@ object ShizukuShellManager {
         val binderAlive = isBinderAlive()
         val permissionGranted = binderAlive && hasPermission()
         val uid = if (binderAlive) runCatching { Shizuku.getUid() }.getOrNull() else null
-        val installed = runCatching {
-            context.packageManager.getPackageInfo(ShizukuPackageName, 0)
-            true
-        }.getOrDefault(false)
+        val installed = ShizukuCompatPackages.any { pkg ->
+            runCatching {
+                context.packageManager.getPackageInfo(pkg, 0)
+            }.isSuccess
+        }
         return ShizukuStatus(
             installed = installed,
             binderAlive = binderAlive,
