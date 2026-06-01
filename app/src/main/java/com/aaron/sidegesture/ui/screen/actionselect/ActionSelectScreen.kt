@@ -514,6 +514,7 @@ private fun ActionPage(
                     val isShellAction = item.value == GlobalActions.SHIZUKU_SHELL
                     val isSelected = selectedRecord.isSelected(item)
                     when {
+                        item.value == GlobalActions.QUICK_LAUNCHER -> onSettingsClick(item)
                         isShellAction && (selectSingle || !isSelected) -> onSettingsClick(item)
                         else -> onSelect(item, selected)
                     }
@@ -522,8 +523,7 @@ private fun ActionPage(
                     item.value == GlobalActions.PREVIOUS_APP ||
                     item.value == GlobalActions.GOTO_BOTTOM ||
                     item.value == GlobalActions.POPUP_SCREEN ||
-                    item.value == GlobalActions.SHIZUKU_SHELL ||
-                    item.value == GlobalActions.QUICK_LAUNCHER,
+                    item.value == GlobalActions.SHIZUKU_SHELL,
                 onSettingsClick = {
                     onSettingsClick(item)
                 }

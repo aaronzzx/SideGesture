@@ -27,6 +27,7 @@ import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.qualifiedNameWithIntents
+import com.aaron.sidegesture.ktx.quickLauncherActionData
 import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.subscribeEvent
@@ -55,6 +56,10 @@ import java.io.FileOutputStream
  * @since 2024/12/2
  */
 class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState, UiEvent>() {
+
+    companion object {
+        var pendingQuickLauncherAction: Action? = null
+    }
 
     private val actionSelect = savedStateHandle.toRoute<ActionSelect>()
 
@@ -133,10 +138,6 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 saveSettings()
             }
         } else if (obj is Action) {
-            if (obj.value == GlobalActions.QUICK_LAUNCHER && selected) {
-                sendUiEvent(UiEvent.GotoQuickLauncherConfig(actionSelect.copy(isQuickLauncher = true)))
-                return
-            }
             selectAction(obj, selected)
             if (uiState.selectSingle) {
                 saveSettings()
@@ -386,6 +387,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun getQuickLauncherRoute(): ActionSelect {
+        pendingQuickLauncherAction = uiState.selectedRecord.findAction(GlobalActions.QUICK_LAUNCHER)
         return actionSelect.copy(isQuickLauncher = true)
     }
 
@@ -695,9 +697,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         }
                         updateUiState {
                             if (actionSelect.isQuickLauncher) {
-                                val quickLauncherAction = actions.find { a ->
-                                    a.value == GlobalActions.QUICK_LAUNCHER
-                                }
+                                val pending = pendingQuickLauncherAction
+                                pendingQuickLauncherAction = null
+                                val quickLauncherAction = pending
+                                    ?: actions.find { a ->
+                                        a.value == GlobalActions.QUICK_LAUNCHER
+                                    }
                                 val quickLauncherData = quickLauncherAction
                                     ?.let { a ->
                                         runCatching {
@@ -882,15 +887,23 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         fun init() {
             subscribeEvent(QuickLauncherConfigEvent::class) { event ->
                 if (actionSelect.isQuickLauncher) return@subscribeEvent
+                val hasItems = event.quickLauncherAction.quickLauncherActionData
+                    ?.items?.isNotEmpty() == true
                 updateUiState {
                     val newList = it.selectedRecord.list.toMutableList()
                     val existingIndex = newList.indexOfFirst { obj ->
                         obj is Action && obj.value == GlobalActions.QUICK_LAUNCHER
                     }
-                    if (existingIndex != -1) {
-                        newList[existingIndex] = event.quickLauncherAction
+                    if (hasItems) {
+                        if (existingIndex != -1) {
+                            newList[existingIndex] = event.quickLauncherAction
+                        } else {
+                            newList.add(event.quickLauncherAction)
+                        }
                     } else {
-                        newList.add(event.quickLauncherAction)
+                        if (existingIndex != -1) {
+                            newList.removeAt(existingIndex)
+                        }
                     }
                     it.copy(selectedRecord = UiState.SelectedRecord(newList))
                 }
