@@ -9,10 +9,6 @@ import android.graphics.Rect
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GlobalSettings.MaxMiniWindowPositionRatio
-import com.aaron.sidegesture.constant.GlobalSettings.MaxMiniWindowSizeRatio
-import com.aaron.sidegesture.constant.GlobalSettings.MinMiniWindowPositionRatio
-import com.aaron.sidegesture.constant.GlobalSettings.MinMiniWindowSizeRatio
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
 import com.blankj.utilcode.util.ScreenUtils
@@ -61,10 +57,10 @@ object MiniWindowUtils {
         showFailureToast: Boolean = true
     ): Boolean {
         return try {
-            if (resolveMode(miniWindowSettings.mode) == MiniWindowMode.Vivo) {
+            if (resolveMode() == MiniWindowMode.Vivo) {
                 return startVivoShareProxy(context, intent, showFailureToast)
             }
-            val activityOptions = getActivityOptions(miniWindowSettings)
+            val activityOptions = getActivityOptions()
             context.startActivity(intent, activityOptions.toBundle())
             true
         } catch (ignored: Exception) {
@@ -83,10 +79,10 @@ object MiniWindowUtils {
         showFailureToast: Boolean = true
     ): Boolean {
         return try {
-            if (resolveMode(miniWindowSettings.mode) == MiniWindowMode.Vivo) {
+            if (resolveMode() == MiniWindowMode.Vivo) {
                 return startVivoShareProxy(context, intents.lastOrNull(), showFailureToast)
             }
-            val activityOptions = getActivityOptions(miniWindowSettings)
+            val activityOptions = getActivityOptions()
             context.startActivities(intents, activityOptions.toBundle())
             true
         } catch (ignored: Exception) {
@@ -98,21 +94,18 @@ object MiniWindowUtils {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun getActivityOptions(settings: ActionSettings.MiniWindow): ActivityOptions {
-        return when (resolveMode(settings.mode)) {
-            MiniWindowMode.Huawei -> makeActivityOptions(WINDOWING_MODE_HUAWEI_HONOR, settings)
-            MiniWindowMode.Oppo -> makeActivityOptions(WINDOWING_MODE_OPPO, settings)
+    private fun getActivityOptions(): ActivityOptions {
+        return when (resolveMode()) {
+            MiniWindowMode.Huawei -> makeActivityOptions(WINDOWING_MODE_HUAWEI_HONOR)
+            MiniWindowMode.Oppo -> makeActivityOptions(WINDOWING_MODE_OPPO)
             MiniWindowMode.Default,
-            MiniWindowMode.Auto -> makeActivityOptions(WINDOWING_MODE_FREEFORM, settings)
-            MiniWindowMode.Vivo -> makeActivityOptions(WINDOWING_MODE_FREEFORM, settings)
+            MiniWindowMode.Auto -> makeActivityOptions(WINDOWING_MODE_FREEFORM)
+            MiniWindowMode.Vivo -> makeActivityOptions(WINDOWING_MODE_FREEFORM)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun makeActivityOptions(
-        mode: Int,
-        settings: ActionSettings.MiniWindow
-    ): ActivityOptions {
+    private fun makeActivityOptions(mode: Int): ActivityOptions {
         return ActivityOptions.makeBasic().also {
             try {
                 val method = ActivityOptions::class.java.getMethod(
@@ -126,32 +119,25 @@ object MiniWindowUtils {
 
             val screenWidth = ScreenUtils.getScreenWidth()
             val screenHeight = ScreenUtils.getScreenHeight()
-
-            it.setLaunchBounds(settings.toBounds(screenWidth, screenHeight))
+            val width = screenWidth
+            val scaledWidth = width * 0.7f
+            val left = ((screenWidth - scaledWidth) / 2f).roundToInt()
+            val right = left + width
+            val height = (width / 0.625f).roundToInt()
+            val top = (screenHeight - height) / 2
+            val bottom = top + height
+            val bounds =  Rect(left, top, right, bottom)
+            it.setLaunchBounds(bounds)
         }
     }
 
-    private fun resolveMode(mode: MiniWindowMode): MiniWindowMode {
-        if (mode != MiniWindowMode.Auto) {
-            return mode
-        }
+    private fun resolveMode(): MiniWindowMode {
         return when (Build.BRAND.lowercase()) {
             "vivo", "iqoo" -> MiniWindowMode.Vivo
             "oppo", "oneplus", "realme" -> MiniWindowMode.Oppo
             "huawei", "honor" -> MiniWindowMode.Huawei
             else -> MiniWindowMode.Default
         }
-    }
-
-    private fun ActionSettings.MiniWindow.toBounds(
-        screenWidth: Int,
-        screenHeight: Int
-    ): Rect {
-        val width = (screenWidth * widthRatio.coerceIn(MinMiniWindowSizeRatio, MaxMiniWindowSizeRatio)).roundToInt()
-        val height = (screenHeight * heightRatio.coerceIn(MinMiniWindowSizeRatio, MaxMiniWindowSizeRatio)).roundToInt()
-        val left = ((screenWidth - width) * horizontalPositionRatio.coerceIn(MinMiniWindowPositionRatio, MaxMiniWindowPositionRatio)).roundToInt()
-        val top = ((screenHeight - height) * verticalPositionRatio.coerceIn(MinMiniWindowPositionRatio, MaxMiniWindowPositionRatio)).roundToInt()
-        return Rect(left, top, left + width, top + height)
     }
 
     private fun startVivoShareProxy(
