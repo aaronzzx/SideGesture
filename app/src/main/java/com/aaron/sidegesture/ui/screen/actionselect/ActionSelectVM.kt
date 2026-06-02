@@ -751,7 +751,20 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     private fun saveQuickLauncherSettings() {
-        val selectedList = uiState.selectedRecord.list
+        val selectedList = uiState.selectedRecord.list.toMutableList()
+        // 保存Bitmap到本地
+        val shortcutInfos = mutableMapOf<Int, LauncherInfo.ShortcutInfo>()
+        selectedList.forEachIndexed { index, obj ->
+            if (obj !is LauncherInfo.ShortcutInfo) return@forEachIndexed
+            val iconBitmap = obj.iconBitmap ?: return@forEachIndexed
+            val iconPath = "${Paths.Image}/${System.currentTimeMillis()}"
+            val fos = FileOutputStream(iconPath)
+            iconBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            shortcutInfos[index] = obj.copy(iconPath = iconPath)
+        }
+        shortcutInfos.forEach { (index, shortcutInfo) ->
+            selectedList[index] = shortcutInfo
+        }
         val items = selectedList.map { obj ->
             when (obj) {
                 is AppInfo -> {
