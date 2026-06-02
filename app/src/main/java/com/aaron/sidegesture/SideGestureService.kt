@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.media.AudioManager
@@ -85,6 +86,8 @@ class SideGestureService : ComponentAccessibilityService() {
     private var mainView: View? = null
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
+    private var screenWidthDp = Resources.getSystem().configuration.screenWidthDp
+    private var screenHeightDp = Resources.getSystem().configuration.screenHeightDp
 
     private var isNowInLockScreenPage = false
     private var currentButtons: List<GestureButton> = emptyList()
@@ -126,8 +129,13 @@ class SideGestureService : ComponentAccessibilityService() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (orientation != newConfig.orientation) {
+        val orientationChanged = orientation != newConfig.orientation
+        val screenSizeChanged = screenWidthDp != newConfig.screenWidthDp
+                || screenHeightDp != newConfig.screenHeightDp
+        if (orientationChanged || screenSizeChanged) {
             orientation = newConfig.orientation
+            screenWidthDp = newConfig.screenWidthDp
+            screenHeightDp = newConfig.screenHeightDp
             updateLayout()
             pinnedScreenshotManager.onEnvironmentChanged(currentButtons)
         }
