@@ -203,7 +203,10 @@ fun SideGestureContainer(
         onDragStart = onDragStart@{ offset ->
             quickLauncherState.hide()
             quickToolsState.hide()
-            smartScreenshotState.dismiss()
+            if (smartScreenshotState.visible) {
+                smartScreenshotState.dismiss()
+                onOverlayTouchChange(false)
+            }
             sideGestureState.onDragStart(offset, imePadding)
         },
         onDrag = onDrag@{ dragAmount ->
