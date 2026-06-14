@@ -395,6 +395,7 @@
     <string name="shizuku_not_installed_hint">当前设备未安装 Shizuku</string>
     <string name="shizuku_not_running_hint">Shizuku 已安装，但当前服务未启动</string>
     <string name="shizuku_permission_required">请先连接并授权 Shizuku</string>
+    <string name="task_switcher_close_all">全部关闭</string>
     <string name="shizuku_status_ready">已就绪</string>
     <string name="shizuku_status_no_permission">未授权</string>
     <string name="shizuku_status_not_running">未连接</string>

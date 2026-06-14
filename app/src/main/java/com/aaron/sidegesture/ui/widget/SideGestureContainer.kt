@@ -67,6 +67,8 @@ import com.aaron.sidegesture.screenshot.ScreenshotCropper
 import com.aaron.sidegesture.screenshot.ScreenshotStorage
 import com.aaron.sidegesture.screenshot.SmartScreenshotEditor
 import com.aaron.sidegesture.screenshot.SmartScreenshotState
+import com.aaron.sidegesture.taskswitcher.TaskSwitcherPanel
+import com.aaron.sidegesture.taskswitcher.rememberTaskSwitcherPanelState
 import com.aaron.sidegesture.utils.DragGestureHandler
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
@@ -102,6 +104,7 @@ fun SideGestureContainer(
     actionSettings: ActionSettings = ActionSettings(),
     advancedSettings: AdvancedSettings = AdvancedSettings(),
     gestureSettings: GestureSettings = GestureSettings(),
+    taskSwitcherLockedPackages: Set<String> = emptySet(),
     onOverlayTouchChange: (Boolean) -> Unit = {},
     overlaysDismissSignal: Int = 0
 ) {
@@ -114,10 +117,12 @@ fun SideGestureContainer(
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
     val quickToolsState = rememberQuickToolsControlCenterState()
     val quickLauncherState = rememberQuickLauncherPanelState()
+    val taskSwitcherState = rememberTaskSwitcherPanelState()
     val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
     var hideSystemScreenshotOverlays by remember { mutableStateOf(false) }
     var pendingSmartScreenshotAfterActionPanelHidden by remember { mutableStateOf(false) }
+    var taskSwitcherQueryJob by remember { mutableStateOf<Job?>(null) }
 
 
     LaunchedEffect(overlaysDismissSignal) {
@@ -128,6 +133,11 @@ fun SideGestureContainer(
 
             //region 快速启动器
             quickLauncherState.hide()
+            //endregion
+
+            //region 任务切换器
+            taskSwitcherQueryJob?.cancel()
+            taskSwitcherState.hide()
             //endregion
 
             //region 智能截图
@@ -167,6 +177,10 @@ fun SideGestureContainer(
         if (action == Action.NONE) {
             return
         }
+        if (action.value != GlobalActions.TASK_SWITCHER) {
+            taskSwitcherQueryJob?.cancel()
+            taskSwitcherState.hide()
+        }
         if (action.value == GlobalActions.HIDE_GESTURE_BUTTON) {
             (context as SideGestureService).hideGestureButton(button)
             return
@@ -181,6 +195,17 @@ fun SideGestureContainer(
                 pendingSmartScreenshotAfterActionPanelHidden = true
             } else {
                 startSmartScreenshotCapture()
+            }
+            return
+        }
+        if (action.value == GlobalActions.TASK_SWITCHER) {
+            taskSwitcherQueryJob?.cancel()
+            taskSwitcherState.hide()
+            taskSwitcherQueryJob = coroutineScope.launch {
+                val tasks = (context as SideGestureService).queryRecentTasks()
+                if (tasks.isNotEmpty()) {
+                    taskSwitcherState.show(tasks, finger, position ?: Position.Left)
+                }
             }
             return
         }
@@ -213,6 +238,8 @@ fun SideGestureContainer(
     DragGestureHandler(
         onDragStart = onDragStart@{ offset ->
             quickLauncherState.hide()
+            taskSwitcherQueryJob?.cancel()
+            taskSwitcherState.hide()
             quickToolsState.hide()
             if (smartScreenshotState.visible) {
                 smartScreenshotState.dismiss()
@@ -455,6 +482,40 @@ fun SideGestureContainer(
                     (context as SideGestureService).launchAppInfo(appInfo, miniWindow, actionSettings.miniWindow)
                 } else if (shortcutInfo != null) {
                     (context as SideGestureService).launchShortcutInfo(shortcutInfo, miniWindow, actionSettings.miniWindow)
+                }
+            }
+        )
+
+        TaskSwitcherPanel(
+            modifier = Modifier.matchParentSize(),
+            state = taskSwitcherState,
+            lockedPackageNames = taskSwitcherLockedPackages,
+            onOverlayTouchChange = onOverlayTouchChange,
+            onLaunch = { task ->
+                (context as SideGestureService).switchToRecentTask(task.packageName)
+                taskSwitcherState.hide()
+            },
+            onClose = { task ->
+                coroutineScope.launch {
+                    val success = (context as SideGestureService).closeRecentTask(task.packageName)
+                    if (success) {
+                        taskSwitcherState.remove(task)
+                    }
+                }
+            },
+            onToggleLock = { packageName ->
+                (context as SideGestureService).toggleTaskSwitcherLock(packageName)
+            },
+            onCloseAll = { tasks ->
+                coroutineScope.launch {
+                    val closedPackages = tasks
+                        .map { it.packageName }
+                        .distinct()
+                        .filter { packageName ->
+                            (context as SideGestureService).closeRecentTask(packageName)
+                        }
+                        .toSet()
+                    taskSwitcherState.removePackages(closedPackages)
                 }
             }
         )

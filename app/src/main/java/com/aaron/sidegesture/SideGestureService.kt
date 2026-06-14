@@ -36,6 +36,7 @@ import com.aaron.composeaccessibility.ComponentAccessibilityService
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.RecentTask
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
@@ -94,9 +95,11 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private var volumeButtonSwitchSongJob: Job? = null
     private val _overlaysDismissSignal = MutableStateFlow(0)
+    private val _taskSwitcherLockedPackages = MutableStateFlow(emptySet<String>())
 
     val coroutineScope = MainScope()
     val overlaysDismissSignal: StateFlow<Int> = _overlaysDismissSignal.asStateFlow()
+    val taskSwitcherLockedPackages: StateFlow<Set<String>> = _taskSwitcherLockedPackages.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
     var initialSettings: InitialSettings? = null
@@ -241,6 +244,9 @@ class SideGestureService : ComponentAccessibilityService() {
                             .actionSettings
                             .data
                             .collectAsStateWithLifecycle(initialValue = ActionSettings())
+                        val taskSwitcherLockedPackages by this@SideGestureService
+                            .taskSwitcherLockedPackages
+                            .collectAsStateWithLifecycle(initialValue = emptySet())
                         val overlaysDismissSignal by this@SideGestureService.overlaysDismissSignal
                             .collectAsStateWithLifecycle()
                         SideGestureContainer(
@@ -259,6 +265,7 @@ class SideGestureService : ComponentAccessibilityService() {
                             actionSettings = actionSettings,
                             advancedSettings = advancedSettings,
                             gestureSettings = gestureSettings,
+                            taskSwitcherLockedPackages = taskSwitcherLockedPackages,
                             overlaysDismissSignal = overlaysDismissSignal
                         )
                     }
@@ -460,6 +467,29 @@ class SideGestureService : ComponentAccessibilityService() {
 
     fun performAction(action: Action) {
         proxy.onAction(action)
+    }
+
+    suspend fun queryRecentTasks(): List<RecentTask> {
+        return proxy.queryRecentTasks()
+    }
+
+    suspend fun closeRecentTask(packageName: String): Boolean {
+        return proxy.closeRecentTask(packageName)
+    }
+
+    fun switchToRecentTask(packageName: String) {
+        proxy.switchToRecentTask(packageName)
+    }
+
+    fun toggleTaskSwitcherLock(packageName: String): Boolean {
+        val packages = _taskSwitcherLockedPackages.value
+        val locked = packageName !in packages
+        _taskSwitcherLockedPackages.value = if (locked) {
+            packages + packageName
+        } else {
+            packages - packageName
+        }
+        return locked
     }
 
     fun dismissActionOverlays() {

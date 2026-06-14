@@ -24,6 +24,7 @@ import com.aaron.sidegesture.constant.ActionSettingsDefaults.GotoBottomStrength
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.MoveScreenData
+import com.aaron.sidegesture.entity.RecentTask
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
@@ -50,6 +51,7 @@ import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.ShellActionExecutor
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
+import com.aaron.sidegesture.shizuku.ShellResult
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.PermissionUtils
@@ -58,12 +60,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/21
  */
 class SideGestureServiceProxy(private val host: SideGestureService) {
+
+    private val recentTaskIdRegex = Regex("""#(\d+)""")
+    private val recentTaskPackageRegex = Regex("""A=\d+:(\S+?)[\s}]""")
+    private val packageNameRegex = Regex("""^[A-Za-z0-9_.]+$""")
 
     private var prevPackageName: String? = null
     private var currPackageName: String? = null
@@ -113,6 +120,30 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 else -> Unit
             }
         }
+    }
+
+    suspend fun queryRecentTasks(): List<RecentTask> = withContext(Dispatchers.IO) {
+        val result = ShellActionExecutor.execute("dumpsys activity recents | grep 'Recent #'")
+        if (!result.isSuccess) {
+            host.showShellFailureToast(result)
+            return@withContext emptyList()
+        }
+        host.parseRecentTasks(result.stdout)
+    }
+
+    suspend fun closeRecentTask(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        if (!packageNameRegex.matches(packageName)) {
+            return@withContext false
+        }
+        val result = ShellActionExecutor.execute("am force-stop $packageName")
+        if (!result.isSuccess) {
+            host.showShellFailureToast(result)
+        }
+        result.isSuccess
+    }
+
+    fun switchToRecentTask(packageName: String) {
+        host.queryLaunchIntentAndStart(packageName)
     }
 
     fun onAction(action: Action) {
@@ -349,23 +380,67 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                     if (result.isSuccess) {
                         return@launch
                     }
-                    val message = when {
-                        result.timedOut -> getString(R.string.shell_execute_timeout)
-                        result.errorMessage == "Shizuku permission denied" ||
-                                result.errorMessage == "Shizuku binder unavailable" -> {
-                            getString(R.string.shizuku_permission_required)
-                        }
-                        result.errorMessage.isNotBlank() -> {
-                            getString(R.string.shell_execute_failed, result.errorMessage)
-                        }
-                        else -> {
-                            getString(R.string.shell_execute_failed, result.stderr.ifBlank { "-" })
-                        }
-                    }
-                    showToast(message)
+                    showShellFailureToast(result)
                 }
             }
         }
+    }
+
+    private fun SideGestureService.parseRecentTasks(output: String): List<RecentTask> {
+        return output
+            .lineSequence()
+            .filter { it.contains("Recent #") }
+            .mapNotNull { line ->
+                if (line.contains("type=home")) {
+                    return@mapNotNull null
+                }
+                val taskId = recentTaskIdRegex
+                    .findAll(line)
+                    .lastOrNull()
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?.toIntOrNull()
+                    ?: return@mapNotNull null
+                val packageName = recentTaskPackageRegex
+                    .find(line)
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?: return@mapNotNull null
+                if (packageName == this.packageName) {
+                    return@mapNotNull null
+                }
+                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                if (launchIntent == null) {
+                    return@mapNotNull null
+                }
+                val label = runCatching {
+                    val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                    packageManager.getApplicationLabel(appInfo).toString()
+                }.getOrDefault(packageName)
+                RecentTask(
+                    taskId = taskId,
+                    packageName = packageName,
+                    label = label
+                )
+            }
+            .toList()
+    }
+
+    private fun SideGestureService.showShellFailureToast(result: ShellResult) {
+        val message = when {
+            result.timedOut -> getString(R.string.shell_execute_timeout)
+            result.errorMessage == "Shizuku permission denied" ||
+                    result.errorMessage == "Shizuku binder unavailable" -> {
+                getString(R.string.shizuku_permission_required)
+            }
+            result.errorMessage.isNotBlank() -> {
+                getString(R.string.shell_execute_failed, result.errorMessage)
+            }
+            else -> {
+                getString(R.string.shell_execute_failed, result.stderr.ifBlank { "-" })
+            }
+        }
+        showToast(message)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

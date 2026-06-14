@@ -6,6 +6,7 @@ import android.content.Context
 import com.aaron.compose.component.UDFComponentDefaults
 import com.aaron.sidegesture.defaults.UDFComponentDefaultsImpl
 import com.aaron.sidegesture.utils.CrashHandler
+import com.blankj.utilcode.util.ProcessUtils
 import me.weishu.reflection.Reflection
 import rikka.shizuku.ShizukuProvider
 
@@ -26,12 +27,19 @@ class App : Application() {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        ShizukuProvider.enableMultiProcessSupport(true)
+        val processName = ProcessUtils.getCurrentProcessName()
+        val isProviderProcess = processName == base?.packageName
+        ShizukuProvider.enableMultiProcessSupport(isProviderProcess)
         Reflection.unseal(base)
     }
 
     override fun onCreate() {
         super.onCreate()
+        val processName = ProcessUtils.getCurrentProcessName()
+        if (processName != packageName) {
+            ShizukuProvider.requestBinderForNonProviderProcess(this)
+        }
+
         context = applicationContext
 
         UDFComponentDefaults.set(UDFComponentDefaultsImpl())
