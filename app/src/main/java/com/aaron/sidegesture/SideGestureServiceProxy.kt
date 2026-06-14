@@ -44,6 +44,7 @@ import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
+import com.aaron.sidegesture.shizuku.ShellResult
 import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.FlashlightController
@@ -51,7 +52,6 @@ import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.ShellActionExecutor
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
-import com.aaron.sidegesture.shizuku.ShellResult
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.PermissionUtils
@@ -181,6 +181,27 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
             }
             GlobalActions.PREVIOUS_APP -> {
                 previousApp()
+            }
+            GlobalActions.KILL_APP -> {
+                val curPkgName = currPackageName
+                if (curPkgName.isNullOrEmpty()) {
+                    return
+                }
+                if (nowInLauncher()) {
+                    return
+                }
+                if (curPkgName == packageName) {
+                    return
+                }
+                coroutineScope.launch(Dispatchers.IO) {
+                    if (!packageNameRegex.matches(curPkgName)) {
+                        return@launch
+                    }
+                    val result = ShellActionExecutor.execute("am force-stop $curPkgName")
+                    if (!result.isSuccess) {
+                        showShellFailureToast(result)
+                    }
+                }
             }
             GlobalActions.OPEN_NOTIFICATION_PANEL -> {
                 performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
