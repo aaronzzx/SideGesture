@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -98,6 +100,14 @@ fun QuickToolsControlCenter(
     }
     var volume by remember(state.visible, state.refreshTick) {
         mutableFloatStateOf(QuickToolsExecutor.currentVolumeRatio(service))
+    }
+    var lastNonZeroVolume by remember(state.visible) {
+        mutableFloatStateOf(
+            QuickToolsExecutor.currentVolumeRatio(service).takeIf { it > 0f } ?: 0.3f
+        )
+    }
+    val brightnessAutoEnabled = remember(state.visible, state.refreshTick) {
+        QuickToolsExecutor.currentBrightnessAutoEnabled(service)
     }
     val wifiEnabled = remember(state.visible, state.refreshTick) {
         QuickToolsExecutor.currentWifiEnabled(service)
@@ -211,6 +221,7 @@ fun QuickToolsControlCenter(
                     mediaState = mediaState,
                     brightness = brightness,
                     volume = volume,
+                    brightnessAutoEnabled = brightnessAutoEnabled,
                     colors = panelColors,
                     wifiEnabled = wifiEnabled,
                     bluetoothEnabled = bluetoothEnabled,
@@ -232,9 +243,34 @@ fun QuickToolsControlCenter(
                             }
                         }
                     },
+                    onBrightnessAutoClick = {
+                        scope.launch {
+                            when (QuickToolsExecutor.toggleBrightnessAuto(service)) {
+                                QuickToolsOperationResult.Success -> state.refresh()
+                                QuickToolsOperationResult.NeedsWriteSettingsOrShizuku -> {
+                                    service.gotoManageWriteSettings()
+                                }
+                                else -> Unit
+                            }
+                        }
+                    },
                     onVolumeChange = { value ->
                         volume = value
+                        if (value > 0f) {
+                            lastNonZeroVolume = value
+                        }
                         QuickToolsExecutor.setVolumeRatio(service, value)
+                    },
+                    onMediaMuteClick = {
+                        if (volume > 0f) {
+                            lastNonZeroVolume = volume
+                            volume = 0f
+                            QuickToolsExecutor.setVolumeRatio(service, 0f)
+                        } else {
+                            val restore = lastNonZeroVolume
+                            volume = restore
+                            QuickToolsExecutor.setVolumeRatio(service, restore)
+                        }
                     },
                     onClick = { type ->
                         scope.launch {
@@ -323,6 +359,7 @@ private fun QuickToolsGrid(
     mediaState: QuickToolsMediaControllerState,
     brightness: Float,
     volume: Float,
+    brightnessAutoEnabled: Boolean,
     colors: QuickToolsPanelColors,
     wifiEnabled: Boolean,
     bluetoothEnabled: Boolean,
@@ -330,7 +367,9 @@ private fun QuickToolsGrid(
     flashlightEnabled: Boolean,
     onOpenPermission: () -> Unit,
     onBrightnessChange: (Float) -> Unit,
+    onBrightnessAutoClick: () -> Unit,
     onVolumeChange: (Float) -> Unit,
+    onMediaMuteClick: () -> Unit,
     onClick: (QuickToolType) -> Unit
 ) {
     LazyVerticalGrid(
@@ -353,6 +392,7 @@ private fun QuickToolsGrid(
                 mediaState = mediaState,
                 brightness = brightness,
                 volume = volume,
+                brightnessAutoEnabled = brightnessAutoEnabled,
                 colors = colors,
                 wifiEnabled = wifiEnabled,
                 bluetoothEnabled = bluetoothEnabled,
@@ -360,7 +400,9 @@ private fun QuickToolsGrid(
                 flashlightEnabled = flashlightEnabled,
                 onOpenPermission = onOpenPermission,
                 onBrightnessChange = onBrightnessChange,
+                onBrightnessAutoClick = onBrightnessAutoClick,
                 onVolumeChange = onVolumeChange,
+                onMediaMuteClick = onMediaMuteClick,
                 onClick = onClick
             )
         }
@@ -373,6 +415,7 @@ private fun QuickToolGridItem(
     mediaState: QuickToolsMediaControllerState,
     brightness: Float,
     volume: Float,
+    brightnessAutoEnabled: Boolean,
     colors: QuickToolsPanelColors,
     wifiEnabled: Boolean,
     bluetoothEnabled: Boolean,
@@ -380,7 +423,9 @@ private fun QuickToolGridItem(
     flashlightEnabled: Boolean,
     onOpenPermission: () -> Unit,
     onBrightnessChange: (Float) -> Unit,
+    onBrightnessAutoClick: () -> Unit,
     onVolumeChange: (Float) -> Unit,
+    onMediaMuteClick: () -> Unit,
     onClick: (QuickToolType) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -397,15 +442,19 @@ private fun QuickToolGridItem(
             contentDescription = stringResource(R.string.quick_tool_brightness),
             value = brightness,
             colors = colors,
-            onValueChange = onBrightnessChange
+            onValueChange = onBrightnessChange,
+            active = brightnessAutoEnabled,
+            onIconClick = onBrightnessAutoClick
         )
         QuickToolType.Volume -> CompactSliderRow(
             modifier = modifier,
-            icon = quickToolIcon(QuickToolType.Volume),
+            icon = if (volume <= 0f) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
             contentDescription = stringResource(R.string.quick_tool_volume),
             value = volume,
             colors = colors,
-            onValueChange = onVolumeChange
+            onValueChange = onVolumeChange,
+            active = volume <= 0f,
+            onIconClick = onMediaMuteClick
         )
         else -> QuickToolCircleButton(
             modifier = modifier,
@@ -449,8 +498,24 @@ private fun CompactSliderRow(
     value: Float,
     colors: QuickToolsPanelColors,
     onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    active: Boolean = false,
+    onIconClick: (() -> Unit)? = null
 ) {
+    val iconContainerColor = if (active) colors.primary else colors.primarySoft
+    val iconTint = if (active) colors.onPrimary else colors.primary
+    val click = onIconClick
+    val iconModifier = if (click != null) {
+        Modifier
+            .size(28.dp)
+            .shapedClickable(CircleShape) {
+                click()
+            }
+    } else {
+        Modifier
+            .size(28.dp)
+            .clip(CircleShape)
+    }
     Surface(
         modifier = modifier,
         color = colors.rowContainer,
@@ -465,16 +530,13 @@ private fun CompactSliderRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(colors.primarySoft),
+                modifier = iconModifier.background(iconContainerColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = contentDescription,
-                    tint = colors.primary,
+                    tint = iconTint,
                     modifier = Modifier.size(16.dp)
                 )
             }

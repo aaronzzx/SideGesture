@@ -26,6 +26,13 @@ object QuickToolsExecutor {
         return (value / 255f).coerceIn(0f, 1f)
     }
 
+    fun currentBrightnessAutoEnabled(service: SideGestureService): Boolean {
+        return service.readSystemInt(
+            Settings.System.SCREEN_BRIGHTNESS_MODE,
+            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+        ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+    }
+
     fun currentVolumeRatio(service: SideGestureService): Float {
         val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
@@ -55,13 +62,37 @@ object QuickToolsExecutor {
     ): QuickToolsOperationResult = withContext(Dispatchers.IO) {
         val value = (ratio.coerceIn(0f, 1f) * 255f).roundToInt().coerceIn(0, 255)
         if (service.canWriteSystemSettings()) {
-            Settings.System.putInt(service.contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0)
             Settings.System.putInt(service.contentResolver, Settings.System.SCREEN_BRIGHTNESS, value)
             return@withContext QuickToolsOperationResult.Success
         }
         if (ShizukuShellManager.currentStatus().permissionGranted) {
             val result = ShizukuShellManager.execute(
-                "settings put system screen_brightness_mode 0 && settings put system screen_brightness $value"
+                "settings put system screen_brightness $value"
+            )
+            return@withContext result.toOperationResult()
+        }
+        QuickToolsOperationResult.NeedsWriteSettingsOrShizuku
+    }
+
+    suspend fun toggleBrightnessAuto(
+        service: SideGestureService
+    ): QuickToolsOperationResult = withContext(Dispatchers.IO) {
+        val mode = if (currentBrightnessAutoEnabled(service)) {
+            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+        } else {
+            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        }
+        if (service.canWriteSystemSettings()) {
+            Settings.System.putInt(
+                service.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                mode
+            )
+            return@withContext QuickToolsOperationResult.Success
+        }
+        if (ShizukuShellManager.currentStatus().permissionGranted) {
+            val result = ShizukuShellManager.execute(
+                "settings put system screen_brightness_mode $mode"
             )
             return@withContext result.toOperationResult()
         }
