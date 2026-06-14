@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -411,7 +413,9 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
             )
         }
 
-        Box(
+        val colorScheme = MaterialTheme.colorScheme
+        val isDarkTheme = colorScheme.surface.luminance() < 0.5f
+        Surface(
             modifier = Modifier
                 .graphicsLayer {
                     if (parentSize.isEmpty()) return@graphicsLayer
@@ -423,16 +427,16 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                 .onGloballyPositioned {
                     panelBounds = it.boundsInRoot()
                 }
-                .background(
-                    color = Color.White.copy(alpha = 0.28f),
-                    shape = RoundedCornerShape(cornerRadius)
-                )
                 .animateEnterExit(
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
                             scaleIn(spring(stiffness = Spring.StiffnessMedium), 0.92f),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) +
                             scaleOut(spring(stiffness = Spring.StiffnessMedium), 0.92f)
-                )
+                ),
+            shape = RoundedCornerShape(cornerRadius),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 3.dp,
+            shadowElevation = if (isDarkTheme) 8.dp else 12.dp
         ) {
             LazyVerticalGrid(
                 modifier = Modifier.fillMaxSize(),
@@ -605,21 +609,11 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                 position = actionPanelState.position
             )
         }
-        val firstLayerOffsets = remember(
-            actionPanelState.position,
-            layouts
-        ) {
-            sectorItemOffsets(
-                layouts = layouts.take(1),
-                position = actionPanelState.position
-            )
-        }
         val anchor = remember(
             parentSize,
             stableOrigin,
             actionPanelState.position,
             itemOffsets,
-            firstLayerOffsets,
             itemSizePx,
             edgePaddingPx,
             cornerSafePaddingPx
@@ -629,7 +623,6 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                 origin = stableOrigin,
                 position = actionPanelState.position,
                 itemOffsets = itemOffsets,
-                firstLayerOffsets = firstLayerOffsets,
                 itemSizePx = itemSizePx,
                 edgePaddingPx = edgePaddingPx,
                 cornerSafePaddingPx = cornerSafePaddingPx
@@ -1151,7 +1144,6 @@ private fun sectorAnchor(
     origin: Offset,
     position: Position,
     itemOffsets: List<Offset>,
-    firstLayerOffsets: List<Offset>,
     itemSizePx: Float,
     edgePaddingPx: Float,
     cornerSafePaddingPx: Float
@@ -1163,9 +1155,6 @@ private fun sectorAnchor(
     val maxX = itemOffsets.maxOfOrNull { it.x } ?: 0f
     val minY = itemOffsets.minOfOrNull { it.y } ?: 0f
     val maxY = itemOffsets.maxOfOrNull { it.y } ?: 0f
-    val firstLayerMinX = firstLayerOffsets.minOfOrNull { it.x } ?: 0f
-    val firstLayerMaxX = firstLayerOffsets.maxOfOrNull { it.x } ?: 0f
-    val firstLayerMaxY = firstLayerOffsets.maxOfOrNull { it.y } ?: 0f
     val safeOrigin = if (origin.isSpecified) {
         origin
     } else {
@@ -1173,16 +1162,11 @@ private fun sectorAnchor(
     }
 
     return when (position) {
-        Position.Left -> Offset(
-            x = edgePaddingPx + itemSizeHalf - firstLayerMinX,
-            y = safeOrigin.y.coerceInSafely(
-                minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
-                maximumValue = parentSize.height - cornerSafePaddingPx - itemSizeHalf - maxY
-            )
-        )
-
-        Position.Right -> Offset(
-            x = parentSize.width - edgePaddingPx - itemSizeHalf - firstLayerMaxX,
+        Position.Left, Position.Right -> Offset(
+            x = safeOrigin.x.coerceInSafely(
+                minimumValue = edgePaddingPx + itemSizeHalf - minX,
+                maximumValue = parentSize.width - edgePaddingPx - itemSizeHalf - maxX
+            ),
             y = safeOrigin.y.coerceInSafely(
                 minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
                 maximumValue = parentSize.height - cornerSafePaddingPx - itemSizeHalf - maxY
@@ -1194,7 +1178,10 @@ private fun sectorAnchor(
                 minimumValue = cornerSafePaddingPx + itemSizeHalf - minX,
                 maximumValue = parentSize.width - cornerSafePaddingPx - itemSizeHalf - maxX
             ),
-            y = parentSize.height - edgePaddingPx - itemSizeHalf - firstLayerMaxY
+            y = safeOrigin.y.coerceInSafely(
+                minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
+                maximumValue = parentSize.height - edgePaddingPx - itemSizeHalf - maxY
+            )
         )
     }
 }
