@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.media.AudioManager
 import android.os.PowerManager
@@ -21,6 +20,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityWindowInfo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
 import androidx.core.view.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
@@ -83,7 +82,7 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private val proxy = SideGestureServiceProxy(this)
 
-    private val imeInsetObserver = ImeInsetObserver(this)
+    private val imeInsetObserver = ImeInsetObserver()
     private var mainView: View? = null
     private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
@@ -146,8 +145,15 @@ class SideGestureService : ComponentAccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         proxy.onAccessibilityEvent(event)
-        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            updateGestureButtons()
+        when (event?.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                imeInsetObserver.recompute()
+                updateGestureButtons()
+            }
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
+                imeInsetObserver.recompute()
+                updateGestureButtons()
+            }
         }
     }
 
@@ -504,64 +510,50 @@ class SideGestureService : ComponentAccessibilityService() {
         updateLayout(mainView, lp)
     }
 
-    private class ImeInsetObserver(val context: Context) {
+    private inner class ImeInsetObserver {
 
         private val _flow = MutableStateFlow(0)
         val flow: StateFlow<Int> = _flow.asStateFlow()
 
-        private var view: View? = null
+        private var enabled = false
 
         fun register() {
-            unregister()
-            this.view = View(context).apply {
-                val localRect = Rect()
-                val windowRect = Rect()
-                viewTreeObserver.addOnGlobalLayoutListener {
-                    getLocalVisibleRect(localRect)
-                    getWindowVisibleDisplayFrame(windowRect)
-                    val navBarHeight = ScreenUtils.getScreenHeight() - windowRect.bottom
-                    val imePadding = windowRect.height() - localRect.height() + navBarHeight
-                    if (localRect.height() == windowRect.height()) {
-                        // ime invisible
-                        _flow.value = 0
-                    } else {
-                        // ime visible
-                        _flow.value = imePadding
-                    }
-                }
-                val lp = WindowManager.LayoutParams().also { lp ->
-                    lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
-                    lp.width = WindowManager.LayoutParams.MATCH_PARENT
-                    lp.height = WindowManager.LayoutParams.MATCH_PARENT
-                    lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-                    lp.format = PixelFormat.RGBA_8888
-                    lp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                            WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM or
-                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                }
-                addView(this, lp)
-            }
+            enabled = true
+            recompute()
         }
 
         fun unregister() {
-            val view = view
-            if (view != null) {
+            enabled = false
+            _flow.value = 0
+        }
+
+        fun recompute() {
+            if (!enabled) {
                 _flow.value = 0
-                removeView(view)
-                this.view = null
+                return
             }
-        }
-
-        private fun addView(view: View, lp: WindowManager.LayoutParams) {
-            val wm = ContextCompat.getSystemService(context, WindowManager::class.java)!!
-            wm.addView(view, lp)
-        }
-
-        private fun removeView(view: View) {
-            val wm = ContextCompat.getSystemService(context, WindowManager::class.java)!!
             try {
-                wm.removeViewImmediate(view)
-            } catch (ignored: Exception) {
+                val wins = windows
+                if (wins.isNullOrEmpty()) {
+                    _flow.value = 0
+                    return
+                }
+                val imeWindow = wins.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                if (imeWindow == null) {
+                    _flow.value = 0
+                    return
+                }
+                val r = Rect()
+                imeWindow.getBoundsInScreen(r)
+                val screenHeight = ScreenUtils.getScreenHeight()
+                if (r.height() <= 0 || r.top >= screenHeight) {
+                    _flow.value = 0
+                    return
+                }
+                val padding = screenHeight - r.top
+                _flow.value = if (padding > 0) padding else 0
+            } catch (e: Exception) {
+                _flow.value = 0
             }
         }
     }
