@@ -104,7 +104,7 @@ fun GestureActions.actionsBy(direction: TriggerDirection): List<Action> {
         TriggerDirection.Center -> center
         TriggerDirection.Down -> down
         TriggerDirection.Up2 -> up2
-        TriggerDirection.Center2 -> emptyList()
+        TriggerDirection.Center2, TriggerDirection.Click -> emptyList()
         TriggerDirection.Down2 -> down2
     }
 }

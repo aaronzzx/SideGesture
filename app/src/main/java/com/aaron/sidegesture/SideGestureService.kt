@@ -332,18 +332,6 @@ class SideGestureService : ComponentAccessibilityService() {
                         updateGestureButtons()
                     }
             }
-            // 监听手势临时隐藏
-            launch {
-                DataStoreHolder
-                    .advancedSettings
-                    .data
-                    .distinctUntilChangedBy {
-                        it.hideTemporary
-                    }
-                    .collectLatest {
-                        updateGestureButtons()
-                    }
-            }
         }
     }
 
@@ -411,22 +399,6 @@ class SideGestureService : ComponentAccessibilityService() {
                         y += -imePadding
                     }
 
-                    if (advancedSettings.hideTemporary) {
-                        view.setOnClickListener { v ->
-                            val lp = v.layoutParams as WindowManager.LayoutParams
-                            lp.setFlags(false)
-                            updateLayout(v, lp)
-                            v.postDelayed(1000) {
-                                val lp2 = v.layoutParams as WindowManager.LayoutParams
-                                val enabled = (view.tag as? GestureButton)?.enabled == true
-                                lp2.setFlags(enabled)
-                                updateLayout(v, lp2)
-                            }
-                        }
-                    } else {
-                        view.setOnClickListener(null)
-                    }
-
                     val initialSettings = DataStoreHolder.initialSettings.data.first()
                     if (!initialSettings.gestureEnabled) {
                         setFlags(false)
@@ -445,6 +417,25 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
                 }
                 updateLayout(view, lp)
+            }
+        }
+    }
+
+    fun hideGestureButton(button: GestureButton?) {
+        buttonViews?.forEach { view ->
+            val tag = view.tag as? GestureButton ?: return@forEach
+            val matched = if (button != null) {
+                tag.id == button.id && tag.position == button.position
+            } else {
+                true
+            }
+            if (!matched) return@forEach
+
+            val lp = view.layoutParams as WindowManager.LayoutParams
+            lp.setFlags(false)
+            updateLayout(view, lp)
+            view.postDelayed(1000) {
+                updateGestureButtons()
             }
         }
     }

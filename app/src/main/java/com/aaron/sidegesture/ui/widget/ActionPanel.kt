@@ -83,6 +83,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionPanelStyle
 import com.aaron.sidegesture.entity.ArcStyle
 import com.aaron.sidegesture.entity.FolderStyle
+import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.SectorStyle
 import com.aaron.sidegesture.entity.Vibrations
@@ -1540,6 +1541,8 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         private set
     var position: Position by mutableStateOf(Position.Left)
         private set
+    var button: GestureButton? by mutableStateOf(null)
+        private set
     private val pendingActions: MutableMap<Int, Action> = mutableStateMapOf()
 
     val selectedAction: Action by derivedStateOf {
@@ -1555,8 +1558,9 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         visible = true
     }
 
-    fun ready(position: Position, actions: List<Action>) {
-        this.position = position
+    fun ready(button: GestureButton, actions: List<Action>) {
+        this.button = button
+        this.position = button.position
         this.actions = actions
     }
 
@@ -1594,6 +1598,7 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         pendingActions.clear()
         origin = Offset.Unspecified
         finger = Offset.Unspecified
+        button = null
         delayTriggerTypeChangedJob?.cancel()
         triggerType = TriggerType.Press
     }

@@ -16,7 +16,6 @@ import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideHomeScreen
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideLandscape
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideQuickPanel
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideScreenLock
-import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideTemporary
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.VolumeButtonSwitchSong
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
@@ -42,7 +41,6 @@ data class AdvancedSettings(
     val hideQuickPanel: Boolean = HideQuickPanel,
     val hideScreenLock: Boolean = HideScreenLock,
     val hideHomeScreen: Boolean = HideHomeScreen,
-    val hideTemporary: Boolean = HideTemporary,
     val excludeFromRecents: Boolean = ExcludeFromRecents,
     val dynamicColor: Boolean = DynamicColor,
     val dayNightMode: DayNightMode = DayNightMode,

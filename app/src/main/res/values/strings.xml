@@ -206,6 +206,7 @@
     <string name="slide_to_bottom_left">向左下滑动</string>
     <string name="slide_to_top">向上滑动</string>
     <string name="slide_to_bottom">向下滑动</string>
+    <string name="single_tap">单击</string>
     <string name="gesture_button_width">触钮宽度</string>
     <string name="gesture_button_length">触钮长度</string>
     <string name="gesture_button_location">触钮位置</string>
@@ -272,7 +273,7 @@
     <string name="action_task_switcher">任务切换器</string>
     <string name="action_quick_tools">快速工具</string>
     <string name="action_float_ball">悬浮球</string>
-    <string name="action_hide_gesture_button">隐藏触钮</string>
+    <string name="action_hide_gesture_button">隐藏触钮(1秒)</string>
     <string name="action_wechat_scan">微信扫一扫</string>
     <string name="action_wechat_pay_simulate_click">微信付款码(7.0+ 模拟点击)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>

@@ -6,6 +6,7 @@ import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionNone
 import com.aaron.sidegesture.constant.GestureActionsDefaults.ActionValue
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Center
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Center2
+import com.aaron.sidegesture.constant.GestureActionsDefaults.Click
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up
@@ -31,7 +32,8 @@ data class GestureActions(
     // 平行手势
     val center2: List<Action> = Center2,
     val up2: List<Action> = Up2,
-    val down2: List<Action> = Down2
+    val down2: List<Action> = Down2,
+    val click: List<Action> = Click
 )
 
 @Parcelize

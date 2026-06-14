@@ -33,7 +33,6 @@ object AdvancedSettingsDefaults {
     const val HideQuickPanel = false
     const val HideScreenLock = false
     const val HideHomeScreen = false
-    const val HideTemporary = false
     const val ExcludeFromRecents = false
     const val DynamicColor = false
     val DayNightMode = com.aaron.sidegesture.entity.DayNightMode.Auto
@@ -47,6 +46,7 @@ object GestureSettingsDefaults {
     val SlideTriggerDistance = ConvertUtils.dp2px(30f)
     val LongSlideTriggerDistance = ConvertUtils.dp2px(100f)
     const val LongPressTriggerDelayMs = 250L
+    const val ClickTriggerTimeoutMs = 100L
     const val LongSlideTriggerImmediately = true
     const val LongSlideTriggerDelayMs = 100L
     const val IsCustomVibration = false
@@ -134,6 +134,7 @@ object GestureActionsDefaults {
     val Center2 = emptyList<Action>()
     val Up2 = emptyList<Action>()
     val Down2 = emptyList<Action>()
+    val Click = emptyList<Action>()
     const val ActionValue = GlobalActions.NONE
     val ActionNone = Action(value = ActionValue, data = "")
 }

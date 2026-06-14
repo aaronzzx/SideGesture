@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalContext
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.constant.GestureSettingsDefaults
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
@@ -160,9 +161,14 @@ fun SideGestureContainer(
         action: Action,
         finger: Offset,
         position: Position?,
-        waitActionPanelHidden: Boolean = false
+        waitActionPanelHidden: Boolean = false,
+        button: GestureButton? = null
     ) {
         if (action == Action.NONE) {
+            return
+        }
+        if (action.value == GlobalActions.HIDE_GESTURE_BUTTON) {
+            (context as SideGestureService).hideGestureButton(button)
             return
         }
         if (action.value == GlobalActions.SMART_SCREENSHOT) {
@@ -194,7 +200,12 @@ fun SideGestureContainer(
 
     SideEffect {
         sideGestureState.onLongPress = { action ->
-            handleAction(action, sideGestureState.finger, sideGestureState.button?.position)
+            handleAction(
+                action = action,
+                finger = sideGestureState.finger,
+                position = sideGestureState.button?.position,
+                button = sideGestureState.button
+            )
             sideGestureState.cancel()
         }
     }
@@ -224,7 +235,7 @@ fun SideGestureContainer(
                 if (button != null && actions != null) {
                     if (actions.size > 1) {
                         actionPanelState.onDragStart(sideGestureState.finger)
-                        actionPanelState.ready(button.position, actions)
+                        actionPanelState.ready(button, actions)
                         sideGestureState.cancel()
                     } else if (actions.isNotEmpty()) {
                         if (actions.first().value == GlobalActions.MOVE_SCREEN) {
@@ -240,7 +251,8 @@ fun SideGestureContainer(
                             handleAction(
                                 actions.first(),
                                 sideGestureState.finger,
-                                button.position
+                                button.position,
+                                button = sideGestureState.button
                             )
                             sideGestureState.cancel()
                         }
@@ -254,13 +266,15 @@ fun SideGestureContainer(
             if (actionPanelState.visible) {
                 val actionPanelFinger = actionPanelState.finger
                 val actionPanelPosition = actionPanelState.position
+                val actionPanelButton = actionPanelState.button
                 val action = actionPanelState.done()
                 actionPanelState.onDragEnd()
                 handleAction(
                     action = action,
                     finger = actionPanelFinger,
                     position = actionPanelPosition,
-                    waitActionPanelHidden = true
+                    waitActionPanelHidden = true,
+                    button = actionPanelButton
                 )
             }
             if (moveScreenState.visible) {
@@ -270,10 +284,16 @@ fun SideGestureContainer(
             }
 
             if (!sideGestureState.isCanceled) {
+                val sideGestureButton = sideGestureState.button
                 val sideGestureFinger = sideGestureState.finger
-                val sideGesturePosition = sideGestureState.button?.position
+                val sideGesturePosition = sideGestureButton?.position
                 val action = sideGestureState.onDragEnd()
-                handleAction(action, sideGestureFinger, sideGesturePosition)
+                handleAction(
+                    action = action,
+                    finger = sideGestureFinger,
+                    position = sideGesturePosition,
+                    button = sideGestureButton
+                )
             } else {
                 sideGestureState.reset()
             }
@@ -511,6 +531,8 @@ class SideGestureState(
 
     private var longSlideFirstTriggerMs = 0L
     private var calcLongPressJob: Job? = null
+    private var downTime = 0L
+    private var hasMovedBeyondSlop = false
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
@@ -531,6 +553,7 @@ class SideGestureState(
     private val viewConfiguration = ViewConfiguration.get(App.getContext())
 
     fun onDragStart(offset: Offset, imePadding: Int) {
+        downTime = SystemClock.uptimeMillis()
         origin = offset
         finger = offset
         button = buttons.find(offset, imePadding)
@@ -574,11 +597,11 @@ class SideGestureState(
 
         val touchSlop = viewConfiguration.scaledTouchSlop
         val minus = finger - origin
-        if (calcLongPressJob?.isActive == true &&
-            (minus.x.absoluteValue > touchSlop ||
-            minus.y.absoluteValue > touchSlop)
-        ) {
-            calcLongPressJob?.cancel()
+        if (minus.x.absoluteValue > touchSlop || minus.y.absoluteValue > touchSlop) {
+            hasMovedBeyondSlop = true
+            if (calcLongPressJob?.isActive == true) {
+                calcLongPressJob?.cancel()
+            }
         }
 
         // 理论上能到这里button不应该为空
@@ -658,6 +681,16 @@ class SideGestureState(
                 returnAction = action
             }
         }
+        if (returnAction == Action.NONE &&
+            !hasMovedBeyondSlop &&
+            SystemClock.uptimeMillis() - downTime <= GestureSettingsDefaults.ClickTriggerTimeoutMs
+        ) {
+            val clickAction = button.slideActions.click.firstOrNull()
+            if (clickAction != null && clickAction != Action.NONE) {
+                gestureSettings.vibrations.tryVibrateForSlide()
+                returnAction = clickAction
+            }
+        }
         reset()
         return returnAction
     }
@@ -679,6 +712,7 @@ class SideGestureState(
         origin = Offset.Unspecified
         finger = Offset.Unspecified
         longSlideFirstTriggerMs = 0L
+        hasMovedBeyondSlop = false
         isOhoGestureEverCanTriggered = false
         slideVibrationFlags = false
 

@@ -10,5 +10,5 @@ import androidx.annotation.Keep
 enum class TriggerDirection {
 
     Center, Up, Down,
-    Center2, Up2, Down2
+    Center2, Up2, Down2, Click
 }

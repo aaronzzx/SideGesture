@@ -635,6 +635,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 Position.Bottom -> context.getString(R.string.slide_to_top_right)
             }
             TriggerDirection.Center2 -> context.getString(R.string.long_press)
+            TriggerDirection.Click -> context.getString(R.string.single_tap)
             TriggerDirection.Up2 -> when (actionSelect.position) {
                 Position.Left, Position.Right -> context.getString(R.string.slide_to_top)
                 Position.Bottom -> context.getString(R.string.slide_to_left)
@@ -644,7 +645,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 Position.Bottom -> context.getString(R.string.slide_to_right)
             }
         }
-        if (actionSelect.direction == TriggerDirection.Center2) {
+        if (actionSelect.direction == TriggerDirection.Center2 || actionSelect.direction == TriggerDirection.Click) {
             return str1
         }
         val str2 = when (actionSelect.isLongSlide) {
@@ -692,6 +693,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             TriggerDirection.Up -> gestureActions.up
                             TriggerDirection.Down -> gestureActions.down
                             TriggerDirection.Center2 -> gestureActions.center2
+                            TriggerDirection.Click -> gestureActions.click
                             TriggerDirection.Up2 -> gestureActions.up2
                             TriggerDirection.Down2 -> gestureActions.down2
                         }
@@ -864,6 +866,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         val oldActions = gestureActions.center2
                         tryDeleteShortcutIcons(oldActions, newActions)
                         gestureActions.copy(center2 = newActions)
+                    }
+                    TriggerDirection.Click -> {
+                        val oldActions = gestureActions.click
+                        tryDeleteShortcutIcons(oldActions, newActions)
+                        gestureActions.copy(click = newActions)
                     }
                     TriggerDirection.Up2 -> {
                         val oldActions = gestureActions.up2

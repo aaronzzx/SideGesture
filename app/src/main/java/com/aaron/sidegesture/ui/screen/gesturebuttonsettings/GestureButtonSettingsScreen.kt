@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -42,6 +43,7 @@ import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.entity.TriggerDirection.Center
 import com.aaron.sidegesture.entity.TriggerDirection.Center2
+import com.aaron.sidegesture.entity.TriggerDirection.Click
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Down2
 import com.aaron.sidegesture.entity.TriggerDirection.Up
@@ -220,6 +222,15 @@ fun GestureButtonSettingsScreen(
                                 direction = Center2,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.center2.actionTextCompose()
+                            )
+                            MySideGestureSettings(
+                                onClick = {
+                                    navToActionSelect(Click)
+                                },
+                                gestureButton = gestureButton,
+                                direction = Click,
+                                isLongSlide = false,
+                                secondaryText = gestureButton.slideActions.click.actionTextCompose()
                             )
                         }
 
@@ -411,6 +422,7 @@ private fun MySideGestureSettings(
                 Position.Bottom -> stringResource(id = R.string.slide_to_top_right)
             }
             Center2 -> stringResource(R.string.long_press)
+            Click -> stringResource(R.string.single_tap)
             Up2 -> when (gestureButton.position) {
                 Position.Left, Position.Right -> stringResource(id = R.string.slide_to_top)
                 Position.Bottom -> stringResource(id = R.string.slide_to_left)
@@ -430,6 +442,7 @@ private fun MySideGestureSettings(
         prefix = {
             val imageVector = when (direction) {
                 Center2 -> Icons.Default.Adjust
+                Click -> Icons.Default.TouchApp
                 else -> Icons.Default.ArrowForward
             }
             Icon(
@@ -457,6 +470,7 @@ private fun MySideGestureSettings(
                                 Position.Bottom -> -180f
                             }
                             Center2 -> 0f
+                            Click -> 0f
                             Down2 -> when (position) {
                                 Position.Left, Position.Right -> 90f
                                 Position.Bottom -> 0f
