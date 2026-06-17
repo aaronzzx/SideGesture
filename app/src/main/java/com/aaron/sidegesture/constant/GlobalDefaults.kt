@@ -67,7 +67,7 @@ object ActionPanelStylesDefaults {
     const val TYPE_SECTOR = 2
     const val TYPE_FOLDER = 3
 
-    const val Type = TYPE_FOLDER
+    const val Type = TYPE_SECTOR
     val ArcStyleItemSize = ConvertUtils.dp2px(48f)
     val SectorStyleItemSize = ConvertUtils.dp2px(40f)
     const val SectorStyleInitialRadiusRatio = 1.5f
