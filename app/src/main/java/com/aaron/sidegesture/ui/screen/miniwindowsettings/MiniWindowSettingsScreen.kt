@@ -18,12 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.clipToBackground
@@ -95,6 +98,13 @@ fun MiniWindowSettingsScreen(
                 title = stringResource(id = R.string.reset_default_settings_warning),
                 text = stringResource(id = R.string.mini_window_reset_warning_desc),
                 onConfirmClick = { vm.resetAll() }
+            )
+        }
+
+        if (uiState.showVivoShareHintDialog) {
+            VivoShareHintDialog(
+                countdownSec = uiState.vivoShareHintCountdownSec,
+                onConfirm = { vm.dismissVivoShareHintDialog() }
             )
         }
 
@@ -231,6 +241,42 @@ fun MiniWindowSettingsScreen(
             )
         }
     }
+}
+
+/**
+ * vivo 设备首次进入小窗设置的提示弹窗：引导去系统开启小窗分享开关。
+ * 倒计时结束([countdownSec]<=0)前禁用确认键并屏蔽返回/外部点击，不可关闭。
+ */
+@Composable
+private fun VivoShareHintDialog(
+    countdownSec: Int,
+    onConfirm: () -> Unit
+) {
+    val dismissable = countdownSec <= 0
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = { if (dismissable) onConfirm() },
+        properties = DialogProperties(
+            dismissOnBackPress = dismissable,
+            dismissOnClickOutside = dismissable
+        ),
+        title = { Text(text = stringResource(id = R.string.mini_window_vivo_share_hint_title)) },
+        text = { Text(text = stringResource(id = R.string.mini_window_vivo_share_hint_desc)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = dismissable) {
+                Text(
+                    text = if (dismissable) {
+                        stringResource(id = R.string.mini_window_vivo_share_hint_confirm)
+                    } else {
+                        stringResource(
+                            id = R.string.mini_window_vivo_share_hint_confirm_countdown,
+                            countdownSec
+                        )
+                    }
+                )
+            }
+        }
+    )
 }
 
 /**

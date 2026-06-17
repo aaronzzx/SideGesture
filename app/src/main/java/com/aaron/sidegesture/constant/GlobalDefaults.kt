@@ -58,6 +58,7 @@ object InitialSettingsDefaults {
 
     const val GestureEnabled = true
     const val Unlocked = false
+    const val MiniWindowVivoShareHintShown = false
 }
 
 object ActionPanelStylesDefaults {

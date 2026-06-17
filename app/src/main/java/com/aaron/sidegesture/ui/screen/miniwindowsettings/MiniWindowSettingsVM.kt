@@ -7,10 +7,14 @@ import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindow.Bounds
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
 import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsVM.UiState
+import com.aaron.sidegesture.miniwindow.RomDetector
+import com.aaron.sidegesture.miniwindow.RomType
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.MiniWindowUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,6 +23,10 @@ import kotlinx.coroutines.withContext
  * @author aaronzzxup@gmail.com
  * @since 2025/6/16
  */
+
+// vivo 小窗分享提示弹窗的倒计时秒数，倒计时结束前不可关闭
+private const val VIVO_SHARE_HINT_COUNTDOWN_SEC = 5
+
 class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     override val initialState: UiState = UiState()
@@ -72,6 +80,17 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         updateUiState { it.copy(showResetDialog = show) }
     }
 
+    /** 倒计时结束后用户确认：关闭提示弹窗并记录已提示，下次不再弹。 */
+    fun dismissVivoShareHintDialog() {
+        if (uiState.vivoShareHintCountdownSec > 0) return
+        updateUiState { it.copy(showVivoShareHintDialog = false) }
+        viewModelScope.launch {
+            DataStoreHolder.initialSettings.updateData {
+                it.copy(miniWindowVivoShareHintShown = true)
+            }
+        }
+    }
+
     /** 恢复整个小窗设置为默认值：启动模式、小窗助手开关、横竖屏尺寸位置与缩放补偿。 */
     fun resetAll() {
         val default = ActionSettings.MiniWindow()
@@ -108,9 +127,13 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     private fun loadData() {
         viewModelScope.launch {
-            // RomDetector 走 getprop，放 IO 线程算自动补偿默认值
-            val (autoP, autoL) = withContext(Dispatchers.IO) {
-                MiniWindowUtils.autoScale(portrait = true) to MiniWindowUtils.autoScale(portrait = false)
+            // RomDetector 走 getprop，放 IO 线程算自动补偿默认值与 vivo 判定
+            val (autoP, autoL, isVivo) = withContext(Dispatchers.IO) {
+                Triple(
+                    MiniWindowUtils.autoScale(portrait = true),
+                    MiniWindowUtils.autoScale(portrait = false),
+                    RomDetector.detect().type == RomType.VIVO
+                )
             }
             DataStoreHolder
                 .actionSettings
@@ -131,6 +154,26 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         )
                     }
                 }
+            maybeShowVivoShareHint(isVivo)
+        }
+    }
+
+    /** vivo 设备首次进入小窗设置时，弹窗提示去系统开启小窗分享开关，倒计时结束才可关闭。 */
+    private suspend fun maybeShowVivoShareHint(isVivo: Boolean) {
+        if (!isVivo) return
+        if (DataStoreHolder.initialSettings.data.first().miniWindowVivoShareHintShown) return
+        viewModelScope.launch {
+            delay(200)
+            updateUiState {
+                it.copy(
+                    showVivoShareHintDialog = true,
+                    vivoShareHintCountdownSec = VIVO_SHARE_HINT_COUNTDOWN_SEC
+                )
+            }
+            while (uiState.vivoShareHintCountdownSec > 0) {
+                delay(1000)
+                updateUiState { it.copy(vivoShareHintCountdownSec = it.vivoShareHintCountdownSec - 1) }
+            }
         }
     }
 
@@ -146,7 +189,9 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val autoPortraitScale: Float = 1f,
         val autoLandscapeScale: Float = 1f,
         val showModeDropdownMenu: Boolean = false,
-        val showResetDialog: Boolean = false
+        val showResetDialog: Boolean = false,
+        val showVivoShareHintDialog: Boolean = false,
+        val vivoShareHintCountdownSec: Int = 0
     ) {
         val currentBounds: Bounds get() = if (editingPortrait) portrait else landscape
         val currentScale: Float
