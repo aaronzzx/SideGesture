@@ -244,8 +244,14 @@
     <string name="use_mi_window_hint">通过「小窗助手(com.sunshine.freeform)」启动，需自行安装该应用，未安装将无效。</string>
     <string name="enable_keep_screen_on">已启用屏幕常亮</string>
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
-    <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法移动屏幕，请先开启长距离滑动立即触发</string>
+    <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法精准点击，请先开启长距离滑动立即触发</string>
     <string name="move_screen_rate">移动速率</string>
+    <string name="move_screen_style">显示样式</string>
+    <string name="move_screen_style_magnifier">放大镜</string>
+    <string name="move_screen_style_crosshair">准星</string>
+    <string name="move_screen_style_crosshair_only_hint">当前系统仅支持准星样式（放大镜需 Android 11+）</string>
+    <string name="move_screen_popup_enabled">悬停弹窗</string>
+    <string name="move_screen_popup_enabled_summary">开启后悬停可选单击/双击/长按，关闭则抬手直接单击</string>
 
     <string name="action_none">无</string>
     <string name="action_back">返回键</string>
@@ -292,7 +298,7 @@
     <string name="action_wechat_pay_simulate_click">微信付款码(7.0+ 模拟点击)</string>
     <string name="action_alipay_scan">支付宝扫一扫</string>
     <string name="action_alipay_pay">支付宝付款码</string>
-    <string name="action_move_screen">移动屏幕(11.0+ 模拟点击)</string>
+    <string name="action_move_screen">精准点击(7.0+ 模拟点击)</string>
     <string name="action_keep_screen_on">屏幕常亮</string>
     <string name="action_back_to_top">快速回顶部(7.0+ 模拟滑动)</string>
     <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>

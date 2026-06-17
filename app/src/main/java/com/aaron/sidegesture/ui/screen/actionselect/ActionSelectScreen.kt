@@ -1256,7 +1256,7 @@ private fun canActionEnabled(
         return false
     }
 
-    // 走完移动屏幕的检查后再走其他
+    // 走完精准点击的检查后再走其他
     return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 
@@ -1272,7 +1272,7 @@ private fun canAppInfoEnabled(
         return false
     }
 
-    // 走完移动屏幕的检查后再走其他
+    // 走完精准点击的检查后再走其他
     return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 
@@ -1288,7 +1288,7 @@ private fun canLauncherInfoEnabled(
         return false
     }
 
-    // 走完移动屏幕的检查后再走其他
+    // 走完精准点击的检查后再走其他
     return !(selectedRecord.size >= maxSelectCount && !item.shortcuts.any { selectedRecord.isSelected(it) })
 }
 
@@ -1304,7 +1304,7 @@ private fun canShortcutInfoEnabled(
         return false
     }
 
-    // 走完移动屏幕的检查后再走其他
+    // 走完精准点击的检查后再走其他
     return !(selectedRecord.size >= maxSelectCount && !selectedRecord.isSelected(item))
 }
 

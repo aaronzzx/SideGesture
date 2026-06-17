@@ -115,6 +115,9 @@ fun SideGestureContainer(
         windowModeSwitchDelayMs = advancedSettings.actionPanelAppSwitchWindowModeDelayMs
     )
     val moveScreenState = rememberMoveScreenState(gestureSettings, actionSettings.moveScreen)
+    // 有效样式：用户选了准星，或系统低于 Android 11 无法截屏 → 一律走准星(低版本兜底)
+    val moveScreenCrosshair = actionSettings.moveScreen.style == ActionSettings.MoveScreen.Style.Crosshair ||
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.R
     val quickToolsState = rememberQuickToolsControlCenterState()
     val quickLauncherState = rememberQuickLauncherPanelState()
     val taskSwitcherState = rememberTaskSwitcherPanelState()
@@ -266,12 +269,15 @@ fun SideGestureContainer(
                         sideGestureState.cancel()
                     } else if (actions.isNotEmpty()) {
                         if (actions.first().value == GlobalActions.MOVE_SCREEN) {
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                                 showVersionTooLowToast(context, R.string.action_move_screen)
                                 sideGestureState.cancel()
                                 return@onDrag
                             }
-                            hideSystemScreenshotOverlays = true
+                            // 放大镜样式需先截屏，隐藏自身浮层；准星样式不截屏，跳过
+                            if (!moveScreenCrosshair) {
+                                hideSystemScreenshotOverlays = true
+                            }
                             moveScreenState.onDragStart(sideGestureState.finger)
                             sideGestureState.cancel()
                         } else {
@@ -350,18 +356,26 @@ fun SideGestureContainer(
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && moveScreenState.visible) {
-            val moveScreenScreenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
-                val service = context as SideGestureService
-                value = takeCleanSystemScreenshot(service)
-            }
-            val screenshot = moveScreenScreenshotState.value
-            if (screenshot != null && !hideSystemScreenshotOverlays) {
-                MoveScreen(
+        if (moveScreenState.visible) {
+            if (moveScreenCrosshair) {
+                CrosshairScreen(
                     modifier = Modifier.matchParentSize(),
-                    screenshot = screenshot,
                     state = moveScreenState
                 )
+            } else {
+                // 放大镜样式(需 Android 11+ 截屏)
+                val moveScreenScreenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
+                    val service = context as SideGestureService
+                    value = takeCleanSystemScreenshot(service)
+                }
+                val screenshot = moveScreenScreenshotState.value
+                if (screenshot != null && !hideSystemScreenshotOverlays) {
+                    MoveScreen(
+                        modifier = Modifier.matchParentSize(),
+                        screenshot = screenshot,
+                        state = moveScreenState
+                    )
+                }
             }
         }
 

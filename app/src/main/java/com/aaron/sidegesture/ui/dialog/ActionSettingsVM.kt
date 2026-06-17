@@ -50,6 +50,22 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
+    fun onMoveScreenStyleChange(style: ActionSettings.MoveScreen.Style) {
+        val newActionSettings = uiState.actionSettings.copy(
+            moveScreen = uiState.actionSettings.moveScreen.copy(style = style)
+        )
+        updateUiState { it.copy(actionSettings = newActionSettings) }
+        persistActionSettings(newActionSettings)
+    }
+
+    fun onMoveScreenPopupEnabledChange(enabled: Boolean) {
+        val newActionSettings = uiState.actionSettings.copy(
+            moveScreen = uiState.actionSettings.moveScreen.copy(popupEnabled = enabled)
+        )
+        updateUiState { it.copy(actionSettings = newActionSettings) }
+        persistActionSettings(newActionSettings)
+    }
+
     fun updatePreviousAppInfos() {
         viewModelScope.launchWithLoading {
             val appInfos = withContext(Dispatchers.IO) {

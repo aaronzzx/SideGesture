@@ -98,7 +98,7 @@ object GlobalActions {
     const val ALIPAY_SCAN = "43"
     /** 支付宝付款码 */
     const val ALIPAY_PAY = "44"
-    /** 移动屏幕 */
+    /** 精准点击 */
     const val MOVE_SCREEN = "45"
     /** 屏幕常亮 */
     const val KEEP_SCREEN_ON = "46"

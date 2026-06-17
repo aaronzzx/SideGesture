@@ -337,7 +337,7 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 }
             }
             GlobalActions.MOVE_SCREEN -> {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                     showVersionTooLowToast(this, R.string.action_move_screen)
                     return
                 }

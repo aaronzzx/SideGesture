@@ -43,7 +43,15 @@ import com.aaron.sidegesture.ui.theme.IconTextPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import android.os.Build
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.alpha
+import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.widget.MyTextSlider
+import com.aaron.sidegesture.ui.widget.MyTextSwitch
 
 /**
  * @author DS-Z
@@ -62,12 +70,31 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
             modifier = Modifier.fillMaxWidth(),
             component = vm.loadingComponent
         ) {
+            val moveScreen = uiState.actionSettings.moveScreen
+            // 系统低于 Android 11 无法截屏，仅支持准星样式
+            val supportsMagnifier = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+            val displayStyle = if (supportsMagnifier) {
+                moveScreen.style
+            } else {
+                ActionSettings.MoveScreen.Style.Crosshair
+            }
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(ItemPadding)
             ) {
+                MoveScreenStyleSelector(
+                    style = displayStyle,
+                    enabled = supportsMagnifier,
+                    onStyleChange = { vm.onMoveScreenStyleChange(it) }
+                )
+                MyTextSwitch(
+                    checked = moveScreen.popupEnabled,
+                    onCheckedChange = { vm.onMoveScreenPopupEnabledChange(it) },
+                    text = stringResource(id = R.string.move_screen_popup_enabled),
+                    secondaryText = stringResource(id = R.string.move_screen_popup_enabled_summary)
+                )
                 MyTextSlider(
-                    value = uiState.actionSettings.moveScreen.rate,
+                    value = moveScreen.rate,
                     onValueChange = { vm.onMoveScreenRateChange(it) },
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.move_screen_rate),
@@ -75,7 +102,9 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     valueRange = MinMoveScreenRate..MaxMoveScreenRate
                 )
                 MyTextSlider(
-                    value = uiState.actionSettings.moveScreen.hoverDelayMs.toFloat(),
+                    // 弹窗关闭时悬停延迟无意义，置灰
+                    enabled = moveScreen.popupEnabled,
+                    value = moveScreen.hoverDelayMs.toFloat(),
                     onValueChange = { vm.onMoveScreenHoverChange(it) },
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.hover_trigger_delay),
@@ -84,6 +113,88 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MoveScreenStyleSelector(
+    style: ActionSettings.MoveScreen.Style,
+    enabled: Boolean,
+    onStyleChange: (ActionSettings.MoveScreen.Style) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = ContentPaddingHorizontal),
+        verticalArrangement = Arrangement.spacedBy(IconTextPadding)
+    ) {
+        Text(
+            text = stringResource(id = R.string.move_screen_style),
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        ) {
+            MoveScreenStyleChip(
+                modifier = Modifier.weight(1f),
+                text = stringResource(id = R.string.move_screen_style_magnifier),
+                selected = style == ActionSettings.MoveScreen.Style.Magnifier,
+                enabled = enabled,
+                onClick = { onStyleChange(ActionSettings.MoveScreen.Style.Magnifier) }
+            )
+            MoveScreenStyleChip(
+                modifier = Modifier.weight(1f),
+                text = stringResource(id = R.string.move_screen_style_crosshair),
+                selected = style == ActionSettings.MoveScreen.Style.Crosshair,
+                enabled = enabled,
+                onClick = { onStyleChange(ActionSettings.MoveScreen.Style.Crosshair) }
+            )
+        }
+        if (!enabled) {
+            Text(
+                text = stringResource(id = R.string.move_screen_style_crosshair_only_hint),
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoveScreenStyleChip(
+    text: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    Box(
+        modifier = modifier
+            .alpha(if (enabled) 1f else 0.5f)
+            .background(color = backgroundColor, shape = MaterialTheme.shapes.medium)
+            .then(if (enabled) Modifier.onClick { onClick() } else Modifier)
+            .heightIn(min = MinInteractiveSize)
+            .padding(vertical = ContentPaddingVertical),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = contentColor,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1
+        )
     }
 }
 
