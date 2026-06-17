@@ -32,8 +32,8 @@ google-services.json
 # Android Profiling
 *.hprof
 
-/app/mapping.txt
-/app/proguardMapping.txt.txt
+app/mapping.txt
+app/proguardMapping.txt
 
 .claude
 .gradle-verify
