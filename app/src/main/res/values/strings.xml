@@ -265,7 +265,7 @@
     <string name="action_open_notification_panel">打开通知面板</string>
     <string name="action_open_quick_panel">打开快捷面板</string>
     <string name="action_lock_screen">锁屏(9.0+)</string>
-    <string name="action_kill_app">关闭应用程序</string>
+    <string name="action_kill_app">关闭应用程序(shizuku)</string>
     <string name="action_flashlight">手电筒</string>
     <string name="action_split_screen">应用分屏(7.0+)</string>
     <string name="action_popup_screen">应用小窗(7.0+)</string>
@@ -284,7 +284,7 @@
     <string name="action_quick_app_panel">快速启动面板</string>
     <string name="action_launch_app">启动应用程序</string>
     <string name="action_launch_app_in_popup">在小窗中启动应用程序</string>
-    <string name="action_task_switcher">任务切换器</string>
+    <string name="action_task_switcher">任务切换器(shizuku)</string>
     <string name="action_quick_tools">快速工具</string>
     <string name="action_float_ball">悬浮球</string>
     <string name="action_hide_gesture_button">隐藏触钮(1秒)</string>
@@ -296,7 +296,7 @@
     <string name="action_keep_screen_on">屏幕常亮</string>
     <string name="action_back_to_top">快速回顶部(7.0+ 模拟滑动)</string>
     <string name="action_goto_bottom">快速到底部(7.0+ 模拟滑动)</string>
-    <string name="action_shizuku_shell">执行 Shell 命令</string>
+    <string name="action_shizuku_shell">执行 Shell 命令(shizuku)</string>
     <string name="action_shizuku_shell_preview">Shell: %1$s</string>
     <string name="action_smart_screenshot">智能截图(11.0+)</string>
     <string name="action_quick_launcher">快速启动器</string>
