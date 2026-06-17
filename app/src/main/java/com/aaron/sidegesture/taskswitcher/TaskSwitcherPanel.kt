@@ -64,6 +64,7 @@ import coil.imageLoader
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.RecentTask
+import com.aaron.sidegesture.utils.VibrateUtils
 import kotlin.math.roundToInt
 
 private val ITEM_ICON_SIZE = 36.dp
@@ -258,7 +259,10 @@ private fun TaskSwitcherRow(
             .clip(RoundedCornerShape(10.dp))
             .combinedClickable(
                 onClick = onLaunch,
-                onLongClick = onToggleLock
+                onLongClick = {
+                    VibrateUtils.vibrate(context)
+                    onToggleLock()
+                }
             )
             .padding(start = 8.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
