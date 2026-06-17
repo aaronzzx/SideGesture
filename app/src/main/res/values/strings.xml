@@ -228,6 +228,16 @@
     <string name="mini_window_vertical_position">垂直位置</string>
     <string name="mini_window_left">左</string>
     <string name="mini_window_right">右</string>
+    <string name="mini_window_settings">小窗设置</string>
+    <string name="mini_window_settings_hint">启动模式、窗口尺寸与位置</string>
+    <string name="mini_window_portrait">竖屏</string>
+    <string name="mini_window_landscape">横屏</string>
+    <string name="mini_window_rect_hint">拖动滑块调整窗口大小和位置，竖屏和横屏各自独立保存；点「横屏」会真实旋转屏幕，调好后自行用手势呼出小窗核对效果。</string>
+    <string name="mini_window_reset_warning_desc">将小窗的启动模式、横竖屏尺寸位置和缩放补偿全部恢复为默认值。</string>
+    <string name="mini_window_scale_compensation">缩放补偿  %1$s</string>
+    <string name="mini_window_scale_hint">部分 ROM 会缩放小窗，补偿值越小窗口越大。默认按机型自动补偿，可在此手动微调当前朝向。</string>
+    <string name="use_mi_window">使用小窗助手</string>
+    <string name="use_mi_window_hint">通过「小窗助手(com.sunshine.freeform)」启动，需自行安装该应用，未安装将无效。</string>
     <string name="enable_keep_screen_on">已启用屏幕常亮</string>
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
     <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法移动屏幕，请先开启长距离滑动立即触发</string>

@@ -2,10 +2,6 @@ package com.aaron.sidegesture.entity.global
 
 import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.GotoBottomStrength
-import com.aaron.sidegesture.constant.ActionSettingsDefaults.MiniWindowHeightRatio
-import com.aaron.sidegesture.constant.ActionSettingsDefaults.MiniWindowHorizontalPositionRatio
-import com.aaron.sidegesture.constant.ActionSettingsDefaults.MiniWindowVerticalPositionRatio
-import com.aaron.sidegesture.constant.ActionSettingsDefaults.MiniWindowWidthRatio
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenHoverDelayMs
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenRate
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.QuickTools
@@ -49,11 +45,25 @@ data class ActionSettings(
     @Keep
     data class MiniWindow(
         val mode: MiniWindowMode = MiniWindowMode.Auto,
-        val widthRatio: Float = MiniWindowWidthRatio,
-        val heightRatio: Float = MiniWindowHeightRatio,
-        val horizontalPositionRatio: Float = MiniWindowHorizontalPositionRatio,
-        val verticalPositionRatio: Float = MiniWindowVerticalPositionRatio
-    )
+        // 第三方「小窗助手(com.sunshine.freeform)」广播路径开关
+        val useMiWindow: Boolean = false,
+        // 竖/横屏各存一套窗口尺寸位置(dp)
+        val portrait: Bounds = Bounds(widthDp = 230, heightDp = 380, leftDp = 70, topDp = 250),
+        val landscape: Bounds = Bounds(widthDp = 200, heightDp = 300, leftDp = 550, topDp = 30),
+        // 横竖屏缩放补偿系数(实际 launchBounds 尺寸 = 设定尺寸 / scale)。
+        // null = 按 ROM 自动补偿，兼容旧配置且默认行为不变
+        val portraitScale: Float? = null,
+        val landscapeScale: Float? = null
+    ) {
+        @Serializable
+        @Keep
+        data class Bounds(
+            val widthDp: Int,
+            val heightDp: Int,
+            val leftDp: Int,
+            val topDp: Int
+        )
+    }
 
     @Serializable
     @Keep

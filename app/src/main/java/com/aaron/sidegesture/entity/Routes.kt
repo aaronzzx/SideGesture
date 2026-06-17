@@ -30,6 +30,10 @@ data object AdvancedSettings
 
 @Keep
 @Serializable
+data object MiniWindowSettings
+
+@Keep
+@Serializable
 data object QuickToolsConfig
 
 @Keep

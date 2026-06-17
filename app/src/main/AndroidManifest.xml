@@ -41,6 +41,7 @@
             android:name=".MainActivity"
             android:launchMode="singleTask"
             android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.SideGesture"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -53,6 +54,9 @@
         <activity
             android:name=".MiniWindowShareProxyActivity"
             android:exported="true"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
             android:label="@string/action_popup_screen"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>

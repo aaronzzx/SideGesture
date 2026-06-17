@@ -515,6 +515,8 @@ fun MyTextSwitch(
     onTextClick: (() -> Unit)? = null,
     secondaryText: String = "",
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
+    mainTextMaxLines: Int = 1,
+    secondaryTextMaxLines: Int = 2,
     markColor: Color = Color.Unspecified,
     mainSecondaryTextPadding: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(
@@ -566,7 +568,7 @@ fun MyTextSwitch(
                     modifier = Modifier.weight(1f, false),
                     text = text,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1
+                    maxLines = mainTextMaxLines
                 )
                 if (markColor.isSpecified) {
                     Box(
@@ -582,7 +584,7 @@ fun MyTextSwitch(
                     text = secondaryText,
                     color = secondaryTextColor,
                     style = MaterialTheme.typography.labelMedium,
-                    maxLines = 2,
+                    maxLines = secondaryTextMaxLines,
                     overflow = TextOverflow.Ellipsis
                 )
             }

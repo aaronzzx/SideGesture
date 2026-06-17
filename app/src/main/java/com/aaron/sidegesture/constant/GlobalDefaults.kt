@@ -214,10 +214,6 @@ object ActionSettingsDefaults {
     const val MoveScreenRate = 2f
     const val MoveScreenHoverDelayMs = 600L
     const val GotoBottomStrength = 10
-    const val MiniWindowWidthRatio = 0.70f
-    const val MiniWindowHeightRatio = 0.50f
-    const val MiniWindowHorizontalPositionRatio = 0.50f
-    const val MiniWindowVerticalPositionRatio = 0.50f
     const val ShellCommandTimeoutMs = 10_000L
     const val ShellCommandMaxOutputLength = 4096
     val QuickToolItems = listOf(

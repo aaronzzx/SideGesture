@@ -5,7 +5,6 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.global.ActionSettings
-import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
 import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiState
@@ -99,33 +98,6 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    fun showMiniWindowModeDropdownMenu(show: Boolean) {
-        updateUiState {
-            it.copy(showMiniWindowModeDropdownMenu = show)
-        }
-    }
-
-    fun onMiniWindowModeChange(mode: MiniWindowMode) {
-        updateMiniWindowSettings { it.copy(mode = mode) }
-        saveSettings()
-    }
-
-    fun onMiniWindowWidthRatioChange(widthRatio: Float) {
-        updateMiniWindowSettings { it.copy(widthRatio = widthRatio) }
-    }
-
-    fun onMiniWindowHeightRatioChange(heightRatio: Float) {
-        updateMiniWindowSettings { it.copy(heightRatio = heightRatio) }
-    }
-
-    fun onMiniWindowHorizontalPositionRatioChange(horizontalPositionRatio: Float) {
-        updateMiniWindowSettings { it.copy(horizontalPositionRatio = horizontalPositionRatio) }
-    }
-
-    fun onMiniWindowVerticalPositionRatioChange(verticalPositionRatio: Float) {
-        updateMiniWindowSettings { it.copy(verticalPositionRatio = verticalPositionRatio) }
-    }
-
     fun saveSettings() {
         persistActionSettings(uiState.actionSettings)
     }
@@ -135,16 +107,6 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
             DataStoreHolder.actionSettings.updateData {
                 actionSettings
             }
-        }
-    }
-
-    private fun updateMiniWindowSettings(block: (ActionSettings.MiniWindow) -> ActionSettings.MiniWindow) {
-        updateUiState {
-            it.copy(
-                actionSettings = it.actionSettings.copy(
-                    miniWindow = block(it.actionSettings.miniWindow)
-                )
-            )
         }
     }
 
@@ -249,7 +211,6 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     data class UiState(
         val actionSettings: ActionSettings = ActionSettings(),
         val actionSettingsLoaded: Boolean = false,
-        val showMiniWindowModeDropdownMenu: Boolean = false,
         val previousAppInfosLoaded: Boolean = false,
         val previousAppSearchQuery: String = "",
         val previousAppRawAppInfos: List<AppInfo> = emptyList(),

@@ -57,6 +57,7 @@ fun AdvancedSettingsScreen(
     onNavToAppBlacklist: () -> Unit,
     onNavToAnimationStyle: () -> Unit,
     onNavToActionPanelStyle: () -> Unit,
+    onNavToMiniWindowSettings: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -139,6 +140,11 @@ fun AdvancedSettingsScreen(
                     modifier = Modifier.padding(top = SectionPadding),
                     title = stringResource(id = R.string.app_settings)
                 ) {
+                    MyTextButton(
+                        onClick = onNavToMiniWindowSettings,
+                        text = stringResource(id = R.string.mini_window_settings),
+                        secondaryText = stringResource(id = R.string.mini_window_settings_hint)
+                    )
                     MyTextSwitch(
                         onCheckedChange = { vm.onVolumeButtonSwitchSong(it) },
                         checked = uiState.volumeButtonSwitchSong,
