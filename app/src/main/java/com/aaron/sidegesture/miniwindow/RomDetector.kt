@@ -13,6 +13,7 @@ import android.os.Build
 object RomDetector {
 
     private const val WINDOWING_MODE_FREEFORM = 5
+    private const val WINDOWING_MODE_MEIZU = 11
     private const val WINDOWING_MODE_OPPO = 100
     private const val WINDOWING_MODE_HUAWEI_HONOR = 102
     private const val WINDOWING_MODE_VIVO = 106
@@ -29,13 +30,14 @@ object RomDetector {
 
     /**
      * 不同 ROM 的 freeform windowingMode 码。
-     * EMUI/鸿蒙=102、OPPO=100、VIVO=106、其余(MIUI/未知)=5。
+     * EMUI/鸿蒙=102、OPPO=100、VIVO=106、魅族=11、其余(MIUI/未知)=5。
      */
     fun freeFormCode(rom: RomInfo = detect()): Int {
         return when (rom.type) {
             RomType.EMUI, RomType.HARMONY_OS -> WINDOWING_MODE_HUAWEI_HONOR
             RomType.OPPO -> WINDOWING_MODE_OPPO
             RomType.VIVO -> WINDOWING_MODE_VIVO
+            RomType.MEIZU -> WINDOWING_MODE_MEIZU
             RomType.MIUI, RomType.UNKNOWN -> WINDOWING_MODE_FREEFORM
         }
     }
@@ -57,12 +59,19 @@ object RomDetector {
         getProp("ro.vivo.os.version").let {
             if (it.isNotEmpty()) return RomInfo(RomType.VIVO, parseVersion(it))
         }
+        // 魅族 Flyme 无独立版本属性，靠 display.id 含 "Flyme" 判定，如 "Flyme 9.3.2.1A"→9
+        getProp("ro.build.display.id").let {
+            if (it.contains("flyme", ignoreCase = true)) {
+                return RomInfo(RomType.MEIZU, parseVersion(it))
+            }
+        }
         // 属性缺失时按品牌兜底，realme/oppo/oneplus 归 OPPO
         return when (Build.BRAND.lowercase()) {
             "xiaomi", "redmi", "poco" -> RomInfo(RomType.MIUI, 0)
             "huawei", "honor" -> RomInfo(RomType.EMUI, 0)
             "oppo", "oneplus", "realme" -> RomInfo(RomType.OPPO, 0)
             "vivo", "iqoo" -> RomInfo(RomType.VIVO, 0)
+            "meizu" -> RomInfo(RomType.MEIZU, 0)
             else -> RomInfo(RomType.UNKNOWN, 0)
         }
     }
@@ -93,7 +102,7 @@ object RomDetector {
 }
 
 enum class RomType {
-    MIUI, EMUI, HARMONY_OS, OPPO, VIVO, UNKNOWN
+    MIUI, EMUI, HARMONY_OS, OPPO, VIVO, MEIZU, UNKNOWN
 }
 
 data class RomInfo(val type: RomType, val version: Int)

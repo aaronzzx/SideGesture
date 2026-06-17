@@ -80,6 +80,7 @@ data class ActionSettings(
         Default,
         Oppo,
         Vivo,
-        Huawei
+        Huawei,
+        Meizu
     }
 }

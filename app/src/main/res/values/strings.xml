@@ -222,6 +222,7 @@
     <string name="mini_window_mode_oppo">OPPO系</string>
     <string name="mini_window_mode_huawei">HUAWEI系</string>
     <string name="mini_window_mode_vivo">VIVO系</string>
+    <string name="mini_window_mode_meizu">MEIZU系</string>
     <string name="mini_window_width">小窗宽度</string>
     <string name="mini_window_height">小窗高度</string>
     <string name="mini_window_horizontal_position">水平位置</string>

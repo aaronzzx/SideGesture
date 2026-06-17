@@ -20,6 +20,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.math.roundToInt
 
 private const val WINDOWING_MODE_FREEFORM = 5
+private const val WINDOWING_MODE_MEIZU = 11
 private const val WINDOWING_MODE_OPPO = 100
 private const val WINDOWING_MODE_HUAWEI_HONOR = 102
 private const val WINDOWING_MODE_VIVO = 106
@@ -117,6 +118,7 @@ object MiniWindowUtils {
             MiniWindowMode.Oppo -> WINDOWING_MODE_OPPO
             MiniWindowMode.Huawei -> WINDOWING_MODE_HUAWEI_HONOR
             MiniWindowMode.Vivo -> WINDOWING_MODE_VIVO
+            MiniWindowMode.Meizu -> WINDOWING_MODE_MEIZU
         }
     }
 

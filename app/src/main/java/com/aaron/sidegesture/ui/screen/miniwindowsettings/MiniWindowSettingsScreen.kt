@@ -420,5 +420,6 @@ private fun miniWindowModeText(mode: MiniWindowMode): String {
         MiniWindowMode.Oppo -> stringResource(id = R.string.mini_window_mode_oppo)
         MiniWindowMode.Huawei -> stringResource(id = R.string.mini_window_mode_huawei)
         MiniWindowMode.Vivo -> stringResource(id = R.string.mini_window_mode_vivo)
+        MiniWindowMode.Meizu -> stringResource(id = R.string.mini_window_mode_meizu)
     }
 }
