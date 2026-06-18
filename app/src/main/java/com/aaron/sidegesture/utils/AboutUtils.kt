@@ -24,12 +24,16 @@ import java.util.Locale
  */
 object AboutUtils {
 
-    fun checkUpgrade(context: Context) {
-        val github = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://github.com/aaronzzx/gulugulu/releases")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    fun openUrl(context: Context, url: String) {
+        if (url.isBlank()) return
+        try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(url)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (ignored: Exception) {
         }
-        context.startActivity(github)
     }
 
     fun feedbackEmail(context: Context, uri: Uri? = null) {

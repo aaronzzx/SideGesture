@@ -45,6 +45,7 @@ import com.aaron.sidegesture.utils.AboutUtils
 fun AboutScreen(
     onBack: () -> Unit,
     onNavToBugCollecting: () -> Unit,
+    onCheckUpdate: () -> Unit,
     vm: AboutVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
@@ -97,7 +98,7 @@ fun AboutScreen(
                 ) {
                     val context = LocalContext.current
                     MyTextButton(
-                        onClick = { AboutUtils.checkUpgrade(context) },
+                        onClick = onCheckUpdate,
                         text = stringResource(id = R.string.check_update),
                         prefix = {
                             Icon(

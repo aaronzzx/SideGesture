@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
@@ -43,8 +46,13 @@ import com.aaron.sidegesture.entity.QuickToolsConfig
 import com.aaron.sidegesture.entity.SectorActionPanelStyle
 import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.entity.WaveAnimationStyle
+import com.aaron.compose.component.UDFComponent
+import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
+import com.aaron.sidegesture.ui.update.UpdateDialog
+import com.aaron.sidegesture.ui.update.UpdateViewModel
+import com.aaron.sidegesture.utils.AboutUtils
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.ActionPanelStyleSelectScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.folder.FolderActionPanelStyleScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.sector.SectorActionPanelStyleScreen
@@ -77,6 +85,10 @@ fun SideGestureApp() {
     SideGestureTheme {
         val navController = rememberNavController()
         val durationMs = ANIMATION_DURATION_MS
+        val updateVm: UpdateViewModel = viewModel()
+        LaunchedEffect(Unit) {
+            updateVm.checkOnLaunch()
+        }
         CompositionLocalProvider(
             LocalNavController provides navController
         ) {
@@ -116,7 +128,8 @@ fun SideGestureApp() {
                         onBack = { navController.navigateUp() },
                         onNavToBugCollecting = {
                             navController.navigate(BugCollecting)
-                        }
+                        },
+                        onCheckUpdate = { updateVm.checkManually() }
                     )
                 }
                 myComposable<AdvancedSettings> {
@@ -215,6 +228,24 @@ fun SideGestureApp() {
                     SectorActionPanelStyleScreen(onBack = { navController.navigateUp() })
                 }
             }
+            UpdateHost(vm = updateVm)
+        }
+    }
+}
+
+@Composable
+private fun UpdateHost(vm: UpdateViewModel) {
+    val context = LocalContext.current
+    UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
+        if (uiState.showDialog) {
+            UpdateDialog(
+                localVersion = BuildConfig.VERSION_NAME,
+                state = uiState,
+                onDismissRequest = { vm.dismiss() },
+                onIgnore = { vm.onIgnoreVersion() },
+                onConfirm = { vm.onConfirmUpdate() },
+                onOpenRelease = { AboutUtils.openUrl(context, uiState.releaseUrl) }
+            )
         }
     }
 }
