@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalContext
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GestureSettingsDefaults
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
@@ -758,7 +757,7 @@ class SideGestureState(
         }
         if (returnAction == Action.NONE &&
             !hasMovedBeyondSlop &&
-            SystemClock.uptimeMillis() - downTime <= GestureSettingsDefaults.ClickTriggerTimeoutMs
+            SystemClock.uptimeMillis() - downTime <= gestureSettings.longPressTriggerDelayMs
         ) {
             val clickAction = button.slideActions.click.firstOrNull()
             if (clickAction != null && clickAction != Action.NONE) {
