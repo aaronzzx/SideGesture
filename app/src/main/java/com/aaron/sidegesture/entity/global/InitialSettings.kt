@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 data class InitialSettings(
     val gestureEnabled: Boolean = GestureEnabled,
     val unlocked: Boolean = Unlocked,
-    // vivo 设备首次进入小窗设置时，是否已提示过去系统开启小窗分享开关
+    // vivo 设备是否已提示过去系统开启小窗分享开关（进入小窗设置页 / 动作选取页勾选应用、快捷方式或「应用小窗」动作，两入口共用，全局只提示一次）
     val miniWindowVivoShareHintShown: Boolean = MiniWindowVivoShareHintShown,
     // 用户在更新弹窗点「忽略此版本」记录的版本号（GitHub release tag），相同版本不再自动弹窗
     val ignoredUpdateVersion: String = IgnoredUpdateVersion,

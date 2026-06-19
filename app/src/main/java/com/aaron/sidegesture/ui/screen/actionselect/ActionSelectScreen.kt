@@ -131,6 +131,7 @@ import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.SearchTopBarField
 import com.aaron.sidegesture.ui.widget.ShellActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.VivoShareHintDialog
 import com.aaron.sidegesture.utils.VibrateUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -183,6 +184,11 @@ fun ActionSelectScreen(
                 onRequestShizukuPermission = vm::requestShizukuPermission,
                 onTest = vm::testShellCommand,
                 onSave = vm::saveShellAction
+            )
+        }
+        if (uiState.showVivoShareHintDialog) {
+            VivoShareHintDialog(
+                onConfirm = { vm.dismissVivoShareHintDialog() }
             )
         }
 

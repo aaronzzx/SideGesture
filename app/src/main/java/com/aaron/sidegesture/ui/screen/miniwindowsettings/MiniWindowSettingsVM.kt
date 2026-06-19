@@ -24,9 +24,6 @@ import kotlinx.coroutines.withContext
  * @since 2025/6/16
  */
 
-// vivo 小窗分享提示弹窗的倒计时秒数，倒计时结束前不可关闭
-private const val VIVO_SHARE_HINT_COUNTDOWN_SEC = 5
-
 class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
 
     override val initialState: UiState = UiState()
@@ -80,9 +77,8 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         updateUiState { it.copy(showResetDialog = show) }
     }
 
-    /** 倒计时结束后用户确认：关闭提示弹窗并记录已提示，下次不再弹。 */
+    /** 用户确认：关闭提示弹窗并记录已提示，下次不再弹。 */
     fun dismissVivoShareHintDialog() {
-        if (uiState.vivoShareHintCountdownSec > 0) return
         updateUiState { it.copy(showVivoShareHintDialog = false) }
         viewModelScope.launch {
             DataStoreHolder.initialSettings.updateData {
@@ -158,22 +154,13 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    /** vivo 设备首次进入小窗设置时，弹窗提示去系统开启小窗分享开关，倒计时结束才可关闭。 */
+    /** vivo 设备首次进入小窗设置时，弹窗提示去系统开启小窗分享开关。 */
     private suspend fun maybeShowVivoShareHint(isVivo: Boolean) {
         if (!isVivo) return
         if (DataStoreHolder.initialSettings.data.first().miniWindowVivoShareHintShown) return
         viewModelScope.launch {
             delay(200)
-            updateUiState {
-                it.copy(
-                    showVivoShareHintDialog = true,
-                    vivoShareHintCountdownSec = VIVO_SHARE_HINT_COUNTDOWN_SEC
-                )
-            }
-            while (uiState.vivoShareHintCountdownSec > 0) {
-                delay(1000)
-                updateUiState { it.copy(vivoShareHintCountdownSec = it.vivoShareHintCountdownSec - 1) }
-            }
+            updateUiState { it.copy(showVivoShareHintDialog = true) }
         }
     }
 
@@ -190,8 +177,7 @@ class MiniWindowSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val autoLandscapeScale: Float = 1f,
         val showModeDropdownMenu: Boolean = false,
         val showResetDialog: Boolean = false,
-        val showVivoShareHintDialog: Boolean = false,
-        val vivoShareHintCountdownSec: Int = 0
+        val showVivoShareHintDialog: Boolean = false
     ) {
         val currentBounds: Bounds get() = if (editingPortrait) portrait else landscape
         val currentScale: Float

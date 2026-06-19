@@ -272,7 +272,6 @@
     <string name="mini_window_vivo_share_hint_title">开启「小窗分享」开关</string>
     <string name="mini_window_vivo_share_hint_desc">检测到当前为 vivo 设备。本应用的小窗依赖系统的「小窗分享」能力，请先到 vivo「设置」中找到并开启「小窗分享」，否则点击小窗时可能无法直接弹出。</string>
     <string name="mini_window_vivo_share_hint_confirm">我知道了</string>
-    <string name="mini_window_vivo_share_hint_confirm_countdown">我知道了（%1$d）</string>
     <string name="mini_window_scale_compensation">缩放补偿  %1$s</string>
     <string name="mini_window_scale_hint">部分 ROM 会缩放小窗，补偿值越小窗口越大。默认按机型自动补偿，可在此手动微调当前朝向。</string>
     <string name="use_mi_window">使用米窗</string>

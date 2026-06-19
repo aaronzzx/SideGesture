@@ -21,6 +21,8 @@ import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.event.QuickLauncherConfigEvent
+import com.aaron.sidegesture.miniwindow.RomDetector
+import com.aaron.sidegesture.miniwindow.RomType
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
@@ -46,6 +48,7 @@ import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,6 +76,9 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     val actionSettingsDialog = ActionSettingsDialog()
     val shellActionDialog = ShellActionDialog()
+
+    // 单选模式下命中 vivo 小窗分享提示时置 true：先弹弹窗，待用户确认后再保存退出，避免 finish() 把弹窗吃掉
+    private var pendingSaveOnHintDismiss = false
 
     init {
         eventHandler.init()
@@ -126,20 +132,33 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun select(obj: Any, selected: Boolean) {
-        val uiState = uiState
-        if (obj is AppInfo) {
-            selectAppInfo(obj, selected)
-            if (uiState.selectSingle) {
-                saveSettings()
+        // 先同步处理勾选，保证选中态即时反馈
+        val isMiniWindowIntent = when (obj) {
+            is AppInfo -> {
+                selectAppInfo(obj, selected)
+                // 勾选应用即有小窗使用可能（应用可配小窗打开）
+                selected
             }
-        } else if (obj is LauncherInfo.ShortcutInfo) {
-            selectShortcutInfo(obj, selected)
-            if (uiState.selectSingle) {
-                saveSettings()
+            is LauncherInfo.ShortcutInfo -> {
+                selectShortcutInfo(obj, selected)
+                // 勾选快捷方式同理
+                selected
             }
-        } else if (obj is Action) {
-            selectAction(obj, selected)
-            if (uiState.selectSingle) {
+            is Action -> {
+                selectAction(obj, selected)
+                // 「应用小窗」动作直接依赖系统小窗分享能力
+                selected && obj.value == GlobalActions.POPUP_SCREEN
+            }
+            else -> return
+        }
+        val isSingle = uiState.selectSingle
+        // 串行判定，避免 vivo 提示弹窗与单选保存退出的 finish() 竞争
+        viewModelScope.launch {
+            if (isMiniWindowIntent && shouldShowVivoShareHint()) {
+                // 单选模式下保存退出推迟到用户确认弹窗后，否则 finish() 会把弹窗吃掉
+                pendingSaveOnHintDismiss = isSingle
+                updateUiState { it.copy(showVivoShareHintDialog = true) }
+            } else if (isSingle) {
                 saveSettings()
             }
         }
@@ -213,6 +232,28 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         } else {
             toast(R.string.disable_mini_window)
         }
+    }
+
+    /**
+     * 是否需要弹 vivo 小窗分享提示：仅 vivo 设备且从未提示过（与小窗设置页共用一次性标记，全局只提示一次）。
+     * 先查标记，已提示过直接返回，不再触发 ROM 检测。
+     */
+    private suspend fun shouldShowVivoShareHint(): Boolean {
+        if (DataStoreHolder.initialSettings.data.first().miniWindowVivoShareHintShown) return false
+        return withContext(Dispatchers.IO) { RomDetector.detect().type == RomType.VIVO }
+    }
+
+    /** 用户确认：关闭提示弹窗并记录已提示；单选模式下此时才放行保存退出（弹窗确认前不 finish）。 */
+    fun dismissVivoShareHintDialog() {
+        val saveAfterDismiss = pendingSaveOnHintDismiss
+        pendingSaveOnHintDismiss = false
+        updateUiState { it.copy(showVivoShareHintDialog = false) }
+        viewModelScope.launch {
+            DataStoreHolder.initialSettings.updateData {
+                it.copy(miniWindowVivoShareHintShown = true)
+            }
+        }
+        if (saveAfterDismiss) saveSettings()
     }
 
     private fun List<LauncherInfo>.replaceShortcutInfo(
@@ -1038,6 +1079,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val selectedRecord: SelectedRecord = SelectedRecord(),
         val actionSettingsDialog: ActionSettingsDialogValue = ActionSettingsDialogValue(false, Action.NONE),
         val shellActionDialog: ShellActionDialogValue = ShellActionDialogValue(),
+        val showVivoShareHintDialog: Boolean = false,
     ) {
         data class SelectedRecord(val list: List<Any> = emptyList()) {
 

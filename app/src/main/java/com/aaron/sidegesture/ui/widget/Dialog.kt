@@ -132,6 +132,28 @@ fun MyAlertDialog(
     )
 }
 
+/**
+ * vivo 设备首次开启小窗相关功能时的提示弹窗：引导去系统开启「小窗分享」开关。
+ * 两个触发入口（进入小窗设置页、在动作选取页给应用/快捷方式开小窗）共用一次性标记，全局只提示一次。
+ * 立即可关，确认即记录已提示。
+ */
+@Composable
+fun VivoShareHintDialog(
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        onDismissRequest = onConfirm,
+        title = { Text(text = stringResource(id = R.string.mini_window_vivo_share_hint_title)) },
+        text = { Text(text = stringResource(id = R.string.mini_window_vivo_share_hint_desc)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(id = R.string.mini_window_vivo_share_hint_confirm))
+            }
+        }
+    )
+}
+
 @Composable
 fun MyAppsDialog(
     onDismissRequest: () -> Unit
