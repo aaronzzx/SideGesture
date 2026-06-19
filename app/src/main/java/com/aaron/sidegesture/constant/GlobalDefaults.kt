@@ -38,6 +38,7 @@ object AdvancedSettingsDefaults {
     val DayNightMode = com.aaron.sidegesture.entity.DayNightMode.Auto
     val ClipApps = emptyMap<String, Float>()
     val ClipShortcuts = emptyMap<String, Float>()
+    const val AutoCheckUpdate = true
 }
 
 object GestureSettingsDefaults {
@@ -60,6 +61,7 @@ object InitialSettingsDefaults {
     const val Unlocked = false
     const val MiniWindowVivoShareHintShown = false
     const val IgnoredUpdateVersion = ""
+    const val NotificationPermissionRequested = false
 }
 
 object ActionPanelStylesDefaults {

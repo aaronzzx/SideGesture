@@ -17,6 +17,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -48,11 +49,16 @@ import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.entity.WaveAnimationStyle
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.BuildConfig
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
+import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
 import com.aaron.sidegesture.ui.update.UpdateDialog
 import com.aaron.sidegesture.ui.update.UpdateViewModel
+import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.utils.AboutUtils
+import com.aaron.sidegesture.utils.update.UpdateChecker
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.ActionPanelStyleSelectScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.folder.FolderActionPanelStyleScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.sector.SectorActionPanelStyleScreen
@@ -73,6 +79,7 @@ import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsScre
 import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import kotlinx.coroutines.flow.first
 import kotlin.reflect.KType
 
 /**
@@ -236,15 +243,49 @@ fun SideGestureApp() {
 @Composable
 private fun UpdateHost(vm: UpdateViewModel) {
     val context = LocalContext.current
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
+    // 首启通知权限引导：SDK>=33 且自动检查已开、未授权、没问过时由 VM 决定是否弹
+    LaunchedEffect(Unit) {
+        vm.evaluateNotificationPrompt()
+    }
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
-        if (uiState.showDialog) {
+        // 通知权限说明弹窗优先；更新/失败弹窗让路，避免叠加
+        val rationaleShowing = uiState.showNotificationRationale
+        if (uiState.showDialog && !rationaleShowing) {
             UpdateDialog(
                 localVersion = BuildConfig.VERSION_NAME,
                 state = uiState,
                 onDismissRequest = { vm.dismiss() },
                 onIgnore = { vm.onIgnoreVersion() },
                 onConfirm = { vm.onConfirmUpdate() },
-                onOpenRelease = { AboutUtils.openUrl(context, uiState.releaseUrl) }
+                onInstall = { vm.onInstall() },
+                onMoveToBackground = { vm.onMoveToBackground() },
+                onOpenRelease = { AboutUtils.openUrl(context, UpdateChecker.RELEASES_PAGE_URL) }
+            )
+        }
+        // 关于页手动检查失败：弹提示弹窗，点确认前往 GitHub Releases 网页
+        if (uiState.showCheckFailedDialog && !rationaleShowing) {
+            val titleRes = when (uiState.checkFailedReason) {
+                UpdateViewModel.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_title
+                UpdateViewModel.CheckFailedReason.NoApk -> R.string.update_check_no_apk_title
+                UpdateViewModel.CheckFailedReason.Generic -> R.string.update_check_failed_title
+            }
+            val messageRes = when (uiState.checkFailedReason) {
+                UpdateViewModel.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_message
+                UpdateViewModel.CheckFailedReason.NoApk -> R.string.update_check_no_apk_message
+                UpdateViewModel.CheckFailedReason.Generic -> R.string.update_check_failed_message
+            }
+            MyAlertDialog(
+                onDismissRequest = { vm.dismissCheckFailedDialog() },
+                onConfirmClick = { AboutUtils.openUrl(context, UpdateChecker.RELEASES_PAGE_URL) },
+                title = stringResource(id = titleRes),
+                text = stringResource(id = messageRes)
+            )
+        }
+        if (rationaleShowing) {
+            NotificationPermissionDialog(
+                onDismiss = { vm.dismissNotificationRationale() },
+                onConfirm = { requestNotificationPermission() }
             )
         }
     }

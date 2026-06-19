@@ -2,4 +2,6 @@
 <paths>
     <external-path name="gulugulu" path="." />
     <external-cache-path name="update" path="." />
+    <!-- externalCacheDir 为 null 时 ApkInstaller 回退到内部 cacheDir，需同样可被 FileProvider 安装 -->
+    <cache-path name="update_cache" path="." />
 </paths>

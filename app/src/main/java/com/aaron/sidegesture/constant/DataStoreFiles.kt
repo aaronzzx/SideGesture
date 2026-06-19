@@ -12,4 +12,5 @@ object DataStoreFiles {
     const val SIDE_GESTURE_BUTTONS = "dd"
     const val BOTTOM_GESTURE_BUTTONS = "ee"
     const val ACTION_SETTINGS = "ff"
+    const val UPDATE_STATE = "gg"
 }

@@ -1,8 +1,12 @@
 package com.aaron.sidegesture.ui.screen.advancedsettings
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewModelScope
 import com.aaron.compose.base.BaseComposeVM
+import com.aaron.sidegesture.App
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
@@ -122,6 +126,29 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onAutoCheckUpdate(value: Boolean) {
+        updateUiState {
+            it.copy(autoCheckUpdate = value)
+        }
+        saveSettings()
+        // 开启时若未授通知权限，先弹说明，再由 UI 发起系统请求；拒绝不影响检查/下载
+        if (value && needsNotificationPermission()) {
+            updateUiState { it.copy(showNotificationRationale = true) }
+        }
+    }
+
+    fun dismissNotificationRationale() {
+        updateUiState { it.copy(showNotificationRationale = false) }
+    }
+
+    private fun needsNotificationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        return ContextCompat.checkSelfPermission(
+            App.getContext(),
+            Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    }
+
     private fun saveSettings() {
         viewModelScope.launch {
             DataStoreHolder.advancedSettings.updateData {
@@ -138,7 +165,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     hideHomeScreen = uiState.hideHomeScreen,
                     excludeFromRecents = uiState.excludeFromRecents,
                     dynamicColor = uiState.dynamicColor,
-                    dayNightMode = uiState.dayNightMode
+                    dayNightMode = uiState.dayNightMode,
+                    autoCheckUpdate = uiState.autoCheckUpdate
                 )
             }
         }
@@ -165,7 +193,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                             hideHomeScreen = item.hideHomeScreen,
                             excludeFromRecents = item.excludeFromRecents,
                             dynamicColor = item.dynamicColor,
-                            dayNightMode = item.dayNightMode
+                            dayNightMode = item.dayNightMode,
+                            autoCheckUpdate = item.autoCheckUpdate
                         )
                     }
                 }
@@ -187,6 +216,8 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val excludeFromRecents: Boolean = false,
         val dynamicColor: Boolean = false,
         val dayNightMode: DayNightMode = DayNightMode.Auto,
+        val autoCheckUpdate: Boolean = true,
+        val showNotificationRationale: Boolean = false,
         val showDynamicColorOption: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
         val showDayNightModeDropdownMenu: Boolean = false
     )

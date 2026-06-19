@@ -39,6 +39,8 @@ import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
+import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -60,6 +62,7 @@ fun AdvancedSettingsScreen(
     onNavToMiniWindowSettings: () -> Unit,
     vm: AdvancedSettingsVM = viewModel()
 ) {
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
     UDFComponent(component = vm.udfComponent, onEvent = {}) { uiState ->
         Column {
             TopBar(
@@ -146,6 +149,12 @@ fun AdvancedSettingsScreen(
                         secondaryText = stringResource(id = R.string.mini_window_settings_hint)
                     )
                     MyTextSwitch(
+                        onCheckedChange = { vm.onAutoCheckUpdate(it) },
+                        checked = uiState.autoCheckUpdate,
+                        text = stringResource(id = R.string.auto_check_update),
+                        secondaryText = stringResource(id = R.string.auto_check_update_hint)
+                    )
+                    MyTextSwitch(
                         onCheckedChange = { vm.onVolumeButtonSwitchSong(it) },
                         checked = uiState.volumeButtonSwitchSong,
                         text = stringResource(id = R.string.volume_button_switch_song),
@@ -227,6 +236,13 @@ fun AdvancedSettingsScreen(
                     }
                 }
             }
+        }
+
+        if (uiState.showNotificationRationale) {
+            NotificationPermissionDialog(
+                onDismiss = { vm.dismissNotificationRationale() },
+                onConfirm = { requestNotificationPermission() }
+            )
         }
     }
 }

@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.aaron.compose.ktx.clipToBackground
@@ -40,12 +39,16 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
 import com.aaron.sidegesture.ui.theme.DialogTitlePadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
+import com.aaron.sidegesture.utils.update.UpdateChecker
 
 /**
- * 发现新版本底部卡片弹窗。
+ * 更新弹窗（唯一交互中心）。状态机五态：
  *
- * 默认态：标题 + 版本对比 + 更新内容滚动区 + [忽略此版本 / 立即更新]。
- * 下载中态：底部按钮行整体替换为进度条，期间禁止关闭。
+ * - 下载中：进度条 + [转后台]（关闭即转后台，下载不中断）
+ * - 已下完：[点击安装]
+ * - 下载失败：[重试]
+ * - 有新版：[忽略此版本] [立即更新]
+ * - 已最新：仅标题（手动检查时）
  *
  * @author aaronzzxup@gmail.com
  * @since 2026/6/18
@@ -57,13 +60,15 @@ fun UpdateDialog(
     onDismissRequest: () -> Unit,
     onIgnore: () -> Unit,
     onConfirm: () -> Unit,
+    onInstall: () -> Unit,
+    onMoveToBackground: () -> Unit,
     onOpenRelease: () -> Unit
 ) {
     BottomDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
-            dismissOnBackPress = !state.downloading,
-            dismissOnClickOutside = !state.downloading
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
         )
     ) {
         Column(
@@ -74,6 +79,12 @@ fun UpdateDialog(
                     shape = MaterialTheme.shapes.medium
                 )
         ) {
+            val isUpToDate = state.phase == UpdateViewModel.UpdatePhase.UpToDate
+            val titleRes = when (state.phase) {
+                UpdateViewModel.UpdatePhase.UpToDate -> R.string.update_already_latest_title
+                UpdateViewModel.UpdatePhase.Failed -> R.string.update_download_failed_title
+                else -> R.string.update_available_title
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -87,7 +98,7 @@ fun UpdateDialog(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = stringResource(id = R.string.update_available_title),
+                    text = stringResource(id = titleRes),
                     fontSize = DialogTitleFontSize,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -105,11 +116,15 @@ fun UpdateDialog(
                     end = DialogTitlePadding,
                     bottom = ItemPadding
                 ),
-                text = stringResource(
-                    id = R.string.update_version_compare,
-                    displayVersion(localVersion),
-                    displayVersion(state.version)
-                ),
+                text = if (isUpToDate) {
+                    UpdateChecker.displayVersion(state.version.ifBlank { localVersion })
+                } else {
+                    stringResource(
+                        id = R.string.update_version_compare,
+                        UpdateChecker.displayVersion(localVersion),
+                        UpdateChecker.displayVersion(state.version)
+                    )
+                },
                 color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.titleSmall
             )
@@ -131,10 +146,32 @@ fun UpdateDialog(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            if (state.downloading) {
-                DownloadingContent(progress = state.progress)
-            } else {
-                ActionRow(onIgnore = onIgnore, onConfirm = onConfirm)
+            when (state.phase) {
+                UpdateViewModel.UpdatePhase.Downloading -> {
+                    DownloadingContent(progress = state.progress)
+                    PrimaryButtonRow(
+                        text = stringResource(id = R.string.update_move_to_background),
+                        onClick = onMoveToBackground
+                    )
+                }
+                UpdateViewModel.UpdatePhase.Downloaded -> {
+                    PrimaryButtonRow(
+                        text = stringResource(id = R.string.update_install_now),
+                        onClick = onInstall
+                    )
+                }
+                UpdateViewModel.UpdatePhase.Failed -> {
+                    PrimaryButtonRow(
+                        text = stringResource(id = R.string.update_retry),
+                        onClick = onConfirm
+                    )
+                }
+                UpdateViewModel.UpdatePhase.NewVersion -> {
+                    ActionRow(onIgnore = onIgnore, onConfirm = onConfirm)
+                }
+                UpdateViewModel.UpdatePhase.UpToDate -> {
+                    Spacer(modifier = Modifier.padding(ItemPadding))
+                }
             }
         }
     }
@@ -170,6 +207,22 @@ private fun ActionRow(
 }
 
 @Composable
+private fun PrimaryButtonRow(text: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = ItemPadding, vertical = ItemPadding)
+    ) {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onClick
+        ) {
+            Text(text = text)
+        }
+    }
+}
+
+@Composable
 private fun DownloadingContent(progress: Int) {
     val animatedFraction by animateFloatAsState(
         targetValue = (progress / 100f).coerceIn(0f, 1f),
@@ -178,7 +231,7 @@ private fun DownloadingContent(progress: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = DialogTitlePadding, vertical = ItemPadding)
+            .padding(horizontal = DialogTitlePadding, vertical = ItemPadding / 2)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -212,18 +265,5 @@ private fun DownloadingContent(progress: Int) {
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
-        Spacer(modifier = Modifier.height(ItemPadding / 2))
-        Text(
-            text = stringResource(id = R.string.update_download_hint),
-            color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
-}
-
-private fun displayVersion(raw: String): String {
-    val trimmed = raw.trim().removePrefix("v").removePrefix("V")
-    return "v$trimmed"
 }

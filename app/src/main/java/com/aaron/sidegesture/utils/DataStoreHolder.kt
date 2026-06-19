@@ -8,6 +8,7 @@ import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.entity.global.InitialSettings
+import com.aaron.sidegesture.entity.global.UpdateState
 import com.aaron.sidegesture.ktx.dataStore
 
 /**
@@ -49,6 +50,12 @@ object DataStoreHolder {
     val sideGestureButtons: DataStore<List<GestureButton>> = run {
         val fileName = DataStoreFiles.SIDE_GESTURE_BUTTONS
         val defValue = GestureButton.SideDefaults
+        App.getContext().dataStore(fileName, defValue)
+    }
+
+    val updateState: DataStore<UpdateState> = run {
+        val fileName = DataStoreFiles.UPDATE_STATE
+        val defValue = UpdateState()
         App.getContext().dataStore(fileName, defValue)
     }
 

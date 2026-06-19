@@ -59,6 +59,8 @@ import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.ui.widget.SideGestureContainer
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
+import com.aaron.sidegesture.utils.update.UpdateNotifications
+import com.aaron.sidegesture.utils.update.UpdateRepository
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,6 +74,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -214,6 +217,7 @@ class SideGestureService : ComponentAccessibilityService() {
         registerScreenLockReceiver()
         registerWallpaperChangedReceiver()
         registerImeInsetObserver()
+        registerUpdateChecker()
 
         val mainView = mainView
         if (mainView != null) {
@@ -388,6 +392,34 @@ class SideGestureService : ComponentAccessibilityService() {
         }
     }
 
+    /**
+     * 后台低频检查更新 ticker：独立协程 + try-catch 全隔离，任何异常都不影响手势主流程。
+     *
+     * 仅「检查 + 写缓存 + 发现新版通知」，绝不下载（下载收口主进程 DownloadService）。
+     */
+    private fun registerUpdateChecker() {
+        coroutineScope.launch {
+            while (isActive) {
+                try {
+                    val autoCheck = DataStoreHolder.advancedSettings.data.first().autoCheckUpdate
+                    if (autoCheck && UpdateRepository.shouldCheck()) {
+                        val result = UpdateRepository.checkAndCache(force = false)
+                        if (result is UpdateRepository.CheckResult.NewVersion) {
+                            val ignored = DataStoreHolder.initialSettings.data.first().ignoredUpdateVersion
+                            val version = result.state.latestVersion
+                            if (version.isNotBlank() && version != ignored) {
+                                UpdateNotifications.showNewVersion(this@SideGestureService, version)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    // 检查异常完全吞掉，绝不波及无障碍手势
+                }
+                delay(UPDATE_CHECK_TICK_INTERVAL_MS)
+            }
+        }
+    }
+
     private fun updateLayout() {
         val mainView = mainView
         if (mainView != null) {
@@ -508,6 +540,11 @@ class SideGestureService : ComponentAccessibilityService() {
             setFlags(enabled)
         }
         updateLayout(mainView, lp)
+    }
+
+    private companion object {
+        // 后台检查 ticker 醒来间隔；是否真正发起请求仍由 24h shouldCheck 决定
+        const val UPDATE_CHECK_TICK_INTERVAL_MS = 30 * 60 * 1000L
     }
 
     private inner class ImeInsetObserver {

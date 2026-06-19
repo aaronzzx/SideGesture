@@ -5,6 +5,7 @@ import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelAppLon
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelAppSwitchWindowModeDelayMs
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ActionPanelStyles
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.AnimationStyles
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.AutoCheckUpdate
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipApps
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ClipShortcuts
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DayNightMode
@@ -44,6 +45,8 @@ data class AdvancedSettings(
     val excludeFromRecents: Boolean = ExcludeFromRecents,
     val dynamicColor: Boolean = DynamicColor,
     val dayNightMode: DayNightMode = DayNightMode,
+    // 后台定期检查新版本并通知（控制 :service 进程的低频检查 + 发现新版通知）
+    val autoCheckUpdate: Boolean = AutoCheckUpdate,
     // qualifiedName
     val clipApps: Map<String, Float> = ClipApps,
     // qualifiedNameWithIntents

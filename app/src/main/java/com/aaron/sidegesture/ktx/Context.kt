@@ -1,9 +1,11 @@
 package com.aaron.sidegesture.ktx
 
 import android.accessibilityservice.AccessibilityService
+import android.app.Activity
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
@@ -311,6 +313,32 @@ fun Context.gotoNotificationListenerSettings() {
         .onFailure {
             startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
+}
+
+/** 跳本应用的系统通知设置页（USER_FIXED 时无法再弹授权框，引导用户手动开通知）。 */
+fun Context.gotoAppNotificationSettings() {
+    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+    } else {
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setData(Uri.fromParts("package", packageName, null))
+    }
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { startActivity(intent) }
+        .onFailure {
+            startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+}
+
+/** 从任意 Context（可能被 ContextWrapper/ContextThemeWrapper 包裹）解包出宿主 Activity。 */
+fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
 }
 
 fun Context.isNotificationListenerEnabled(clazz: Class<*>): Boolean {
