@@ -59,11 +59,16 @@ class UpdateViewModel : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
-    /** App 启动：缓存不新鲜(>1h)则懒触发检查，随后按状态决定是否自动弹窗。 */
+    /** App 启动：开启自动检查、缓存不新鲜(>1h)且已过退避点时懒触发检查，随后按状态决定是否自动弹窗。 */
     fun checkOnLaunch() {
         viewModelScope.launch {
+            val autoCheck = DataStoreHolder.advancedSettings.data.first().autoCheckUpdate
             val cache = DataStoreHolder.updateState.data.first()
-            if (System.currentTimeMillis() - cache.lastCheckSuccessTime >= LAUNCH_FRESH_MS) {
+            val now = System.currentTimeMillis()
+            if (autoCheck &&
+                now - cache.lastCheckSuccessTime >= LAUNCH_FRESH_MS &&
+                now >= cache.nextRetryTime
+            ) {
                 UpdateRepository.checkAndCache(force = false)
             }
             recompute(OpenMode.Auto)

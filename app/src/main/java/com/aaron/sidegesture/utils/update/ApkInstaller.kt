@@ -74,8 +74,8 @@ object ApkInstaller {
                 return@withContext true
             }
             var existing = if (partFile.exists()) partFile.length() else 0L
-            // .part 大小异常（>= 期望但未转正，多为坏残留）→ 删除重下
-            if (expectedSize > 0 && existing >= expectedSize) {
+            // .part 大小超出期望（坏残留）→ 删除重下；恰好等于期望的完整 part 留给下面转正
+            if (expectedSize > 0 && existing > expectedSize) {
                 partFile.delete()
                 existing = 0L
             }

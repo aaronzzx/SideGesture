@@ -236,8 +236,9 @@ class HomeVM : BaseComposeVM<UiState, UiEvent>() {
         viewModelScope.launch {
             launch {
                 val app = App.getContext()
-                val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
                 DataStoreHolder.initialSettings.data.collectLatest { initialSettings ->
+                    // 实时重读无障碍状态，避免闭包冻结旧值在后续发射时把开关错误打回
+                    val isAccessibilityEnabled = app.isAccessibilitySettingsOn(SideGestureService::class.java)
                     updateUiState {
                         it.copy(isGestureEnabled = isAccessibilityEnabled && initialSettings.gestureEnabled)
                     }
