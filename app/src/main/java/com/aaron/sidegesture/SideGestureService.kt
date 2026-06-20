@@ -10,6 +10,7 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.media.AudioManager
 import android.os.PowerManager
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
 import android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
@@ -94,6 +95,12 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private var isNowInLockScreenPage = false
     private var currentButtons: List<GestureButton> = emptyList()
+
+    /**
+     * 「隐藏触钮」动作的冷却截止时间（uptimeMillis），key 见 [buttonKey]。
+     * 冷却期内即使收到高频窗口事件，[updateGestureButtons] 也强制保持触钮不可触摸。
+     */
+    private val hiddenButtonUntil = mutableMapOf<String, Long>()
 
     private var volumeButtonSwitchSongJob: Job? = null
     private val _overlaysDismissSignal = MutableStateFlow(0)
@@ -445,7 +452,9 @@ class SideGestureService : ComponentAccessibilityService() {
                     }
 
                     val initialSettings = DataStoreHolder.initialSettings.data.first()
-                    if (!initialSettings.gestureEnabled) {
+                    if (isButtonHidden(button)) {
+                        setFlags(false)
+                    } else if (!initialSettings.gestureEnabled) {
                         setFlags(false)
                     } else {
                         if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
@@ -467,6 +476,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     fun hideGestureButton(button: GestureButton?) {
+        val until = SystemClock.uptimeMillis() + HIDE_GESTURE_BUTTON_DURATION_MS
         buttonViews?.forEach { view ->
             val tag = view.tag as? GestureButton ?: return@forEach
             val matched = if (button != null) {
@@ -476,13 +486,30 @@ class SideGestureService : ComponentAccessibilityService() {
             }
             if (!matched) return@forEach
 
+            hiddenButtonUntil[buttonKey(tag)] = until
             val lp = view.layoutParams as WindowManager.LayoutParams
             lp.setFlags(false)
             updateLayout(view, lp)
-            view.postDelayed(1000) {
+            view.postDelayed(HIDE_GESTURE_BUTTON_DURATION_MS) {
                 updateGestureButtons()
             }
         }
+    }
+
+    private fun buttonKey(button: GestureButton): String = "${button.id}|${button.position}"
+
+    /**
+     * 该触钮是否仍处于「隐藏触钮」冷却期。冷却期内 [updateGestureButtons] 强制保持不可触摸，
+     * 避免高频窗口事件（[onAccessibilityEvent]）把刚设的 NOT_TOUCHABLE 冲掉。过期顺手清理。
+     */
+    private fun isButtonHidden(button: GestureButton): Boolean {
+        val key = buttonKey(button)
+        val until = hiddenButtonUntil[key] ?: return false
+        if (SystemClock.uptimeMillis() < until) {
+            return true
+        }
+        hiddenButtonUntil.remove(key)
+        return false
     }
 
     fun getCurrentPackageName(): String {
@@ -545,6 +572,9 @@ class SideGestureService : ComponentAccessibilityService() {
     private companion object {
         // 后台检查 ticker 醒来间隔；是否真正发起请求仍由 24h shouldCheck 决定
         const val UPDATE_CHECK_TICK_INTERVAL_MS = 30 * 60 * 1000L
+
+        // 「隐藏触钮」动作触发后强制不可触摸的冷却时长，到点走 updateGestureButtons 重算恢复
+        const val HIDE_GESTURE_BUTTON_DURATION_MS = 1000L
     }
 
     private inner class ImeInsetObserver {
