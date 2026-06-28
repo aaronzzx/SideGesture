@@ -15,7 +15,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.SideGestureApp
-import com.aaron.sidegesture.ui.update.UpdateViewModel
+import com.aaron.sidegesture.ui.update.UpdateVM
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     // 与 SideGestureApp 内 viewModel() 同为 Activity 作用域，解析到同一实例
-    private val updateViewModel: UpdateViewModel by viewModels()
+    private val updateVM: UpdateVM by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         myEnableEdgeToEdge()
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // 冷启动入口（含通知拉起）：读状态评估是否调起更新弹窗
-        updateViewModel.onEntry()
+        updateVM.onEntry()
 
         lifecycleScope.launch {
             val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -49,13 +49,13 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        updateViewModel.onEntry()
+        updateVM.onEntry()
     }
 
     // 从最近任务返回（无新 Intent）时浮出下载完成/失败入口，但不重复弹「有新版」
     override fun onResume() {
         super.onResume()
-        updateViewModel.onForeground()
+        updateVM.onForeground()
     }
 }
 

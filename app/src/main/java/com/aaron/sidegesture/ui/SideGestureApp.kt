@@ -26,6 +26,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aaron.compose.component.UDFComponent
+import com.aaron.sidegesture.BuildConfig
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.About
 import com.aaron.sidegesture.entity.ActionPanelStyleSelect
 import com.aaron.sidegesture.entity.ActionSelect
@@ -47,18 +50,8 @@ import com.aaron.sidegesture.entity.QuickToolsConfig
 import com.aaron.sidegesture.entity.SectorActionPanelStyle
 import com.aaron.sidegesture.entity.Unlock
 import com.aaron.sidegesture.entity.WaveAnimationStyle
-import com.aaron.compose.component.UDFComponent
-import com.aaron.sidegesture.BuildConfig
-import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ktx.LocalNavController
 import com.aaron.sidegesture.ui.screen.about.AboutScreen
-import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
-import com.aaron.sidegesture.ui.update.UpdateDialog
-import com.aaron.sidegesture.ui.update.UpdateViewModel
-import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
-import com.aaron.sidegesture.ui.widget.MyAlertDialog
-import com.aaron.sidegesture.utils.AboutUtils
-import com.aaron.sidegesture.utils.update.UpdateChecker
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.ActionPanelStyleSelectScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.folder.FolderActionPanelStyleScreen
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.sector.SectorActionPanelStyleScreen
@@ -79,7 +72,13 @@ import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsScre
 import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
-import kotlinx.coroutines.flow.first
+import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
+import com.aaron.sidegesture.ui.update.UpdateDialog
+import com.aaron.sidegesture.ui.update.UpdateVM
+import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
+import com.aaron.sidegesture.ui.widget.MyAlertDialog
+import com.aaron.sidegesture.utils.AboutUtils
+import com.aaron.sidegesture.utils.update.UpdateChecker
 import kotlin.reflect.KType
 
 /**
@@ -92,7 +91,7 @@ fun SideGestureApp() {
     SideGestureTheme {
         val navController = rememberNavController()
         val durationMs = ANIMATION_DURATION_MS
-        val updateVm: UpdateViewModel = viewModel()
+        val updateVm: UpdateVM = viewModel()
         LaunchedEffect(Unit) {
             updateVm.checkOnLaunch()
         }
@@ -241,7 +240,7 @@ fun SideGestureApp() {
 }
 
 @Composable
-private fun UpdateHost(vm: UpdateViewModel) {
+private fun UpdateHost(vm: UpdateVM) {
     val context = LocalContext.current
     val requestNotificationPermission = rememberNotificationPermissionRequest()
     // 首启通知权限引导：SDK>=33 且自动检查已开、未授权、没问过时由 VM 决定是否弹
@@ -266,14 +265,14 @@ private fun UpdateHost(vm: UpdateViewModel) {
         // 关于页手动检查失败：弹提示弹窗，点确认前往 GitHub Releases 网页
         if (uiState.showCheckFailedDialog && !rationaleShowing) {
             val titleRes = when (uiState.checkFailedReason) {
-                UpdateViewModel.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_title
-                UpdateViewModel.CheckFailedReason.NoApk -> R.string.update_check_no_apk_title
-                UpdateViewModel.CheckFailedReason.Generic -> R.string.update_check_failed_title
+                UpdateVM.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_title
+                UpdateVM.CheckFailedReason.NoApk -> R.string.update_check_no_apk_title
+                UpdateVM.CheckFailedReason.Generic -> R.string.update_check_failed_title
             }
             val messageRes = when (uiState.checkFailedReason) {
-                UpdateViewModel.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_message
-                UpdateViewModel.CheckFailedReason.NoApk -> R.string.update_check_no_apk_message
-                UpdateViewModel.CheckFailedReason.Generic -> R.string.update_check_failed_message
+                UpdateVM.CheckFailedReason.RateLimited -> R.string.update_check_rate_limited_message
+                UpdateVM.CheckFailedReason.NoApk -> R.string.update_check_no_apk_message
+                UpdateVM.CheckFailedReason.Generic -> R.string.update_check_failed_message
             }
             MyAlertDialog(
                 onDismissRequest = { vm.dismissCheckFailedDialog() },

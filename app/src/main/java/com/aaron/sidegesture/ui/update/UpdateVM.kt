@@ -9,8 +9,8 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ui.update.UpdateViewModel.UiEvent
-import com.aaron.sidegesture.ui.update.UpdateViewModel.UiState
+import com.aaron.sidegesture.ui.update.UpdateVM.UiEvent
+import com.aaron.sidegesture.ui.update.UpdateVM.UiState
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.update.ApkInstaller
 import com.aaron.sidegesture.utils.update.DownloadController
@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
  * @author aaronzzxup@gmail.com
  * @since 2026/6/18
  */
-class UpdateViewModel : BaseComposeVM<UiState, UiEvent>() {
+class UpdateVM : BaseComposeVM<UiState, UiEvent>() {
 
     override val initialState: UiState = UiState()
 

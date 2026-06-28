@@ -11,7 +11,6 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - DataStore Preferences
 - Accessibility Service
 - FastCompose
-- Android Gradle Plugin 8.13.2，Kotlin 2.0.20，Java 17
 
 ## 目录结构
 
@@ -48,7 +47,6 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 
 - 主进程承载 `MainActivity`、Compose UI、ViewModel 与用户配置交互。
 - 独立 `:service` 进程承载 `SideGestureService`，负责无障碍触摸监听和手势识别。
-- 主进程与服务进程通过 `SideGestureServiceProxy` 代理通信。
 - 用户配置通过 DataStore 持久化，文件名集中在 `DataStoreFiles.kt`。
 - Release 构建启用混淆，反射、序列化、无障碍相关类改动需检查 `app/proguard-rules.pro`。
 
@@ -59,6 +57,7 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 修改 DataStore 数据模型时，必须考虑旧配置兼容和默认值。
 - 修改 Compose UI 时，遵循现有 MVVM 分层，不把持久化或系统调用直接塞进 UI 组件。
 - Compose 页面默认遵循 `UDF` 单向数据流：`ViewModel` 输出 `UiState`，`UI` 负责渲染和派发事件，不反向持有一份等价业务状态。
+- Composable 函数内不写嵌套函数，保持 UI 结构清晰
 - UI 界面一般不持有状态；搜索态、筛选结果、加载态、弹窗显隐、权限分支、联动显示等页面状态，默认放进 `ViewModel` 的 `UiState` 统一管理。
 - ViewModel 实现类命名以 VM 结尾
 - `remember` / `rememberSaveable` 仅用于少量纯展示、瞬时、与业务无关的本地状态，例如焦点、滚动位置、动画展开态；只要状态会影响页面逻辑、数据派生、跨组件同步或保存行为，就上移到 `UiState`。

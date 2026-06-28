@@ -56,7 +56,7 @@ import com.aaron.sidegesture.utils.update.UpdateChecker
 @Composable
 fun UpdateDialog(
     localVersion: String,
-    state: UpdateViewModel.UiState,
+    state: UpdateVM.UiState,
     onDismissRequest: () -> Unit,
     onIgnore: () -> Unit,
     onConfirm: () -> Unit,
@@ -79,10 +79,10 @@ fun UpdateDialog(
                     shape = MaterialTheme.shapes.medium
                 )
         ) {
-            val isUpToDate = state.phase == UpdateViewModel.UpdatePhase.UpToDate
+            val isUpToDate = state.phase == UpdateVM.UpdatePhase.UpToDate
             val titleRes = when (state.phase) {
-                UpdateViewModel.UpdatePhase.UpToDate -> R.string.update_already_latest_title
-                UpdateViewModel.UpdatePhase.Failed -> R.string.update_download_failed_title
+                UpdateVM.UpdatePhase.UpToDate -> R.string.update_already_latest_title
+                UpdateVM.UpdatePhase.Failed -> R.string.update_download_failed_title
                 else -> R.string.update_available_title
             }
             Row(
@@ -147,29 +147,29 @@ fun UpdateDialog(
             )
 
             when (state.phase) {
-                UpdateViewModel.UpdatePhase.Downloading -> {
+                UpdateVM.UpdatePhase.Downloading -> {
                     DownloadingContent(progress = state.progress)
                     PrimaryButtonRow(
                         text = stringResource(id = R.string.update_move_to_background),
                         onClick = onMoveToBackground
                     )
                 }
-                UpdateViewModel.UpdatePhase.Downloaded -> {
+                UpdateVM.UpdatePhase.Downloaded -> {
                     PrimaryButtonRow(
                         text = stringResource(id = R.string.update_install_now),
                         onClick = onInstall
                     )
                 }
-                UpdateViewModel.UpdatePhase.Failed -> {
+                UpdateVM.UpdatePhase.Failed -> {
                     PrimaryButtonRow(
                         text = stringResource(id = R.string.update_retry),
                         onClick = onConfirm
                     )
                 }
-                UpdateViewModel.UpdatePhase.NewVersion -> {
+                UpdateVM.UpdatePhase.NewVersion -> {
                     ActionRow(onIgnore = onIgnore, onConfirm = onConfirm)
                 }
-                UpdateViewModel.UpdatePhase.UpToDate -> {
+                UpdateVM.UpdatePhase.UpToDate -> {
                     Spacer(modifier = Modifier.padding(ItemPadding))
                 }
             }

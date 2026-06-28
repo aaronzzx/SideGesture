@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.first
  * 检查更新逻辑（进程无关）：拉取 GitHub release → 写入跨进程缓存 [UpdateState]。
  *
  * 主进程启动 / 关于页手动检查 / `:service` 后台 ticker 都走这里，结果统一进缓存，
- * 由各自的呈现层（[com.aaron.sidegesture.ui.update.UpdateViewModel] / 通知）读取。
+ * 由各自的呈现层（[com.aaron.sidegesture.ui.update.UpdateVM] / 通知）读取。
  *
  * @author aaronzzxup@gmail.com
  * @since 2026/6/19
