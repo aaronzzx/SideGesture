@@ -109,7 +109,7 @@ fun SideGestureContainer(
 ) {
     val context = LocalContext.current
     val curOnAction by rememberUpdatedState(newValue = onAction)
-    val sideGestureState = rememberSideGestureState(buttons, advancedSettings, gestureSettings)
+    val sideGestureState = rememberSideGestureState(buttons, gestureSettings)
     val actionPanelState = rememberActionPanelState(
         windowModeSwitchDelayMs = advancedSettings.actionPanelAppSwitchWindowModeDelayMs
     )
@@ -562,19 +562,17 @@ fun SideGestureContainer(
 @Composable
 private fun rememberSideGestureState(
     buttons: List<GestureButton>,
-    advancedSettings: AdvancedSettings = AdvancedSettings(),
     gestureSettings: GestureSettings = GestureSettings()
 ): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    return remember(coroutineScope, buttons, advancedSettings, gestureSettings) {
-        SideGestureState(coroutineScope, buttons, advancedSettings, gestureSettings)
+    return remember(coroutineScope, buttons, gestureSettings) {
+        SideGestureState(coroutineScope, buttons, gestureSettings)
     }
 }
 
 class SideGestureState(
     private val coroutineScope: CoroutineScope,
     private val buttons: List<GestureButton>,
-    private val advancedSettings: AdvancedSettings = AdvancedSettings(),
     private val gestureSettings: GestureSettings = GestureSettings()
 ) {
 
@@ -610,13 +608,6 @@ class SideGestureState(
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
-    private val stickySlideValue = run {
-        val waveStyle = advancedSettings.animationStyles.value as? WaveStyle
-        if (waveStyle?.stickySlideEnabled == true) {
-            ConvertUtils.dp2px(36f) .toFloat()
-        } else 0f
-    }
-
     /**
      * 区分上下滑和侧滑，当可以触发侧滑时，即使后面触发方向变成上下滑也需要取消手势
      */
@@ -651,12 +642,12 @@ class SideGestureState(
 
             when (button.position) {
                 Position.Left, Position.Right -> {
-                    fingerXAnim.snapTo(getStickySlideValue(button, true))
+                    fingerXAnim.snapTo(0f)
                     fingerYAnim.snapTo(offset.y)
                 }
                 Position.Bottom -> {
                     fingerXAnim.snapTo(offset.x)
-                    fingerYAnim.snapTo(getStickySlideValue(button, false))
+                    fingerYAnim.snapTo(0f)
                 }
             }
         }
@@ -822,8 +813,8 @@ class SideGestureState(
         val longSlideAction = button.longSlideActions
         val originX = origin.x
         val originY = origin.y
-        val fingerX = finger.x + getStickySlideValue(button, true)
-        val fingerY = finger.y + getStickySlideValue(button, false)
+        val fingerX = finger.x
+        val fingerY = finger.y
         val triggerDirection = triggerDirection
 
         // 长按直接返回
@@ -954,17 +945,6 @@ class SideGestureState(
             Position.Bottom -> gestureSettings.angles.bottom
         }
         return angle.getTriggerDirection(degree.toFloat())
-    }
-
-    private fun getStickySlideValue(button: GestureButton, isX: Boolean): Float {
-        val stickySlideValue = stickySlideValue
-        if (isX) {
-            return when (button.position) {
-                Position.Left -> -stickySlideValue
-                else -> stickySlideValue
-            }
-        }
-        return stickySlideValue
     }
 }
 
