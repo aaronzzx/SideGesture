@@ -7,10 +7,10 @@ import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindow.Bounds
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
 import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsVM.UiState
-import com.aaron.sidegesture.miniwindow.RomDetector
-import com.aaron.sidegesture.miniwindow.RomType
+import com.aaron.sidegesture.platform.freeform.RomDetector
+import com.aaron.sidegesture.platform.freeform.RomType
 import com.aaron.sidegesture.utils.DataStoreHolder
-import com.aaron.sidegesture.utils.MiniWindowUtils
+import com.aaron.sidegesture.platform.freeform.MiniWindowUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest

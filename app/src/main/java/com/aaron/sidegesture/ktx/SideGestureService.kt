@@ -15,7 +15,7 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
-import com.aaron.sidegesture.ui.widget.GestureView
+import com.aaron.sidegesture.feature.gesture.GestureView
 import com.aaron.sidegesture.utils.MotionEventDispatcher
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.suspendCancellableCoroutine

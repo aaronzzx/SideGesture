@@ -26,8 +26,8 @@ import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.global.QuickToolItem
-import com.aaron.sidegesture.quicktools.quickToolIcon
-import com.aaron.sidegesture.quicktools.quickToolText
+import com.aaron.sidegesture.feature.quicktools.quickToolIcon
+import com.aaron.sidegesture.feature.quicktools.quickToolText
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
 import com.aaron.sidegesture.ui.theme.ItemPadding

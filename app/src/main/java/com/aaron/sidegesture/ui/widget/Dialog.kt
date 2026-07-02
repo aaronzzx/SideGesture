@@ -66,7 +66,7 @@ import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoWechatScan
 import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shizukuStatusSummary
-import com.aaron.sidegesture.shizuku.ShellResult
+import com.aaron.sidegesture.platform.shell.ShellResult
 import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent

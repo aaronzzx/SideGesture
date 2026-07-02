@@ -10,7 +10,7 @@ import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.isAccessibilitySettingsOn
 import com.aaron.sidegesture.ktx.isIgnoringBatteryOptimizations
-import com.aaron.sidegesture.shizuku.ShizukuShellManager
+import com.aaron.sidegesture.platform.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiState
 import com.aaron.sidegesture.utils.BackupHelper

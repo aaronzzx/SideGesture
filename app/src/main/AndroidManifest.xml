@@ -57,7 +57,7 @@
         </activity>
 
         <activity
-            android:name=".MiniWindowShareProxyActivity"
+            android:name=".platform.freeform.MiniWindowShareProxyActivity"
             android:exported="true"
             android:clearTaskOnLaunch="true"
             android:excludeFromRecents="true"
@@ -88,7 +88,7 @@
         </service>
 
         <service
-            android:name=".quicktools.QuickToolsNotificationListenerService"
+            android:name=".feature.quicktools.QuickToolsNotificationListenerService"
             android:exported="true"
             android:label="@string/quick_tools_settings"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
@@ -98,7 +98,7 @@
         </service>
 
         <service
-            android:name=".utils.update.DownloadService"
+            android:name=".feature.update.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 

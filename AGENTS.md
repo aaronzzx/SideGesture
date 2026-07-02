@@ -15,13 +15,15 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 ## 目录结构
 
 - `app/src/main/java/com/aaron/sidegesture/`：应用主代码
+- `feature/`：具体业务功能模块，例如快捷启动、快速工具、截图、任务切换、更新、手势运行时、动作面板和移屏
+- `platform/`：系统能力、厂商/ROM 适配、Shizuku、shell、设备能力等底层接入
 - `ui/screen/`：页面级 Compose 与对应业务入口
-- `ui/widget/`：可复用 Compose 组件
+- `ui/widget/`：可复用 Compose 组件，不放具体业务运行时容器
 - `ui/theme/`：主题、颜色、样式
 - `entity/`：手势、动作、配置等数据模型
 - `defaults/`：默认配置与 DataStore 文件定义
 - `constant/`：常量定义
-- `utils/`：系统能力、无障碍、震动、备份等工具
+- `utils/`：通用工具和跨模块辅助，不承载完整业务模块或平台能力
 - `gradle/libs.versions.toml`：依赖版本集中管理
 
 ## 构建与验证
@@ -88,6 +90,8 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 ## 新目录约定
 
 - 新功能目录先明确职责边界，再放代码。
+- 具体业务功能默认放 `feature/<feature>/`，不要放在根包第一层。
+- 系统能力、ROM 适配、Shizuku、shell 等底层接入默认放 `platform/<capability>/`。
 - 页面级功能放 `ui/screen/<feature>/` 或遵循现有同类结构。
 - 可复用 UI 放 `ui/widget/`，不要和具体业务强耦合。
-- 通用系统能力放 `utils/`，领域模型放 `entity/`，默认值放 `defaults/`。
+- 通用工具和跨模块辅助放 `utils/`，系统能力、ROM 适配、Shizuku、shell 等底层接入放 `platform/`，领域模型放 `entity/`，默认值放 `defaults/`。

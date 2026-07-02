@@ -15,7 +15,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.SideGestureApp
-import com.aaron.sidegesture.ui.update.UpdateVM
+import com.aaron.sidegesture.feature.update.ui.UpdateVM
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

@@ -1,6 +1,6 @@
 package com.aaron.sidegesture.ktx
 
-import com.aaron.sidegesture.ui.widget.ActionPanelState
+import com.aaron.sidegesture.feature.actionpanel.ActionPanelState
 
 /**
  * @author DS-Z

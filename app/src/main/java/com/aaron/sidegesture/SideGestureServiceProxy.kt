@@ -44,12 +44,12 @@ import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
-import com.aaron.sidegesture.shizuku.ShellResult
-import com.aaron.sidegesture.ui.widget.ActionPanelState.TriggerType
+import com.aaron.sidegesture.platform.shell.ShellResult
+import com.aaron.sidegesture.feature.actionpanel.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.FlashlightController
 import com.aaron.sidegesture.utils.JsonHelper
-import com.aaron.sidegesture.utils.ShellActionExecutor
+import com.aaron.sidegesture.platform.shell.ShellActionExecutor
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.BarUtils

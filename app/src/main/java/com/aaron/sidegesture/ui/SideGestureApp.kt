@@ -72,13 +72,13 @@ import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsScre
 import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
-import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
-import com.aaron.sidegesture.ui.update.UpdateDialog
-import com.aaron.sidegesture.ui.update.UpdateVM
-import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
+import com.aaron.sidegesture.feature.update.ui.NotificationPermissionDialog
+import com.aaron.sidegesture.feature.update.ui.UpdateDialog
+import com.aaron.sidegesture.feature.update.ui.UpdateVM
+import com.aaron.sidegesture.feature.update.ui.rememberNotificationPermissionRequest
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.utils.AboutUtils
-import com.aaron.sidegesture.utils.update.UpdateChecker
+import com.aaron.sidegesture.feature.update.UpdateChecker
 import kotlin.reflect.KType
 
 /**

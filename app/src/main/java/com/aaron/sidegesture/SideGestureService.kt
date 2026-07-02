@@ -55,13 +55,13 @@ import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
-import com.aaron.sidegesture.screenshot.PinnedScreenshotManager
+import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
-import com.aaron.sidegesture.ui.widget.SideGestureContainer
+import com.aaron.sidegesture.feature.gesture.SideGestureContainer
 import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
-import com.aaron.sidegesture.utils.update.UpdateNotifications
-import com.aaron.sidegesture.utils.update.UpdateRepository
+import com.aaron.sidegesture.feature.update.UpdateNotifications
+import com.aaron.sidegesture.feature.update.UpdateRepository
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

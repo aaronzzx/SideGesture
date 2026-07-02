@@ -2,7 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import android.content.Context
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.shizuku.ShizukuShellManager
+import com.aaron.sidegesture.platform.shizuku.ShizukuShellManager
 
 fun Context.shizukuStatusLabel(status: ShizukuShellManager.ShizukuStatus): String {
     return when {

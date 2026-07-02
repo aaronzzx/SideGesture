@@ -21,8 +21,8 @@ import com.aaron.sidegesture.entity.ShellCommandActionData
 import com.aaron.sidegesture.entity.TriggerDirection
 import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.event.QuickLauncherConfigEvent
-import com.aaron.sidegesture.miniwindow.RomDetector
-import com.aaron.sidegesture.miniwindow.RomType
+import com.aaron.sidegesture.platform.freeform.RomDetector
+import com.aaron.sidegesture.platform.freeform.RomType
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
@@ -33,8 +33,8 @@ import com.aaron.sidegesture.ktx.quickLauncherActionData
 import com.aaron.sidegesture.ktx.shellCommandActionData
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.subscribeEvent
-import com.aaron.sidegesture.shizuku.ShellResult
-import com.aaron.sidegesture.shizuku.ShizukuShellManager
+import com.aaron.sidegesture.platform.shell.ShellResult
+import com.aaron.sidegesture.platform.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState
 import com.aaron.sidegesture.utils.AppInfoUtils
@@ -42,7 +42,7 @@ import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.PinyinSearchUtils
-import com.aaron.sidegesture.utils.ShellActionExecutor
+import com.aaron.sidegesture.platform.shell.ShellActionExecutor
 import com.aaron.sidegesture.utils.ShortcutUtils
 import com.blankj.utilcode.util.FileUtils
 import kotlinx.coroutines.Dispatchers

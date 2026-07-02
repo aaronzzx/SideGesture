@@ -39,8 +39,8 @@ import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.SectionPadding
-import com.aaron.sidegesture.ui.update.NotificationPermissionDialog
-import com.aaron.sidegesture.ui.update.rememberNotificationPermissionRequest
+import com.aaron.sidegesture.feature.update.ui.NotificationPermissionDialog
+import com.aaron.sidegesture.feature.update.ui.rememberNotificationPermissionRequest
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton

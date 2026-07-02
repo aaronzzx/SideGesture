@@ -21,7 +21,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.global.ActionSettings
-import com.aaron.sidegesture.utils.MiniWindowUtils
+import com.aaron.sidegesture.platform.freeform.MiniWindowUtils
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.AppUtils
