@@ -33,10 +33,25 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.composeaccessibility.ComponentAccessibilityService
+import com.aaron.sidegesture.action.ActionManager
+import com.aaron.sidegesture.action.ActionRequest
+import com.aaron.sidegesture.action.ForegroundAppAware
+import com.aaron.sidegesture.action.handler.AppActionHandler
+import com.aaron.sidegesture.action.handler.DeviceActionHandler
+import com.aaron.sidegesture.action.handler.HideGestureButtonActionHandler
+import com.aaron.sidegesture.action.handler.MediaActionHandler
+import com.aaron.sidegesture.action.handler.MoveScreenActionHandler
+import com.aaron.sidegesture.action.handler.PaymentActionHandler
+import com.aaron.sidegesture.action.handler.QuickLauncherActionHandler
+import com.aaron.sidegesture.action.handler.QuickToolsActionHandler
+import com.aaron.sidegesture.action.handler.ScrollActionHandler
+import com.aaron.sidegesture.action.handler.ShellActionHandler
+import com.aaron.sidegesture.action.handler.SmartScreenshotActionHandler
+import com.aaron.sidegesture.action.handler.SystemActionHandler
+import com.aaron.sidegesture.action.handler.TaskSwitcherActionHandler
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
-import com.aaron.sidegesture.entity.RecentTask
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
@@ -84,8 +99,6 @@ import kotlinx.coroutines.launch
  */
 class SideGestureService : ComponentAccessibilityService() {
 
-    private val proxy = SideGestureServiceProxy(this)
-
     private val imeInsetObserver = ImeInsetObserver()
     private var mainView: View? = null
     private var buttonViews: List<View>? = null
@@ -103,13 +116,32 @@ class SideGestureService : ComponentAccessibilityService() {
     private val hiddenButtonUntil = mutableMapOf<String, Long>()
 
     private var volumeButtonSwitchSongJob: Job? = null
-    private val _overlaysDismissSignal = MutableStateFlow(0)
     private val _taskSwitcherLockedPackages = MutableStateFlow(emptySet<String>())
 
     val coroutineScope = MainScope()
-    val overlaysDismissSignal: StateFlow<Int> = _overlaysDismissSignal.asStateFlow()
     val taskSwitcherLockedPackages: StateFlow<Set<String>> = _taskSwitcherLockedPackages.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
+
+    private val actionManager by lazy {
+        ActionManager(
+            handlers = listOf(
+                SystemActionHandler(this),
+                MediaActionHandler(this),
+                DeviceActionHandler(this),
+                AppActionHandler(this),
+                PaymentActionHandler(this),
+                ScrollActionHandler(this),
+                ShellActionHandler(this),
+                HideGestureButtonActionHandler(this),
+                TaskSwitcherActionHandler(this),
+                QuickLauncherActionHandler(this),
+                QuickToolsActionHandler(this),
+                SmartScreenshotActionHandler(this),
+                MoveScreenActionHandler(this)
+            ),
+            coroutineScope = coroutineScope
+        )
+    }
 
     var initialSettings: InitialSettings? = null
         private set
@@ -148,13 +180,21 @@ class SideGestureService : ComponentAccessibilityService() {
             orientation = newConfig.orientation
             screenWidthDp = newConfig.screenWidthDp
             screenHeightDp = newConfig.screenHeightDp
+            actionManager.dismissOverlays()
             updateLayout()
             pinnedScreenshotManager.onEnvironmentChanged(currentButtons)
         }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        proxy.onAccessibilityEvent(event)
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            actionManager.onForegroundAppChanged(
+                ForegroundAppAware.Snapshot(
+                    packageName = event.packageName?.toString(),
+                    className = event.className?.toString()
+                )
+            )
+        }
         when (event?.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 imeInsetObserver.recompute()
@@ -211,9 +251,9 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onDestroy() {
+        actionManager.dismissOverlays()
         super.onDestroy()
         coroutineScope.cancel()
-        proxy.onRelease()
         pinnedScreenshotManager.release()
         unregisterReceiver(screenLockReceiver)
         unregisterReceiver(wallpaperChangedReceiver)
@@ -257,15 +297,6 @@ class SideGestureService : ComponentAccessibilityService() {
                         val imePadding by imeInsetObserver
                             .flow
                             .collectAsStateWithLifecycle()
-                        val actionSettings by DataStoreHolder
-                            .actionSettings
-                            .data
-                            .collectAsStateWithLifecycle(initialValue = ActionSettings())
-                        val taskSwitcherLockedPackages by this@SideGestureService
-                            .taskSwitcherLockedPackages
-                            .collectAsStateWithLifecycle(initialValue = emptySet())
-                        val overlaysDismissSignal by this@SideGestureService.overlaysDismissSignal
-                            .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
                             buttons = sideButtons + bottomButtons,
@@ -275,15 +306,10 @@ class SideGestureService : ComponentAccessibilityService() {
                                 else -> null
                             },
                             actionPanelStyle = advancedSettings.actionPanelStyles.value,
-                            onAction = { action ->
-                                proxy.onAction(action)
-                            },
-                            onOverlayTouchChange = ::setOverlayTouchEnabled,
-                            actionSettings = actionSettings,
+                            onActionRequest = actionManager::submit,
+                            onDismissOverlays = actionManager::dismissOverlays,
                             advancedSettings = advancedSettings,
-                            gestureSettings = gestureSettings,
-                            taskSwitcherLockedPackages = taskSwitcherLockedPackages,
-                            overlaysDismissSignal = overlaysDismissSignal
+                            gestureSettings = gestureSettings
                         )
                     }
                 }
@@ -531,19 +557,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     fun performAction(action: Action) {
-        proxy.onAction(action)
-    }
-
-    suspend fun queryRecentTasks(): List<RecentTask> {
-        return proxy.queryRecentTasks()
-    }
-
-    suspend fun closeRecentTask(packageName: String): Boolean {
-        return proxy.closeRecentTask(packageName)
-    }
-
-    fun switchToRecentTask(packageName: String) {
-        proxy.switchToRecentTask(packageName)
+        actionManager.submit(ActionRequest(action))
     }
 
     fun toggleTaskSwitcherLock(packageName: String): Boolean {
@@ -558,15 +572,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     fun dismissActionOverlays() {
-        _overlaysDismissSignal.value++
-    }
-
-    fun setOverlayTouchEnabled(enabled: Boolean) {
-        val mainView = mainView ?: return
-        val lp = (mainView.layoutParams as WindowManager.LayoutParams).apply {
-            setFlags(enabled)
-        }
-        updateLayout(mainView, lp)
+        actionManager.dismissOverlays()
     }
 
     private companion object {

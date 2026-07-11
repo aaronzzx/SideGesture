@@ -34,19 +34,23 @@ class TaskSwitcherActionHandler(
 
     private val state = TaskSwitcherPanelState()
     private var window: View? = null
+    private var requestVersion = 0L
 
     override suspend fun handle(request: ActionRequest) {
         val context = request.actionContext ?: return
         val anchor = context.anchor ?: return
         val edge = context.button?.position ?: Position.Left
+        val version = ++requestVersion
         state.hide()
         val tasks = queryRecentTasks()
+        if (version != requestVersion) return
         if (tasks.isEmpty()) return
         ensureWindow()
         state.show(tasks, anchor, edge)
     }
 
     override fun onDismiss() {
+        requestVersion++
         state.hide()
         window?.let(service::removeWindow)
         window = null

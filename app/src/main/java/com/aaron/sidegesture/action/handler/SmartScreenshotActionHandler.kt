@@ -38,15 +38,22 @@ class SmartScreenshotActionHandler(
 
     private val state = SmartScreenshotState()
     private var window: View? = null
+    private var requestVersion = 0L
 
     override suspend fun handle(request: ActionRequest) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             showVersionTooLowToast(service, R.string.action_smart_screenshot)
             return
         }
+        val version = ++requestVersion
         state.startCapture()
         delay(500)
+        if (version != requestVersion) return
         val screenshot = service.takeScreenshot()
+        if (version != requestVersion) {
+            screenshot?.recycle()
+            return
+        }
         if (screenshot == null) {
             onDismiss()
             showToast(R.string.screenshot_capture_failed)
@@ -57,6 +64,7 @@ class SmartScreenshotActionHandler(
     }
 
     override fun onDismiss() {
+        requestVersion++
         state.dismiss()
         state.cancelCapture()
         window?.let(service::removeWindow)

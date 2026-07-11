@@ -223,7 +223,7 @@ fun CrosshairScreen(
 
 /**
  * 狙击镜准星：外圈圆环 + 中心点 + 四向断口十字。准星不做边界限制，跟随目标自由移动
- * (越界时自然移出屏幕，实际点击的越界拦截由 SideGestureServiceProxy 校验)。
+ * (越界时自然移出屏幕，实际点击的越界拦截由 MoveScreenActionHandler 校验)。
  */
 private fun DrawScope.drawSniperReticle(center: Offset) {
     val radius = 22.dp.toPx()
