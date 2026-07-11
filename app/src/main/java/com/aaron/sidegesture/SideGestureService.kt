@@ -68,6 +68,7 @@ import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
+import com.aaron.sidegesture.feature.gesture.GestureWindowManager
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.feature.gesture.SideGestureContainer
 import com.aaron.sidegesture.utils.Events
@@ -94,21 +95,11 @@ import kotlinx.coroutines.launch
 class SideGestureService : ComponentAccessibilityService() {
 
     private val imeInsetObserver = ImeInsetObserver()
-    private var mainView: View? = null
-    private var buttonViews: List<View>? = null
     private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
     private var screenWidthDp = Resources.getSystem().configuration.screenWidthDp
     private var screenHeightDp = Resources.getSystem().configuration.screenHeightDp
 
     private var isNowInLockScreenPage = false
-    private var currentButtons: List<GestureButton> = emptyList()
-
-    /**
-     * 「隐藏触钮」动作的冷却截止时间（uptimeMillis），key 见 [buttonKey]。
-     * 冷却期内即使收到高频窗口事件，[updateGestureButtons] 也强制保持触钮不可触摸。
-     */
-    private val hiddenButtonUntil = mutableMapOf<String, Long>()
-
     private var volumeButtonSwitchSongJob: Job? = null
     private val _taskSwitcherLockedPackages = MutableStateFlow(emptySet<String>())
 
@@ -117,7 +108,22 @@ class SideGestureService : ComponentAccessibilityService() {
     val taskSwitcherLockedPackages: StateFlow<Set<String>> = _taskSwitcherLockedPackages.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
-    private val actionManager by lazy {
+    private val gestureWindowManager: GestureWindowManager by lazy {
+        GestureWindowManager(
+            service = this,
+            scope = coroutineScope,
+            settingsStore = settingsStore,
+            imePadding = imeInsetObserver.flow,
+            isScreenLocked = { isNowInLockScreenPage },
+            isLauncherForeground = ::nowInLauncher,
+            currentPackageName = ::getCurrentPackageName,
+            onActionRequest = { actionManager.submit(it) },
+            onDismissActionOverlays = { actionManager.dismissOverlays() },
+            onButtonsChanged = { pinnedScreenshotManager.onEnvironmentChanged(it) }
+        )
+    }
+
+    private val actionManager: ActionManager by lazy {
         ActionManager(
             handlers = listOf(
                 SystemActionHandler(this),
@@ -127,7 +133,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 PaymentActionHandler(this),
                 ScrollActionHandler(this, settingsStore),
                 ShellActionHandler(this),
-                HideGestureButtonActionHandler(this),
+                HideGestureButtonActionHandler(gestureWindowManager),
                 TaskSwitcherActionHandler(this),
                 QuickLauncherActionHandler(this),
                 QuickToolsActionHandler(this, settingsStore),
@@ -153,7 +159,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 isNowInLockScreenPage = false
                 pinnedScreenshotManager.setScreenLocked(false)
             }
-            updateGestureButtons()
+            gestureWindowManager.refreshVisibility()
         }
     }
 
@@ -167,8 +173,8 @@ class SideGestureService : ComponentAccessibilityService() {
             screenWidthDp = newConfig.screenWidthDp
             screenHeightDp = newConfig.screenHeightDp
             actionManager.dismissOverlays()
-            updateLayout()
-            pinnedScreenshotManager.onEnvironmentChanged(currentButtons)
+            gestureWindowManager.onConfigurationChanged()
+            pinnedScreenshotManager.onEnvironmentChanged(settingsStore.buttons.value)
         }
     }
 
@@ -184,11 +190,11 @@ class SideGestureService : ComponentAccessibilityService() {
         when (event?.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 imeInsetObserver.recompute()
-                updateGestureButtons()
+                gestureWindowManager.refreshVisibility()
             }
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
                 imeInsetObserver.recompute()
-                updateGestureButtons()
+                gestureWindowManager.refreshVisibility()
             }
         }
     }
@@ -239,6 +245,7 @@ class SideGestureService : ComponentAccessibilityService() {
     override fun onDestroy() {
         actionManager.dismissOverlays()
         super.onDestroy()
+        gestureWindowManager.release()
         coroutineScope.cancel()
         pinnedScreenshotManager.release()
         unregisterReceiver(screenLockReceiver)
@@ -251,70 +258,7 @@ class SideGestureService : ComponentAccessibilityService() {
         registerWallpaperChangedReceiver()
         registerImeInsetObserver()
         registerUpdateChecker()
-
-        val mainView = mainView
-        if (mainView != null) {
-            removeWindow(mainView)
-        }
-        this.mainView = attachComposeOverlay {
-            var key by remember { mutableStateOf(Any()) }
-            SubscribeEvent(eventClass = WallpaperChangedEvent::class) {
-                key = Any()
-            }
-            key(key) {
-                SideGestureTheme {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        val buttons by settingsStore.buttons.collectAsStateWithLifecycle()
-                        val advancedSettings by settingsStore.advancedSettings.collectAsStateWithLifecycle()
-                        val gestureSettings by settingsStore.gestureSettings.collectAsStateWithLifecycle()
-                        val imePadding by imeInsetObserver
-                            .flow
-                            .collectAsStateWithLifecycle()
-                        SideGestureContainer(
-                            modifier = Modifier.matchParentSize(),
-                            buttons = buttons,
-                            imePadding = imePadding,
-                            animationStyle = when (advancedSettings.animationStyles.isAnimationEnabled) {
-                                true -> advancedSettings.animationStyles.value
-                                else -> null
-                            },
-                            actionPanelStyle = advancedSettings.actionPanelStyles.value,
-                            onActionRequest = actionManager::submit,
-                            onDismissOverlays = actionManager::dismissOverlays,
-                            advancedSettings = advancedSettings,
-                            gestureSettings = gestureSettings
-                        )
-                    }
-                }
-            }
-        }
-
-        coroutineScope.launch(Dispatchers.Main.immediate) {
-            // 监听触钮修改
-            launch {
-                settingsStore.buttons
-                    .collectLatest { buttons ->
-                        currentButtons = buttons
-                        val buttonViews = buttonViews
-                        if (buttonViews != null) {
-                            removeWindows(buttonViews)
-                        }
-                        this@SideGestureService.buttonViews = attachGestureButtons(buttons)
-                        pinnedScreenshotManager.onEnvironmentChanged(buttons)
-                        updateGestureButtons()
-                    }
-            }
-            // 监听手势开关
-            launch {
-                settingsStore.initialSettings
-                    .distinctUntilChangedBy {
-                        it.gestureEnabled
-                    }
-                    .collectLatest {
-                        updateGestureButtons()
-                    }
-            }
-        }
+        gestureWindowManager.startOrReattach()
     }
 
     private fun registerScreenLockReceiver() {
@@ -334,11 +278,6 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private fun registerImeInsetObserver() {
         coroutineScope.launch {
-            launch {
-                imeInsetObserver.flow.collectLatest {
-                    updateGestureButtons()
-                }
-            }
             launch {
                 settingsStore.advancedSettings
                     .distinctUntilChangedBy {
@@ -383,91 +322,6 @@ class SideGestureService : ComponentAccessibilityService() {
         }
     }
 
-    private fun updateLayout() {
-        val mainView = mainView
-        if (mainView != null) {
-            val lp = (mainView.layoutParams as WindowManager.LayoutParams).apply {
-                updateMainView()
-            }
-            updateLayout(mainView, lp)
-        }
-        updateGestureButtons()
-    }
-
-    private fun updateGestureButtons() {
-        coroutineScope.launch {
-            val advancedSettings = settingsStore.advancedSettings.value
-            val buttonViews = buttonViews
-            buttonViews?.forEach { view ->
-                val button = view.tag as? GestureButton ?: return@forEach
-                val lp = (view.layoutParams as WindowManager.LayoutParams).apply {
-                    updateGestureButton(button)
-                    if (button.position != Position.Bottom) {
-                        val imePadding = imeInsetObserver.flow.value
-                        y += -imePadding
-                    }
-
-                    val initialSettings = settingsStore.initialSettings.value
-                    if (isButtonHidden(button)) {
-                        setFlags(false)
-                    } else if (!initialSettings.gestureEnabled) {
-                        setFlags(false)
-                    } else {
-                        if (advancedSettings.hideLandscape && ScreenUtils.isLandscape()) {
-                            setFlags(false)
-                        } else if (advancedSettings.hideHomeScreen && nowInLauncher()) {
-                            setFlags(false)
-                        } else if (advancedSettings.hideScreenLock && isNowInLockScreenPage) {
-                            setFlags(false)
-                        } else if (getCurrentPackageName() in advancedSettings.excludeApps) {
-                            setFlags(false)
-                        } else {
-                            setFlags(button.enabled)
-                        }
-                    }
-                }
-                updateLayout(view, lp)
-            }
-        }
-    }
-
-    fun hideGestureButton(button: GestureButton?) {
-        val until = SystemClock.uptimeMillis() + HIDE_GESTURE_BUTTON_DURATION_MS
-        buttonViews?.forEach { view ->
-            val tag = view.tag as? GestureButton ?: return@forEach
-            val matched = if (button != null) {
-                tag.id == button.id && tag.position == button.position
-            } else {
-                true
-            }
-            if (!matched) return@forEach
-
-            hiddenButtonUntil[buttonKey(tag)] = until
-            val lp = view.layoutParams as WindowManager.LayoutParams
-            lp.setFlags(false)
-            updateLayout(view, lp)
-            view.postDelayed(HIDE_GESTURE_BUTTON_DURATION_MS) {
-                updateGestureButtons()
-            }
-        }
-    }
-
-    private fun buttonKey(button: GestureButton): String = "${button.id}|${button.position}"
-
-    /**
-     * 该触钮是否仍处于「隐藏触钮」冷却期。冷却期内 [updateGestureButtons] 强制保持不可触摸，
-     * 避免高频窗口事件（[onAccessibilityEvent]）把刚设的 NOT_TOUCHABLE 冲掉。过期顺手清理。
-     */
-    private fun isButtonHidden(button: GestureButton): Boolean {
-        val key = buttonKey(button)
-        val until = hiddenButtonUntil[key] ?: return false
-        if (SystemClock.uptimeMillis() < until) {
-            return true
-        }
-        hiddenButtonUntil.remove(key)
-        return false
-    }
-
     fun getCurrentPackageName(): String {
         return rootInActiveWindow?.packageName?.toString() ?: ""
     }
@@ -509,8 +363,6 @@ class SideGestureService : ComponentAccessibilityService() {
         // 后台检查 ticker 醒来间隔；是否真正发起请求仍由 24h shouldCheck 决定
         const val UPDATE_CHECK_TICK_INTERVAL_MS = 30 * 60 * 1000L
 
-        // 「隐藏触钮」动作触发后强制不可触摸的冷却时长，到点走 updateGestureButtons 重算恢复
-        const val HIDE_GESTURE_BUTTON_DURATION_MS = 1000L
     }
 
     private inner class ImeInsetObserver {
