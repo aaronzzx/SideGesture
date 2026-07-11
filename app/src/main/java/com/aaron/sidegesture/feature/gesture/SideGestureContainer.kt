@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -24,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -96,8 +94,6 @@ import kotlin.math.hypot
  * @since 2024/11/15
  */
 
-private const val SystemScreenshotOverlaySettleFrameCount = 2
-
 @Composable
 fun SideGestureContainer(
     onAction: (Action) -> Unit,
@@ -128,8 +124,6 @@ fun SideGestureContainer(
     val taskSwitcherState = rememberTaskSwitcherPanelState()
     val smartScreenshotState = remember { SmartScreenshotState() }
     val coroutineScope = rememberCoroutineScope()
-    var hideSystemScreenshotOverlays by remember { mutableStateOf(false) }
-    var pendingSmartScreenshotAfterActionPanelHidden by remember { mutableStateOf(false) }
     var taskSwitcherQueryJob by remember { mutableStateOf<Job?>(null) }
 
 
@@ -149,7 +143,6 @@ fun SideGestureContainer(
             //endregion
 
             //region 智能截图
-            pendingSmartScreenshotAfterActionPanelHidden = false
             smartScreenshotState.dismiss()
             smartScreenshotState.cancelCapture()
             onOverlayTouchChange(false)
@@ -157,21 +150,8 @@ fun SideGestureContainer(
         }
     }
 
-    suspend fun takeCleanSystemScreenshot(service: SideGestureService): Bitmap? {
-        hideSystemScreenshotOverlays = true
-        return try {
-            repeat(SystemScreenshotOverlaySettleFrameCount) {
-                withFrameNanos { }
-            }
-            service.takeScreenshot()
-        } finally {
-            hideSystemScreenshotOverlays = false
-        }
-    }
-
     fun startSmartScreenshotCapture() {
         quickToolsState.hide()
-        hideSystemScreenshotOverlays = true
         smartScreenshotState.startCapture()
     }
 
@@ -179,7 +159,6 @@ fun SideGestureContainer(
         action: Action,
         finger: Offset,
         position: Position?,
-        waitActionPanelHidden: Boolean = false,
         button: GestureButton? = null
     ) {
         if (action == Action.NONE) {
@@ -199,11 +178,7 @@ fun SideGestureContainer(
                 sideGestureState.cancel()
                 return
             }
-            if (waitActionPanelHidden) {
-                pendingSmartScreenshotAfterActionPanelHidden = true
-            } else {
-                startSmartScreenshotCapture()
-            }
+            startSmartScreenshotCapture()
             return
         }
         if (action.value == GlobalActions.TASK_SWITCHER) {
@@ -279,10 +254,6 @@ fun SideGestureContainer(
                                 sideGestureState.cancel()
                                 return@onDrag
                             }
-                            // 放大镜样式需先截屏，隐藏自身浮层；准星样式不截屏，跳过
-                            if (!moveScreenCrosshair) {
-                                hideSystemScreenshotOverlays = true
-                            }
                             moveScreenState.onDragStart(sideGestureState.finger)
                             sideGestureState.cancel()
                         } else {
@@ -305,13 +276,14 @@ fun SideGestureContainer(
                 val actionPanelFinger = actionPanelState.finger
                 val actionPanelPosition = actionPanelState.position
                 val actionPanelButton = actionPanelState.button
-                val action = actionPanelState.done()
+                val action = actionPanelState.done(
+                    advancedSettings.actionPanelAppLongPressLaunchPopup
+                )
                 actionPanelState.onDragEnd()
                 handleAction(
                     action = action,
                     finger = actionPanelFinger,
                     position = actionPanelPosition,
-                    waitActionPanelHidden = true,
                     button = actionPanelButton
                 )
             }
@@ -350,7 +322,8 @@ fun SideGestureContainer(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && smartScreenshotState.isCapturing) {
             LaunchedEffect(smartScreenshotState.isCapturing) {
                 val service = context as SideGestureService
-                val screenshot = takeCleanSystemScreenshot(service)
+                delay(500)
+                val screenshot = service.takeScreenshot()
                 if (screenshot == null) {
                     smartScreenshotState.cancelCapture()
                     showToast(R.string.screenshot_capture_failed)
@@ -369,12 +342,12 @@ fun SideGestureContainer(
                 )
             } else {
                 // 放大镜样式(需 Android 11+ 截屏)
-                val moveScreenScreenshotState: State<Bitmap?> = produceState<Bitmap?>(null) {
+                val moveScreenScreenshotState = produceState<Bitmap?>(null) {
                     val service = context as SideGestureService
-                    value = takeCleanSystemScreenshot(service)
+                    value = service.takeScreenshot()
                 }
                 val screenshot = moveScreenScreenshotState.value
-                if (screenshot != null && !hideSystemScreenshotOverlays) {
+                if (screenshot != null) {
                     MoveScreen(
                         modifier = Modifier.matchParentSize(),
                         screenshot = screenshot,
@@ -539,23 +512,15 @@ fun SideGestureContainer(
             }
         )
 
-        if (!hideSystemScreenshotOverlays) {
-            ActionPanel(
-                actionPanelStyle = actionPanelStyle,
-                actionPanelState = actionPanelState,
-                modifier = Modifier.matchParentSize(),
-                longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
-                vibrations = gestureSettings.vibrations,
-                onHidden = {
-                    if (pendingSmartScreenshotAfterActionPanelHidden) {
-                        pendingSmartScreenshotAfterActionPanelHidden = false
-                        startSmartScreenshotCapture()
-                    }
-                }
-            )
-        }
+        ActionPanel(
+            actionPanelStyle = actionPanelStyle,
+            actionPanelState = actionPanelState,
+            modifier = Modifier.matchParentSize(),
+            longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup,
+            vibrations = gestureSettings.vibrations
+        )
 
-        if (animationStyle != null && !hideSystemScreenshotOverlays) {
+        if (animationStyle != null) {
             GestureAnimation(
                 modifier = Modifier.matchParentSize(),
                 animationStyle = animationStyle,

@@ -11,10 +11,8 @@ import com.aaron.sidegesture.constant.GestureActionsDefaults.Down
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up2
-import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 /**
  * @author aaronzzxup@gmail.com
@@ -41,10 +39,7 @@ data class GestureActions(
 @Keep
 data class Action(
     val value: String = ActionValue,
-    val data: String = "",
-    @IgnoredOnParcel
-    @Transient
-    val extra: Any? = null
+    val data: String = ""
 ) : Parcelable {
     companion object {
         val NONE: Action get() = ActionNone

@@ -33,7 +33,6 @@ import com.aaron.sidegesture.ktx.gotoAlipayScan
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.gotoWechat
 import com.aaron.sidegesture.ktx.gotoWechatScan
-import com.aaron.sidegesture.ktx.isMiniWindow
 import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
 import com.aaron.sidegesture.ktx.launchAssist
@@ -45,7 +44,6 @@ import com.aaron.sidegesture.ktx.toggleMute
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.platform.shell.ShellResult
-import com.aaron.sidegesture.feature.actionpanel.ActionPanelState.TriggerType
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.FlashlightController
 import com.aaron.sidegesture.utils.JsonHelper
@@ -317,22 +315,16 @@ class SideGestureServiceProxy(private val host: SideGestureService) {
                 gotoAlipayPayCode()
             }
             GlobalActions.EXTRA_LAUNCH_APP -> {
-                val advancedSettings = advancedSettings ?: return
                 val appInfo = action.appInfo
                 if (appInfo != null) {
-                    val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
-                    val triggerType = action.extra as? TriggerType
-                    val miniWindow = triggerType?.isMiniWindow(!appInfo.miniWindow && longPressLaunchPopup) ?: false
+                    val miniWindow = appInfo.miniWindow
                     launchAppInfo(appInfo, miniWindow, actionSettings?.miniWindow ?: ActionSettings.MiniWindow())
                 }
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> {
-                val advancedSettings = advancedSettings ?: return
                 val shortcutInfo = action.shortcutInfo
                 if (shortcutInfo != null) {
-                    val longPressLaunchPopup = advancedSettings.actionPanelAppLongPressLaunchPopup
-                    val triggerType = action.extra as? TriggerType
-                    val miniWindow = triggerType?.isMiniWindow(!shortcutInfo.miniWindow && longPressLaunchPopup) ?: false
+                    val miniWindow = shortcutInfo.miniWindow
                     launchShortcutInfo(shortcutInfo, miniWindow, actionSettings?.miniWindow ?: ActionSettings.MiniWindow())
                 }
             }

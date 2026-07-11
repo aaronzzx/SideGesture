@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.feature.actionpanel
 
-import com.aaron.sidegesture.feature.gesture.LongSlideState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState.Visible
@@ -39,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -90,14 +88,15 @@ import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.SectorStyle
 import com.aaron.sidegesture.entity.Vibrations
+import com.aaron.sidegesture.feature.gesture.LongSlideState
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.appInfo
-import com.aaron.sidegesture.ktx.isMiniWindow
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
+import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.theme.RootPadding
 import kotlinx.coroutines.CoroutineScope
@@ -125,8 +124,7 @@ fun ActionPanel(
     actionPanelState: ActionPanelState,
     modifier: Modifier = Modifier,
     longPressLaunchPopup: Boolean = false,
-    vibrations: Vibrations? = null,
-    onHidden: () -> Unit = {}
+    vibrations: Vibrations? = null
 ) {
     AnimatedVisibility(
         modifier = modifier,
@@ -134,12 +132,6 @@ fun ActionPanel(
         enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
         exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
     ) {
-        DisposableEffect(Unit) {
-            onDispose {
-                onHidden()
-            }
-        }
-
         Box {
             Box(
                 modifier = Modifier
@@ -168,15 +160,7 @@ fun ActionPanel(
                     Box(
                         modifier = Modifier
                             .let { thisModifier ->
-                                val miniWindowInConfig = remember(selectedAction) {
-                                    selectedAction
-                                        .appInfo
-                                        ?.miniWindow
-                                        ?: selectedAction
-                                            .shortcutInfo
-                                            ?.miniWindow ?: false
-                                }
-                                val miniWindow = actionPanelState.triggerType.isMiniWindow(!miniWindowInConfig && longPressLaunchPopup)
+                                val miniWindow = actionPanelState.isMiniWindow(longPressLaunchPopup)
                                 val maxWidth = this@BoxWithConstraints.maxWidth
                                 val maxHeight = this@BoxWithConstraints.maxHeight
                                 val spec = spring<Dp>(stiffness = 5000f)
@@ -1536,8 +1520,7 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
     val selectedAction: Action by derivedStateOf {
         pendingActions.values.find { it != Action.NONE } ?: Action.NONE
     }
-    var triggerType: TriggerType by mutableStateOf(TriggerType.Press)
-        private set
+    private var triggerType: TriggerType by mutableStateOf(TriggerType.Press)
     private var delayTriggerTypeChangedJob: Job? = null
     private var windowModeSwitchDelayMs: Long = AdvancedSettingsDefaults.ActionPanelAppSwitchWindowModeDelayMs
 
@@ -1552,11 +1535,25 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         this.actions = actions
     }
 
-    fun done(): Action {
+    fun done(longPressLaunchPopup: Boolean): Action {
         val action = selectedAction
-        val triggerType = triggerType
+        val miniWindow = isMiniWindow(longPressLaunchPopup)
+        val appInfo = action.appInfo
+        val shortcutInfo = action.shortcutInfo
+        val data = when {
+            appInfo != null -> JsonHelper.encodeToString(appInfo.copy(miniWindow = miniWindow))
+            shortcutInfo != null -> JsonHelper.encodeToString(shortcutInfo.copy(miniWindow = miniWindow))
+            else -> action.data
+        }
         reset()
-        return action.copy(extra = triggerType)
+        return action.copy(data = data)
+    }
+
+    fun isMiniWindow(longPressLaunchPopup: Boolean): Boolean {
+        val miniWindowInConfig = selectedAction.appInfo?.miniWindow
+            ?: selectedAction.shortcutInfo?.miniWindow
+            ?: false
+        return triggerType.isMiniWindow(!miniWindowInConfig && longPressLaunchPopup)
     }
 
     fun isSelected(action: Action): Boolean {
@@ -1590,12 +1587,19 @@ class ActionPanelState(private val coroutineScope: CoroutineScope) : LongSlideSt
         delayTriggerTypeChangedJob?.cancel()
         triggerType = TriggerType.Press
     }
+}
 
-    /**
-     * 用于实现短按和长按
-     */
-    enum class TriggerType {
+/**
+ * 用于实现短按和长按
+ */
+private enum class TriggerType {
 
-        Press, LongPress
+    Press, LongPress
+}
+
+private fun TriggerType.isMiniWindow(longPressLaunchPopup: Boolean): Boolean {
+    return when (this) {
+        TriggerType.Press -> !longPressLaunchPopup
+        TriggerType.LongPress -> longPressLaunchPopup
     }
 }
