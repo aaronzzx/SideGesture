@@ -16,6 +16,7 @@ import com.aaron.sidegesture.feature.screenshot.ScreenshotCropper
 import com.aaron.sidegesture.feature.screenshot.ScreenshotStorage
 import com.aaron.sidegesture.feature.screenshot.SmartScreenshotEditor
 import com.aaron.sidegesture.feature.screenshot.SmartScreenshotState
+import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.setFlags
@@ -26,12 +27,15 @@ import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SmartScreenshotActionHandler(
-    private val service: SideGestureService
+    private val service: SideGestureService,
+    private val scope: CoroutineScope,
+    private val pinnedScreenshotManager: PinnedScreenshotManager
 ) : ActionHandler, OverlayDismissAware {
 
     override val supportedActions = setOf(GlobalActions.SMART_SCREENSHOT)
@@ -84,7 +88,7 @@ class SmartScreenshotActionHandler(
                             state = state,
                             onCancel = ::onDismiss,
                             onSave = {
-                                service.coroutineScope.launch {
+                                scope.launch {
                                     val output = crop(screenshot)
                                     val saved = withContext(Dispatchers.IO) {
                                         ScreenshotStorage.saveToGallery(service, output)
@@ -97,7 +101,7 @@ class SmartScreenshotActionHandler(
                                 }
                             },
                             onCopy = {
-                                service.coroutineScope.launch {
+                                scope.launch {
                                     val output = crop(screenshot)
                                     val uri = withContext(Dispatchers.IO) {
                                         ScreenshotStorage.createClipboardUri(service, output)
@@ -113,7 +117,7 @@ class SmartScreenshotActionHandler(
                                 }
                             },
                             onShare = {
-                                service.coroutineScope.launch {
+                                scope.launch {
                                     val output = crop(screenshot)
                                     onDismiss()
                                     val uri = withContext(Dispatchers.IO) {
@@ -131,7 +135,7 @@ class SmartScreenshotActionHandler(
                                     selectionRect = state.selectionRect,
                                     shape = state.shape
                                 )
-                                service.pinnedScreenshotManager.pin(
+                                pinnedScreenshotManager.pin(
                                     bitmap = output,
                                     sourceRect = state.selectionRect
                                 )

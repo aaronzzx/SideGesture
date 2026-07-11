@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.os.Build
 import android.provider.Settings
 import com.aaron.sidegesture.SideGestureService
-import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.canWriteSystemSettings
 import com.aaron.sidegesture.ktx.dispatchMediaKeyEvent
 import com.aaron.sidegesture.ktx.gotoManageWriteSettings
@@ -159,10 +158,6 @@ object QuickToolsExecutor {
 
     fun dispatchMediaNext(service: SideGestureService) {
         service.dispatchMediaKeyEvent(android.view.KeyEvent.KEYCODE_MEDIA_NEXT)
-    }
-
-    fun performExistingAction(service: SideGestureService, actionValue: String) {
-        service.performAction(Action(value = actionValue))
     }
 
     private fun com.aaron.sidegesture.platform.shell.ShellResult.toOperationResult(): QuickToolsOperationResult {

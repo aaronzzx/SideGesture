@@ -9,7 +9,6 @@ import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.action.ForegroundAppAware
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.ktx.appInfo

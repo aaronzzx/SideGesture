@@ -13,12 +13,14 @@ import com.aaron.sidegesture.utils.FlashlightController
 import com.aaron.sidegesture.utils.showToast
 import com.blankj.utilcode.util.PermissionUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class DeviceActionHandler(
-    private val service: SideGestureService
+    private val service: SideGestureService,
+    private val scope: CoroutineScope
 ) : ActionHandler {
 
     override val supportedActions = setOf(
@@ -29,7 +31,7 @@ class DeviceActionHandler(
     private var wakeLock: PowerManager.WakeLock? = null
 
     init {
-        service.coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
+        scope.coroutineContext[Job]?.invokeOnCompletion {
             wakeLock?.takeIf { it.isHeld }?.release()
             wakeLock = null
         }
@@ -52,7 +54,7 @@ class DeviceActionHandler(
             PermissionUtils.permission(Manifest.permission.CAMERA)
                 .callback { granted, _, deniedForever, _ ->
                     if (granted) {
-                        service.coroutineScope.launch(Dispatchers.Default) {
+                        scope.launch(Dispatchers.Default) {
                             if (!FlashlightController.toggle(service)) {
                                 showToast(R.string.flashlight_failed)
                             }

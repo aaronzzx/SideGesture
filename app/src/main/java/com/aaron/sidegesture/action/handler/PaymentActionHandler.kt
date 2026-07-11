@@ -18,11 +18,13 @@ import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class PaymentActionHandler(
-    private val service: SideGestureService
+    private val service: SideGestureService,
+    private val scope: CoroutineScope
 ) : ActionHandler, ForegroundAppAware {
 
     override val supportedActions = setOf(
@@ -68,7 +70,7 @@ class PaymentActionHandler(
         service.gotoWechat()
         if (!isWechatHome) {
             pendingWechatPayAutoCancelJob?.cancel()
-            pendingWechatPayAutoCancelJob = service.coroutineScope.launch {
+            pendingWechatPayAutoCancelJob = scope.launch {
                 delay(3000)
                 pendingWechatPay = false
             }
@@ -77,7 +79,7 @@ class PaymentActionHandler(
     }
 
     private fun mockClickWechatPay() {
-        service.coroutineScope.launch {
+        scope.launch {
             delay(500)
             val radius = ConvertUtils.dp2px(12f)
             AccessibilityUtils.click(

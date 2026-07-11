@@ -39,12 +39,14 @@ import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
 class MoveScreenActionHandler internal constructor(
     private val service: SideGestureService,
-    private val settingsStore: ServiceSettingsStore
+    private val settingsStore: ServiceSettingsStore,
+    private val scope: CoroutineScope
 ) : ActionHandler, ActionRequestProducer, OverlayDismissAware {
 
     override val supportedActions = setOf(GlobalActions.MOVE_SCREEN)
@@ -93,7 +95,7 @@ class MoveScreenActionHandler internal constructor(
         val gestureSettings = settingsStore.gestureSettings.value
         val moveScreenSettings = settingsStore.actionSettings.value.moveScreen
         onDismiss()
-        val newState = MoveScreenState(gestureSettings, moveScreenSettings, service.coroutineScope)
+        val newState = MoveScreenState(gestureSettings, moveScreenSettings, scope)
         state = newState
         lastRawPosition = anchor
         useCrosshair = moveScreenSettings.style == ActionSettings.MoveScreen.Style.Crosshair ||

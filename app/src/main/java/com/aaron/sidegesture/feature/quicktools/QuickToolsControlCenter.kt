@@ -90,10 +90,8 @@ fun QuickToolsControlCenter(
     settings: QuickToolsSettings,
     state: QuickToolsControlCenterState,
     onOverlayTouchChange: (Boolean) -> Unit,
+    onAction: (Action) -> Unit,
     modifier: Modifier = Modifier,
-    onAction: (Action) -> Unit = { action ->
-        QuickToolsExecutor.performExistingAction(service, action.value)
-    }
 ) {
     val enabledTypes = remember(settings) {
         settings.items.filter { it.enabled }.map { it.type }

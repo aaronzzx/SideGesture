@@ -23,16 +23,20 @@ import com.aaron.sidegesture.ktx.updateLayout
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.platform.shell.ShellActionExecutor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TaskSwitcherActionHandler(
-    private val service: SideGestureService
+    private val service: SideGestureService,
+    private val scope: CoroutineScope
 ) : ActionHandler, OverlayDismissAware {
 
     override val supportedActions = setOf(GlobalActions.TASK_SWITCHER)
 
     private val state = TaskSwitcherPanelState()
+    private val lockedPackages = MutableStateFlow(emptySet<String>())
     private var window: View? = null
     private var requestVersion = 0L
 
@@ -59,26 +63,26 @@ class TaskSwitcherActionHandler(
     private fun ensureWindow() {
         if (window != null) return
         window = service.attachComposeOverlay {
-            val lockedPackages by service.taskSwitcherLockedPackages.collectAsState()
+            val lockedPackageNames by lockedPackages.collectAsState()
             SideGestureTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
                     TaskSwitcherPanel(
                         modifier = Modifier.fillMaxSize(),
                         state = state,
-                        lockedPackageNames = lockedPackages,
+                        lockedPackageNames = lockedPackageNames,
                         onOverlayTouchChange = ::setTouchEnabled,
                         onLaunch = { task ->
                             switchToRecentTask(task.packageName)
                             state.hide()
                         },
                         onClose = { task ->
-                            service.coroutineScope.launch {
+                            scope.launch {
                                 if (closeRecentTask(task.packageName)) state.remove(task)
                             }
                         },
-                        onToggleLock = service::toggleTaskSwitcherLock,
+                        onToggleLock = ::toggleLock,
                         onCloseAll = { tasks ->
-                            service.coroutineScope.launch {
+                            scope.launch {
                                 val closed = tasks.map { it.packageName }
                                     .distinct()
                                     .filter { closeRecentTask(it) }
@@ -98,6 +102,17 @@ class TaskSwitcherActionHandler(
             setFlags(enabled)
         }
         service.updateLayout(view, params)
+    }
+
+    private fun toggleLock(packageName: String): Boolean {
+        val packages = lockedPackages.value
+        val locked = packageName !in packages
+        lockedPackages.value = if (locked) {
+            packages + packageName
+        } else {
+            packages - packageName
+        }
+        return locked
     }
 
     private suspend fun queryRecentTasks(): List<RecentTask> = withContext(Dispatchers.IO) {
