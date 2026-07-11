@@ -11,6 +11,7 @@ import com.aaron.sidegesture.action.ForegroundAppAware
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
+import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
@@ -25,7 +26,8 @@ import kotlinx.coroutines.withContext
 
 class AppActionHandler internal constructor(
     private val service: SideGestureService,
-    private val settingsStore: ServiceSettingsStore
+    private val settingsStore: ServiceSettingsStore,
+    private val environmentMonitor: ServiceEnvironmentMonitor
 ) : ActionHandler, ForegroundAppAware {
 
     override val supportedActions = setOf(
@@ -98,7 +100,10 @@ class AppActionHandler internal constructor(
 
     private suspend fun killCurrentApp() {
         val packageName = currentPackageName ?: return
-        if (service.nowInLauncher() || packageName == service.packageName || !PACKAGE_NAME_REGEX.matches(packageName)) {
+        if (environmentMonitor.isLauncherForeground() ||
+            packageName == service.packageName ||
+            !PACKAGE_NAME_REGEX.matches(packageName)
+        ) {
             return
         }
         val result = withContext(Dispatchers.IO) {
@@ -115,7 +120,7 @@ class AppActionHandler internal constructor(
             return
         }
         val packageName = currentPackageName ?: return
-        if (service.nowInLauncher()) return
+        if (environmentMonitor.isLauncherForeground()) return
         val intent = Intent(Intent.ACTION_MAIN)
             .setPackage(packageName)
             .addCategory(Intent.CATEGORY_LAUNCHER)

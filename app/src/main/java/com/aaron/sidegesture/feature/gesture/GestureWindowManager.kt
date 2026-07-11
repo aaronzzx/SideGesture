@@ -18,6 +18,7 @@ import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.event.WallpaperChangedEvent
+import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -33,7 +34,6 @@ import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -42,10 +42,7 @@ internal class GestureWindowManager(
     private val service: SideGestureService,
     private val scope: CoroutineScope,
     private val settingsStore: ServiceSettingsStore,
-    private val imePadding: StateFlow<Int>,
-    private val isScreenLocked: () -> Boolean,
-    private val isLauncherForeground: () -> Boolean,
-    private val currentPackageName: () -> String,
+    private val environmentMonitor: ServiceEnvironmentMonitor,
     private val onActionRequest: (ActionRequest) -> Unit,
     private val onDismissActionOverlays: () -> Unit,
     private val onButtonsChanged: (List<GestureButton>) -> Unit
@@ -72,7 +69,7 @@ internal class GestureWindowManager(
                 combine(
                     settingsStore.initialSettings,
                     settingsStore.advancedSettings,
-                    imePadding
+                    environmentMonitor.imePadding
                 ) { _, _, _ -> Unit }.collectLatest {
                     refreshVisibility()
                 }
@@ -88,15 +85,15 @@ internal class GestureWindowManager(
             val params = (view.layoutParams as WindowManager.LayoutParams).apply {
                 updateGestureButton(button)
                 if (button.position != Position.Bottom) {
-                    y -= imePadding.value
+                    y -= environmentMonitor.imePadding.value
                 }
                 val touchEnabled = when {
                     isButtonHidden(button) -> false
                     !initialSettings.gestureEnabled -> false
                     advancedSettings.hideLandscape && ScreenUtils.isLandscape() -> false
-                    advancedSettings.hideHomeScreen && isLauncherForeground() -> false
-                    advancedSettings.hideScreenLock && isScreenLocked() -> false
-                    currentPackageName() in advancedSettings.excludeApps -> false
+                    advancedSettings.hideHomeScreen && environmentMonitor.isLauncherForeground() -> false
+                    advancedSettings.hideScreenLock && environmentMonitor.isScreenLocked -> false
+                    environmentMonitor.currentPackageName() in advancedSettings.excludeApps -> false
                     else -> button.enabled
                 }
                 setFlags(touchEnabled)
@@ -156,7 +153,7 @@ internal class GestureWindowManager(
                     val buttons by settingsStore.buttons.collectAsStateWithLifecycle()
                     val advancedSettings by settingsStore.advancedSettings.collectAsStateWithLifecycle()
                     val gestureSettings by settingsStore.gestureSettings.collectAsStateWithLifecycle()
-                    val currentImePadding by imePadding.collectAsStateWithLifecycle()
+                    val currentImePadding by environmentMonitor.imePadding.collectAsStateWithLifecycle()
                     SideGestureContainer(
                         modifier = Modifier.matchParentSize(),
                         buttons = buttons,

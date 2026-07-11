@@ -69,6 +69,7 @@ import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.feature.gesture.GestureWindowManager
+import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.feature.gesture.SideGestureContainer
 import com.aaron.sidegesture.utils.Events
@@ -94,12 +95,6 @@ import kotlinx.coroutines.launch
  */
 class SideGestureService : ComponentAccessibilityService() {
 
-    private val imeInsetObserver = ImeInsetObserver()
-    private var orientation = if (ScreenUtils.isLandscape()) 2 else 1
-    private var screenWidthDp = Resources.getSystem().configuration.screenWidthDp
-    private var screenHeightDp = Resources.getSystem().configuration.screenHeightDp
-
-    private var isNowInLockScreenPage = false
     private var volumeButtonSwitchSongJob: Job? = null
     private val _taskSwitcherLockedPackages = MutableStateFlow(emptySet<String>())
 
@@ -108,15 +103,25 @@ class SideGestureService : ComponentAccessibilityService() {
     val taskSwitcherLockedPackages: StateFlow<Set<String>> = _taskSwitcherLockedPackages.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
+    private val environmentMonitor: ServiceEnvironmentMonitor by lazy {
+        ServiceEnvironmentMonitor(
+            service = this,
+            scope = coroutineScope,
+            settingsStore = settingsStore,
+            onScreenLockChanged = { locked ->
+                if (locked) actionManager.dismissOverlays()
+                pinnedScreenshotManager.setScreenLocked(locked)
+                gestureWindowManager.refreshVisibility()
+            }
+        )
+    }
+
     private val gestureWindowManager: GestureWindowManager by lazy {
         GestureWindowManager(
             service = this,
             scope = coroutineScope,
             settingsStore = settingsStore,
-            imePadding = imeInsetObserver.flow,
-            isScreenLocked = { isNowInLockScreenPage },
-            isLauncherForeground = ::nowInLauncher,
-            currentPackageName = ::getCurrentPackageName,
+            environmentMonitor = environmentMonitor,
             onActionRequest = { actionManager.submit(it) },
             onDismissActionOverlays = { actionManager.dismissOverlays() },
             onButtonsChanged = { pinnedScreenshotManager.onEnvironmentChanged(it) }
@@ -129,7 +134,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 SystemActionHandler(this),
                 MediaActionHandler(this),
                 DeviceActionHandler(this),
-                AppActionHandler(this, settingsStore),
+                AppActionHandler(this, settingsStore, environmentMonitor),
                 PaymentActionHandler(this),
                 ScrollActionHandler(this, settingsStore),
                 ShellActionHandler(this),
@@ -144,34 +149,9 @@ class SideGestureService : ComponentAccessibilityService() {
         )
     }
 
-    private val wallpaperChangedReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            Events.post(WallpaperChangedEvent())
-        }
-    }
-    private val screenLockReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                isNowInLockScreenPage = true
-                dismissActionOverlays()
-                pinnedScreenshotManager.setScreenLocked(true)
-            } else if (intent?.action == Intent.ACTION_USER_PRESENT) {
-                isNowInLockScreenPage = false
-                pinnedScreenshotManager.setScreenLocked(false)
-            }
-            gestureWindowManager.refreshVisibility()
-        }
-    }
-
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        val orientationChanged = orientation != newConfig.orientation
-        val screenSizeChanged = screenWidthDp != newConfig.screenWidthDp
-                || screenHeightDp != newConfig.screenHeightDp
-        if (orientationChanged || screenSizeChanged) {
-            orientation = newConfig.orientation
-            screenWidthDp = newConfig.screenWidthDp
-            screenHeightDp = newConfig.screenHeightDp
+        if (environmentMonitor.onConfigurationChanged(newConfig)) {
             actionManager.dismissOverlays()
             gestureWindowManager.onConfigurationChanged()
             pinnedScreenshotManager.onEnvironmentChanged(settingsStore.buttons.value)
@@ -187,15 +167,8 @@ class SideGestureService : ComponentAccessibilityService() {
                 )
             )
         }
-        when (event?.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                imeInsetObserver.recompute()
-                gestureWindowManager.refreshVisibility()
-            }
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
-                imeInsetObserver.recompute()
-                gestureWindowManager.refreshVisibility()
-            }
+        if (event != null && environmentMonitor.onAccessibilityEvent(event)) {
+            gestureWindowManager.refreshVisibility()
         }
     }
 
@@ -245,53 +218,16 @@ class SideGestureService : ComponentAccessibilityService() {
     override fun onDestroy() {
         actionManager.dismissOverlays()
         super.onDestroy()
+        environmentMonitor.stop()
         gestureWindowManager.release()
         coroutineScope.cancel()
         pinnedScreenshotManager.release()
-        unregisterReceiver(screenLockReceiver)
-        unregisterReceiver(wallpaperChangedReceiver)
-        imeInsetObserver.unregister()
     }
 
     override fun onSetOverlay() {
-        registerScreenLockReceiver()
-        registerWallpaperChangedReceiver()
-        registerImeInsetObserver()
+        environmentMonitor.start()
         registerUpdateChecker()
         gestureWindowManager.startOrReattach()
-    }
-
-    private fun registerScreenLockReceiver() {
-        val intentFilter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_OFF)
-            addAction(Intent.ACTION_USER_PRESENT)
-        }
-        registerReceiver(screenLockReceiver, intentFilter)
-    }
-
-    private fun registerWallpaperChangedReceiver() {
-        val intentFilter = IntentFilter().apply {
-            addAction(Intent.ACTION_WALLPAPER_CHANGED)
-        }
-        registerReceiver(wallpaperChangedReceiver, intentFilter)
-    }
-
-    private fun registerImeInsetObserver() {
-        coroutineScope.launch {
-            launch {
-                settingsStore.advancedSettings
-                    .distinctUntilChangedBy {
-                        it.fitSoftKeyboard
-                    }
-                    .collectLatest {
-                        if (it.fitSoftKeyboard) {
-                            imeInsetObserver.register()
-                        } else {
-                            imeInsetObserver.unregister()
-                        }
-                    }
-            }
-        }
     }
 
     /**
@@ -322,24 +258,6 @@ class SideGestureService : ComponentAccessibilityService() {
         }
     }
 
-    fun getCurrentPackageName(): String {
-        return rootInActiveWindow?.packageName?.toString() ?: ""
-    }
-
-    fun nowInLauncher(): Boolean {
-        val pkgName = getCurrentPackageName()
-        val launcherIntent = Intent().apply {
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_HOME)
-        }
-        val resolves = packageManager
-            .queryIntentActivitiesCompat(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
-            .filter {
-                packageManager.getLaunchIntentForPackage(it.activityInfo.packageName ?: "") == null
-            }
-        return resolves.any { it.activityInfo?.packageName == pkgName }
-    }
-
     fun performAction(action: Action) {
         actionManager.submit(ActionRequest(action))
     }
@@ -365,51 +283,4 @@ class SideGestureService : ComponentAccessibilityService() {
 
     }
 
-    private inner class ImeInsetObserver {
-
-        private val _flow = MutableStateFlow(0)
-        val flow: StateFlow<Int> = _flow.asStateFlow()
-
-        private var enabled = false
-
-        fun register() {
-            enabled = true
-            recompute()
-        }
-
-        fun unregister() {
-            enabled = false
-            _flow.value = 0
-        }
-
-        fun recompute() {
-            if (!enabled) {
-                _flow.value = 0
-                return
-            }
-            try {
-                val wins = windows
-                if (wins.isNullOrEmpty()) {
-                    _flow.value = 0
-                    return
-                }
-                val imeWindow = wins.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-                if (imeWindow == null) {
-                    _flow.value = 0
-                    return
-                }
-                val r = Rect()
-                imeWindow.getBoundsInScreen(r)
-                val screenHeight = ScreenUtils.getScreenHeight()
-                if (r.height() <= 0 || r.top >= screenHeight) {
-                    _flow.value = 0
-                    return
-                }
-                val padding = screenHeight - r.top
-                _flow.value = if (padding > 0) padding else 0
-            } catch (e: Exception) {
-                _flow.value = 0
-            }
-        }
-    }
 }
