@@ -5,13 +5,14 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
-import com.aaron.sidegesture.constant.ActionSettingsDefaults
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 
-class ScrollActionHandler(
-    private val service: SideGestureService
+class ScrollActionHandler internal constructor(
+    private val service: SideGestureService,
+    private val settingsStore: ServiceSettingsStore
 ) : ActionHandler {
 
     override val supportedActions = setOf(
@@ -34,7 +35,7 @@ class ScrollActionHandler(
             GlobalActions.GOTO_BOTTOM -> AccessibilityUtils.fastVerticalScroll(
                 service,
                 false,
-                service.actionSettings?.gotoBottom?.strength ?: ActionSettingsDefaults.GotoBottomStrength
+                settingsStore.actionSettings.value.gotoBottom.strength
             )
         }
     }

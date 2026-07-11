@@ -16,6 +16,7 @@ import com.aaron.sidegesture.action.OverlayDismissAware
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenterState
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.setFlags
@@ -25,8 +26,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
-class QuickToolsActionHandler(
-    private val service: SideGestureService
+class QuickToolsActionHandler internal constructor(
+    private val service: SideGestureService,
+    private val settingsStore: ServiceSettingsStore
 ) : ActionHandler, ActionRequestProducer, OverlayDismissAware {
 
     override val supportedActions = setOf(GlobalActions.QUICK_TOOLS)
@@ -44,8 +46,7 @@ class QuickToolsActionHandler(
         val context = request.actionContext ?: return
         val anchor = context.anchor ?: return
         val edge = context.button?.position ?: return
-        settings = service.actionSettings?.quickTools
-            ?: com.aaron.sidegesture.entity.global.ActionSettings().quickTools
+        settings = settingsStore.actionSettings.value.quickTools
         ensureWindow()
         state.show(anchor, edge)
     }

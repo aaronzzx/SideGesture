@@ -52,10 +52,6 @@ import com.aaron.sidegesture.action.handler.TaskSwitcherActionHandler
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
-import com.aaron.sidegesture.entity.global.ActionSettings
-import com.aaron.sidegesture.entity.global.AdvancedSettings
-import com.aaron.sidegesture.entity.global.GestureSettings
-import com.aaron.sidegesture.entity.global.InitialSettings
 import com.aaron.sidegesture.event.WallpaperChangedEvent
 import com.aaron.sidegesture.ktx.SubscribeEvent
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -71,9 +67,9 @@ import com.aaron.sidegesture.ktx.updateMainView
 import com.aaron.sidegesture.ktx.volumeDown
 import com.aaron.sidegesture.ktx.volumeUp
 import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.feature.gesture.SideGestureContainer
-import com.aaron.sidegesture.utils.DataStoreHolder
 import com.aaron.sidegesture.utils.Events
 import com.aaron.sidegesture.feature.update.UpdateNotifications
 import com.aaron.sidegesture.feature.update.UpdateRepository
@@ -87,9 +83,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -119,6 +113,7 @@ class SideGestureService : ComponentAccessibilityService() {
     private val _taskSwitcherLockedPackages = MutableStateFlow(emptySet<String>())
 
     val coroutineScope = MainScope()
+    private val settingsStore = ServiceSettingsStore(coroutineScope)
     val taskSwitcherLockedPackages: StateFlow<Set<String>> = _taskSwitcherLockedPackages.asStateFlow()
     val pinnedScreenshotManager: PinnedScreenshotManager by lazy { PinnedScreenshotManager(this) }
 
@@ -128,29 +123,20 @@ class SideGestureService : ComponentAccessibilityService() {
                 SystemActionHandler(this),
                 MediaActionHandler(this),
                 DeviceActionHandler(this),
-                AppActionHandler(this),
+                AppActionHandler(this, settingsStore),
                 PaymentActionHandler(this),
-                ScrollActionHandler(this),
+                ScrollActionHandler(this, settingsStore),
                 ShellActionHandler(this),
                 HideGestureButtonActionHandler(this),
                 TaskSwitcherActionHandler(this),
                 QuickLauncherActionHandler(this),
-                QuickToolsActionHandler(this),
+                QuickToolsActionHandler(this, settingsStore),
                 SmartScreenshotActionHandler(this),
-                MoveScreenActionHandler(this)
+                MoveScreenActionHandler(this, settingsStore)
             ),
             coroutineScope = coroutineScope
         )
     }
-
-    var initialSettings: InitialSettings? = null
-        private set
-    var advancedSettings: AdvancedSettings? = null
-        private set
-    var gestureSettings: GestureSettings? = null
-        private set
-    var actionSettings: ActionSettings? = null
-        private set
 
     private val wallpaperChangedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -211,7 +197,7 @@ class SideGestureService : ComponentAccessibilityService() {
         val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         val keyCode = event?.keyCode
-        if (advancedSettings?.volumeButtonSwitchSong == true &&
+        if (settingsStore.advancedSettings.value.volumeButtonSwitchSong &&
             audioManager.isMusicActive &&
             powerManager.isInteractive.not() &&
             (keyCode == KEYCODE_VOLUME_UP || keyCode == KEYCODE_VOLUME_DOWN)
@@ -278,28 +264,15 @@ class SideGestureService : ComponentAccessibilityService() {
             key(key) {
                 SideGestureTheme {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        val sideButtons by DataStoreHolder
-                            .sideGestureButtons
-                            .data
-                            .collectAsStateWithLifecycle(initialValue = emptyList())
-                        val bottomButtons by DataStoreHolder
-                            .bottomGestureButtons
-                            .data
-                            .collectAsStateWithLifecycle(initialValue = emptyList())
-                        val advancedSettings by DataStoreHolder
-                            .advancedSettings
-                            .data
-                            .collectAsStateWithLifecycle(initialValue = AdvancedSettings())
-                        val gestureSettings by DataStoreHolder
-                            .gestureSettings
-                            .data
-                            .collectAsStateWithLifecycle(initialValue = GestureSettings())
+                        val buttons by settingsStore.buttons.collectAsStateWithLifecycle()
+                        val advancedSettings by settingsStore.advancedSettings.collectAsStateWithLifecycle()
+                        val gestureSettings by settingsStore.gestureSettings.collectAsStateWithLifecycle()
                         val imePadding by imeInsetObserver
                             .flow
                             .collectAsStateWithLifecycle()
                         SideGestureContainer(
                             modifier = Modifier.matchParentSize(),
-                            buttons = sideButtons + bottomButtons,
+                            buttons = buttons,
                             imePadding = imePadding,
                             animationStyle = when (advancedSettings.animationStyles.isAnimationEnabled) {
                                 true -> advancedSettings.animationStyles.value
@@ -317,48 +290,9 @@ class SideGestureService : ComponentAccessibilityService() {
         }
 
         coroutineScope.launch(Dispatchers.Main.immediate) {
-            // 监听全局配置修改
-            launch {
-                DataStoreHolder
-                    .initialSettings
-                    .data
-                    .collectLatest {
-                        initialSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .advancedSettings
-                    .data
-                    .collectLatest {
-                        advancedSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .gestureSettings
-                    .data
-                    .collectLatest {
-                        gestureSettings = it
-                    }
-            }
-            launch {
-                DataStoreHolder
-                    .actionSettings
-                    .data
-                    .collectLatest {
-                        actionSettings = it
-                    }
-            }
-
             // 监听触钮修改
             launch {
-                DataStoreHolder
-                    .sideGestureButtons
-                    .data
-                    .combine(DataStoreHolder.bottomGestureButtons.data) { l1, l2 ->
-                        l1 + l2
-                    }
+                settingsStore.buttons
                     .collectLatest { buttons ->
                         currentButtons = buttons
                         val buttonViews = buttonViews
@@ -372,9 +306,7 @@ class SideGestureService : ComponentAccessibilityService() {
             }
             // 监听手势开关
             launch {
-                DataStoreHolder
-                    .initialSettings
-                    .data
+                settingsStore.initialSettings
                     .distinctUntilChangedBy {
                         it.gestureEnabled
                     }
@@ -408,9 +340,7 @@ class SideGestureService : ComponentAccessibilityService() {
                 }
             }
             launch {
-                DataStoreHolder
-                    .advancedSettings
-                    .data
+                settingsStore.advancedSettings
                     .distinctUntilChangedBy {
                         it.fitSoftKeyboard
                     }
@@ -434,11 +364,11 @@ class SideGestureService : ComponentAccessibilityService() {
         coroutineScope.launch {
             while (isActive) {
                 try {
-                    val autoCheck = DataStoreHolder.advancedSettings.data.first().autoCheckUpdate
+                    val autoCheck = settingsStore.advancedSettings.value.autoCheckUpdate
                     if (autoCheck && UpdateRepository.shouldCheck()) {
                         val result = UpdateRepository.checkAndCache(force = false)
                         if (result is UpdateRepository.CheckResult.NewVersion) {
-                            val ignored = DataStoreHolder.initialSettings.data.first().ignoredUpdateVersion
+                            val ignored = settingsStore.initialSettings.value.ignoredUpdateVersion
                             val version = result.state.latestVersion
                             if (version.isNotBlank() && version != ignored) {
                                 UpdateNotifications.showNewVersion(this@SideGestureService, version)
@@ -466,7 +396,7 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private fun updateGestureButtons() {
         coroutineScope.launch {
-            val advancedSettings = advancedSettings ?: return@launch
+            val advancedSettings = settingsStore.advancedSettings.value
             val buttonViews = buttonViews
             buttonViews?.forEach { view ->
                 val button = view.tag as? GestureButton ?: return@forEach
@@ -477,7 +407,7 @@ class SideGestureService : ComponentAccessibilityService() {
                         y += -imePadding
                     }
 
-                    val initialSettings = DataStoreHolder.initialSettings.data.first()
+                    val initialSettings = settingsStore.initialSettings.value
                     if (isButtonHidden(button)) {
                         setFlags(false)
                     } else if (!initialSettings.gestureEnabled) {

@@ -10,6 +10,7 @@ import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.action.ForegroundAppAware
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
@@ -22,8 +23,9 @@ import com.aaron.sidegesture.utils.showVersionTooLowToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AppActionHandler(
-    private val service: SideGestureService
+class AppActionHandler internal constructor(
+    private val service: SideGestureService,
+    private val settingsStore: ServiceSettingsStore
 ) : ActionHandler, ForegroundAppAware {
 
     override val supportedActions = setOf(
@@ -39,7 +41,7 @@ class AppActionHandler(
 
     override fun onChange(snapshot: ForegroundAppAware.Snapshot) {
         val packageName = snapshot.packageName ?: return
-        val excluded = service.actionSettings?.previousApp?.packageNames.orEmpty()
+        val excluded = settingsStore.actionSettings.value.previousApp.packageNames
         if (packageName in excluded || service.packageManager.getLaunchIntentForPackage(packageName) == null) {
             return
         }
@@ -61,14 +63,14 @@ class AppActionHandler(
                 service.launchAppInfo(
                     appInfo,
                     appInfo.miniWindow,
-                    service.actionSettings?.miniWindow ?: ActionSettings.MiniWindow()
+                    settingsStore.actionSettings.value.miniWindow
                 )
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> request.action.shortcutInfo?.let { shortcutInfo ->
                 service.launchShortcutInfo(
                     shortcutInfo,
                     shortcutInfo.miniWindow,
-                    service.actionSettings?.miniWindow ?: ActionSettings.MiniWindow()
+                    settingsStore.actionSettings.value.miniWindow
                 )
             }
         }
@@ -126,7 +128,7 @@ class AppActionHandler(
         service.launchAppInPopup(
             packageName,
             className,
-            service.actionSettings?.miniWindow ?: ActionSettings.MiniWindow()
+            settingsStore.actionSettings.value.miniWindow
         )
     }
 

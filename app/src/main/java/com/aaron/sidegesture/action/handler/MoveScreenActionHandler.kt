@@ -24,6 +24,7 @@ import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.feature.movescreen.CrosshairScreen
 import com.aaron.sidegesture.feature.movescreen.MoveScreen
 import com.aaron.sidegesture.feature.movescreen.MoveScreenState
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.attachComposeOverlay
 import com.aaron.sidegesture.ktx.removeWindow
 import com.aaron.sidegesture.ktx.setFlags
@@ -41,8 +42,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
-class MoveScreenActionHandler(
-    private val service: SideGestureService
+class MoveScreenActionHandler internal constructor(
+    private val service: SideGestureService,
+    private val settingsStore: ServiceSettingsStore
 ) : ActionHandler, ActionRequestProducer, OverlayDismissAware {
 
     override val supportedActions = setOf(GlobalActions.MOVE_SCREEN)
@@ -83,13 +85,13 @@ class MoveScreenActionHandler(
             showVersionTooLowToast(service, R.string.action_move_screen)
             return
         }
-        if (service.gestureSettings?.longSlideTriggerImmediately != true) {
+        if (!settingsStore.gestureSettings.value.longSlideTriggerImmediately) {
             showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
             return
         }
         val anchor = request.actionContext?.anchor ?: return
-        val gestureSettings = service.gestureSettings ?: return
-        val moveScreenSettings = service.actionSettings?.moveScreen ?: ActionSettings.MoveScreen()
+        val gestureSettings = settingsStore.gestureSettings.value
+        val moveScreenSettings = settingsStore.actionSettings.value.moveScreen
         onDismiss()
         val newState = MoveScreenState(gestureSettings, moveScreenSettings, service.coroutineScope)
         state = newState
