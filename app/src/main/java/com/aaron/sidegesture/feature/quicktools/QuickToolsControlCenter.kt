@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.QuickToolType
 import com.aaron.sidegesture.entity.global.QuickToolsSettings
@@ -89,7 +90,10 @@ fun QuickToolsControlCenter(
     settings: QuickToolsSettings,
     state: QuickToolsControlCenterState,
     onOverlayTouchChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAction: (Action) -> Unit = { action ->
+        QuickToolsExecutor.performExistingAction(service, action.value)
+    }
 ) {
     val enabledTypes = remember(settings) {
         settings.items.filter { it.enabled }.map { it.type }
@@ -277,7 +281,8 @@ fun QuickToolsControlCenter(
                             handleQuickToolClick(
                                 type = type,
                                 service = service,
-                                state = state
+                                state = state,
+                                onAction = onAction
                             )
                         }
                     }
@@ -290,16 +295,17 @@ fun QuickToolsControlCenter(
 private suspend fun handleQuickToolClick(
     type: QuickToolType,
     service: SideGestureService,
-    state: QuickToolsControlCenterState
+    state: QuickToolsControlCenterState,
+    onAction: (Action) -> Unit
 ) {
     when (type) {
         QuickToolType.Flashlight -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.FLASHLIGHT)
+            onAction(Action(GlobalActions.FLASHLIGHT))
             delay(150)
             state.refresh()
         }
         QuickToolType.Mute -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.MUTE)
+            onAction(Action(GlobalActions.MUTE))
             delay(150)
             state.refresh()
         }
@@ -330,19 +336,19 @@ private suspend fun handleQuickToolClick(
             }
         }
         QuickToolType.NotificationPanel -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.OPEN_NOTIFICATION_PANEL)
+            onAction(Action(GlobalActions.OPEN_NOTIFICATION_PANEL))
             state.hide()
         }
         QuickToolType.QuickSettingsPanel -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.OPEN_QUICK_PANEL)
+            onAction(Action(GlobalActions.OPEN_QUICK_PANEL))
             state.hide()
         }
         QuickToolType.LockScreen -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.LOCK_SCREEN)
+            onAction(Action(GlobalActions.LOCK_SCREEN))
             state.hide()
         }
         QuickToolType.Screenshot -> {
-            QuickToolsExecutor.performExistingAction(service, GlobalActions.SCREENSHOT)
+            onAction(Action(GlobalActions.SCREENSHOT))
             state.hide()
         }
         QuickToolType.MediaControl,

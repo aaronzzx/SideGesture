@@ -87,14 +87,13 @@ class PinnedScreenshotManager(
     private val deleteTargetState = PinDeleteTargetState()
     private var deleteTargetWindow: DeleteTargetWindow? = null
     private var isScreenLocked = false
+    private var safeInsets = PinSafeInsets.from(service, windowManager, emptyList())
 
     fun pin(
         bitmap: Bitmap,
-        buttons: List<GestureButton>,
         sourceRect: Rect? = null
     ) {
         ensureDeleteTargetWindow()
-        val safeInsets = PinSafeInsets.from(service, windowManager, buttons)
         val root = rootSize
         val minScale = minScale(bitmap)
         val chromeSize = pinChromeSizePx()
@@ -186,7 +185,7 @@ class PinnedScreenshotManager(
     }
 
     fun onEnvironmentChanged(buttons: List<GestureButton>) {
-        val safeInsets = PinSafeInsets.from(service, windowManager, buttons)
+        safeInsets = PinSafeInsets.from(service, windowManager, buttons)
         updateDeleteTargetLayout()
         windows.values.forEach { window ->
             val state = window.state

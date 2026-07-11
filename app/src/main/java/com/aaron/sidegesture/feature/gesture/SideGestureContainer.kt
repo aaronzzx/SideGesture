@@ -446,7 +446,6 @@ fun SideGestureContainer(
                     )
                     (context as SideGestureService).pinnedScreenshotManager.pin(
                         bitmap = output,
-                        buttons = buttons,
                         sourceRect = smartScreenshotState.selectionRect
                     )
                     smartScreenshotState.dismiss()
