@@ -28,7 +28,7 @@ data class ActionSettings(
         val hoverDelayMs: Long = MoveScreenHoverDelayMs,
         val radius: Int = ConvertUtils.dp2px(12f),
         // 显示样式：放大镜(需 Android 11+ 截屏)或准星(Android 7+)。默认放大镜，兼容旧配置
-        val style: Style = Style.Magnifier,
+        val style: Style = Style.Crosshair,
         // 悬停弹窗(单击/双击/长按三选项)开关，关闭则抬手直接单击。两种样式共用
         val popupEnabled: Boolean = true
     ) {

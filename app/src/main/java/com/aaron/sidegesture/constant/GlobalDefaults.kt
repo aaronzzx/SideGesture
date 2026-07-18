@@ -214,7 +214,7 @@ object GestureButtonDefaults {
 
 object ActionSettingsDefaults {
 
-    const val MoveScreenRate = 2f
+    const val MoveScreenRate = 3f
     const val MoveScreenHoverDelayMs = 600L
     const val GotoBottomStrength = 10
     const val ShellCommandTimeoutMs = 10_000L

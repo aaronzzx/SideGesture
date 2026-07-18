@@ -54,7 +54,7 @@ object GlobalSettings {
     val MinActionPanelScrollHotZoneHeight = ConvertUtils.dp2px(16f).toFloat()
     val MaxActionPanelScrollHotZoneHeight = ConvertUtils.dp2px(56f).toFloat()
     const val MinMoveScreenRate = 1f
-    const val MaxMoveScreenRate = 3f
+    const val MaxMoveScreenRate = 6f
     const val MinMoveScreenHover = 300f
     const val MaxMoveScreenHover = 1000f
     const val MinGotoBottomStrength = 1f
