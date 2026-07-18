@@ -18,7 +18,7 @@ object GlobalSettings {
     val MinSlideTriggerDistance = ConvertUtils.dp2px(24f)
     val MaxSlideTriggerDistance = ConvertUtils.dp2px(40f)
     val MinLongSlideTriggerDistance = ConvertUtils.dp2px(80f)
-    val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(100f)
+    val MaxLongSlideTriggerDistance = ConvertUtils.dp2px(150f)
     const val MinBezierStrokeWidth = 0
     val MaxBezierStrokeWidth = ConvertUtils.dp2px(5f)
     val MinBezierWidth = ConvertUtils.dp2px(20f)
@@ -67,7 +67,7 @@ object GlobalSettings {
     const val MaxGestureButtonPosition = 1f
     const val MinGestureButtonLength = 0.1f
     const val MinLongSlideTriggerDelayMs = 0L
-    const val MaxLongSlideTriggerDelayMs = 250L
+    const val MaxLongSlideTriggerDelayMs = 1000L
     const val MinLongPressTriggerDelayMs = 100L
     const val MaxLongPressTriggerDelayMs = 1000L
     const val MinActionPanelAppSwitchWindowModeDelayMs = 500L
