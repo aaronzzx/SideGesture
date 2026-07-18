@@ -2,7 +2,16 @@
 
 ## 状态
 
-待实施。
+已完成。
+
+## 实施与验证
+
+- `ActionSettingsDialog` 已为 `GlobalActions.PREVIOUS_APP` 使用“上一个应用排除列表”专用标题，其他动作继续使用通用动作文案。
+- `ActionSettingsDialogTitleTest` 已覆盖 PREVIOUS_APP 特殊分支和普通动作默认分支。
+- `:app:testDebugUnitTest --tests com.aaron.sidegesture.ui.widget.ActionSettingsDialogTitleTest` 通过。
+- `:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:assembleDebugAndroidTest` 和 `git diff --check` 均通过。
+- 已在 Android 15/API 35 的 `Nexus_5_API_35`（serial `emulator-5554`）上安装 Debug APK 并启动 `MainActivity`。
+- `:app:connectedDebugAndroidTest` 通过（2 tests）；真实 UI tree 显示“上一个应用排除列表”，crash buffer 为 0。
 
 ## 复杂度
 
@@ -14,7 +23,7 @@
 
 目标是只调整该弹窗的标题文案，让内容和标题一致，同时保留动作列表及其他场景中的通用动作名称。
 
-## 当前行为与证据
+## 实施前行为与证据
 
 - `ActionSettingsDialog` 的 `title` 统一调用 `context.actionText(action)`，包括 `GlobalActions.PREVIOUS_APP`，没有针对弹窗内容的专用标题。见 [`Dialog.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/widget/Dialog.kt#L509-L532) 。
 - `PREVIOUS_APP` 的通用动作文案为“上一个应用程序”，该文案由 [`strings.xml`](../../app/src/main/res/values/strings.xml#L302) 中的 `action_previous_app` 提供。
@@ -65,5 +74,5 @@
 
 - [`Dialog.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/widget/Dialog.kt#L509-L532) ：弹窗标题与正文分支。
 - [`ActionSettingsDialog.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/dialog/ActionSettingsDialog.kt#L190-L220) ：上一个应用排除列表正文。
-- [`strings.xml`](../../app/src/main/res/values/strings.xml#L302) ：通用动作名称资源。
+- [`strings.xml`](../../app/src/main/res/values/strings.xml#L302-L303) ：通用动作名称和专用标题资源。
 - [`GlobalActions.kt`](../../app/src/main/java/com/aaron/sidegesture/constant/GlobalActions.kt#L30-L42) ：`PREVIOUS_APP` 动作 ID。

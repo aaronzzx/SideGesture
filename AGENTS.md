@@ -100,6 +100,15 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 修改无障碍服务后，通常需要杀掉主进程和 `:service` 进程，再重新安装并重新启用无障碍服务。
 - 涉及系统悬浮窗、无障碍、应用列表查询、忽略电池优化时，要检查 Manifest 权限和 Android 版本差异。
 
+## Android 模拟器 QA
+
+- 需要设备行为验证时，先运行 `adb devices -l`；如果没有在线设备，应主动查找并启动已有 AVD，不得直接跳过设备验证。
+- 先从仓库 `local.properties` 解析 `sdk.dir`，再用 `where.exe adb` 和 `where.exe emulator` 核对命令来源；若 PATH 命令缺失或指向其他 SDK，优先使用解析出的 SDK 目录下的 `platform-tools\adb.exe` 和 `emulator\emulator.exe`。
+- 启动前检查 `$env:ANDROID_AVD_HOME`、`$env:ANDROID_USER_HOME` 以及 `$env:USERPROFILE\.android\avd`。环境变量缺失但默认 AVD 目录存在时，只在当前验证进程显式设置正确的 AVD home，并使用解析出的 SDK `emulator.exe -list-avds` 重新列出 AVD。
+- 只有在正确的 AVD home 上列表为空，且不存在 `emulator` 或 `qemu` 进程时，才能判定没有可用模拟器；普通权限与提权上下文结果不一致时必须继续核对，不能直接下结论。
+- 不得自动创建或删除 AVD；后台启动使用隐藏、无窗口方式，并且只关闭本轮由自己启动的 AVD。
+- 存在可用 AVD 时运行 `connectedDebugAndroidTest`；涉及真实 UI 的验收按 UI tree 定位和坐标操作，并保留截图与 logcat 证据。
+
 ## 新目录约定
 
 - 新功能目录先明确职责边界，再放代码。

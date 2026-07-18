@@ -300,6 +300,7 @@
     <string name="action_last_song">上一首</string>
     <string name="action_next_song">下一首</string>
     <string name="action_previous_app">上一个应用程序</string>
+    <string name="previous_app_exclusion_list_title">上一个应用排除列表</string>
     <string name="action_app_screen">应用程序屏幕</string>
     <string name="action_web_forward">前进(网络浏览器)</string>
     <string name="action_open_notification_panel">打开通知面板</string>

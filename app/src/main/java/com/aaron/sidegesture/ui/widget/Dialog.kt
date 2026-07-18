@@ -505,6 +505,18 @@ fun ColorPickerDialog(
     }
 }
 
+fun resolveActionSettingsDialogTitle(
+    action: Action,
+    defaultTitle: String,
+    previousAppTitle: String
+): String {
+    return if (action.value == GlobalActions.PREVIOUS_APP) {
+        previousAppTitle
+    } else {
+        defaultTitle
+    }
+}
+
 @Composable
 fun ActionSettingsDialog(
     onDismissRequest: () -> Unit,
@@ -516,7 +528,13 @@ fun ActionSettingsDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = context.actionText(action))
+            Text(
+                text = resolveActionSettingsDialogTitle(
+                    action = action,
+                    defaultTitle = context.actionText(action),
+                    previousAppTitle = stringResource(R.string.previous_app_exclusion_list_title)
+                )
+            )
         },
         text = {
             when (action.value) {
