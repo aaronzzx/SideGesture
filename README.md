@@ -50,3 +50,12 @@ gulugulu 是一款基于无障碍服务的侧边手势工具。它在屏幕边�
 3. （建议）允许**忽略电池优化**与**自启动**，保证后台稳定
 4. 在「手势触钮」里添加并自定义你的第一个触钮
 5. 为每个手势绑定动作，开滑！
+
+## 开发与测试
+
+JVM 单元测试在本地直接运行，不需要设备；连接设备或模拟器的仪器测试会安装并运行 Android 测试包。
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest
+.\gradlew.bat :app:connectedDebugAndroidTest
+```

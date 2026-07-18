@@ -30,7 +30,7 @@ class DataStoreSerializerTest {
 
         val value = serializer.readFrom(oldJson.byteInputStream())
 
-        assertEquals(ActionSettings.MoveScreen.Style.Magnifier, value.moveScreen.style)
+        assertEquals(ActionSettings.MoveScreen.Style.Crosshair, value.moveScreen.style)
         assertTrue(value.moveScreen.popupEnabled)
     }
 
