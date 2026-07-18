@@ -3,10 +3,10 @@ package com.aaron.sidegesture.action.handler
 import android.graphics.Bitmap
 import android.os.Build
 import android.view.MotionEvent
-import android.view.View
-import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,23 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
-import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.action.ActionRequestProducer
-import com.aaron.sidegesture.action.OverlayDismissAware
+import com.aaron.sidegesture.action.ConfigurationAware
+import com.aaron.sidegesture.action.OverlayActionHandler
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.MoveScreenData
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.feature.movescreen.CrosshairScreen
 import com.aaron.sidegesture.feature.movescreen.MoveScreen
 import com.aaron.sidegesture.feature.movescreen.MoveScreenState
+import com.aaron.sidegesture.feature.screenshot.CleanScreenshotCoordinator
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
-import com.aaron.sidegesture.ktx.attachComposeOverlay
-import com.aaron.sidegesture.ktx.removeWindow
-import com.aaron.sidegesture.ktx.setFlags
-import com.aaron.sidegesture.ktx.takeScreenshot
-import com.aaron.sidegesture.ktx.updateLayout
-import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.aaron.sidegesture.ui.theme.WallpaperAwareSideGestureTheme
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.utils.MotionEventDispatcher
@@ -38,18 +34,21 @@ import com.aaron.sidegesture.utils.OnMotionEventListener
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.ScreenUtils
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 
-class MoveScreenActionHandler internal constructor(
+class MoveScreenActionHandler(
     private val service: SideGestureService,
     private val settingsStore: ServiceSettingsStore,
-    private val scope: CoroutineScope
-) : ActionHandler, ActionRequestProducer, OverlayDismissAware {
+    private val scope: CoroutineScope,
+    private val screenshotCoordinator: CleanScreenshotCoordinator
+) : OverlayActionHandler, ActionRequestProducer, ConfigurationAware {
 
     override val supportedActions = setOf(GlobalActions.MOVE_SCREEN)
+    override val touchEnabled: Flow<Boolean> = flowOf(false)
 
     private val requests = Channel<ActionRequest>(Channel.UNLIMITED)
     override val flow: Flow<ActionRequest> = requests.receiveAsFlow()
@@ -57,7 +56,6 @@ class MoveScreenActionHandler internal constructor(
     private var state: MoveScreenState? by mutableStateOf(null)
     private var screenshot: Bitmap? by mutableStateOf(null)
     private var useCrosshair by mutableStateOf(true)
-    private var window: View? = null
     private var lastRawPosition = Offset.Unspecified
 
     private val motionListener = OnMotionEventListener { event ->
@@ -79,33 +77,32 @@ class MoveScreenActionHandler internal constructor(
     }
 
     override suspend fun handle(request: ActionRequest) {
-        if (request.action.data.isNotBlank()) {
-            performMoveScreenAction(request.action.data)
-            return
-        }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             showVersionTooLowToast(service, R.string.action_move_screen)
             return
         }
-        if (!settingsStore.gestureSettings.value.longSlideTriggerImmediately) {
+        if (request.action.data.isNotBlank()) {
+            performMoveScreenAction(request.action.data)
+            return
+        }
+        val settings = settingsStore.currentSnapshotOrNull() ?: return
+        if (!settings.gestureSettings.longSlideTriggerImmediately) {
             showToast(R.string.move_screen_disabled_cause_long_slide_trigger_immediately)
             return
         }
         val anchor = request.actionContext?.anchor ?: return
-        val gestureSettings = settingsStore.gestureSettings.value
-        val moveScreenSettings = settingsStore.actionSettings.value.moveScreen
+        val gestureSettings = settings.gestureSettings
+        val moveScreenSettings = settings.actionSettings.moveScreen
         onDismiss()
         val newState = MoveScreenState(gestureSettings, moveScreenSettings, scope)
         state = newState
         lastRawPosition = anchor
         useCrosshair = moveScreenSettings.style == ActionSettings.MoveScreen.Style.Crosshair ||
             Build.VERSION.SDK_INT < Build.VERSION_CODES.R
-        ensureWindow()
-        setTouchEnabled(false)
         MotionEventDispatcher.addOnMotionEventListener(motionListener)
         newState.onDragStart(anchor)
         if (!useCrosshair) {
-            val captured = service.takeScreenshot()
+            val captured = screenshotCoordinator.capture()
             if (state === newState) {
                 screenshot = captured
             } else {
@@ -122,37 +119,30 @@ class MoveScreenActionHandler internal constructor(
         screenshot = null
         useCrosshair = true
         lastRawPosition = Offset.Unspecified
-        window?.let(service::removeWindow)
-        window = null
     }
 
-    private fun ensureWindow() {
-        if (window != null) return
-        window = service.attachComposeOverlay {
-            SideGestureTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    val currentState = state
-                    if (currentState != null) {
-                        val bitmap = screenshot
-                        if (useCrosshair) {
-                            CrosshairScreen(currentState, Modifier.fillMaxSize())
-                        } else if (bitmap != null) {
-                            MoveScreen(bitmap, currentState, Modifier.fillMaxSize())
-                        }
+    override fun onConfigurationChanged() {
+        onDismiss()
+    }
+
+    @Composable
+    override fun Content() {
+        WallpaperAwareSideGestureTheme {
+            Box(modifier = Modifier.fillMaxSize()) {
+                val currentState = state
+                if (currentState != null) {
+                    val bitmap = screenshot
+                    if (useCrosshair) {
+                        CrosshairScreen(currentState, Modifier.fillMaxSize())
+                    } else if (bitmap != null) {
+                        MoveScreen(bitmap, currentState, Modifier.fillMaxSize())
                     }
                 }
             }
         }
     }
 
-    private fun setTouchEnabled(enabled: Boolean) {
-        val view = window ?: return
-        val params = (view.layoutParams as WindowManager.LayoutParams).apply {
-            setFlags(enabled)
-        }
-        service.updateLayout(view, params)
-    }
-
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun performMoveScreenAction(data: String) {
         val moveScreenData = runCatching {
             JsonHelper.decodeFromString<MoveScreenData>(data)

@@ -89,14 +89,12 @@ fun QuickToolsControlCenter(
     service: SideGestureService,
     settings: QuickToolsSettings,
     state: QuickToolsControlCenterState,
-    onOverlayTouchChange: (Boolean) -> Unit,
     onAction: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val enabledTypes = remember(settings) {
         settings.items.filter { it.enabled }.map { it.type }
     }
-    val mediaState = rememberQuickToolsMediaControllerState()
     var brightness by remember(state.visible, state.refreshTick) {
         mutableFloatStateOf(QuickToolsExecutor.currentBrightnessRatio(service))
     }
@@ -129,19 +127,20 @@ fun QuickToolsControlCenter(
         quickToolsPanelColors(colorScheme = colorScheme, isDarkTheme = isDarkTheme)
     }
 
-    LaunchedEffect(state.visible) {
-        onOverlayTouchChange(state.visible)
-        if (state.visible) {
-            mediaState.refresh()
-        }
-    }
-
     AnimatedVisibility(
         modifier = modifier.fillMaxSize(),
         visible = state.visible,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
+        val mediaState = rememberQuickToolsMediaControllerState()
+
+        LaunchedEffect(state.visible) {
+            if (state.visible) {
+                mediaState.refresh()
+            }
+        }
+
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()

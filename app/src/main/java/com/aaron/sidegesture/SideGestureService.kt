@@ -4,8 +4,10 @@ import android.content.res.Configuration
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.aaron.composeaccessibility.ComponentAccessibilityService
+import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionManager
 import com.aaron.sidegesture.action.ForegroundAppAware
+import com.aaron.sidegesture.action.OverlayActionHandler
 import com.aaron.sidegesture.action.handler.AppActionHandler
 import com.aaron.sidegesture.action.handler.DeviceActionHandler
 import com.aaron.sidegesture.action.handler.HideGestureButtonActionHandler
@@ -19,9 +21,12 @@ import com.aaron.sidegesture.action.handler.ShellActionHandler
 import com.aaron.sidegesture.action.handler.SmartScreenshotActionHandler
 import com.aaron.sidegesture.action.handler.SystemActionHandler
 import com.aaron.sidegesture.action.handler.TaskSwitcherActionHandler
+import com.aaron.sidegesture.feature.actionoverlay.ActionOverlayHost
 import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.feature.gesture.GestureWindowManager
+import com.aaron.sidegesture.feature.screenshot.CleanScreenshotCoordinator
 import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
+import com.aaron.sidegesture.feature.screenshot.WindowVisibilityController
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.feature.update.UpdateCheckScheduler
 import com.aaron.sidegesture.feature.volumebutton.VolumeButtonController
@@ -38,6 +43,10 @@ class SideGestureService : ComponentAccessibilityService() {
     private val settingsStore = ServiceSettingsStore(serviceScope)
     private val pinnedScreenshotManager: PinnedScreenshotManager by lazy {
         PinnedScreenshotManager(this)
+    }
+
+    private val actionOverlayHost by lazy {
+        ActionOverlayHost(this, serviceScope)
     }
 
     private val environmentMonitor: ServiceEnvironmentMonitor by lazy {
@@ -59,31 +68,60 @@ class SideGestureService : ComponentAccessibilityService() {
             scope = serviceScope,
             settingsStore = settingsStore,
             environmentMonitor = environmentMonitor,
+            actionOverlayTouchEnabled = actionOverlayHost.touchEnabled,
             onActionRequest = { actionManager.submit(it) },
             onDismissActionOverlays = { actionManager.dismissOverlays() },
             onButtonsChanged = { pinnedScreenshotManager.onEnvironmentChanged(it) }
         )
     }
 
-    private val actionManager: ActionManager by lazy {
-        ActionManager(
-            handlers = listOf(
-                SystemActionHandler(this),
-                MediaActionHandler(this),
-                DeviceActionHandler(this, serviceScope),
-                AppActionHandler(this, settingsStore, environmentMonitor),
-                PaymentActionHandler(this, serviceScope),
-                ScrollActionHandler(this, settingsStore),
-                ShellActionHandler(this),
-                HideGestureButtonActionHandler(gestureWindowManager),
-                TaskSwitcherActionHandler(this, serviceScope),
-                QuickLauncherActionHandler(this),
-                QuickToolsActionHandler(this, settingsStore),
-                SmartScreenshotActionHandler(this, serviceScope, pinnedScreenshotManager),
-                MoveScreenActionHandler(this, settingsStore, serviceScope)
-            ),
-            coroutineScope = serviceScope
+    private val screenshotCoordinator by lazy {
+        CleanScreenshotCoordinator(
+            service = this,
+            windowVisibilityController = object : WindowVisibilityController {
+                override fun hideWindowsForScreenshot() {
+                    gestureWindowManager.setTemporarilyHidden(true)
+                    actionOverlayHost.setTemporarilyHidden(true)
+                }
+
+                override fun restoreWindowsAfterScreenshot() {
+                    gestureWindowManager.setTemporarilyHidden(false)
+                    actionOverlayHost.setTemporarilyHidden(false)
+                }
+            }
         )
+    }
+
+    private val actionHandlers: List<ActionHandler> by lazy {
+        listOf(
+            SystemActionHandler(this),
+            MediaActionHandler(this),
+            DeviceActionHandler(this, serviceScope),
+            AppActionHandler(this, settingsStore, environmentMonitor, serviceScope),
+            PaymentActionHandler(this, serviceScope),
+            ScrollActionHandler(this, settingsStore),
+            ShellActionHandler(this),
+            HideGestureButtonActionHandler(gestureWindowManager),
+            TaskSwitcherActionHandler(this, serviceScope),
+            QuickLauncherActionHandler(),
+            QuickToolsActionHandler(this, settingsStore),
+            SmartScreenshotActionHandler(
+                this,
+                serviceScope,
+                pinnedScreenshotManager,
+                screenshotCoordinator
+            ),
+            MoveScreenActionHandler(
+                this,
+                settingsStore,
+                serviceScope,
+                screenshotCoordinator
+            )
+        )
+    }
+
+    private val actionManager: ActionManager by lazy {
+        ActionManager(actionHandlers, serviceScope)
     }
 
     private val volumeButtonController by lazy {
@@ -97,9 +135,12 @@ class SideGestureService : ComponentAccessibilityService() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (environmentMonitor.onConfigurationChanged(newConfig)) {
-            actionManager.dismissOverlays()
+            actionManager.onConfigurationChanged()
             gestureWindowManager.onConfigurationChanged()
-            pinnedScreenshotManager.onEnvironmentChanged(settingsStore.buttons.value)
+            actionOverlayHost.onConfigurationChanged()
+            settingsStore.currentSnapshotOrNull()?.let { settings ->
+                pinnedScreenshotManager.onEnvironmentChanged(settings.buttons)
+            }
         }
     }
 
@@ -113,7 +154,7 @@ class SideGestureService : ComponentAccessibilityService() {
             )
         }
         if (event != null && environmentMonitor.onAccessibilityEvent(event)) {
-            gestureWindowManager.refreshVisibility()
+            gestureWindowManager.requestVisibilityRefresh()
         }
     }
 
@@ -129,6 +170,7 @@ class SideGestureService : ComponentAccessibilityService() {
         actionManager.dismissOverlays()
         updateCheckScheduler.stop()
         environmentMonitor.stop()
+        actionOverlayHost.release()
         gestureWindowManager.release()
         pinnedScreenshotManager.release()
         serviceScope.cancel()
@@ -136,9 +178,10 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onSetOverlay() {
-        actionManager.run { Unit }
+        actionManager.start()
         environmentMonitor.start()
         gestureWindowManager.startOrReattach()
+        actionOverlayHost.attach(actionHandlers.filterIsInstance<OverlayActionHandler>())
         updateCheckScheduler.start()
     }
 }

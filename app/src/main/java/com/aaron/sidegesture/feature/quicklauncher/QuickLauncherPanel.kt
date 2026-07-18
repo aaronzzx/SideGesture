@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -77,16 +76,11 @@ private val EDGE_PADDING = 16.dp
 fun QuickLauncherPanel(
     state: QuickLauncherPanelState,
     onLaunch: (Action, Boolean) -> Unit,
-    onOverlayTouchChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
-
-    LaunchedEffect(state.visible) {
-        onOverlayTouchChange(state.visible)
-    }
 
     AnimatedVisibility(
         modifier = modifier.fillMaxSize(),

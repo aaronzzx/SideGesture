@@ -1,29 +1,25 @@
 package com.aaron.sidegesture.action.handler
 
-import android.view.View
-import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.aaron.sidegesture.SideGestureService
-import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
-import com.aaron.sidegesture.action.OverlayDismissAware
+import com.aaron.sidegesture.action.OverlayActionHandler
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.entity.RecentTask
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.RecentTask
 import com.aaron.sidegesture.feature.taskswitcher.TaskSwitcherPanel
 import com.aaron.sidegesture.feature.taskswitcher.TaskSwitcherPanelState
-import com.aaron.sidegesture.ktx.attachComposeOverlay
-import com.aaron.sidegesture.ktx.removeWindow
-import com.aaron.sidegesture.ktx.setFlags
-import com.aaron.sidegesture.ktx.updateLayout
-import com.aaron.sidegesture.ui.theme.SideGestureTheme
 import com.aaron.sidegesture.platform.shell.ShellActionExecutor
-import kotlinx.coroutines.Dispatchers
+import com.aaron.sidegesture.ui.theme.WallpaperAwareSideGestureTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,13 +27,19 @@ import kotlinx.coroutines.withContext
 class TaskSwitcherActionHandler(
     private val service: SideGestureService,
     private val scope: CoroutineScope
-) : ActionHandler, OverlayDismissAware {
+) : OverlayActionHandler {
+
+    private companion object {
+        val RECENT_TASK_ID_REGEX = Regex("#(\\d+)")
+        val RECENT_TASK_PACKAGE_REGEX = Regex("A=\\d+:(\\S+?)[\\s}]")
+        val PACKAGE_NAME_REGEX = Regex("^[A-Za-z0-9_.]+$")
+    }
 
     override val supportedActions = setOf(GlobalActions.TASK_SWITCHER)
 
     private val state = TaskSwitcherPanelState()
     private val lockedPackages = MutableStateFlow(emptySet<String>())
-    private var window: View? = null
+    override val touchEnabled: Flow<Boolean> = snapshotFlow { state.visible }
     private var requestVersion = 0L
 
     override suspend fun handle(request: ActionRequest) {
@@ -49,59 +51,45 @@ class TaskSwitcherActionHandler(
         val tasks = queryRecentTasks()
         if (version != requestVersion) return
         if (tasks.isEmpty()) return
-        ensureWindow()
         state.show(tasks, anchor, edge)
     }
 
     override fun onDismiss() {
         requestVersion++
         state.hide()
-        window?.let(service::removeWindow)
-        window = null
     }
 
-    private fun ensureWindow() {
-        if (window != null) return
-        window = service.attachComposeOverlay {
-            val lockedPackageNames by lockedPackages.collectAsState()
-            SideGestureTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    TaskSwitcherPanel(
-                        modifier = Modifier.fillMaxSize(),
-                        state = state,
-                        lockedPackageNames = lockedPackageNames,
-                        onOverlayTouchChange = ::setTouchEnabled,
-                        onLaunch = { task ->
-                            switchToRecentTask(task.packageName)
-                            state.hide()
-                        },
-                        onClose = { task ->
-                            scope.launch {
-                                if (closeRecentTask(task.packageName)) state.remove(task)
-                            }
-                        },
-                        onToggleLock = ::toggleLock,
-                        onCloseAll = { tasks ->
-                            scope.launch {
-                                val closed = tasks.map { it.packageName }
-                                    .distinct()
-                                    .filter { closeRecentTask(it) }
-                                    .toSet()
-                                state.removePackages(closed)
-                            }
+    @Composable
+    override fun Content() {
+        val lockedPackageNames by lockedPackages.collectAsState()
+        WallpaperAwareSideGestureTheme {
+            Box(modifier = Modifier.fillMaxSize()) {
+                TaskSwitcherPanel(
+                    modifier = Modifier.fillMaxSize(),
+                    state = state,
+                    lockedPackageNames = lockedPackageNames,
+                    onLaunch = { task ->
+                        switchToRecentTask(task.packageName)
+                        state.hide()
+                    },
+                    onClose = { task ->
+                        scope.launch {
+                            if (closeRecentTask(task.packageName)) state.remove(task)
                         }
-                    )
-                }
+                    },
+                    onToggleLock = ::toggleLock,
+                    onCloseAll = { tasks ->
+                        scope.launch {
+                            val closed = tasks.map { it.packageName }
+                                .distinct()
+                                .filter { closeRecentTask(it) }
+                                .toSet()
+                            state.removePackages(closed)
+                        }
+                    }
+                )
             }
         }
-    }
-
-    private fun setTouchEnabled(enabled: Boolean) {
-        val view = window ?: return
-        val params = (view.layoutParams as WindowManager.LayoutParams).apply {
-            setFlags(enabled)
-        }
-        service.updateLayout(view, params)
     }
 
     private fun toggleLock(packageName: String): Boolean {
@@ -170,11 +158,5 @@ class TaskSwitcherActionHandler(
                 RecentTask(taskId, packageName, label)
             }
             .toList()
-    }
-
-    private companion object {
-        val RECENT_TASK_ID_REGEX = Regex("#(\\d+)")
-        val RECENT_TASK_PACKAGE_REGEX = Regex("A=\\d+:(\\S+?)[\\s}]")
-        val PACKAGE_NAME_REGEX = Regex("^[A-Za-z0-9_.]+$")
     }
 }

@@ -7,17 +7,17 @@ import androidx.datastore.core.MultiProcessDataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import com.aaron.sidegesture.utils.JsonHelper
+import kotlinx.serialization.SerializationException
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
-import kotlinx.serialization.SerializationException
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2024/11/24
  */
 
-internal inline fun <reified T> Context.dataStore(fileName: String, defValue: T): DataStore<T> {
+inline fun <reified T> Context.dataStore(fileName: String, defValue: T): DataStore<T> {
     val serializer = createJsonDataStoreSerializer(defValue)
     return MultiProcessDataStoreFactory.create(
         serializer = serializer,
@@ -28,7 +28,7 @@ internal inline fun <reified T> Context.dataStore(fileName: String, defValue: T)
     )
 }
 
-internal inline fun <reified T> createJsonDataStoreSerializer(defValue: T): Serializer<T> {
+inline fun <reified T> createJsonDataStoreSerializer(defValue: T): Serializer<T> {
     return object : Serializer<T> {
         override val defaultValue: T = defValue
 

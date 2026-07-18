@@ -5,7 +5,7 @@ import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.feature.gesture.GestureWindowManager
 
-class HideGestureButtonActionHandler internal constructor(
+class HideGestureButtonActionHandler(
     private val gestureWindowManager: GestureWindowManager
 ) : ActionHandler {
 

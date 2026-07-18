@@ -39,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -87,15 +86,10 @@ fun TaskSwitcherPanel(
     onClose: (RecentTask) -> Unit,
     onToggleLock: (String) -> Unit,
     onCloseAll: (List<RecentTask>) -> Unit,
-    onOverlayTouchChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
-
-    LaunchedEffect(state.visible) {
-        onOverlayTouchChange(state.visible)
-    }
 
     AnimatedVisibility(
         modifier = modifier.fillMaxSize(),

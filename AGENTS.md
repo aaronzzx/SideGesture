@@ -54,9 +54,11 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 
 ## 修改规则
 
+- `app` 模块禁止使用 `internal` 可见性修饰符，类、构造函数、函数、对象和数据类统一使用默认 `public` 可见性。
 - 修改手势检测逻辑时，优先从 `SideGestureService.kt` 理清事件流，不要只修表层判断。
 - 修改跨进程逻辑时，同时检查主进程调用方、服务进程实现和异常兜底。
 - 修改 DataStore 数据模型时，必须考虑旧配置兼容和默认值。
+- 服务进程不得在 DataStore 首次真实数据发射前使用模型默认值执行用户行为；需要消费多份配置时，统一通过明确的就绪快照读取。
 - 修改 Compose UI 时，遵循现有 MVVM 分层，不把持久化或系统调用直接塞进 UI 组件。
 - Compose 页面默认遵循 `UDF` 单向数据流：`ViewModel` 输出 `UiState`，`UI` 负责渲染和派发事件，不反向持有一份等价业务状态。
 - Composable 函数内不写嵌套函数，保持 UI 结构清晰
@@ -68,6 +70,16 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 优先使用项目已有的api，风格优先按项目已有风格做
 - 优先使用fastcompose库的api
 - 文档需要同步更新
+
+## 动作浮层约定
+
+- 会展示独立动作浮层的 Handler 统一实现 `OverlayActionHandler`，由它组合 `ActionHandler`、`OverlayDismissAware`、`touchEnabled` 和对应的 Composable 内容。
+- `OverlayActionHandler` 自己管理业务状态、显示隐藏、进退场动画、主题和资源；`onDismiss()` 只收起自身 UI，不负责移除 Window。
+- `ActionOverlayHost` 只负责动作浮层 Window 的添加、布局与触摸更新、临时隐藏恢复和服务销毁释放，不持有或修改具体 Compose UI 状态。
+- 动作浮层 Window 在服务生命周期内持久存在，不随单次 `show()` / `hide()` 反复添加和移除；Window 触摸状态由各 `OverlayActionHandler.touchEnabled` 提供。
+- 任一可触摸动作浮层显示时必须暂时禁用透明手势触钮，避免层级更高的触钮抢占浮层边缘事件；移屏等依赖当前手势事件流的非触摸浮层不受此限制。
+- 系统截图前统一由截图协调层临时隐藏手势主窗口和动作浮层 Window，等待真实绘制帧后截图，并在 `finally` 中恢复原状态。
+- 移屏等连续手势动作必须在当前输入事件返回前完成状态初始化和事件监听注册，耗时操作放到后续挂起流程。
 
 ## 动画实现约定
 

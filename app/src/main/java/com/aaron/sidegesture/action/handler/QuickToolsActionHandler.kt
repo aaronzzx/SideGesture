@@ -1,35 +1,31 @@
 package com.aaron.sidegesture.action.handler
 
-import android.view.View
-import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.aaron.sidegesture.SideGestureService
-import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.action.ActionRequestProducer
-import com.aaron.sidegesture.action.OverlayDismissAware
+import com.aaron.sidegesture.action.OverlayActionHandler
 import com.aaron.sidegesture.constant.GlobalActions
+import com.aaron.sidegesture.entity.global.QuickToolsSettings
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenterState
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
-import com.aaron.sidegesture.ktx.attachComposeOverlay
-import com.aaron.sidegesture.ktx.removeWindow
-import com.aaron.sidegesture.ktx.setFlags
-import com.aaron.sidegesture.ktx.updateLayout
-import com.aaron.sidegesture.ui.theme.SideGestureTheme
-import kotlinx.coroutines.flow.Flow
+import com.aaron.sidegesture.ui.theme.WallpaperAwareSideGestureTheme
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 
-class QuickToolsActionHandler internal constructor(
+class QuickToolsActionHandler(
     private val service: SideGestureService,
     private val settingsStore: ServiceSettingsStore
-) : ActionHandler, ActionRequestProducer, OverlayDismissAware {
+) : OverlayActionHandler, ActionRequestProducer {
 
     override val supportedActions = setOf(GlobalActions.QUICK_TOOLS)
 
@@ -37,37 +33,33 @@ class QuickToolsActionHandler internal constructor(
     override val flow: Flow<ActionRequest> = requests.receiveAsFlow()
 
     private val state = QuickToolsControlCenterState()
-    private var settings by mutableStateOf(
-        com.aaron.sidegesture.entity.global.ActionSettings().quickTools
-    )
-    private var window: View? = null
+    private var settings by mutableStateOf<QuickToolsSettings?>(null)
+    override val touchEnabled: Flow<Boolean> = snapshotFlow { state.visible }
 
     override suspend fun handle(request: ActionRequest) {
         val context = request.actionContext ?: return
         val anchor = context.anchor ?: return
         val edge = context.button?.position ?: return
-        settings = settingsStore.actionSettings.value.quickTools
-        ensureWindow()
+        val snapshot = settingsStore.currentSnapshotOrNull() ?: return
+        settings = snapshot.actionSettings.quickTools
         state.show(anchor, edge)
     }
 
     override fun onDismiss() {
         state.hide()
-        window?.let(service::removeWindow)
-        window = null
     }
 
-    private fun ensureWindow() {
-        if (window != null) return
-        window = service.attachComposeOverlay {
-            SideGestureTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+    @Composable
+    override fun Content() {
+        WallpaperAwareSideGestureTheme {
+            Box(modifier = Modifier.fillMaxSize()) {
+                val currentSettings = settings
+                if (currentSettings != null) {
                     QuickToolsControlCenter(
                         modifier = Modifier.fillMaxSize(),
                         service = service,
-                        settings = settings,
+                        settings = currentSettings,
                         state = state,
-                        onOverlayTouchChange = ::setTouchEnabled,
                         onAction = { action ->
                             requests.trySend(ActionRequest(action))
                         }
@@ -75,13 +67,5 @@ class QuickToolsActionHandler internal constructor(
                 }
             }
         }
-    }
-
-    private fun setTouchEnabled(enabled: Boolean) {
-        val view = window ?: return
-        val params = (view.layoutParams as WindowManager.LayoutParams).apply {
-            setFlags(enabled)
-        }
-        service.updateLayout(view, params)
     }
 }

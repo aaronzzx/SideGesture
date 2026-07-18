@@ -7,30 +7,65 @@ import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.entity.global.InitialSettings
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 
-internal class ServiceSettingsStore(
-    scope: CoroutineScope
+data class ServiceSettingsSnapshot(
+    val initialSettings: InitialSettings,
+    val advancedSettings: AdvancedSettings,
+    val gestureSettings: GestureSettings,
+    val actionSettings: ActionSettings,
+    val buttons: List<GestureButton>
+)
+
+class ServiceSettingsStore(
+    scope: CoroutineScope,
+    snapshotSource: Flow<ServiceSettingsSnapshot> = serviceSettingsSnapshotFlow()
 ) {
 
-    val initialSettings: StateFlow<InitialSettings> = DataStoreHolder.initialSettings.data
-        .stateIn(scope, SharingStarted.Eagerly, InitialSettings())
+    private val readySnapshot = ReadySnapshot(snapshotSource, scope)
+    val snapshot: StateFlow<ServiceSettingsSnapshot?> = readySnapshot.state
 
-    val advancedSettings: StateFlow<AdvancedSettings> = DataStoreHolder.advancedSettings.data
-        .stateIn(scope, SharingStarted.Eagerly, AdvancedSettings())
+    fun currentSnapshotOrNull(): ServiceSettingsSnapshot? = readySnapshot.currentOrNull()
 
-    val gestureSettings: StateFlow<GestureSettings> = DataStoreHolder.gestureSettings.data
-        .stateIn(scope, SharingStarted.Eagerly, GestureSettings())
+    suspend fun awaitSnapshot(): ServiceSettingsSnapshot = readySnapshot.await()
 
-    val actionSettings: StateFlow<ActionSettings> = DataStoreHolder.actionSettings.data
-        .stateIn(scope, SharingStarted.Eagerly, ActionSettings())
+    class ReadySnapshot<T : Any>(
+        source: Flow<T>,
+        scope: CoroutineScope
+    ) {
 
-    val buttons: StateFlow<List<GestureButton>> = DataStoreHolder.sideGestureButtons.data
+        val state: StateFlow<T?> = source.stateIn(scope, SharingStarted.Eagerly, null)
+
+        fun currentOrNull(): T? = state.value
+
+        suspend fun await(): T = state.filterNotNull().first()
+    }
+}
+
+private fun serviceSettingsSnapshotFlow(): Flow<ServiceSettingsSnapshot> {
+    val buttons = DataStoreHolder.sideGestureButtons.data
         .combine(DataStoreHolder.bottomGestureButtons.data) { sideButtons, bottomButtons ->
             sideButtons + bottomButtons
         }
-        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+    return combine(
+        DataStoreHolder.initialSettings.data,
+        DataStoreHolder.advancedSettings.data,
+        DataStoreHolder.gestureSettings.data,
+        DataStoreHolder.actionSettings.data,
+        buttons
+    ) { initialSettings, advancedSettings, gestureSettings, actionSettings, buttons ->
+        ServiceSettingsSnapshot(
+            initialSettings = initialSettings,
+            advancedSettings = advancedSettings,
+            gestureSettings = gestureSettings,
+            actionSettings = actionSettings,
+            buttons = buttons
+        )
+    }
 }

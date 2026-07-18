@@ -9,8 +9,8 @@ import com.aaron.sidegesture.action.ActionHandler
 import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.action.ForegroundAppAware
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.launchAppInPopup
 import com.aaron.sidegesture.ktx.launchAppInfo
@@ -18,16 +18,22 @@ import com.aaron.sidegesture.ktx.launchShortcutInfo
 import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.platform.shell.ShellActionExecutor
-import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class AppActionHandler internal constructor(
+class AppActionHandler(
     private val service: SideGestureService,
     private val settingsStore: ServiceSettingsStore,
-    private val environmentMonitor: ServiceEnvironmentMonitor
+    private val environmentMonitor: ServiceEnvironmentMonitor,
+    scope: CoroutineScope
 ) : ActionHandler, ForegroundAppAware {
+
+    private companion object {
+        val PACKAGE_NAME_REGEX = Regex("^[A-Za-z0-9_.]+$")
+    }
 
     override val supportedActions = setOf(
         GlobalActions.PREVIOUS_APP,
@@ -39,10 +45,27 @@ class AppActionHandler internal constructor(
 
     private var previousPackageName: String? = null
     private var currentPackageName: String? = null
+    private var pendingForegroundSnapshot: ForegroundAppAware.Snapshot? = null
+
+    init {
+        scope.launch {
+            settingsStore.awaitSnapshot()
+            pendingForegroundSnapshot?.let { snapshot ->
+                pendingForegroundSnapshot = null
+                onChange(snapshot)
+            }
+        }
+    }
 
     override fun onChange(snapshot: ForegroundAppAware.Snapshot) {
+        val settings = settingsStore.currentSnapshotOrNull()
+        if (settings == null) {
+            pendingForegroundSnapshot = snapshot
+            return
+        }
+        pendingForegroundSnapshot = null
         val packageName = snapshot.packageName ?: return
-        val excluded = settingsStore.actionSettings.value.previousApp.packageNames
+        val excluded = settings.actionSettings.previousApp.packageNames
         if (packageName in excluded || service.packageManager.getLaunchIntentForPackage(packageName) == null) {
             return
         }
@@ -61,17 +84,19 @@ class AppActionHandler internal constructor(
             GlobalActions.KILL_APP -> killCurrentApp()
             GlobalActions.POPUP_SCREEN -> launchCurrentAppInPopup()
             GlobalActions.EXTRA_LAUNCH_APP -> request.action.appInfo?.let { appInfo ->
+                val settings = settingsStore.currentSnapshotOrNull() ?: return
                 service.launchAppInfo(
                     appInfo,
                     appInfo.miniWindow,
-                    settingsStore.actionSettings.value.miniWindow
+                    settings.actionSettings.miniWindow
                 )
             }
             GlobalActions.EXTRA_LAUNCH_SHORTCUT -> request.action.shortcutInfo?.let { shortcutInfo ->
+                val settings = settingsStore.currentSnapshotOrNull() ?: return
                 service.launchShortcutInfo(
                     shortcutInfo,
                     shortcutInfo.miniWindow,
-                    settingsStore.actionSettings.value.miniWindow
+                    settings.actionSettings.miniWindow
                 )
             }
         }
@@ -119,6 +144,7 @@ class AppActionHandler internal constructor(
             return
         }
         val packageName = currentPackageName ?: return
+        val settings = settingsStore.currentSnapshotOrNull() ?: return
         if (environmentMonitor.isLauncherForeground()) return
         val intent = Intent(Intent.ACTION_MAIN)
             .setPackage(packageName)
@@ -132,11 +158,7 @@ class AppActionHandler internal constructor(
         service.launchAppInPopup(
             packageName,
             className,
-            settingsStore.actionSettings.value.miniWindow
+            settings.actionSettings.miniWindow
         )
-    }
-
-    private companion object {
-        val PACKAGE_NAME_REGEX = Regex("^[A-Za-z0-9_.]+$")
     }
 }

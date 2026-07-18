@@ -9,11 +9,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-internal class UpdateCheckScheduler(
+class UpdateCheckScheduler(
     private val service: SideGestureService,
     private val scope: CoroutineScope,
     private val settingsStore: ServiceSettingsStore
 ) {
+
+    private companion object {
+        const val UPDATE_CHECK_TICK_INTERVAL_MS = 30 * 60 * 1000L
+    }
 
     private var tickerJob: Job? = null
 
@@ -22,13 +26,16 @@ internal class UpdateCheckScheduler(
         tickerJob = scope.launch {
             while (isActive) {
                 try {
-                    if (settingsStore.advancedSettings.value.autoCheckUpdate &&
+                    val settings = settingsStore.awaitSnapshot()
+                    if (settings.advancedSettings.autoCheckUpdate &&
                         UpdateRepository.shouldCheck()
                     ) {
                         val result = UpdateRepository.checkAndCache(force = false)
                         if (result is UpdateRepository.CheckResult.NewVersion) {
                             val version = result.state.latestVersion
-                            val ignoredVersion = settingsStore.initialSettings.value.ignoredUpdateVersion
+                            val ignoredVersion = settingsStore.awaitSnapshot()
+                                .initialSettings
+                                .ignoredUpdateVersion
                             if (version.isNotBlank() && version != ignoredVersion) {
                                 UpdateNotifications.showNewVersion(service, version)
                             }
@@ -47,9 +54,5 @@ internal class UpdateCheckScheduler(
     fun stop() {
         tickerJob?.cancel()
         tickerJob = null
-    }
-
-    private companion object {
-        const val UPDATE_CHECK_TICK_INTERVAL_MS = 30 * 60 * 1000L
     }
 }

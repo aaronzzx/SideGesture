@@ -22,9 +22,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
-internal class ServiceEnvironmentMonitor(
+class ServiceEnvironmentMonitor(
     private val service: SideGestureService,
     private val scope: CoroutineScope,
     private val settingsStore: ServiceSettingsStore,
@@ -79,10 +80,11 @@ internal class ServiceEnvironmentMonitor(
             IntentFilter(Intent.ACTION_WALLPAPER_CHANGED)
         )
         fitSoftKeyboardJob = scope.launch {
-            settingsStore.advancedSettings
-                .distinctUntilChangedBy { it.fitSoftKeyboard }
+            settingsStore.snapshot
+                .filterNotNull()
+                .distinctUntilChangedBy { it.advancedSettings.fitSoftKeyboard }
                 .collectLatest { settings ->
-                    if (settings.fitSoftKeyboard) {
+                    if (settings.advancedSettings.fitSoftKeyboard) {
                         imeInsetObserver.register()
                     } else {
                         imeInsetObserver.unregister()

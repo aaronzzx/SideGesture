@@ -16,7 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal class VolumeButtonController(
+class VolumeButtonController(
     private val service: SideGestureService,
     private val scope: CoroutineScope,
     private val settingsStore: ServiceSettingsStore
@@ -26,10 +26,11 @@ internal class VolumeButtonController(
 
     fun handle(event: KeyEvent?): Boolean {
         event ?: return false
+        val settings = settingsStore.currentSnapshotOrNull() ?: return false
         val keyCode = event.keyCode
         val powerManager = service.getSystemService(Context.POWER_SERVICE) as PowerManager
         val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if (!settingsStore.advancedSettings.value.volumeButtonSwitchSong ||
+        if (!settings.advancedSettings.volumeButtonSwitchSong ||
             !audioManager.isMusicActive ||
             powerManager.isInteractive ||
             keyCode != KeyEvent.KEYCODE_VOLUME_UP && keyCode != KeyEvent.KEYCODE_VOLUME_DOWN

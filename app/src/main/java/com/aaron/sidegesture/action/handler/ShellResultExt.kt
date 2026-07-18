@@ -5,7 +5,7 @@ import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.platform.shell.ShellResult
 import com.aaron.sidegesture.utils.showToast
 
-internal fun SideGestureService.showShellFailureToast(result: ShellResult) {
+fun SideGestureService.showShellFailureToast(result: ShellResult) {
     val message = when {
         result.timedOut -> getString(R.string.shell_execute_timeout)
         result.errorMessage == "Shizuku permission denied" ||

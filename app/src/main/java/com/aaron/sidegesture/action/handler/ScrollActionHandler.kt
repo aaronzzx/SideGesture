@@ -10,7 +10,7 @@ import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 
-class ScrollActionHandler internal constructor(
+class ScrollActionHandler(
     private val service: SideGestureService,
     private val settingsStore: ServiceSettingsStore
 ) : ActionHandler {
@@ -32,11 +32,14 @@ class ScrollActionHandler internal constructor(
         }
         when (request.action.value) {
             GlobalActions.BACK_TO_TOP -> AccessibilityUtils.fastVerticalScroll(service, true)
-            GlobalActions.GOTO_BOTTOM -> AccessibilityUtils.fastVerticalScroll(
-                service,
-                false,
-                settingsStore.actionSettings.value.gotoBottom.strength
-            )
+            GlobalActions.GOTO_BOTTOM -> {
+                val settings = settingsStore.currentSnapshotOrNull() ?: return
+                AccessibilityUtils.fastVerticalScroll(
+                    service,
+                    false,
+                    settings.actionSettings.gotoBottom.strength
+                )
+            }
         }
     }
 }

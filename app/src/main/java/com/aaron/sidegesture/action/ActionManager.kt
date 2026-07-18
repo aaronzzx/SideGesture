@@ -2,7 +2,7 @@ package com.aaron.sidegesture.action
 
 import com.aaron.sidegesture.entity.Action
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ActionManager(
@@ -11,8 +11,11 @@ class ActionManager(
 ) {
 
     private val dispatcher = ActionDispatcher(handlers)
+    private var started = false
 
-    init {
+    fun start() {
+        if (started) return
+        started = true
         handlers.filterIsInstance<ActionRequestProducer>().forEach { producer ->
             coroutineScope.launch {
                 producer.flow.collect(::handle)
@@ -22,7 +25,7 @@ class ActionManager(
 
     fun submit(request: ActionRequest) {
         if (request.action == Action.NONE) return
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.Main.immediate) {
             handle(request)
         }
     }
@@ -41,6 +44,12 @@ class ActionManager(
     fun dismissOverlays() {
         handlers.filterIsInstance<OverlayDismissAware>().forEach { handler ->
             handler.onDismiss()
+        }
+    }
+
+    fun onConfigurationChanged() {
+        handlers.filterIsInstance<ConfigurationAware>().forEach { handler ->
+            handler.onConfigurationChanged()
         }
     }
 }

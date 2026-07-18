@@ -4,7 +4,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aaron.sidegesture.entity.global.QuickToolType
 
-internal object QuickToolsGridSpec {
+object QuickToolsGridSpec {
     const val Columns = 4
     const val ViewportRows = 6
 
@@ -20,7 +20,7 @@ internal object QuickToolsGridSpec {
     val CompactButtonSize = minOf(RowHeight, 40.dp)
 }
 
-internal data class QuickToolLayoutSpan(
+data class QuickToolLayoutSpan(
     val columnSpan: Int,
     val rowSpan: Int
 ) {
@@ -30,7 +30,7 @@ internal data class QuickToolLayoutSpan(
     }
 }
 
-internal fun QuickToolType.layoutSpan(): QuickToolLayoutSpan {
+fun QuickToolType.layoutSpan(): QuickToolLayoutSpan {
     return when (this) {
         QuickToolType.MediaControl -> QuickToolLayoutSpan(columnSpan = QuickToolsGridSpec.Columns, rowSpan = 2)
         QuickToolType.Brightness,

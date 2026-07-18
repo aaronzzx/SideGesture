@@ -17,8 +17,8 @@ import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.BarUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ScreenUtils
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -26,6 +26,11 @@ class PaymentActionHandler(
     private val service: SideGestureService,
     private val scope: CoroutineScope
 ) : ActionHandler, ForegroundAppAware {
+
+    private companion object {
+        const val WECHAT_PACKAGE = "com.tencent.mm"
+        const val WECHAT_HOME_ACTIVITY = "com.tencent.mm.ui.LauncherUI"
+    }
 
     override val supportedActions = setOf(
         GlobalActions.WECHAT_SCAN,
@@ -102,10 +107,5 @@ class PaymentActionHandler(
         return runCatching {
             service.packageManager.getActivityInfo(ComponentName(packageName, className), 0)
         }.isSuccess
-    }
-
-    private companion object {
-        const val WECHAT_PACKAGE = "com.tencent.mm"
-        const val WECHAT_HOME_ACTIVITY = "com.tencent.mm.ui.LauncherUI"
     }
 }
