@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ktx
 
 import android.content.Context
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.MultiProcessDataStoreFactory
 import androidx.datastore.core.Serializer
@@ -17,11 +18,16 @@ import java.io.OutputStream
  * @since 2024/11/24
  */
 
-inline fun <reified T> Context.dataStore(fileName: String, defValue: T): DataStore<T> {
+inline fun <reified T> Context.dataStore(
+    fileName: String,
+    defValue: T,
+    migrations: List<DataMigration<T>> = emptyList()
+): DataStore<T> {
     val serializer = createJsonDataStoreSerializer(defValue)
     return MultiProcessDataStoreFactory.create(
         serializer = serializer,
         corruptionHandler = ReplaceFileCorruptionHandler { defValue },
+        migrations = migrations,
         produceFile = {
             File(filesDir, "ds/$fileName")
         }

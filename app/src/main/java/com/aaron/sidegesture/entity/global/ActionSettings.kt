@@ -27,9 +27,9 @@ data class ActionSettings(
         val rate: Float = MoveScreenRate,
         val hoverDelayMs: Long = MoveScreenHoverDelayMs,
         val radius: Int = ConvertUtils.dp2px(12f),
-        // 显示样式：放大镜(需 Android 11+ 截屏)或准星(Android 7+)。默认放大镜，兼容旧配置
+        // 兼容历史序列化字段；DataStore 迁移统一写回 Crosshair，运行时仅使用准星
         val style: Style = Style.Crosshair,
-        // 悬停弹窗(单击/双击/长按三选项)开关，关闭则抬手直接单击。两种样式共用
+        // 悬停弹窗(单击/双击/长按三选项)开关，关闭则抬手直接单击
         val popupEnabled: Boolean = true
     ) {
         enum class Action {
@@ -83,4 +83,11 @@ data class ActionSettings(
         Huawei,
         Meizu
     }
+}
+
+fun ActionSettings.forceCrosshairMoveScreenStyle(): ActionSettings {
+    if (moveScreen.style == ActionSettings.MoveScreen.Style.Crosshair) return this
+    return copy(
+        moveScreen = moveScreen.copy(style = ActionSettings.MoveScreen.Style.Crosshair)
+    )
 }

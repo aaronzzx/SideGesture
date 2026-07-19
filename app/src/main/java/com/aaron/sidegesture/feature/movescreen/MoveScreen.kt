@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -29,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -50,8 +48,8 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastForEachIndexed
 import com.aaron.compose.utils.SystemFontScaleHandler
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
@@ -85,11 +83,6 @@ fun MoveScreen(
     backgroundColor: Color = Color.Black
 ) {
     Box(modifier = modifier) {
-        val stateFingerOnScreen = if (state.showMoveScreenActionPopup) {
-            remember { state.fingerOnScreen }
-        } else {
-            state.fingerOnScreen
-        }
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -110,7 +103,7 @@ fun MoveScreen(
                 }
                 .displayCutoutPadding()
                 .drawBehind {
-                    val offset = stateFingerOnScreen
+                    val offset = state.displayFingerOnScreen
                     val magnifierSize = 80.dp
                     val path = Path().also {
                         it.addOval(
@@ -201,11 +194,6 @@ fun CrosshairScreen(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
-        val reticleTarget = if (state.showMoveScreenActionPopup) {
-            remember { state.fingerOnScreen }
-        } else {
-            state.fingerOnScreen
-        }
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -213,7 +201,7 @@ fun CrosshairScreen(
                     if (state.showMoveScreenActionPopup) {
                         drawRect(color = Color.Black.copy(alpha = DimAlpha))
                     }
-                    drawSniperReticle(reticleTarget)
+                    drawSniperReticle(state.displayFingerOnScreen)
                 }
         )
 
@@ -254,7 +242,7 @@ private fun DrawScope.drawSniperReticle(center: Offset) {
 @Composable
 private fun MoveScreenActionPopup(state: MoveScreenState) {
     val colorScheme = MaterialTheme.colorScheme
-    val showLocation = remember(state.showMoveScreenActionPopup) { state.finger }
+    val showLocation = state.popupAnchor
     val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
     val parentWidth = 70.dp
     val parentHeight = 150.dp
@@ -274,6 +262,9 @@ private fun MoveScreenActionPopup(state: MoveScreenState) {
             modifier = Modifier
                 .width(parentWidth)
                 .height(parentHeight)
+                .onGloballyPositioned {
+                    state.updateActionPopupBounds(it.boundsInRoot())
+                }
                 .shadow(
                     elevation = 4.dp,
                     shape = MaterialTheme.shapes.small
@@ -284,29 +275,13 @@ private fun MoveScreenActionPopup(state: MoveScreenState) {
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionSettings.MoveScreen.Action.entries.fastForEachIndexed { index, action ->
+            ActionSettings.MoveScreen.Action.entries.forEach { action ->
                 key(action) {
-                    var originBounds by remember { mutableStateOf(Rect.Zero) }
-                    LaunchedEffect(state, index, action) {
-                        snapshotFlow { state.finger }
-                            .collect { finger ->
-                                if (originBounds.contains(finger)) {
-                                    if (state.pendingAction != action) {
-                                        state.pendingAction = action
-                                        state.gestureSettings.vibrations.tryVibrateForMoveScreen()
-                                    }
-                                } else {
-                                    if (state.pendingAction == action) {
-                                        state.pendingAction = null
-                                    }
-                                }
-                            }
-                    }
                     SystemFontScaleHandler(false) {
                         Text(
                             modifier = Modifier
                                 .onGloballyPositioned {
-                                    originBounds = it.boundsInRoot()
+                                    state.updateActionBounds(action, it.boundsInRoot())
                                 }
                                 .fillMaxWidth()
                                 .weight(1f)
@@ -333,34 +308,57 @@ fun rememberMoveScreenState(
 ): MoveScreenState {
     val coroutineScope = rememberCoroutineScope()
     return remember(gestureSettings, actionSettings, coroutineScope) {
-        MoveScreenState(gestureSettings, actionSettings, coroutineScope)
+        MoveScreenState(
+            actionSettings = actionSettings,
+            coroutineScope = coroutineScope,
+            onActionSelected = {
+                gestureSettings.vibrations.tryVibrateForMoveScreen()
+            }
+        )
     }
+}
+
+enum class MoveScreenPhase {
+    Following, HoverPending, Selecting
 }
 
 @Stable
 class MoveScreenState(
-    val gestureSettings: GestureSettings,
     private val actionSettings: ActionSettings.MoveScreen,
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
+    private val screenSizeProvider: () -> IntSize = {
+        IntSize(ScreenUtils.getScreenWidth(), ScreenUtils.getScreenHeight())
+    },
+    private val hoverDelay: suspend (Long) -> Unit = { delay(it) },
+    private val onActionSelected: () -> Unit = {}
 ) : LongSlideState() {
 
     var visible: Boolean by mutableStateOf(false)
         private set
     var offset: Offset by mutableStateOf(Offset.Zero)
         private set
-    // 等待模拟点击的坐标
     val fingerOnScreen: Offset by derivedStateOf {
         origin + srcOffset * 2f + (offset - srcOffset)
     }
-    private var srcOffset: Offset by mutableStateOf(Offset.Zero)
-
-    private var longPressJob: Job? = null
-    private var rect: Rect? = null
-
-    var pendingAction: ActionSettings.MoveScreen.Action? = null
-    var showMoveScreenActionPopup: Boolean by mutableStateOf(false)
+    val displayFingerOnScreen: Offset
+        get() = frozenTarget ?: fingerOnScreen
+    var popupAnchor: Offset by mutableStateOf(Offset.Unspecified)
         private set
-    private var pendingFingerOnScreen: Offset? = null
+    var phase: MoveScreenPhase by mutableStateOf(MoveScreenPhase.Following)
+        private set
+    val showMoveScreenActionPopup: Boolean
+        get() = phase == MoveScreenPhase.Selecting
+    var pendingAction: ActionSettings.MoveScreen.Action? by mutableStateOf(null)
+        private set
+
+    private var srcOffset: Offset by mutableStateOf(Offset.Zero)
+    private var longPressJob: Job? = null
+    private var hoverBounds: Rect? = null
+    private var popupBounds: Rect? = null
+    private val actionBounds = mutableMapOf<ActionSettings.MoveScreen.Action, Rect>()
+    private var frozenTarget: Offset? by mutableStateOf(null)
+    private var hoverGeneration = 0L
+    private var popupPointerMoved = false
 
     override fun onDragStart(offset: Offset) {
         super.onDragStart(offset)
@@ -369,41 +367,45 @@ class MoveScreenState(
 
     override fun onDrag(dragAmount: Offset) {
         super.onDrag(dragAmount)
+
+        if (phase == MoveScreenPhase.Selecting) {
+            updatePopupSelection()
+            return
+        }
+
         offset += dragAmount * actionSettings.rate
         srcOffset += dragAmount
+        updateHoverState()
+    }
 
-        if (showMoveScreenActionPopup) return
-        // 悬停弹窗关闭时不再 arm 弹窗，抬手由 done() 默认走单击
-        if (!actionSettings.popupEnabled) return
-        val settings = actionSettings
-        val rect = rect
-        val finger = finger
-        if (rect != null && rect.contains(finger)) {
-            return
+    fun updateActionPopupBounds(bounds: Rect) {
+        if (phase != MoveScreenPhase.Selecting) return
+        popupBounds = bounds
+        if (!bounds.contains(finger)) {
+            resumeFollowing()
+        } else if (popupPointerMoved) {
+            updatePopupSelection()
         }
-        val fingerOnScreen = fingerOnScreen
-        if (fingerOnScreen.x.toInt() !in 0..ScreenUtils.getScreenWidth() ||
-            fingerOnScreen.y.toInt() !in 0..ScreenUtils.getScreenHeight()
-        ) {
-            longPressJob?.cancel()
-            this.rect = null
-            return
-        }
-        this.rect = Rect(center = finger, radius = settings.radius.toFloat())
-        longPressJob?.cancel()
-        longPressJob = coroutineScope.launch {
-            delay(settings.hoverDelayMs)
-            showMoveScreenActionPopup = true
-            pendingFingerOnScreen = fingerOnScreen
+    }
+
+    fun updateActionBounds(action: ActionSettings.MoveScreen.Action, bounds: Rect) {
+        if (phase != MoveScreenPhase.Selecting) return
+        actionBounds[action] = bounds
+        if (popupPointerMoved) {
+            updatePopupSelection()
         }
     }
 
     fun done(): Action {
-        val finger = pendingFingerOnScreen ?: fingerOnScreen
+        val target = if (phase == MoveScreenPhase.Selecting) {
+            frozenTarget ?: fingerOnScreen
+        } else {
+            fingerOnScreen
+        }
         val moveScreenData = MoveScreenData(
-            x = finger.x.toInt(),
-            y = finger.y.toInt(),
-            action = if (showMoveScreenActionPopup) pendingAction else Tap
+            x = target.x.toInt(),
+            y = target.y.toInt(),
+            action = if (phase == MoveScreenPhase.Selecting) pendingAction ?: Tap else Tap
         )
         val data = JsonHelper.encodeToString(moveScreenData)
         return Action(GlobalActions.MOVE_SCREEN, data)
@@ -414,10 +416,95 @@ class MoveScreenState(
         visible = false
         offset = Offset.Zero
         srcOffset = Offset.Zero
-        longPressJob?.cancel()
-        rect = null
+        invalidateHover()
+        popupBounds = null
+        actionBounds.clear()
+        frozenTarget = null
+        popupAnchor = Offset.Unspecified
         pendingAction = null
-        pendingFingerOnScreen = null
-        showMoveScreenActionPopup = false
+        popupPointerMoved = false
+        phase = MoveScreenPhase.Following
+    }
+
+    private fun updatePopupSelection() {
+        popupPointerMoved = true
+        val popupBounds = popupBounds ?: return
+        if (!popupBounds.contains(finger)) {
+            resumeFollowing()
+            return
+        }
+
+        val action = ActionSettings.MoveScreen.Action.entries.firstOrNull {
+            actionBounds[it]?.contains(finger) == true
+        }
+        if (pendingAction == action) return
+        pendingAction = action
+        if (action != null) {
+            onActionSelected()
+        }
+    }
+
+    private fun resumeFollowing() {
+        invalidateHover()
+        popupBounds = null
+        actionBounds.clear()
+        frozenTarget = null
+        pendingAction = null
+        popupPointerMoved = false
+        phase = MoveScreenPhase.Following
+        updateHoverState()
+    }
+
+    private fun updateHoverState() {
+        if (!actionSettings.popupEnabled) {
+            cancelPendingHover()
+            return
+        }
+
+        val target = fingerOnScreen
+        val screenSize = screenSizeProvider()
+        if (target.x.toInt() !in 0..screenSize.width ||
+            target.y.toInt() !in 0..screenSize.height
+        ) {
+            cancelPendingHover()
+            return
+        }
+
+        val currentHoverBounds = hoverBounds
+        if (currentHoverBounds != null && currentHoverBounds.contains(finger)) return
+
+        this.hoverBounds = Rect(center = finger, radius = actionSettings.radius.toFloat())
+        longPressJob?.cancel()
+        hoverGeneration++
+        val generation = hoverGeneration
+        phase = MoveScreenPhase.HoverPending
+        longPressJob = coroutineScope.launch {
+            hoverDelay(actionSettings.hoverDelayMs)
+            if (generation != hoverGeneration || phase != MoveScreenPhase.HoverPending) {
+                return@launch
+            }
+            frozenTarget = fingerOnScreen
+            popupAnchor = finger
+            pendingAction = null
+            popupBounds = null
+            actionBounds.clear()
+            popupPointerMoved = false
+            hoverBounds = null
+            phase = MoveScreenPhase.Selecting
+            longPressJob = null
+        }
+    }
+
+    private fun cancelPendingHover() {
+        if (phase != MoveScreenPhase.HoverPending && longPressJob == null) return
+        invalidateHover()
+        phase = MoveScreenPhase.Following
+    }
+
+    private fun invalidateHover() {
+        hoverGeneration++
+        longPressJob?.cancel()
+        longPressJob = null
+        hoverBounds = null
     }
 }

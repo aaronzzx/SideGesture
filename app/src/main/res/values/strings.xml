@@ -281,10 +281,6 @@
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
     <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法精准点击，请先开启长距离滑动立即触发</string>
     <string name="move_screen_rate">移动速率</string>
-    <string name="move_screen_style">显示样式</string>
-    <string name="move_screen_style_magnifier">放大镜</string>
-    <string name="move_screen_style_crosshair">准星</string>
-    <string name="move_screen_style_crosshair_only_hint">当前系统仅支持准星样式（放大镜需 Android 11+）</string>
     <string name="move_screen_popup_enabled">悬停弹窗</string>
     <string name="move_screen_popup_enabled_summary">开启后悬停可选单击/双击/长按，关闭则抬手直接单击</string>
 

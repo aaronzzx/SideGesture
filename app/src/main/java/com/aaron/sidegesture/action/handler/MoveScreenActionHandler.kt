@@ -1,10 +1,8 @@
 package com.aaron.sidegesture.action.handler
 
-import android.graphics.Bitmap
 import android.os.Build
 import android.view.MotionEvent
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,10 +20,9 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.MoveScreenData
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.feature.movescreen.CrosshairScreen
-import com.aaron.sidegesture.feature.movescreen.MoveScreen
 import com.aaron.sidegesture.feature.movescreen.MoveScreenState
-import com.aaron.sidegesture.feature.screenshot.CleanScreenshotCoordinator
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
+import com.aaron.sidegesture.ktx.tryVibrateForMoveScreen
 import com.aaron.sidegesture.ui.theme.WallpaperAwareSideGestureTheme
 import com.aaron.sidegesture.utils.AccessibilityUtils
 import com.aaron.sidegesture.utils.JsonHelper
@@ -43,8 +40,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class MoveScreenActionHandler(
     private val service: SideGestureService,
     private val settingsStore: ServiceSettingsStore,
-    private val scope: CoroutineScope,
-    private val screenshotCoordinator: CleanScreenshotCoordinator
+    private val scope: CoroutineScope
 ) : OverlayActionHandler, ActionRequestProducer, ConfigurationAware {
 
     override val supportedActions = setOf(GlobalActions.MOVE_SCREEN)
@@ -54,8 +50,6 @@ class MoveScreenActionHandler(
     override val flow: Flow<ActionRequest> = requests.receiveAsFlow()
 
     private var state: MoveScreenState? by mutableStateOf(null)
-    private var screenshot: Bitmap? by mutableStateOf(null)
-    private var useCrosshair by mutableStateOf(true)
     private var lastRawPosition = Offset.Unspecified
 
     private val motionListener = OnMotionEventListener { event ->
@@ -69,6 +63,12 @@ class MoveScreenActionHandler(
                 lastRawPosition = currentPosition
             }
             MotionEvent.ACTION_UP -> {
+                if (lastRawPosition != Offset.Unspecified) {
+                    val finalDragAmount = currentPosition - lastRawPosition
+                    if (finalDragAmount != Offset.Zero) {
+                        current.onDrag(finalDragAmount)
+                    }
+                }
                 requests.trySend(ActionRequest(current.done()))
                 onDismiss()
             }
@@ -94,30 +94,23 @@ class MoveScreenActionHandler(
         val gestureSettings = settings.gestureSettings
         val moveScreenSettings = settings.actionSettings.moveScreen
         onDismiss()
-        val newState = MoveScreenState(gestureSettings, moveScreenSettings, scope)
+        val newState = MoveScreenState(
+            actionSettings = moveScreenSettings,
+            coroutineScope = scope,
+            onActionSelected = {
+                gestureSettings.vibrations.tryVibrateForMoveScreen()
+            }
+        )
         state = newState
         lastRawPosition = anchor
-        useCrosshair = moveScreenSettings.style == ActionSettings.MoveScreen.Style.Crosshair ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.R
         MotionEventDispatcher.addOnMotionEventListener(motionListener)
         newState.onDragStart(anchor)
-        if (!useCrosshair) {
-            val captured = screenshotCoordinator.capture()
-            if (state === newState) {
-                screenshot = captured
-            } else {
-                captured?.recycle()
-            }
-        }
     }
 
     override fun onDismiss() {
         MotionEventDispatcher.removeOnMotionEventListener(motionListener)
         state?.onDragCancel()
         state = null
-        screenshot?.recycle()
-        screenshot = null
-        useCrosshair = true
         lastRawPosition = Offset.Unspecified
     }
 
@@ -128,16 +121,9 @@ class MoveScreenActionHandler(
     @Composable
     override fun Content() {
         WallpaperAwareSideGestureTheme {
-            Box(modifier = Modifier.fillMaxSize()) {
-                val currentState = state
-                if (currentState != null) {
-                    val bitmap = screenshot
-                    if (useCrosshair) {
-                        CrosshairScreen(currentState, Modifier.fillMaxSize())
-                    } else if (bitmap != null) {
-                        MoveScreen(bitmap, currentState, Modifier.fillMaxSize())
-                    }
-                }
+            val currentState = state
+            if (currentState != null) {
+                CrosshairScreen(currentState, Modifier.fillMaxSize())
             }
         }
     }

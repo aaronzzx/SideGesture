@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ktx
 
 import androidx.datastore.core.CorruptionException
+import com.aaron.sidegesture.defaults.MoveScreenStyleMigration
 import com.aaron.sidegesture.entity.global.ActionSettings
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -32,6 +33,30 @@ class DataStoreSerializerTest {
 
         assertEquals(ActionSettings.MoveScreen.Style.Crosshair, value.moveScreen.style)
         assertTrue(value.moveScreen.popupEnabled)
+    }
+
+    @Test
+    fun moveScreenStyleMigrationForcesLegacyMagnifierToCrosshair() = runBlocking {
+        val legacy = ActionSettings(
+            moveScreen = ActionSettings.MoveScreen(
+                rate = 1.5f,
+                hoverDelayMs = 500L,
+                radius = 24,
+                style = ActionSettings.MoveScreen.Style.Magnifier,
+                popupEnabled = false
+            )
+        )
+
+        assertTrue(MoveScreenStyleMigration.shouldMigrate(legacy))
+
+        val migrated = MoveScreenStyleMigration.migrate(legacy)
+
+        assertEquals(ActionSettings.MoveScreen.Style.Crosshair, migrated.moveScreen.style)
+        assertEquals(1.5f, migrated.moveScreen.rate)
+        assertEquals(500L, migrated.moveScreen.hoverDelayMs)
+        assertEquals(24, migrated.moveScreen.radius)
+        assertEquals(false, migrated.moveScreen.popupEnabled)
+        assertEquals(false, MoveScreenStyleMigration.shouldMigrate(migrated))
     }
 
     @Test

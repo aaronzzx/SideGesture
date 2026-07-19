@@ -4,7 +4,7 @@
 
 当前处于下一轮功能更新的实施阶段。11 项需求已按复杂度拆成四批，其中需求 7、8 共用亮度状态与系统适配链，合并为一份 SPEC。
 
-需求 10、1、4 已完成实现、本地自动化验证与 Android 15 模拟器验证，第一批已结束，下一项为第二批需求 3。实施顺序以 [SPEC 索引](docs/spec/README.md) 为准；只有完成实现并通过对应验证后，功能事项才能移入“已完成”。
+需求 10、1、4、3 已完成实现、本地自动化验证与 Android 15 模拟器验证，第一批及第二批需求 3 已结束，下一项为需求 7、8。实施顺序以 [SPEC 索引](docs/spec/README.md) 为准；只有完成实现并通过对应验证后，功能事项才能移入“已完成”。
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
@@ -20,10 +20,11 @@
 - [x] 2026-07-18：完成需求 10，为“上一个应用”设置弹窗增加排除列表专用标题，并补充特殊分支与默认分支自动化测试。
 - [x] 2026-07-19：完成需求 1，将文本 Slider 常驻标题值改为拖动锚点气泡，支持边界限位、短尖角中心对齐、圆角无缝衔接、`120ms` 尺寸动画、手指遮挡区避让和 `Range Slider` 活动锚点显示。
 - [x] 2026-07-19：完成需求 4，新增默认关闭的“输入法时隐藏触钮”设置，以独立输入法可见状态统一隐藏并禁用全部边缘触钮，输入法消失后恢复原有可见性、触摸和 Left／Right 避让规则。
+- [x] 2026-07-19：完成需求 3，为移屏增加 Following／HoverPending／Selecting 显式状态，支持拖出菜单后恢复跟随、再次悬停、无选择 Tap 回退和 ACTION_UP 末段位移；生产运行时统一使用准星，历史 Magnifier 配置与旧备份自动迁移为 Crosshair。
 
 ## 进行中
 
-当前无业务代码实施项。下一项为第二批需求 3。
+当前无业务代码实施项。下一项为第二批需求 7、8。
 
 ## 待办
 
@@ -34,7 +35,7 @@
 
 ### 第二批：中高复杂度／诊断先行
 
-- [ ] 需求 3：[移屏悬停后恢复移动并支持再次悬停](docs/spec/03-move-screen-rehover.md)。
+- [x] 需求 3：[移屏悬停后恢复移动并支持再次悬停](docs/spec/03-move-screen-rehover.md)。
 - [ ] 需求 7、8：[统一快速工具亮度读写、映射与刷新](docs/spec/07-08-quick-tools-brightness.md)。
 - [ ] 需求 9：[定位并修复应用黑名单持久化与服务命中链路](docs/spec/09-app-blacklist-sync.md)。
 - [ ] 需求 11：[快速启动器改为横向整页翻页](docs/spec/11-quick-launcher-horizontal-paging.md)。
@@ -57,8 +58,6 @@
 
 ## 最近验证
 
-- 2026-07-18：第三轮限域复审结果为 PASS；`imeVisible` 契约和恢复 generation／服务确认／资源摘要汇合协议均已闭环，无剩余行动项。
-- 2026-07-18：独立复验 `:app:testDebugUnitTest` 通过，共 9 个测试套件、28 项测试，失败、错误和跳过均为 0。
 - 2026-07-18：独立复验 `assembleDebug`、`:app:assembleDebugAndroidTest` 和 `git diff --check` 均通过。
 - 2026-07-18：`AGENTS.md` 新增自动化测试同步规则，原文精确出现 1 次，文档差异检查通过。
 - 2026-07-18：需求 10 目标单测、全量 `:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:assembleDebugAndroidTest` 和 `git diff --check` 独立复验通过，验证前后源码与未跟踪测试哈希一致。
@@ -67,3 +66,5 @@
 - 2026-07-19：需求 1 全量 `:app:testDebugUnitTest` 通过，共 12 个测试套件、40 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 6 项测试全绿，其中尺寸动画测试确认中间帧介于起止宽度之间。真实 Slider 连续拖动截图确认 `947 ms` 至 `1000 ms` 的位数变化保持圆角、尖角对齐和边界限位，未发现本应用崩溃。
 - 2026-07-19：需求 4 全量 `:app:testDebugUnitTest` 通过，共 14 个测试套件、49 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 9 项测试全部通过。
 - 2026-07-19：需求 4 在 Android 15／API 35 模拟器完成运行时验证：设置项可见且可保存；输入法弹出时 Left、Right、Bottom 窗口均不可见、无 Surface 且不可触摸，收起后按原状态恢复；主进程、`:service` 进程和 crash buffer 均无致命日志。
+- 2026-07-19：需求 3 全量 `:app:testDebugUnitTest` 通过，共 15 个测试套件、58 项测试，失败、错误和跳过均为 0；`assembleDebug`、`assembleDebugAndroidTest` 与准星 Compose 定向仪器测试通过，crash buffer 为空。
+- 2026-07-19：需求 3 在 `Nexus_5_API_35` 完成真实悬浮窗验证：历史 Magnifier 磁盘值被 DataStore migration 改写为 Crosshair，设置页无样式入口；竖屏 Left／Right 与横屏 Bottom 均可拖出后在新锚点再次悬停，Tall cutout 左侧 inset 为 144px，全程仅显示准星且无崩溃。

@@ -3,6 +3,7 @@ package com.aaron.sidegesture.utils
 import androidx.datastore.core.DataStore
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.constant.DataStoreFiles
+import com.aaron.sidegesture.defaults.MoveScreenStyleMigration
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
@@ -38,7 +39,11 @@ object DataStoreHolder {
     val actionSettings: DataStore<ActionSettings> = run {
         val fileName = DataStoreFiles.ACTION_SETTINGS
         val defValue = ActionSettings()
-        App.getContext().dataStore(fileName, defValue)
+        App.getContext().dataStore(
+            fileName = fileName,
+            defValue = defValue,
+            migrations = listOf(MoveScreenStyleMigration)
+        )
     }
 
     val bottomGestureButtons: DataStore<List<GestureButton>> = run {

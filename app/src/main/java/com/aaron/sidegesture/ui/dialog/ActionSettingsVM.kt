@@ -5,6 +5,7 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.App
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.entity.global.forceCrosshairMoveScreenStyle
 import com.aaron.sidegesture.ktx.coerceTimeMillis
 import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiEvent
 import com.aaron.sidegesture.ui.dialog.ActionSettingsVM.UiState
@@ -48,14 +49,6 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                 )
             )
         }
-    }
-
-    fun onMoveScreenStyleChange(style: ActionSettings.MoveScreen.Style) {
-        val newActionSettings = uiState.actionSettings.copy(
-            moveScreen = uiState.actionSettings.moveScreen.copy(style = style)
-        )
-        updateUiState { it.copy(actionSettings = newActionSettings) }
-        persistActionSettings(newActionSettings)
     }
 
     fun onMoveScreenPopupEnabledChange(enabled: Boolean) {
@@ -119,9 +112,10 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     }
 
     private fun persistActionSettings(actionSettings: ActionSettings) {
+        val normalizedActionSettings = actionSettings.forceCrosshairMoveScreenStyle()
         viewModelScope.launchWithLoading {
             DataStoreHolder.actionSettings.updateData {
-                actionSettings
+                normalizedActionSettings
             }
         }
     }

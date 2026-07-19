@@ -5,6 +5,7 @@ import android.net.Uri
 import com.aaron.sidegesture.BuildConfig
 import com.aaron.sidegesture.constant.Paths
 import com.aaron.sidegesture.entity.global.Backup
+import com.aaron.sidegesture.entity.global.forceCrosshairMoveScreenStyle
 import com.aaron.sidegesture.utils.DataStoreHolder.actionSettings
 import com.aaron.sidegesture.utils.DataStoreHolder.advancedSettings
 import com.aaron.sidegesture.utils.DataStoreHolder.bottomGestureButtons
@@ -156,7 +157,7 @@ object BackupHelper {
                 },
                 async {
                     actionSettings.updateData {
-                        backup.actionSettings ?: it
+                        backup.actionSettings?.forceCrosshairMoveScreenStyle() ?: it
                     }
                 },
                 async {

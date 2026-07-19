@@ -114,8 +114,7 @@ class SideGestureService : ComponentAccessibilityService() {
             MoveScreenActionHandler(
                 this,
                 settingsStore,
-                serviceScope,
-                screenshotCoordinator
+                serviceScope
             )
         )
     }
