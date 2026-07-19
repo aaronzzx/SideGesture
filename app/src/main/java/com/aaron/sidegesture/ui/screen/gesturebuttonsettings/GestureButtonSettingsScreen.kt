@@ -64,7 +64,7 @@ import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.ui.widget.formatSliderInteger
-import com.aaron.sidegesture.ui.widget.formatSliderPercentageRange
+import com.aaron.sidegesture.ui.widget.formatSliderPercentage
 import com.blankj.utilcode.util.ConvertUtils
 
 /**
@@ -315,7 +315,7 @@ fun GestureButtonSettingsScreen(
                                 text = stringResource(id = R.string.gesture_button_length),
                                 sliderValueHint = stringResource(id = R.string.top) to stringResource(id = R.string.bottom),
                                 valueRange = MinGestureButtonPosition..MaxGestureButtonPosition,
-                                valueFormatter = ::formatSliderPercentageRange
+                                valueFormatter = ::formatSliderPercentage
                             )
                             if (uiState.gestureButtonSettings.isSideButton) {
                                 MyTextSwitch(

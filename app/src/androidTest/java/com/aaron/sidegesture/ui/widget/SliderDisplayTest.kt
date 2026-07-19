@@ -35,6 +35,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 private const val RANGE_TAG = "slider-display-range"
+private const val BUBBLE_TAG = "slider-value-bubble"
 
 @RunWith(AndroidJUnit4::class)
 class SliderDisplayTest {
@@ -63,8 +64,10 @@ class SliderDisplayTest {
                 )
             }
         }
+        composeTestRule.waitForIdle()
 
         val slider = composeTestRule.onNode(progressSliderMatcher)
+        composeTestRule.onNodeWithText("0.25").assertDoesNotExist()
         slider.performTouchInput {
             down(center)
             moveBy(Offset(width * 0.25f, 0f))
@@ -74,13 +77,65 @@ class SliderDisplayTest {
         assertTrue("pointer move must call onValueChange", changeCount > 0)
         assertEquals("pointer is still down", 0, finishedCount)
         assertTrue("value must move", abs(value - 0.25f) > 0.001f)
-        composeTestRule.onNodeWithText(formatSliderDecimal(value, 2)).assertIsDisplayed()
+        val currentValueText = formatSliderDecimal(value, 2)
+        val bubbleNode = composeTestRule.onNodeWithText(currentValueText)
+        bubbleNode.assertIsDisplayed()
         composeTestRule.onNodeWithText("小").assertIsDisplayed()
         composeTestRule.onNodeWithText("大").assertIsDisplayed()
+        val sliderBounds = slider.getUnclippedBoundsInRoot()
+        val bubbleBounds = bubbleNode.getUnclippedBoundsInRoot()
+        val sliderCenterY = sliderBounds.top + (sliderBounds.bottom - sliderBounds.top) / 2
+        assertTrue(bubbleBounds.bottom <= sliderCenterY - 32.dp)
 
         slider.performTouchInput { up() }
         composeTestRule.waitForIdle()
         assertEquals(1, finishedCount)
+        composeTestRule.onNodeWithText(currentValueText).assertDoesNotExist()
+    }
+
+    @Test
+    fun bubbleSizeAnimatesWhenFormattedTextWidthChanges() {
+        var bubbleText by mutableStateOf("1 dp")
+
+        composeTestRule.setContent {
+            SliderTestTheme {
+                MyTextSlider(
+                    value = 0.5f,
+                    onValueChange = {},
+                    text = "尺寸动画",
+                    valueFormatter = { bubbleText }
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val slider = composeTestRule.onNode(progressSliderMatcher)
+        slider.performTouchInput {
+            down(center)
+            moveBy(Offset(width * 0.1f, 0f))
+        }
+        composeTestRule.waitForIdle()
+
+        val bubble = composeTestRule.onNodeWithTag(BUBBLE_TAG)
+        val startBounds = bubble.getUnclippedBoundsInRoot()
+        val startWidth = startBounds.right - startBounds.left
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.runOnIdle {
+            bubbleText = "100000 dp"
+        }
+        composeTestRule.mainClock.advanceTimeByFrame()
+        composeTestRule.mainClock.advanceTimeBy(60)
+        val middleBounds = bubble.getUnclippedBoundsInRoot()
+        val middleWidth = middleBounds.right - middleBounds.left
+        composeTestRule.mainClock.advanceTimeBy(200)
+        val endBounds = bubble.getUnclippedBoundsInRoot()
+        val endWidth = endBounds.right - endBounds.left
+
+        assertTrue("bubble must grow during the animation", middleWidth > startWidth)
+        assertTrue("middle frame must remain before the target size", middleWidth < endWidth)
+
+        composeTestRule.mainClock.autoAdvance = true
+        slider.performTouchInput { up() }
     }
 
     @Test
@@ -101,7 +156,7 @@ class SliderDisplayTest {
                     onValueChangeFinished = { finishedCount++ },
                     text = "区间滑块",
                     sliderValueHint = "起点" to "终点",
-                    valueFormatter = ::formatSliderPercentageRange,
+                    valueFormatter = ::formatSliderPercentage,
                     sliderModifier = Modifier.testTag(RANGE_TAG)
                 )
             }
@@ -134,12 +189,12 @@ class SliderDisplayTest {
         assertTrue(range.start <= range.endInclusive)
         assertTrue(range.start >= 0f && range.endInclusive <= 1f)
         assertEquals(0f, range.start, 1e-6f)
-        assertEquals("0% – 80%", formatSliderPercentageRange(range))
-        composeTestRule.onNodeWithText("0% – 80%").assertIsDisplayed()
+        composeTestRule.onNodeWithText("0%").assertIsDisplayed()
 
         rangeSlider.performTouchInput { up() }
         composeTestRule.waitForIdle()
         assertEquals(1, finishedCount)
+        composeTestRule.onNodeWithText("0%").assertDoesNotExist()
 
         rangeSlider.performTouchInput {
             down(endCenter)
@@ -151,12 +206,12 @@ class SliderDisplayTest {
         assertTrue(range.start <= range.endInclusive)
         assertTrue(range.start >= 0f && range.endInclusive <= 1f)
         assertEquals(1f, range.endInclusive, 1e-6f)
-        assertEquals("0% – 100%", formatSliderPercentageRange(range))
-        composeTestRule.onNodeWithText("0% – 100%").assertIsDisplayed()
+        composeTestRule.onNodeWithText("100%").assertIsDisplayed()
 
         rangeSlider.performTouchInput { up() }
         composeTestRule.waitForIdle()
         assertEquals(2, finishedCount)
+        composeTestRule.onNodeWithText("100%").assertDoesNotExist()
 
         val currentRangeRect = rangeSlider.fetchSemanticsNode().boundsInRoot
         val currentOrigin = Offset(currentRangeRect.left, currentRangeRect.top)
@@ -176,20 +231,20 @@ class SliderDisplayTest {
         assertTrue(range.start <= range.endInclusive)
         assertTrue(range.start >= 0f && range.endInclusive <= 1f)
         assertEquals(1f, range.start, 1e-6f)
-        assertEquals("100% – 100%", formatSliderPercentageRange(range))
-        composeTestRule.onNodeWithText("100% – 100%").assertIsDisplayed()
+        composeTestRule.onNodeWithText("100%").assertIsDisplayed()
 
         rangeSlider.performTouchInput { up() }
         composeTestRule.waitForIdle()
         assertEquals(3, finishedCount)
+        composeTestRule.onNodeWithText("100%").assertDoesNotExist()
         composeTestRule.onNodeWithText("起点").assertIsDisplayed()
         composeTestRule.onNodeWithText("终点").assertIsDisplayed()
     }
 
     @Test
-    fun longTitlesEllipsizeAndValueStaysSingleLineWithHint() {
+    fun longTitlesEllipsizeWithoutPersistentValueAndHintsRemainVisible() {
         val title = "这是一个非常非常长的 Slider 标题，用于验证单行省略行为"
-        val valueText = "0.50 – 1.00"
+        val valueText = "50%"
         composeTestRule.setContent {
             SliderTestTheme {
                 CompositionLocalProvider(LocalDensity provides Density(1f, 1.3f)) {
@@ -214,14 +269,7 @@ class SliderDisplayTest {
         assertEquals(1, titleLayout.single().lineCount)
         assertTrue(titleLayout.single().isLineEllipsized(0))
 
-        val valueLayout = mutableListOf<TextLayoutResult>()
-        composeTestRule.onNodeWithText(valueText).performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
-            it.invoke(valueLayout)
-        }
-        assertEquals(1, valueLayout.single().lineCount)
-        val titleBounds = composeTestRule.onNodeWithText(title).getUnclippedBoundsInRoot()
-        val valueBounds = composeTestRule.onNodeWithText(valueText).getUnclippedBoundsInRoot()
-        assertTrue(titleBounds.right <= valueBounds.left)
+        composeTestRule.onNodeWithText(valueText).assertDoesNotExist()
         composeTestRule.onNodeWithText("0").assertIsDisplayed()
         composeTestRule.onNodeWithText("1").assertIsDisplayed()
     }

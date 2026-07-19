@@ -24,7 +24,6 @@ class SliderFormatterTest {
     fun percentageFormattersCoverZeroAndOne() {
         assertEquals("0%", formatSliderPercentage(0f))
         assertEquals("100%", formatSliderPercentage(1f))
-        assertEquals("10% – 90%", formatSliderPercentageRange(0.1f..0.9f))
     }
 
     @Test
