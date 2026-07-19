@@ -16,6 +16,7 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.global.QuickToolsSettings
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenter
 import com.aaron.sidegesture.feature.quicktools.QuickToolsControlCenterState
+import com.aaron.sidegesture.feature.quicktools.QuickToolsExecutor
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ui.theme.WallpaperAwareSideGestureTheme
 import kotlinx.coroutines.channels.Channel
@@ -32,7 +33,9 @@ class QuickToolsActionHandler(
     private val requests = Channel<ActionRequest>(Channel.UNLIMITED)
     override val flow: Flow<ActionRequest> = requests.receiveAsFlow()
 
-    private val state = QuickToolsControlCenterState()
+    private val state = QuickToolsControlCenterState(
+        QuickToolsExecutor.brightnessGateway(service)
+    )
     private var settings by mutableStateOf<QuickToolsSettings?>(null)
     override val touchEnabled: Flow<Boolean> = snapshotFlow { state.visible }
 

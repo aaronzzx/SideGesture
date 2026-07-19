@@ -2,7 +2,7 @@
 
 ## 状态
 
-草案，待目标设备基线。现有读写链路已确认，系统异步生效和厂商映射尚未在目标设备上验证；未实现修复。
+已完成。实现与自动化测试已覆盖 Android 15／API 35 AOSP 模拟器、Android 16／API 36 小米真机、WRITE_SETTINGS、仅 Shizuku、外部系统修改、观察生命周期和快速工具浮层手势入口。
 
 ## 复杂度
 
@@ -12,15 +12,26 @@
 
 需求 7＝自动亮度按钮点击后需要刷新，需求 8＝快速工具亮度条与系统亮度不一致；两者共用同一份亮度状态，合并设计以避免两个控件各自维护不一致的读写逻辑。
 
-当前需求 7 的切换自动亮度后立即 `refresh()`，但系统可能稍后才完成模式切换或亮度计算，面板因此短暂显示旧值或错误值；需求 8 的亮度读写固定使用 `SCREEN_BRIGHTNESS / 255f` 线性映射，没有观察外部系统修改，容易造成亮度条与系统亮度不一致，也没有在面板隐藏时释放观察资源。
+实现前，需求 7 的切换自动亮度后立即 `refresh()`，但系统可能稍后才完成模式切换或亮度计算，面板因此短暂显示旧值或错误值；需求 8 的亮度读写固定使用 `SCREEN_BRIGHTNESS / 255f` 线性映射，没有观察外部系统修改，容易造成亮度条与系统亮度不一致，也没有在面板隐藏时释放观察资源。
 
-目标是让 `QuickToolsExecutor` 成为亮度读取、写入、模式转换和系统读回的唯一边界：切换或拖动后以系统读回为准；面板可见期间持续观察系统亮度和模式，隐藏后释放观察；不能用固定延时掩盖异步生效问题。实施前必须用目标设备确认系统值范围和映射。
+当前实现让 `QuickToolsExecutor` 成为系统亮度读取、写入、模式转换和读回边界，并由独立亮度控制器统一 Compose 状态：切换或拖动后以系统读回为准；面板可见期间持续观察系统亮度和模式，隐藏后释放观察；不使用固定延时掩盖异步生效问题。
 
-## 当前行为与证据
+## 实现结果与证据
 
-- [QuickToolsControlCenter.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenter.kt) 在 `state.visible` 或 `refreshTick` 变化时读取亮度比例和自动模式；亮度变化、自动模式点击成功后直接调用 `state.refresh()`。相关代码在 98-110、235-256 行。
-- [QuickToolsControlCenterState.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenterState.kt) 的 `show()` 立即触发一次 refresh，但没有系统设置观察器；`hide()` 只改变可见性。相关代码在 12-39 行。
-- [QuickToolsExecutor.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsExecutor.kt) 使用 `SCREEN_BRIGHTNESS` 默认值 128，并按 255 线性转换；写入优先走 `WRITE_SETTINGS`，否则走 Shizuku；自动模式同样只写入模式值并返回成功。相关代码在 21-99 行。
+- [QuickToolsBrightness.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightness.kt) 集中定义亮度范围、系统快照、写入能力、读写网关和控制器；Android 9 及以上采用与 AOSP SystemUI 一致的 HLG 感知映射，旧版本保留线性映射，快速拖动以最新写入序号淘汰排队旧值。
+- [QuickToolsExecutor.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsExecutor.kt) 读取系统原始值、模式与写入能力，观察 `SCREEN_BRIGHTNESS` 和 `SCREEN_BRIGHTNESS_MODE`，通过 WRITE_SETTINGS 或 Shizuku 写入后立即读回，并区分成功、待系统同步、失败和无权限。
+- [QuickToolsControlCenterState.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenterState.kt) 持有唯一亮度状态；面板显示时注册观察，隐藏或服务销毁时注销，重新显示时读取完整系统快照。
+- [QuickToolsControlCenter.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenter.kt) 不再保存等价的本地亮度业务状态；滑块和自动亮度按钮只消费控制器快照，无权限时不乐观更新并沿用系统设置授权入口。
+- [QuickToolsBrightnessTest.kt](../../app/src/test/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessTest.kt) 覆盖 Android 15 基线映射、旧 API 线性映射、扩展范围、观察生命周期、无权限、异步自动模式和连续写入竞态；[QuickToolsBrightnessGatewayInstrumentedTest.kt](../../app/src/androidTest/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessGatewayInstrumentedTest.kt) 在真实 Android 系统设置上覆盖 WRITE_SETTINGS 写入、读回、自动模式和观察器注销；[QuickToolsBrightnessShizukuInstrumentedTest.kt](../../app/src/androidTest/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessShizukuInstrumentedTest.kt) 在 WRITE_SETTINGS 未放行时覆盖生产 Shizuku 网关、外部修改、观察停止和重开刷新。
+
+## 设备基线（2026-07-19 至 2026-07-20）
+
+- 设备矩阵为 `Nexus_5_API_35` AVD（Android 15／API 35，AOSP／Google）和小米 `25113PN0EC` 真机（Android 16／API 36）。
+- AOSP 模拟器系统有效整数范围为 `1..255`，自动亮度模式值为 `1`。框架资源报告设置范围 `10..255`，但亮度整数感知范围开关为关闭，实际 SystemUI 仍按 `BrightnessSynchronizer` 的 `1..255` 线性整数范围与 HLG 感知滑块互转。
+- 系统亮度条约 `0%／25%／50%／75%／100%` 时，`SCREEN_BRIGHTNESS` 实测分别为 `1／6／22／68／254~255`。旧实现把原始值 `22` 线性除以 `255` 后只显示约 `9%`；新实现将 `22` 与感知比例 `50%` 双向映射，误差不超过 1 个原始整数值。
+- 小米真机框架资源报告范围为 `5..255`，实际系统亮度面板端点可到达 `1..255`，整数感知范围开关同样关闭；自动模式下原始亮度与调整值会随环境策略动态变化。
+- WRITE_SETTINGS 路径下，两种 API 的手动亮度与自动模式写入均触发 `ContentObserver` 并可读回；Android 15 定向测试前后恢复为亮度 `255`、自动模式 `1`，Android 16 真机测试也恢复原模式与现场值。
+- Android 15 模拟器的 WRITE_SETTINGS 保持 `default`，Shizuku `13.6.0` 服务在线且应用权限已授予；生产网关确认选择 Shizuku 并成功写入亮度、切换模式、接收外部变化和恢复原系统值。
 
 ## 范围
 
@@ -49,11 +60,11 @@
 
 ## 技术方案
 
-1. 在 `QuickToolsExecutor` 内定义亮度快照和统一转换边界：原始系统值、归一化比例、自动模式和可写能力由同一入口返回；具体范围使用目标设备基线结果，而不是在 UI 中固定 255。
-2. 亮度写入和自动模式切换返回操作结果及读回状态。成功的定义是权限调用成功且在观察／主动读回中得到目标模式或可接受的系统值；超时或被系统覆盖时返回失败／待同步，不提升本地状态。
-3. 在快速工具控制中心的可见性生命周期内注册 `ContentObserver` 或等价系统回调，回调只触发快照刷新；离开可见状态时注销并清理引用。不得由观察器持有面板或服务的长生命周期引用。
-4. 将系统回调、写入完成回调和 Compose 状态更新串行化，避免快速拖动时旧回调覆盖新值；必要时以最新写入序号或快照时间戳丢弃过期结果。
-5. 先在目标设备记录手动／自动切换前后的原始值和事件顺序，再确定归一化函数、滑块边界及是否需要对最小非零亮度做设备级处理。
+1. `QuickToolsExecutor` 提供亮度网关，原始系统值、归一化比例、自动模式、范围和可写能力由同一快照返回；UI 不再固定除以 `255`。
+2. 亮度写入和自动模式切换返回操作结果及立即读回快照。权限调用成功但读回尚未匹配目标时返回待同步，不提升本地状态，后续由系统观察回调刷新。
+3. 快速工具控制中心显示时注册 `ContentObserver`，隐藏时注销；服务销毁通过统一浮层 dismiss 链调用 `hide()`，不遗留常驻观察器。
+4. 滑块拖动以 Mutex 串行写入，并用单调递增序号跳过排队的过期值；观察回调仍可刷新系统快照，但待写比例只由最新请求持有。
+5. Android 9 及以上按 AOSP HLG 感知曲线转换，Android 8.1 及以下按旧 SystemUI 线性曲线转换；标准现代范围使用 `1..255`，检测到 OEM 扩展最大值时保留框架配置范围。
 
 ## 状态／数据与兼容性
 
@@ -72,15 +83,29 @@
 - 快速连续拖动不会出现旧值回写覆盖新值；重新打开面板会读取最新系统快照。
 - 至少覆盖两种 Android API 和目标 OEM；观察器不可用、权限撤销、服务重启均无崩溃。
 
+## 本轮验证结果
+
+- 全量 JVM 测试共 16 个测试套件、67 项测试，失败、错误和跳过均为 0；`assembleDebug` 与 `assembleDebugAndroidTest` 通过。
+- Android 15／API 35 上 WRITE_SETTINGS 亮度定向仪器测试 3／3 通过，覆盖感知映射读写、自动模式观察读回和注销后不再接收变化；测试前后系统亮度与模式均恢复，crash buffer 为空。
+- Android 15／API 35 上仅 Shizuku 的生产网关测试 2／2 通过，覆盖亮度写入、自动／手动切换、外部系统修改、可见期观察、停止后不更新和重新开始读取最新值；测试后恢复亮度 `255`、自动模式 `1`，本应用无崩溃。
+- Android 16／API 36 小米真机上的 WRITE_SETTINGS 定向仪器测试 3／3 通过，实际亮度端点、系统模式读回和观察器生命周期均正常，本应用无崩溃。
+- 全量 `connectedDebugAndroidTest` 共执行 13 项，本次新增亮度测试 3 项全部通过；既有 `AdvancedSettingsScreenTest.hideGestureOnImeSettingDisplaysExplanationAndUpdatesValue` 出现 1 个“组件未显示”失败，与本次亮度改动无代码交集，已保留为独立回归问题。
+- Debug APK 在两台设备均可正常覆盖安装并重启服务；边缘长滑会将快捷工具对应的全屏动作浮层 Window 切为可触摸，手势入口验收通过。
+- Android 的 UI Automator 与 `screencap` 不包含 `TYPE_ACCESSIBILITY_OVERLAY` 内容，因此浮层验收采用 WindowManager 触摸状态和生产控制器／网关仪器测试，不把不可获取的节点或截图误报为界面缺失。
+
 ## 风险与待确认
 
-- 不同 OEM 可能把亮度范围扩展到 0-2047、限制最小值或延迟写回，固定 0-255 方案在基线前不能视为正确。
-- 自动亮度开启时系统可能持续重写 `SCREEN_BRIGHTNESS`，需要确认滑块拖动是被拒绝、短暂生效还是自动切手动。
-- `ContentObserver` 回调线程和服务进程生命周期需要在真机确认，尤其是快速隐藏、销毁和重新打开的竞态。
-- 需要确定读回超时时间、用户可见反馈文案和滑块容差；这些值待设备基线后补充。
+- 其他 OEM 仍可能把亮度范围扩展到 0-2047、限制最小值、改变感知映射或延迟写回；当前扩展范围已有单元测试保护，但后续遇到此类设备仍需记录新基线。
+- 自动亮度开启时系统可能持续重写 `SCREEN_BRIGHTNESS`；小米真机已观察到动态原始值，界面会按系统回调读回而不维持乐观值。
+- `ContentObserver` 主线程回调、控制器显示／隐藏生命周期、服务重启和两种 API 的系统读回均已验证。
+- 当前待同步状态依赖后续系统观察回调自然收敛，尚未增加超时提示；若目标 OEM 基线出现长时间不回调，再按真实时序补充有限超时与用户反馈。
 
 ## 关联代码
 
 - [QuickToolsControlCenter.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenter.kt)
 - [QuickToolsControlCenterState.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsControlCenterState.kt)
 - [QuickToolsExecutor.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsExecutor.kt)
+- [QuickToolsBrightness.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightness.kt)
+- [QuickToolsBrightnessTest.kt](../../app/src/test/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessTest.kt)
+- [QuickToolsBrightnessGatewayInstrumentedTest.kt](../../app/src/androidTest/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessGatewayInstrumentedTest.kt)
+- [QuickToolsBrightnessShizukuInstrumentedTest.kt](../../app/src/androidTest/java/com/aaron/sidegesture/feature/quicktools/QuickToolsBrightnessShizukuInstrumentedTest.kt)

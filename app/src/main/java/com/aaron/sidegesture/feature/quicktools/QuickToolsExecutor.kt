@@ -2,8 +2,11 @@ package com.aaron.sidegesture.feature.quicktools
 
 import android.content.Context
 import android.content.Intent
+import android.database.ContentObserver
 import android.media.AudioManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.ktx.canWriteSystemSettings
@@ -16,20 +19,13 @@ import com.aaron.sidegesture.platform.shizuku.ShizukuShellManager
 import com.aaron.sidegesture.utils.FlashlightController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 object QuickToolsExecutor {
 
-    fun currentBrightnessRatio(service: SideGestureService): Float {
-        val value = service.readSystemInt(Settings.System.SCREEN_BRIGHTNESS, 128)
-        return (value / 255f).coerceIn(0f, 1f)
-    }
-
-    fun currentBrightnessAutoEnabled(service: SideGestureService): Boolean {
-        return service.readSystemInt(
-            Settings.System.SCREEN_BRIGHTNESS_MODE,
-            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-        ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+    fun brightnessGateway(context: Context): QuickToolsBrightnessGateway {
+        return SystemQuickToolsBrightnessGateway(context)
     }
 
     fun currentVolumeRatio(service: SideGestureService): Float {
@@ -53,49 +49,6 @@ object QuickToolsExecutor {
 
     fun currentFlashlightEnabled(service: SideGestureService): Boolean {
         return FlashlightController.isEnabled(service)
-    }
-
-    suspend fun setBrightnessRatio(
-        service: SideGestureService,
-        ratio: Float
-    ): QuickToolsOperationResult = withContext(Dispatchers.IO) {
-        val value = (ratio.coerceIn(0f, 1f) * 255f).roundToInt().coerceIn(0, 255)
-        if (service.canWriteSystemSettings()) {
-            Settings.System.putInt(service.contentResolver, Settings.System.SCREEN_BRIGHTNESS, value)
-            return@withContext QuickToolsOperationResult.Success
-        }
-        if (ShizukuShellManager.currentStatus().permissionGranted) {
-            val result = ShizukuShellManager.execute(
-                "settings put system screen_brightness $value"
-            )
-            return@withContext result.toOperationResult()
-        }
-        QuickToolsOperationResult.NeedsWriteSettingsOrShizuku
-    }
-
-    suspend fun toggleBrightnessAuto(
-        service: SideGestureService
-    ): QuickToolsOperationResult = withContext(Dispatchers.IO) {
-        val mode = if (currentBrightnessAutoEnabled(service)) {
-            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-        } else {
-            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-        }
-        if (service.canWriteSystemSettings()) {
-            Settings.System.putInt(
-                service.contentResolver,
-                Settings.System.SCREEN_BRIGHTNESS_MODE,
-                mode
-            )
-            return@withContext QuickToolsOperationResult.Success
-        }
-        if (ShizukuShellManager.currentStatus().permissionGranted) {
-            val result = ShizukuShellManager.execute(
-                "settings put system screen_brightness_mode $mode"
-            )
-            return@withContext result.toOperationResult()
-        }
-        QuickToolsOperationResult.NeedsWriteSettingsOrShizuku
     }
 
     fun setVolumeRatio(service: SideGestureService, ratio: Float) {
@@ -167,10 +120,164 @@ object QuickToolsExecutor {
             QuickToolsOperationResult.Failed(errorMessage.ifBlank { stderr })
         }
     }
+
+    private class SystemQuickToolsBrightnessGateway(
+        private val context: Context
+    ) : QuickToolsBrightnessGateway {
+
+        override fun readSnapshot(): QuickToolsBrightnessSnapshot {
+            val range = brightnessRange()
+            val rawValue = context.readSystemInt(
+                Settings.System.SCREEN_BRIGHTNESS,
+                (range.minimum + range.maximum) / 2
+            )
+            val mode = context.readSystemInt(
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            )
+            return QuickToolsBrightnessSnapshot(
+                rawValue = rawValue,
+                ratio = QuickToolsBrightnessMapping.rawToRatio(
+                    rawValue = rawValue,
+                    range = range,
+                    sdkInt = Build.VERSION.SDK_INT
+                ),
+                autoEnabled = mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
+                range = range,
+                writeCapability = writeCapability()
+            )
+        }
+
+        override fun observeChanges(onChanged: () -> Unit): AutoCloseable {
+            val resolver = context.contentResolver
+            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    onChanged()
+                }
+            }
+            return try {
+                resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS),
+                    false,
+                    observer
+                )
+                resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS_MODE),
+                    false,
+                    observer
+                )
+                AutoCloseable {
+                    runCatching { resolver.unregisterContentObserver(observer) }
+                }
+            } catch (_: Exception) {
+                runCatching { resolver.unregisterContentObserver(observer) }
+                AutoCloseable { }
+            }
+        }
+
+        override suspend fun setRatio(ratio: Float): QuickToolsBrightnessOperation =
+            withContext(Dispatchers.IO) {
+                val range = brightnessRange()
+                val targetRawValue = QuickToolsBrightnessMapping.ratioToRaw(
+                    ratio = ratio,
+                    range = range,
+                    sdkInt = Build.VERSION.SDK_INT
+                )
+                val writeResult = writeSystemInt(
+                    name = Settings.System.SCREEN_BRIGHTNESS,
+                    value = targetRawValue
+                )
+                val snapshot = readSnapshot()
+                val result = if (
+                    writeResult == QuickToolsOperationResult.Success &&
+                    abs(snapshot.rawValue - targetRawValue) > 1
+                ) {
+                    QuickToolsOperationResult.PendingSystemSync
+                } else {
+                    writeResult
+                }
+                QuickToolsBrightnessOperation(result = result, snapshot = snapshot)
+            }
+
+        override suspend fun toggleAuto(): QuickToolsBrightnessOperation =
+            withContext(Dispatchers.IO) {
+                val currentSnapshot = readSnapshot()
+                val targetMode = if (currentSnapshot.autoEnabled) {
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+                } else {
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                }
+                val writeResult = writeSystemInt(
+                    name = Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    value = targetMode
+                )
+                val snapshot = readSnapshot()
+                val targetAutoEnabled =
+                    targetMode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                val result = if (
+                    writeResult == QuickToolsOperationResult.Success &&
+                    snapshot.autoEnabled != targetAutoEnabled
+                ) {
+                    QuickToolsOperationResult.PendingSystemSync
+                } else {
+                    writeResult
+                }
+                QuickToolsBrightnessOperation(result = result, snapshot = snapshot)
+            }
+
+        private fun brightnessRange(): QuickToolsBrightnessRange {
+            return QuickToolsBrightnessMapping.resolveRange(
+                sdkInt = Build.VERSION.SDK_INT,
+                configuredMinimum = androidInteger("config_screenBrightnessSettingMinimum"),
+                configuredMaximum = androidInteger("config_screenBrightnessSettingMaximum")
+            )
+        }
+
+        private fun androidInteger(name: String): Int? {
+            val resourceId = context.resources.getIdentifier(name, "integer", "android")
+            if (resourceId == 0) return null
+            return runCatching { context.resources.getInteger(resourceId) }.getOrNull()
+        }
+
+        private fun writeCapability(): QuickToolsBrightnessWriteCapability {
+            return when {
+                context.canWriteSystemSettings() ->
+                    QuickToolsBrightnessWriteCapability.WriteSettings
+                ShizukuShellManager.currentStatus().permissionGranted ->
+                    QuickToolsBrightnessWriteCapability.Shizuku
+                else -> QuickToolsBrightnessWriteCapability.None
+            }
+        }
+
+        private suspend fun writeSystemInt(
+            name: String,
+            value: Int
+        ): QuickToolsOperationResult {
+            if (context.canWriteSystemSettings()) {
+                return runCatching {
+                    if (Settings.System.putInt(context.contentResolver, name, value)) {
+                        QuickToolsOperationResult.Success
+                    } else {
+                        QuickToolsOperationResult.Failed("System settings rejected the write")
+                    }
+                }.getOrElse { error ->
+                    QuickToolsOperationResult.Failed(error.message.orEmpty())
+                }
+            }
+            if (ShizukuShellManager.currentStatus().permissionGranted) {
+                return ShizukuShellManager.execute(
+                    "settings put system $name $value"
+                ).toOperationResult()
+            }
+            return QuickToolsOperationResult.NeedsWriteSettingsOrShizuku
+        }
+    }
 }
 
 sealed interface QuickToolsOperationResult {
     data object Success : QuickToolsOperationResult
+    data object PendingSystemSync : QuickToolsOperationResult
+    data object Superseded : QuickToolsOperationResult
     data object NeedsShizuku : QuickToolsOperationResult
     data object NeedsWriteSettingsOrShizuku : QuickToolsOperationResult
     data class Failed(val message: String) : QuickToolsOperationResult

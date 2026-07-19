@@ -95,9 +95,7 @@ fun QuickToolsControlCenter(
     val enabledTypes = remember(settings) {
         settings.items.filter { it.enabled }.map { it.type }
     }
-    var brightness by remember(state.visible, state.refreshTick) {
-        mutableFloatStateOf(QuickToolsExecutor.currentBrightnessRatio(service))
-    }
+    val brightness = state.brightnessRatio
     var volume by remember(state.visible, state.refreshTick) {
         mutableFloatStateOf(QuickToolsExecutor.currentVolumeRatio(service))
     }
@@ -106,9 +104,7 @@ fun QuickToolsControlCenter(
             QuickToolsExecutor.currentVolumeRatio(service).takeIf { it > 0f } ?: 0.3f
         )
     }
-    val brightnessAutoEnabled = remember(state.visible, state.refreshTick) {
-        QuickToolsExecutor.currentBrightnessAutoEnabled(service)
-    }
+    val brightnessAutoEnabled = state.brightnessAutoEnabled
     val wifiEnabled = remember(state.visible, state.refreshTick) {
         QuickToolsExecutor.currentWifiEnabled(service)
     }
@@ -233,25 +229,34 @@ fun QuickToolsControlCenter(
                         state.hide()
                     },
                     onBrightnessChange = { value ->
-                        brightness = value
-                        scope.launch {
-                            when (QuickToolsExecutor.setBrightnessRatio(service, value)) {
-                                QuickToolsOperationResult.Success -> state.refresh()
-                                QuickToolsOperationResult.NeedsWriteSettingsOrShizuku -> {
-                                    service.gotoManageWriteSettings()
+                        if (!state.brightnessCanWrite) {
+                            state.hide()
+                            service.gotoManageWriteSettings()
+                        } else {
+                            scope.launch {
+                                when (state.setBrightnessRatio(value)) {
+                                    QuickToolsOperationResult.NeedsWriteSettingsOrShizuku -> {
+                                        state.hide()
+                                        service.gotoManageWriteSettings()
+                                    }
+                                    else -> Unit
                                 }
-                                else -> Unit
                             }
                         }
                     },
                     onBrightnessAutoClick = {
-                        scope.launch {
-                            when (QuickToolsExecutor.toggleBrightnessAuto(service)) {
-                                QuickToolsOperationResult.Success -> state.refresh()
-                                QuickToolsOperationResult.NeedsWriteSettingsOrShizuku -> {
-                                    service.gotoManageWriteSettings()
+                        if (!state.brightnessCanWrite) {
+                            state.hide()
+                            service.gotoManageWriteSettings()
+                        } else {
+                            scope.launch {
+                                when (state.toggleBrightnessAuto()) {
+                                    QuickToolsOperationResult.NeedsWriteSettingsOrShizuku -> {
+                                        state.hide()
+                                        service.gotoManageWriteSettings()
+                                    }
+                                    else -> Unit
                                 }
-                                else -> Unit
                             }
                         }
                     },
