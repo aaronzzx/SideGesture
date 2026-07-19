@@ -19,6 +19,9 @@ import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderDecimal
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.blankj.utilcode.util.ConvertUtils
 
 /**
  * @author OpenAI
@@ -43,7 +46,8 @@ fun SectorActionPanelStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.icon_size),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinActionPanelItemSize.toFloat()..MaxActionPanelItemSize.toFloat()
+                        valueRange = MinActionPanelItemSize.toFloat()..MaxActionPanelItemSize.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
                 MySection(
@@ -55,14 +59,16 @@ fun SectorActionPanelStyleScreen(
                         onValueChange = vm::onInitialRadiusRatioChange,
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.sector_arc_length),
-                        valueRange = MinActionPanelInitialRadiusRatio..MaxActionPanelInitialRadiusRatio
+                        valueRange = MinActionPanelInitialRadiusRatio..MaxActionPanelInitialRadiusRatio,
+                        valueFormatter = { formatSliderDecimal(it, 2) }
                     )
                     MyTextSlider(
                         value = uiState.style.itemSpacingRatio,
                         onValueChange = vm::onItemSpacingRatioChange,
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.expand_spacing),
-                        valueRange = MinActionPanelItemSpacingRatio..MaxActionPanelItemSpacingRatio
+                        valueRange = MinActionPanelItemSpacingRatio..MaxActionPanelItemSpacingRatio,
+                        valueFormatter = { formatSliderDecimal(it, 2) }
                     )
                 }
             }

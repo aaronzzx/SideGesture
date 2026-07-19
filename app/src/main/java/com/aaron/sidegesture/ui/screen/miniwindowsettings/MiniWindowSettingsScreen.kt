@@ -57,6 +57,8 @@ import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
 import com.aaron.sidegesture.ui.widget.VivoShareHintDialog
+import com.aaron.sidegesture.ui.widget.formatSliderDecimal
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ScreenUtils
 import kotlin.math.roundToInt
@@ -144,12 +146,10 @@ fun MiniWindowSettingsScreen(
                             value = uiState.currentScale,
                             onValueChange = { vm.onCurrentScaleChange(it) },
                             onValueChangeFinished = { vm.onScaleChangeFinished() },
-                            text = stringResource(
-                                id = R.string.mini_window_scale_compensation,
-                                "%.2f".format(uiState.currentScale)
-                            ),
+                            text = stringResource(id = R.string.mini_window_scale_compensation),
                             sliderValueHint = stringResource(id = R.string.large) to stringResource(id = R.string.small),
-                            valueRange = MiniWindowScaleRange
+                            valueRange = MiniWindowScaleRange,
+                            valueFormatter = { formatSliderDecimal(it, 2) }
                         )
                         Text(
                             modifier = Modifier
@@ -185,8 +185,9 @@ fun MiniWindowSettingsScreen(
                                 )
                             },
                             onValueChangeFinished = { vm.onBoundsChangeFinished() },
-                            text = stringResource(id = R.string.mini_window_width) + "  ${bounds.widthDp}",
-                            valueRange = MinMiniWindowSizeDp.toFloat()..screenWidthDp.toFloat()
+                            text = stringResource(id = R.string.mini_window_width),
+                            valueRange = MinMiniWindowSizeDp.toFloat()..screenWidthDp.toFloat(),
+                            valueFormatter = { formatSliderInteger(it, " dp") }
                         )
                         MyTextSlider(
                             value = bounds.heightDp.toFloat(),
@@ -197,8 +198,9 @@ fun MiniWindowSettingsScreen(
                                 )
                             },
                             onValueChangeFinished = { vm.onBoundsChangeFinished() },
-                            text = stringResource(id = R.string.mini_window_height) + "  ${bounds.heightDp}",
-                            valueRange = MinMiniWindowSizeDp.toFloat()..screenHeightDp.toFloat()
+                            text = stringResource(id = R.string.mini_window_height),
+                            valueRange = MinMiniWindowSizeDp.toFloat()..screenHeightDp.toFloat(),
+                            valueFormatter = { formatSliderInteger(it, " dp") }
                         )
                         MyTextSlider(
                             value = bounds.leftDp.toFloat(),
@@ -209,8 +211,9 @@ fun MiniWindowSettingsScreen(
                                 )
                             },
                             onValueChangeFinished = { vm.onBoundsChangeFinished() },
-                            text = stringResource(id = R.string.mini_window_horizontal_position) + "  ${bounds.leftDp}",
-                            valueRange = 0f..(screenWidthDp - bounds.widthDp).coerceAtLeast(0).toFloat()
+                            text = stringResource(id = R.string.mini_window_horizontal_position),
+                            valueRange = 0f..(screenWidthDp - bounds.widthDp).coerceAtLeast(0).toFloat(),
+                            valueFormatter = { formatSliderInteger(it, " dp") }
                         )
                         MyTextSlider(
                             value = bounds.topDp.toFloat(),
@@ -221,8 +224,9 @@ fun MiniWindowSettingsScreen(
                                 )
                             },
                             onValueChangeFinished = { vm.onBoundsChangeFinished() },
-                            text = stringResource(id = R.string.mini_window_vertical_position) + "  ${bounds.topDp}",
-                            valueRange = 0f..(screenHeightDp - bounds.heightDp).coerceAtLeast(0).toFloat()
+                            text = stringResource(id = R.string.mini_window_vertical_position),
+                            valueRange = 0f..(screenHeightDp - bounds.heightDp).coerceAtLeast(0).toFloat(),
+                            valueFormatter = { formatSliderInteger(it, " dp") }
                         )
                     }
                 }

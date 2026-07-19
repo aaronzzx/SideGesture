@@ -25,6 +25,8 @@ import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.blankj.utilcode.util.ConvertUtils
 
 /**
  * @author OpenAI
@@ -49,21 +51,24 @@ fun FolderActionPanelStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.icon_size),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinActionPanelItemSize.toFloat()..MaxActionPanelItemSize.toFloat()
+                        valueRange = MinActionPanelItemSize.toFloat()..MaxActionPanelItemSize.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                     MyTextSlider(
                         value = uiState.style.columns.toFloat(),
                         onValueChange = vm::onColumnsChange,
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.columns),
-                        valueRange = MinActionPanelColumns..MaxActionPanelColumns
+                        valueRange = MinActionPanelColumns..MaxActionPanelColumns,
+                        valueFormatter = { formatSliderInteger(it) }
                     )
                     MyTextSlider(
                         value = uiState.style.rows.toFloat(),
                         onValueChange = vm::onRowsChange,
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.rows),
-                        valueRange = MinActionPanelRows..MaxActionPanelRows
+                        valueRange = MinActionPanelRows..MaxActionPanelRows,
+                        valueFormatter = { formatSliderInteger(it) }
                     )
                 }
                 MySection(
@@ -76,7 +81,8 @@ fun FolderActionPanelStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.scroll_speed),
                         sliderValueHint = stringResource(id = R.string.slow) to stringResource(id = R.string.fast),
-                        valueRange = MinActionPanelScrollSpeed..MaxActionPanelScrollSpeed
+                        valueRange = MinActionPanelScrollSpeed..MaxActionPanelScrollSpeed,
+                        valueFormatter = { formatSliderInteger(it, " px/帧") }
                     )
                     MyTextSlider(
                         value = uiState.style.scrollHotZoneHeight.toFloat(),
@@ -84,7 +90,8 @@ fun FolderActionPanelStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.scroll_hot_zone_height),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinActionPanelScrollHotZoneHeight..MaxActionPanelScrollHotZoneHeight
+                        valueRange = MinActionPanelScrollHotZoneHeight..MaxActionPanelScrollHotZoneHeight,
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
                 MySection(
@@ -97,7 +104,8 @@ fun FolderActionPanelStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.corner_radius),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinActionPanelCornerRadius.toFloat()..MaxActionPanelCornerRadius.toFloat()
+                        valueRange = MinActionPanelCornerRadius.toFloat()..MaxActionPanelCornerRadius.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
             }

@@ -78,6 +78,7 @@ import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
 import com.aaron.sidegesture.ui.theme.RootPadding
 import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
 import com.aaron.sidegesture.ui.theme.SectionTitlePadding
+import java.util.Locale
 
 /**
  * @author aaronzzxup@gmail.com
@@ -207,7 +208,8 @@ fun MyTextSlider(
     enabled: Boolean = true,
     sliderValueHint: Pair<String, String>? = null,
     onValueChangeFinished: (() -> Unit)? = null,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    valueFormatter: (Float) -> String
 ) {
     Column(
         modifier = modifier
@@ -216,14 +218,28 @@ fun MyTextSlider(
             .padding(vertical = ContentPaddingVerticalWithSection),
         verticalArrangement = Arrangement.spacedBy(IconTextPadding)
     ) {
-        Text(
+        Row(
             modifier = Modifier
                 .padding(horizontal = ContentPaddingHorizontal)
-                .width(IntrinsicSize.Max),
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1
-        )
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = valueFormatter(value),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (sliderValueHint != null) {
             Box(
                 modifier = Modifier
@@ -268,7 +284,9 @@ fun MyTextRangeSlider(
     enabled: Boolean = true,
     sliderValueHint: Pair<String, String>? = null,
     onValueChangeFinished: (() -> Unit)? = null,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    valueFormatter: (ClosedFloatingPointRange<Float>) -> String,
+    sliderModifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -277,14 +295,28 @@ fun MyTextRangeSlider(
             .padding(vertical = ContentPaddingVerticalWithSection),
         verticalArrangement = Arrangement.spacedBy(IconTextPadding)
     ) {
-        Text(
+        Row(
             modifier = Modifier
                 .padding(horizontal = ContentPaddingHorizontal)
-                .width(IntrinsicSize.Max),
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1
-        )
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = valueFormatter(value),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (sliderValueHint != null) {
             Box(
                 modifier = Modifier
@@ -308,7 +340,7 @@ fun MyTextRangeSlider(
             }
         }
         MyRangeSlider(
-            modifier = Modifier
+            modifier = sliderModifier
                 .padding(horizontal = ContentPaddingHorizontal - 6.dp)
                 .height(30.dp),
             enabled = enabled,
@@ -319,6 +351,18 @@ fun MyTextRangeSlider(
         )
     }
 }
+
+fun formatSliderInteger(value: Float, suffix: String = ""): String =
+    String.format(Locale.ROOT, "%.0f%s", value, suffix)
+
+fun formatSliderDecimal(value: Float, decimals: Int, suffix: String = ""): String =
+    String.format(Locale.ROOT, "%.${decimals}f%s", value, suffix)
+
+fun formatSliderPercentage(value: Float): String =
+    formatSliderInteger(value * 100f, "%")
+
+fun formatSliderPercentageRange(range: ClosedFloatingPointRange<Float>): String =
+    "${formatSliderPercentage(range.start)} – ${formatSliderPercentage(range.endInclusive)}"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

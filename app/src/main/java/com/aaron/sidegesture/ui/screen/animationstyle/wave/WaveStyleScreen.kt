@@ -56,6 +56,9 @@ import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderDecimal
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.launch
 
 /**
@@ -137,7 +140,8 @@ fun WaveStyleScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.stroke_width),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinBezierStrokeWidth.toFloat()..MaxBezierStrokeWidth.toFloat()
+                        valueRange = MinBezierStrokeWidth.toFloat()..MaxBezierStrokeWidth.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
 
@@ -151,7 +155,8 @@ fun WaveStyleScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.width),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinBezierWidth.toFloat()..MaxBezierWidth.toFloat()
+                        valueRange = MinBezierWidth.toFloat()..MaxBezierWidth.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                     MyTextSlider(
                         value = uiState.animationStyle.bezierLengthHalfRatio.toFloat(),
@@ -159,7 +164,8 @@ fun WaveStyleScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.length),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinBezierLength.toFloat()..MaxBezierLength.toFloat()
+                        valueRange = MinBezierLength.toFloat()..MaxBezierLength.toFloat(),
+                        valueFormatter = { formatSliderDecimal(it, 2) }
                     )
                     MyTextSwitch(
                         onCheckedChange = { vm.onSafeBoundsChange(it) },
@@ -198,7 +204,8 @@ fun WaveStyleScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.scaling),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinIconScale..MaxIconScale
+                        valueRange = MinIconScale..MaxIconScale,
+                        valueFormatter = { formatSliderDecimal(it, 2) }
                     )
 
                     MyExpandableColumn(

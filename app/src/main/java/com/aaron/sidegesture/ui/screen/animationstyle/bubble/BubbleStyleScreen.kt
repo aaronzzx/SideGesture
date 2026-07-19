@@ -55,6 +55,9 @@ import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderDecimal
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.launch
 
 /**
@@ -133,7 +136,8 @@ fun BubbleStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.stroke_width),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinBezierStrokeWidth.toFloat()..MaxBezierStrokeWidth.toFloat()
+                        valueRange = MinBezierStrokeWidth.toFloat()..MaxBezierStrokeWidth.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
 
@@ -147,7 +151,8 @@ fun BubbleStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.diameter),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinBubbleDiameter.toFloat()..MaxBubbleDiameter.toFloat()
+                        valueRange = MinBubbleDiameter.toFloat()..MaxBubbleDiameter.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                     MyTextSlider(
                         value = uiState.animationStyle.maxOffset.toFloat(),
@@ -155,7 +160,8 @@ fun BubbleStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.pop_offset),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinBubbleOffset.toFloat()..MaxBubbleOffset.toFloat()
+                        valueRange = MinBubbleOffset.toFloat()..MaxBubbleOffset.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                 }
 
@@ -182,7 +188,8 @@ fun BubbleStyleScreen(
                         onValueChangeFinished = vm::saveSettings,
                         text = stringResource(id = R.string.scaling),
                         sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                        valueRange = MinIconScale..MaxIconScale
+                        valueRange = MinIconScale..MaxIconScale,
+                        valueFormatter = { formatSliderDecimal(it, 2) }
                     )
 
                     MyExpandableColumn(

@@ -52,6 +52,8 @@ import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
+import com.aaron.sidegesture.ui.widget.formatSliderDecimal
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
 
 /**
  * @author DS-Z
@@ -99,7 +101,8 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.move_screen_rate),
                     sliderValueHint = stringResource(id = R.string.slow) to stringResource(id = R.string.fast),
-                    valueRange = MinMoveScreenRate..MaxMoveScreenRate
+                    valueRange = MinMoveScreenRate..MaxMoveScreenRate,
+                    valueFormatter = { formatSliderDecimal(it, 2, "×") }
                 )
                 MyTextSlider(
                     // 弹窗关闭时悬停延迟无意义，置灰
@@ -109,7 +112,8 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.hover_trigger_delay),
                     sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                    valueRange = MinMoveScreenHover..MaxMoveScreenHover
+                    valueRange = MinMoveScreenHover..MaxMoveScreenHover,
+                    valueFormatter = { formatSliderInteger(it, " ms") }
                 )
             }
         }
@@ -281,7 +285,8 @@ fun GotoBottomSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     onValueChangeFinished = { vm.saveSettings() },
                     text = stringResource(id = R.string.strength),
                     sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                    valueRange = MinGotoBottomStrength..MaxGotoBottomStrength
+                    valueRange = MinGotoBottomStrength..MaxGotoBottomStrength,
+                    valueFormatter = { formatSliderInteger(it) }
                 )
             }
         }

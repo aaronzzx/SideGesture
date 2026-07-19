@@ -63,6 +63,9 @@ import com.aaron.sidegesture.ui.widget.MyTextRangeSlider
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.aaron.sidegesture.ui.widget.formatSliderPercentageRange
+import com.blankj.utilcode.util.ConvertUtils
 
 /**
  * @author aaronzzxup@gmail.com
@@ -302,7 +305,8 @@ fun GestureButtonSettingsScreen(
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_width),
                                 sliderValueHint = stringResource(id = R.string.small) to stringResource(id = R.string.large),
-                                valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat()
+                                valueRange = MinGestureButtonWidth.toFloat()..MaxGestureButtonWidth.toFloat(),
+                                valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                             )
                             MyTextRangeSlider(
                                 value = gestureButton.start..gestureButton.end,
@@ -310,7 +314,8 @@ fun GestureButtonSettingsScreen(
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
                                 sliderValueHint = stringResource(id = R.string.top) to stringResource(id = R.string.bottom),
-                                valueRange = MinGestureButtonPosition..MaxGestureButtonPosition
+                                valueRange = MinGestureButtonPosition..MaxGestureButtonPosition,
+                                valueFormatter = ::formatSliderPercentageRange
                             )
                             if (uiState.gestureButtonSettings.isSideButton) {
                                 MyTextSwitch(

@@ -47,6 +47,7 @@ import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
 
 /**
  * @author aaronzzxup@gmail.com
@@ -116,7 +117,8 @@ fun AdvancedSettingsScreen(
                         onValueChangeFinished = vm::onActionPanelAppSwitchWindowModeDelayMsChangeFinished,
                         text = stringResource(id = R.string.action_panel_app_switch_window_mode_delay_ms),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinActionPanelAppSwitchWindowModeDelayMs.toFloat()..MaxActionPanelAppSwitchWindowModeDelayMs.toFloat()
+                        valueRange = MinActionPanelAppSwitchWindowModeDelayMs.toFloat()..MaxActionPanelAppSwitchWindowModeDelayMs.toFloat(),
+                        valueFormatter = { formatSliderInteger(it, " ms") }
                     )
                 }
                 MySection(

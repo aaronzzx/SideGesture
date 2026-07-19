@@ -56,6 +56,8 @@ import com.aaron.sidegesture.ui.widget.MyTextButton
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.TopBar
+import com.aaron.sidegesture.ui.widget.formatSliderInteger
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.launch
 
 /**
@@ -121,7 +123,8 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinSlideTriggerDistance.toFloat()..MaxSlideTriggerDistance.toFloat()
+                        valueRange = MinSlideTriggerDistance.toFloat()..MaxSlideTriggerDistance.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                     MyTextSlider(
                         value = uiState.longPressTriggerDelayMs.toFloat(),
@@ -129,7 +132,8 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.long_press_trigger_delay_ms),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat()
+                        valueRange = MinLongPressTriggerDelayMs.toFloat()..MaxLongPressTriggerDelayMs.toFloat(),
+                        valueFormatter = { formatSliderInteger(it, " ms") }
                     )
                 }
                 MySection(
@@ -154,7 +158,8 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.trigger_distance),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinLongSlideTriggerDistance.toFloat()..MaxLongSlideTriggerDistance.toFloat()
+                        valueRange = MinLongSlideTriggerDistance.toFloat()..MaxLongSlideTriggerDistance.toFloat(),
+                        valueFormatter = { formatSliderInteger(ConvertUtils.px2dp(it).toFloat(), " dp") }
                     )
                     MyTextSlider(
                         value = uiState.longSlideTriggerDelayMs.toFloat(),
@@ -162,7 +167,8 @@ fun GestureSettingsScreen(
                         onValueChangeFinished = { vm.saveSettings() },
                         text = stringResource(id = R.string.long_slide_trigger_delay_ms),
                         sliderValueHint = stringResource(id = R.string.short1) to stringResource(id = R.string.long1),
-                        valueRange = MinLongSlideTriggerDelayMs.toFloat()..MaxLongSlideTriggerDelayMs.toFloat()
+                        valueRange = MinLongSlideTriggerDelayMs.toFloat()..MaxLongSlideTriggerDelayMs.toFloat(),
+                        valueFormatter = { formatSliderInteger(it, " ms") }
                     )
                 }
                 MySection(
@@ -255,7 +261,8 @@ fun GestureSettingsScreen(
                                     onValueChangeFinished = { vm.saveSettings() },
                                     text = stringResource(id = R.string.vibration_strength),
                                     sliderValueHint = stringResource(id = R.string.low) to stringResource(id = R.string.high),
-                                    valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
+                                    valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat(),
+                                    valueFormatter = { formatSliderInteger(it, " ms") }
                                 )
                             }
                         }
@@ -266,7 +273,8 @@ fun GestureSettingsScreen(
                             onValueChangeFinished = { vm.saveSettings() },
                             text = stringResource(id = R.string.vibration_strength),
                             sliderValueHint = stringResource(id = R.string.low) to stringResource(id = R.string.high),
-                            valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat()
+                            valueRange = MinVibrationDurationMs.toFloat()..MaxVibrationDurationMs.toFloat(),
+                            valueFormatter = { formatSliderInteger(it, " ms") }
                         )
                     }
                 }
