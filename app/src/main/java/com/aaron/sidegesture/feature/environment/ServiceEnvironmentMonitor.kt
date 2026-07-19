@@ -16,14 +16,40 @@ import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
 import com.aaron.sidegesture.utils.Events
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+data class ImeWindowState(
+    val visible: Boolean = false,
+    val padding: Int = 0
+)
+
+fun shouldObserveIme(fitSoftKeyboard: Boolean, hideGestureOnIme: Boolean): Boolean {
+    return fitSoftKeyboard || hideGestureOnIme
+}
+
+fun resolveImeWindowState(
+    windowPresent: Boolean,
+    boundsTop: Int,
+    boundsHeight: Int,
+    screenHeight: Int
+): ImeWindowState {
+    if (!windowPresent) return ImeWindowState()
+    val padding = if (boundsHeight > 0 && boundsTop < screenHeight) {
+        (screenHeight - boundsTop).coerceAtLeast(0)
+    } else {
+        0
+    }
+    return ImeWindowState(visible = true, padding = padding)
+}
 
 class ServiceEnvironmentMonitor(
     private val service: SideGestureService,
@@ -33,7 +59,7 @@ class ServiceEnvironmentMonitor(
 ) {
 
     private val imeInsetObserver = ImeInsetObserver()
-    val imePadding: StateFlow<Int> = imeInsetObserver.flow
+    val imeWindowState: StateFlow<ImeWindowState> = imeInsetObserver.state
 
     var isScreenLocked: Boolean = false
         private set
@@ -42,7 +68,7 @@ class ServiceEnvironmentMonitor(
     private var screenWidthDp = service.resources.configuration.screenWidthDp
     private var screenHeightDp = service.resources.configuration.screenHeightDp
     private var started = false
-    private var fitSoftKeyboardJob: Job? = null
+    private var imeObservationJob: Job? = null
 
     private val wallpaperChangedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -79,12 +105,18 @@ class ServiceEnvironmentMonitor(
             wallpaperChangedReceiver,
             IntentFilter(Intent.ACTION_WALLPAPER_CHANGED)
         )
-        fitSoftKeyboardJob = scope.launch {
+        imeObservationJob = scope.launch(Dispatchers.Main.immediate) {
             settingsStore.snapshot
                 .filterNotNull()
-                .distinctUntilChangedBy { it.advancedSettings.fitSoftKeyboard }
-                .collectLatest { settings ->
-                    if (settings.advancedSettings.fitSoftKeyboard) {
+                .map { settings ->
+                    shouldObserveIme(
+                        fitSoftKeyboard = settings.advancedSettings.fitSoftKeyboard,
+                        hideGestureOnIme = settings.advancedSettings.hideGestureOnIme
+                    )
+                }
+                .distinctUntilChanged()
+                .collectLatest { observeIme ->
+                    if (observeIme) {
                         imeInsetObserver.register()
                     } else {
                         imeInsetObserver.unregister()
@@ -107,6 +139,7 @@ class ServiceEnvironmentMonitor(
         orientation = config.orientation
         screenWidthDp = config.screenWidthDp
         screenHeightDp = config.screenHeightDp
+        if (changed) imeInsetObserver.recompute()
         return changed
     }
 
@@ -128,8 +161,8 @@ class ServiceEnvironmentMonitor(
     }
 
     fun stop() {
-        fitSoftKeyboardJob?.cancel()
-        fitSoftKeyboardJob = null
+        imeObservationJob?.cancel()
+        imeObservationJob = null
         imeInsetObserver.unregister()
         if (!started) return
         started = false
@@ -139,8 +172,8 @@ class ServiceEnvironmentMonitor(
 
     private inner class ImeInsetObserver {
 
-        private val _flow = MutableStateFlow(0)
-        val flow: StateFlow<Int> = _flow.asStateFlow()
+        private val _state = MutableStateFlow(ImeWindowState())
+        val state: StateFlow<ImeWindowState> = _state.asStateFlow()
 
         private var enabled = false
 
@@ -151,31 +184,32 @@ class ServiceEnvironmentMonitor(
 
         fun unregister() {
             enabled = false
-            _flow.value = 0
+            _state.value = ImeWindowState()
         }
 
         fun recompute() {
             if (!enabled) {
-                _flow.value = 0
+                _state.value = ImeWindowState()
                 return
             }
             try {
                 val imeWindow = service.windows
                     ?.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
                 if (imeWindow == null) {
-                    _flow.value = 0
+                    _state.value = ImeWindowState()
                     return
                 }
                 val bounds = Rect()
                 imeWindow.getBoundsInScreen(bounds)
                 val screenHeight = ScreenUtils.getScreenHeight()
-                if (bounds.height() <= 0 || bounds.top >= screenHeight) {
-                    _flow.value = 0
-                    return
-                }
-                _flow.value = (screenHeight - bounds.top).coerceAtLeast(0)
+                _state.value = resolveImeWindowState(
+                    windowPresent = true,
+                    boundsTop = bounds.top,
+                    boundsHeight = bounds.height(),
+                    screenHeight = screenHeight
+                )
             } catch (e: Exception) {
-                _flow.value = 0
+                _state.value = ImeWindowState()
             }
         }
     }

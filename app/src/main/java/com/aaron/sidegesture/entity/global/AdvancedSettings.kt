@@ -13,6 +13,7 @@ import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.DynamicColor
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ExcludeApps
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.ExcludeFromRecents
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.FitSoftKeyboard
+import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideGestureOnIme
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideHomeScreen
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideLandscape
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults.HideQuickPanel
@@ -36,6 +37,7 @@ data class AdvancedSettings(
     val actionPanelStyles: ActionPanelStyles = ActionPanelStyles,
     val volumeButtonSwitchSong: Boolean = VolumeButtonSwitchSong,
     val fitSoftKeyboard: Boolean = FitSoftKeyboard,
+    val hideGestureOnIme: Boolean = HideGestureOnIme,
     val actionPanelAppLongPressLaunchPopup: Boolean = ActionPanelAppLongPressLaunchPopup,
     val actionPanelAppSwitchWindowModeDelayMs: Long = ActionPanelAppSwitchWindowModeDelayMs,
     val hideLandscape: Boolean = HideLandscape,

@@ -129,6 +129,7 @@
     <string name="quick_settings">快捷面板</string>
     <string name="lock_screen">锁屏界面</string>
     <string name="launcher">系统桌面</string>
+    <string name="hide_gesture_on_ime">弹出软键盘</string>
     <string name="click_to_hide_button_temporary">单击触发区隐藏1秒</string>
     <string name="dynamic_color">动态配色</string>
     <string name="dynamic_color_hint">从桌面壁纸中派生颜色</string>

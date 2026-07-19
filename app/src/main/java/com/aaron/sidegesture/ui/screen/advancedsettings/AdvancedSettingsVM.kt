@@ -60,6 +60,13 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         saveSettings()
     }
 
+    fun onHideGestureOnImeChange(value: Boolean) {
+        updateUiState {
+            it.copy(hideGestureOnIme = value)
+        }
+        saveSettings()
+    }
+
     fun onActionPanelAppLongPressLaunchPopupChanged(value: Boolean) {
         updateUiState {
             it.copy(actionPanelAppLongPressLaunchPopup = value)
@@ -157,6 +164,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                     animationStyles = it.animationStyles.copy(isAnimationEnabled = uiState.showAnimation),
                     volumeButtonSwitchSong = uiState.volumeButtonSwitchSong,
                     fitSoftKeyboard = uiState.fitSoftKeyboard,
+                    hideGestureOnIme = uiState.hideGestureOnIme,
                     actionPanelAppLongPressLaunchPopup = uiState.actionPanelAppLongPressLaunchPopup,
                     actionPanelAppSwitchWindowModeDelayMs = uiState.actionPanelAppSwitchWindowModeDelayMs,
                     hideLandscape = uiState.hideLandscape,
@@ -185,6 +193,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                             actionPanelStyleType = normalizeActionPanelStyleType(item.actionPanelStyles.type),
                             volumeButtonSwitchSong = item.volumeButtonSwitchSong,
                             fitSoftKeyboard = item.fitSoftKeyboard,
+                            hideGestureOnIme = item.hideGestureOnIme,
                             actionPanelAppLongPressLaunchPopup = item.actionPanelAppLongPressLaunchPopup,
                             actionPanelAppSwitchWindowModeDelayMs = item.actionPanelAppSwitchWindowModeDelayMs,
                             hideLandscape = item.hideLandscape,
@@ -207,6 +216,7 @@ class AdvancedSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val animationStyleType: Int = AnimationStyles.TYPE_WAVE,
         val actionPanelStyleType: Int = ActionPanelStyles.TYPE_FOLDER,
         val fitSoftKeyboard: Boolean = false,
+        val hideGestureOnIme: Boolean = false,
         val actionPanelAppLongPressLaunchPopup: Boolean = false,
         val actionPanelAppSwitchWindowModeDelayMs: Long = 500L,
         val hideLandscape: Boolean = false,

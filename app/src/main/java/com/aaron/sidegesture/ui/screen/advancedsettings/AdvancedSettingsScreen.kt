@@ -140,6 +140,10 @@ fun AdvancedSettingsScreen(
                         checked = uiState.hideHomeScreen,
                         text = stringResource(id = R.string.launcher)
                     )
+                    HideGestureOnImeSetting(
+                        checked = uiState.hideGestureOnIme,
+                        onCheckedChange = vm::onHideGestureOnImeChange
+                    )
                 }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
@@ -247,6 +251,18 @@ fun AdvancedSettingsScreen(
             )
         }
     }
+}
+
+@Composable
+fun HideGestureOnImeSetting(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    MyTextSwitch(
+        onCheckedChange = onCheckedChange,
+        checked = checked,
+        text = stringResource(id = R.string.hide_gesture_on_ime)
+    )
 }
 
 @Composable

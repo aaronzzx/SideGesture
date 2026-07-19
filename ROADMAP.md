@@ -4,7 +4,7 @@
 
 当前处于下一轮功能更新的实施阶段。11 项需求已按复杂度拆成四批，其中需求 7、8 共用亮度状态与系统适配链，合并为一份 SPEC。
 
-需求 10、1 已完成实现、本地自动化验证与 Android 15 模拟器验证，下一项为第一批需求 4。实施顺序以 [SPEC 索引](docs/spec/README.md) 为准；只有完成实现并通过对应验证后，功能事项才能移入“已完成”。
+需求 10、1、4 已完成实现、本地自动化验证与 Android 15 模拟器验证，第一批已结束，下一项为第二批需求 3。实施顺序以 [SPEC 索引](docs/spec/README.md) 为准；只有完成实现并通过对应验证后，功能事项才能移入“已完成”。
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
@@ -19,17 +19,18 @@
 - [x] 2026-07-18：补充工程规范，要求功能实现同步编写自动化测试，并在完成后使用测试代码验证。
 - [x] 2026-07-18：完成需求 10，为“上一个应用”设置弹窗增加排除列表专用标题，并补充特殊分支与默认分支自动化测试。
 - [x] 2026-07-19：完成需求 1，将文本 Slider 常驻标题值改为拖动锚点气泡，支持边界限位、短尖角中心对齐、圆角无缝衔接、`120ms` 尺寸动画、手指遮挡区避让和 `Range Slider` 活动锚点显示。
+- [x] 2026-07-19：完成需求 4，新增默认关闭的“输入法时隐藏触钮”设置，以独立输入法可见状态统一隐藏并禁用全部边缘触钮，输入法消失后恢复原有可见性、触摸和 Left／Right 避让规则。
 
 ## 进行中
 
-当前无业务代码实施项。下一项为第一批需求 4。
+当前无业务代码实施项。下一项为第二批需求 3。
 
 ## 待办
 
 ### 第一批：低复杂度优先
 
 - [x] 需求 1：[为文本 Slider 显示格式化后的当前值](docs/spec/01-slider-value-display.md)。
-- [ ] 需求 4：[输入法出现时隐藏并禁用手势触钮](docs/spec/04-hide-gesture-on-ime.md)。
+- [x] 需求 4：[输入法出现时隐藏并禁用手势触钮](docs/spec/04-hide-gesture-on-ime.md)。
 
 ### 第二批：中高复杂度／诊断先行
 
@@ -56,7 +57,6 @@
 
 ## 最近验证
 
-- 2026-07-18：修订后复查确认全部 SPEC 链接存在，需求 7／8 编号映射一致，Top 文档包含 IME、双击和跨进程恢复门禁契约。
 - 2026-07-18：第三轮限域复审结果为 PASS；`imeVisible` 契约和恢复 generation／服务确认／资源摘要汇合协议均已闭环，无剩余行动项。
 - 2026-07-18：独立复验 `:app:testDebugUnitTest` 通过，共 9 个测试套件、28 项测试，失败、错误和跳过均为 0。
 - 2026-07-18：独立复验 `assembleDebug`、`:app:assembleDebugAndroidTest` 和 `git diff --check` 均通过。
@@ -65,3 +65,5 @@
 - 2026-07-18：需求 10 在 `Nexus_5_API_35`（Android 15／API 35）通过 `connectedDebugAndroidTest` 2 项测试；Debug APK 启动正常，UI 树确认标题为“上一个应用排除列表”，crash buffer 为空。
 - 2026-07-18：定位模拟器误判原因为 QA 进程未显式使用正确 AVD home；`AGENTS.md` 已补充 SDK、AVD home、后台启动、设备验证与证据留存规范。
 - 2026-07-19：需求 1 全量 `:app:testDebugUnitTest` 通过，共 12 个测试套件、40 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 6 项测试全绿，其中尺寸动画测试确认中间帧介于起止宽度之间。真实 Slider 连续拖动截图确认 `947 ms` 至 `1000 ms` 的位数变化保持圆角、尖角对齐和边界限位，未发现本应用崩溃。
+- 2026-07-19：需求 4 全量 `:app:testDebugUnitTest` 通过，共 14 个测试套件、49 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 9 项测试全部通过。
+- 2026-07-19：需求 4 在 Android 15／API 35 模拟器完成运行时验证：设置项可见且可保存；输入法弹出时 Left、Right、Bottom 窗口均不可见、无 Surface 且不可触摸，收起后按原状态恢复；主进程、`:service` 进程和 crash buffer 均无致命日志。

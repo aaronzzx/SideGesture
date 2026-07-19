@@ -14,6 +14,7 @@ import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.action.ActionRequest
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.feature.environment.ImeWindowState
 import com.aaron.sidegesture.feature.environment.ServiceEnvironmentMonitor
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.ktx.attachComposeOverlay
@@ -36,6 +37,31 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+data class GestureButtonImeState(
+    val hidden: Boolean,
+    val padding: Int
+)
+
+fun resolveGestureButtonImeState(
+    position: Position,
+    fitSoftKeyboard: Boolean,
+    hideGestureOnIme: Boolean,
+    imeWindowState: ImeWindowState
+): GestureButtonImeState {
+    val hidden = hideGestureOnIme && imeWindowState.visible
+    val padding = if (
+        !hidden &&
+        fitSoftKeyboard &&
+        imeWindowState.visible &&
+        (position == Position.Left || position == Position.Right)
+    ) {
+        imeWindowState.padding
+    } else {
+        0
+    }
+    return GestureButtonImeState(hidden = hidden, padding = padding)
+}
 
 class GestureWindowManager(
     private val service: SideGestureService,
@@ -84,7 +110,7 @@ class GestureWindowManager(
                         .filterNotNull()
                         .map { it.initialSettings to it.advancedSettings }
                         .distinctUntilChanged(),
-                    environmentMonitor.imePadding,
+                    environmentMonitor.imeWindowState,
                     actionOverlayTouchEnabled
                 ) { _, _, _ -> Unit }.collectLatest {
                     refreshVisibility()
@@ -103,14 +129,21 @@ class GestureWindowManager(
         val settings = settingsStore.currentSnapshotOrNull() ?: return
         val initialSettings = settings.initialSettings
         val advancedSettings = settings.advancedSettings
+        val imeWindowState = environmentMonitor.imeWindowState.value
         buttonViews.forEach { view ->
             val button = view.tag as? GestureButton ?: return@forEach
+            val buttonImeState = resolveGestureButtonImeState(
+                position = button.position,
+                fitSoftKeyboard = advancedSettings.fitSoftKeyboard,
+                hideGestureOnIme = advancedSettings.hideGestureOnIme,
+                imeWindowState = imeWindowState
+            )
+            view.visibility = if (buttonImeState.hidden) View.INVISIBLE else View.VISIBLE
             val params = (view.layoutParams as WindowManager.LayoutParams).apply {
                 updateGestureButton(button)
-                if (button.position != Position.Bottom) {
-                    y -= environmentMonitor.imePadding.value
-                }
+                y -= buttonImeState.padding
                 val touchEnabled = when {
+                    buttonImeState.hidden -> false
                     actionOverlayTouchEnabled.value -> false
                     isButtonHidden(button) -> false
                     !initialSettings.gestureEnabled -> false
@@ -175,11 +208,21 @@ class GestureWindowManager(
             val settings by settingsStore.snapshot.collectAsStateWithLifecycle()
             val currentSettings = settings ?: return@WallpaperAwareSideGestureTheme
             Box(modifier = Modifier.fillMaxSize()) {
-                val currentImePadding by environmentMonitor.imePadding.collectAsStateWithLifecycle()
+                val currentImeWindowState by environmentMonitor.imeWindowState.collectAsStateWithLifecycle()
                 SideGestureContainer(
                     modifier = Modifier.matchParentSize(),
                     buttons = currentSettings.buttons,
-                    imePadding = currentImePadding,
+                    imePadding = if (
+                        currentSettings.advancedSettings.fitSoftKeyboard &&
+                        !(
+                            currentSettings.advancedSettings.hideGestureOnIme &&
+                                currentImeWindowState.visible
+                        )
+                    ) {
+                        currentImeWindowState.padding
+                    } else {
+                        0
+                    },
                     animationStyle = if (currentSettings.advancedSettings.animationStyles.isAnimationEnabled) {
                         currentSettings.advancedSettings.animationStyles.value
                     } else {

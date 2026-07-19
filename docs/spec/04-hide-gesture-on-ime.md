@@ -2,7 +2,7 @@
 
 ## 状态
 
-待实施。
+已完成。
 
 ## 复杂度
 
@@ -14,13 +14,13 @@
 
 目标是增加独立的 `hideGestureOnIme` 设置。开启后，检测到输入法窗口时隐藏并禁用所有当前及未来的边缘触钮；当前实现至少覆盖左、右、底部，后续新增顶部等边缘触钮也必须自动纳入。输入法消失后恢复原有可见性和命中规则。该行为与 `fitSoftKeyboard` 解耦，同时开启时以隐藏为优先。
 
-## 当前行为与证据
+## 实现结果与证据
 
-- [`AdvancedSettings.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/global/AdvancedSettings.kt#L30-L45) 目前只有 `fitSoftKeyboard` 等高级设置，没有输入法期间隐藏触钮的字段。
-- [`AdvancedSettingsScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/advancedsettings/AdvancedSettingsScreen.kt#L80-L141) 的“隐藏触钮” section 目前只有横屏、锁屏和启动器开关；`fitSoftKeyboard` 位于“手势按钮扩展” section。
-- [`ServiceEnvironmentMonitor.kt`](../../app/src/main/java/com/aaron/sidegesture/feature/environment/ServiceEnvironmentMonitor.kt#L82-L93) 仅在 `fitSoftKeyboard` 开启时注册 `ImeInsetObserver`，并向服务侧提供 `imePadding`；观察器通过无障碍窗口计算输入法顶部位置。见 [`ServiceEnvironmentMonitor.kt`](../../app/src/main/java/com/aaron/sidegesture/feature/environment/ServiceEnvironmentMonitor.kt#L140-L179) 。
-- [`GestureWindowManager.kt`](../../app/src/main/java/com/aaron/sidegesture/feature/gesture/GestureWindowManager.kt#L82-L125) 将 `imePadding` 用于左、右触钮的纵向偏移，底部触钮不偏移；当前命中禁用条件没有输入法隐藏分支。
-- `fitSoftKeyboard` 默认值为 `true`，见 [`GlobalDefaults.kt`](../../app/src/main/java/com/aaron/sidegesture/constant/GlobalDefaults.kt#L20-L38) 。新开关必须默认 `false`，避免改变现有用户行为。
+- [`AdvancedSettings.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/global/AdvancedSettings.kt#L40) 已增加 `hideGestureOnIme` 字段；[`GlobalDefaults.kt`](../../app/src/main/java/com/aaron/sidegesture/constant/GlobalDefaults.kt#L30) 将默认值设为 `false`，旧配置缺少该字段时保持原有行为。
+- [`AdvancedSettingsVM.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/advancedsettings/AdvancedSettingsVM.kt#L63-L65) 已接入设置变更、保存和加载；[`AdvancedSettingsScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/advancedsettings/AdvancedSettingsScreen.kt#L143-L145) 已在“隐藏触钮” section 增加“输入法时隐藏触钮”开关和说明。
+- [`ServiceEnvironmentMonitor.kt`](../../app/src/main/java/com/aaron/sidegesture/feature/environment/ServiceEnvironmentMonitor.kt#L30-L51) 已提供原子的 `ImeWindowState`，将“窗口可见”与“避让距离”分开；`fitSoftKeyboard` 或 `hideGestureOnIme` 任一开启时都会观察输入法窗口，并在配置变化时重新计算状态。
+- [`GestureWindowManager.kt`](../../app/src/main/java/com/aaron/sidegesture/feature/gesture/GestureWindowManager.kt#L128-L160) 已统一遍历当前附着的触钮窗口：隐藏时设置 `View.INVISIBLE` 和 `FLAG_NOT_TOUCHABLE`，恢复时重新应用各触钮原有启用状态；`fitSoftKeyboard` 仍只对 Left／Right 应用避让距离。
+- [`ServiceEnvironmentMonitorTest.kt`](../../app/src/test/java/com/aaron/sidegesture/feature/environment/ServiceEnvironmentMonitorTest.kt) 和 [`GestureButtonImeStateTest.kt`](../../app/src/test/java/com/aaron/sidegesture/feature/gesture/GestureButtonImeStateTest.kt) 覆盖观察条件、零高度输入法、隐藏优先级、位置差异和恢复逻辑；设备测试覆盖旧 JSON 默认值、序列化往返与设置页交互。
 
 ## 范围
 
@@ -45,12 +45,12 @@
 - 开启后，只要输入法窗口处于可见状态，所有当前及未来边缘触钮均不可见且不可命中；当前 Left／Right／Bottom 必须覆盖，未来 Top 等位置也自动纳入；隐藏优先级高于 `fitSoftKeyboard`。
 - 输入法消失后立即按原有条件恢复，包括未来新增位置，不保留输入法期间的临时禁用状态。
 
-## 技术方案
+## 技术实现
 
-1. 在 `AdvancedSettings` 和对应默认值、VM `UiState`、保存／加载逻辑中加入布尔字段；沿用 DataStore 序列化与 `ServiceSettingsStore` 快照，不新增独立状态源。
-2. 扩展 `ServiceEnvironmentMonitor` 的输入法观察生命周期：当任一相关设置开启时注册，二者均关闭时注销；除了现有 `imePadding`，提供明确的 `imeVisible`（或等价状态），避免把“抬高距离为零”误判为输入法消失。
-3. 在 `GestureWindowManager` 的可见性刷新组合流中收集该状态。输入法可见且 `hideGestureOnIme` 开启时，遍历所有当前附着的触钮窗口，设置为不可见并关闭触摸 flags；不要按 Left／Right／Bottom 写死分支，以便未来 Top 等位置自动继承规则；否则继续执行现有位置偏移和条件判断。
-4. 处理设置变更、无障碍窗口事件、配置变化和输入法消失时的刷新，确保恢复路径复用同一个 `refreshVisibility()`，不留下单独的临时状态。
+1. `AdvancedSettings`、默认值、VM `UiState` 与保存／加载逻辑共用一个 `hideGestureOnIme` 字段，继续沿用 DataStore 序列化和 `ServiceSettingsStore` 就绪快照。
+2. `ServiceEnvironmentMonitor` 在任一输入法相关设置开启时注册观察，在二者均关闭时注销，并以 `ImeWindowState` 同时发布明确的可见性和避让距离。
+3. `GestureWindowManager` 在同一可见性刷新链路中消费输入法状态；隐藏逻辑遍历全部 `buttonViews`，不按位置写死，布局避让才显式限制为 Left／Right。
+4. 设置变更、无障碍窗口事件、配置变化和输入法消失均复用状态流与 `refreshVisibility()` 恢复路径，不保留额外临时禁用状态。
 
 ## 数据与兼容性
 
@@ -69,12 +69,17 @@
 6. 横屏、锁屏、启动器、排除应用、动作浮层触摸禁用等现有条件与输入法条件叠加后结果正确。
 7. 主进程修改设置后，服务进程通过就绪快照及时收到新值；服务首次真实快照前不执行用户可见的隐藏动作。
 
-## 风险与待确认
+## 验证结果
 
-- 部分 ROM 的输入法窗口可能短暂存在但高度为零，需以窗口可见性和事件时序验证 `imeVisible` 判定。
-- 触钮“隐藏”若通过 Window 可见性实现，需检查恢复时窗口 flags、布局参数和透明手势区域是否一致。
-- 输入法切换、浮动键盘、分屏和旋转会产生连续窗口事件，需验证不会闪烁或卡在禁用状态。
-- 最终设置标题、说明文案和“隐藏触钮”section 内排序待产品确认。
+- 全量 JVM 测试通过，共 14 个测试套件、49 项测试；`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
+- Android 15／API 35 模拟器上 `connectedDebugAndroidTest` 共 9 项测试全部通过，包含旧配置默认值、启用值序列化往返和设置页交互。
+- 模拟器手动验证确认：输入法弹出时 Left、Right、Bottom 三个触钮窗口均为 `INVISIBLE`、无 Surface 且带 `NOT_TOUCHABLE`；输入法收起后左右触钮恢复可见与可触摸，底部触钮按其原有禁用状态恢复。
+- 设置页开关保存后，独立 `:service` 进程无需重启即可响应输入法状态；主进程、服务进程及 crash buffer 均无致命日志。
+
+## 残余风险与待确认
+
+- Android 15 标准全屏输入法路径已验证；厂商 ROM、浮动键盘、分屏和旋转组合仍属于后续设备矩阵覆盖范围。
+- 输入法窗口短暂存在但边界无效的场景已按“可见但避让距离为零”处理，并有 JVM 回归测试；不同 ROM 的窗口事件时序仍需随设备反馈补充样本。
 
 ## 关联代码
 
