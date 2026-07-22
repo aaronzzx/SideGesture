@@ -2,34 +2,33 @@
 
 ## 状态
 
-草案，先补齐诊断证据再实施修复。当前代码链路存在可疑断点，但尚未证明唯一根因，不能把候选修复写成已完成。
+已完成。已确认页面状态模型同时承担 canonical 黑名单和展示分组，导致加载竞态清空勾选、点击后立即重排；修复后已通过 JVM 回归测试和 Android 15／API 35 模拟器跨进程验收。
 
 ## 复杂度
 
-中高。当前阶段主要工作是建立三段诊断证据并定位断点；真实修复复杂度需在断点确认后复评，可能下降或上升。黑名单从 UI 写入多进程 DataStore，再进入服务快照和悬浮窗触摸判定；应用查询结果、服务启动时序和前台包名匹配都可能造成不同表象。
+中高。黑名单从 UI 写入多进程 DataStore，再进入服务快照和悬浮窗触摸判定；修复同时覆盖页面加载竞态、会话排序、缺失应用保留、服务启动时序和前台包名匹配。
 
 ## 问题与目标
 
-用户配置的应用黑名单有「看起来已保存但手势仍可触发」或「应用重新出现后黑名单丢失」的风险。现有链路为 UI → MultiProcess DataStore → `ServiceSettingsStore` → `GestureWindowManager`，但每一段的实际值和故障断点尚未有闭环证据。
+用户配置的应用黑名单存在「保存后重进未勾选」和「勾选后立即移动到列表顶部」的问题。现有链路为 UI → MultiProcess DataStore → `ServiceSettingsStore` → `GestureWindowManager`。
 
-目标分两阶段完成：第一阶段建立三段诊断证据（ViewModel 写入、服务快照、窗口命中）；第二阶段只针对证据确认的断点修复。持久化列表不能因为当前 launcher 查询不到某个包名而被静默删除；显示列表可以按当前查询裁剪，但 canonical 黑名单必须保留。
+目标是拆分持久化选择集和页面展示顺序：持久化列表不能因为当前 launcher 查询不到某个包名而被静默删除；页面进入时按已保存选择排序一次，本次停留期间勾选只改变选择状态，退出重进后才重新排序。服务进程继续使用 canonical 黑名单做精确包名命中。
 
 ## 当前行为与证据
 
-- [AppBlacklistVM.kt](../../app/src/main/java/com/aaron/sidegesture/ui/screen/appblacklist/AppBlacklistVM.kt) 的 `selectApp()` 修改 UI 列表，`done()` 只在用户点击完成时写入 `DataStoreHolder.advancedSettings`；`loadData()` 取一次持久化数据。相关代码在 61-103、122-143 行。
-- 同文件 `arrangeAppInfos()` 根据当前 `queryLauncherActivities()` 返回的包名构造 `validExcludeApps`，并移除当前查询不到的已保存包名，再把该列表写回 UiState。相关代码在 105-119、157-198 行。
-- [ServiceSettingsStore.kt](../../app/src/main/java/com/aaron/sidegesture/feature/servicesettings/ServiceSettingsStore.kt) 将 initial、advanced、gesture、action 和按钮 DataStore 合并为 `ServiceSettingsSnapshot`；需要继续确认 service 进程何时拿到首次非空快照。相关代码在 51-70 行。
-- [GestureWindowManager.kt](../../app/src/main/java/com/aaron/sidegesture/feature/gesture/GestureWindowManager.kt) 在刷新可见性时用 `environmentMonitor.currentPackageName()` 与 `advancedSettings.excludeApps` 比较，命中后关闭触摸。相关代码在 80-125 行。
-
-目前已知候选断点包括：只有 Done 才保存导致用户离开页面时未写入；`arrangeAppInfos()` 按 launcher 查询裁剪持久化包名；服务已同步但 `currentPackageName` 格式或时序未命中；窗口刷新没有在环境变化后及时触发。这些只是待验证假设，不是已确认根因；候选均待三段证据确认。
+- 原实现的 `loadData()` 在 `rawAppInfos` 仍为空时调用 `arrangeAppInfos()`，后者会把所有已保存包名当作无效应用移除，因此 DataStore 已成功读出但 UiState 立即丢失勾选。
+- 原实现的 `selectApp()` 每次点击都会重新生成 `selectedAppInfos` 和 `unselectedAppInfos`，而 UI 固定先渲染已选列表，所以应用会在当前页面内立即跳到顶部。
+- [AppBlacklistListState.kt](../../app/src/main/java/com/aaron/sidegesture/ui/screen/appblacklist/AppBlacklistListState.kt) 现已分离入口排序基线、canonical 选择集、稳定全量顺序和搜索结果；launcher 查询不再修改选择集。
+- [ServiceSettingsStore.kt](../../app/src/main/java/com/aaron/sidegesture/feature/servicesettings/ServiceSettingsStore.kt) 首次快照继续以 `null` 表示未就绪，真实 DataStore 发射后才供服务消费；AdvancedSettings 更新会触发窗口可见性刷新。
+- [GestureWindowManager.kt](../../app/src/main/java/com/aaron/sidegesture/feature/gesture/GestureWindowManager.kt) 使用非空前台包名与 canonical 黑名单精确匹配，空值和部分包名不命中。
 
 ## 范围
 
-- 给黑名单保存、服务快照和窗口命中增加可验证的诊断点或测试接缝，记录包名集合摘要、版本／时间戳、当前前台包名及最终 `touchEnabled` 判定。
-- 区分 canonical 持久化列表和当前设备可展示列表，查询不到应用时不覆盖 canonical 列表。
-- 核查跨进程 DataStore 的写入完成、服务首次真实快照、快照更新触发窗口刷新三段时序。
-- 核查前台包名的规范化、系统应用／分身包名和 refreshVisibility 触发条件，并按证据修复最小断点。
-- 覆盖保存后立即进入目标应用、服务重启、应用暂时不可查询、外部系统切换前台应用等场景。
+- 区分 canonical 持久化列表、入口排序基线、当前会话稳定顺序和搜索过滤结果。
+- 查询不到应用时不覆盖 canonical 列表；保存操作只写当前选择集。
+- 页面首次读取真实保存值前不展示可操作列表，并禁用搜索、重置和完成按钮，避免加载竞态覆盖用户选择。
+- 前台包名为空时不命中黑名单，非空包名使用精确匹配；设置快照和前台窗口变化继续触发窗口刷新。
+- 覆盖两种加载顺序、保存后重进、当前会话不跳位、缺失包名保留、服务重启和跨应用触摸恢复。
 
 ## 非目标
 
@@ -41,17 +40,18 @@
 ## 产品／交互决策
 
 - 用户在页面点击完成后，保存成功的列表是 canonical 黑名单；返回页面时，已保存但当前暂不可查询的包名不能无提示消失。
+- 页面进入时按已保存选择将应用排在前面；当前页面内勾选或取消只更新复选状态，不改变列表位置，重新进入页面后才按新保存值排序。
 - 查询不到的包名不显示为可操作应用项，但可在页面显示数量或「暂不可用」提示，具体文案待 UI 方案确认；再次可查询时自动恢复选中状态。
-- 服务侧以 canonical 列表做触摸拦截；当前前台包名无法可靠获取时不得误判为命中，保持现有安全默认并记录诊断原因。
+- 服务侧以 canonical 列表做触摸拦截；当前前台包名无法可靠获取时不得误判为命中，保持现有安全默认。
 - 诊断只用于定位，不改变用户可见行为；修复必须由证据驱动并提供回归场景。
 
 ## 技术方案
 
-1. 在 ViewModel 保存路径记录写入前集合、DataStore 更新完成结果和单调版本／时间戳；验证 `done()` 返回成功后服务进程能否读取同一 canonical 列表。
-2. 调整 `arrangeAppInfos()` 的数据模型：保留从 DataStore 读出的 `excludeApps` 作为 canonical，另算 `displaySelectedAppInfos`／`displayUnselectedAppInfos`。当前查询不到的包名不得从 canonical 移除。
-3. 在 `ServiceSettingsStore` 暴露或测试可读的快照序列，确认服务首次使用前已等待真实 DataStore 发射；快照更新后明确触发 `GestureWindowManager.refreshVisibility()`。
-4. 在 `GestureWindowManager` 建立窗口命中诊断：记录当前包名原值与规范化值、canonical 黑名单是否包含、触摸标志最终原因，以及环境变化是否触发刷新。对包名比较只做有证据支持的规范化，不凭猜测增加模糊匹配。
-5. 依次跑三段分支：写入失败、写入成功但快照未更新、快照更新但包名未命中、包名命中但窗口未刷新；每个分支只修复对应链路并补回归测试。
+1. 新增 `AppBlacklistListState`，分别保存入口黑名单快照、当前工作选择集、会话稳定顺序和搜索结果。
+2. DataStore 与应用列表无论谁先完成加载，只有真实保存值到达后才展示列表；应用查询只参与展示，不再裁剪 canonical 黑名单。
+3. `selectApp()` 只修改工作选择集，不重建排序；重新创建页面后才按最新已保存选择重新分组。
+4. 保存继续通过 MultiProcess DataStore 写入 `AdvancedSettings.excludeApps`；`ServiceSettingsStore` 的就绪快照和现有 combine 链负责跨进程更新窗口状态。
+5. 抽出前台包名精确命中函数，明确空包名不命中；通过 JVM 测试覆盖边界，并用 WindowManager 的 `NOT_TOUCHABLE` 标志验证生产链路。
 
 ## 状态／数据与兼容性
 
@@ -62,23 +62,24 @@
 
 ## 验收标准
 
-- 点击完成后，能够分别提供「ViewModel 写入完成」「服务快照包含目标包名」「窗口命中并关闭触摸」三段证据；任一断点失败都能被明确定位。
-- 同一包名在页面保存后立即打开目标应用，手势按钮按预期不可触摸；离开目标应用后恢复原有触摸状态。
-- 服务进程重启或首次启动时，快照等待真实 DataStore 值，不因默认空列表短暂放行被黑名单应用。
-- 当前 launcher 查询不到已保存包名时，canonical 列表不减少；应用重新出现后仍显示为已选。
-- `currentPackageName` 为空、格式异常或获取失败时不误判命中，窗口刷新和诊断原因可观察。
-- 进程间快速连续保存、环境快速切换和窗口刷新并发下无旧快照覆盖新快照、无触摸状态卡死。
-- 诊断关闭或降级后，生产日志不泄露不必要的完整包名，现有页面交互和排序不回归。
+- [x] 点击完成后 DataStore 磁盘值包含目标包名，退出重进后目标应用保持勾选并按已保存选择置顶。
+- [x] 当前页面内勾选或取消不改变列表位置；重新进入页面后才重新排序。
+- [x] 当前 launcher 查询不到已保存包名时，canonical 列表不减少。
+- [x] 保存后进入目标应用，左右触钮带 `NOT_TOUCHABLE`；离开目标应用后恢复可触摸。
+- [x] 模拟器和 `:service` 重启后仍读取真实黑名单快照，目标应用继续命中。
+- [x] `currentPackageName` 为空或仅部分匹配时不误判命中。
+- [x] 全量 JVM 测试、Debug 构建、测试 APK 构建和 Android 15／API 35 真实页面验收通过。
 
 ## 风险与待确认
 
-- 不同 ROM 的前台包名来源可能包含分身、桌面容器或短暂空值，需目标设备确认规范化规则。
-- DataStore 多进程读取延迟和服务启动时序需要实测，不能用单次本地进程测试代替。
+- 不同 ROM 的前台包名来源可能包含分身或桌面容器；当前仅采用有证据支持的精确包名匹配，不增加模糊规则。
+- Android 15／API 35 已覆盖 DataStore 写入、服务重启和窗口触摸标志；后续遇到厂商 ROM 差异时再补对应设备样本。
 - 窗口触摸标志可能受手势浮层、横屏隐藏、锁屏等其它条件共同影响，诊断必须区分黑名单原因与其它禁用原因。
 - 是否在 UI 显示「暂不可用包名」数量、以及卸载包名的长期清理策略待产品确认。
 
 ## 关联代码
 
 - [AppBlacklistVM.kt](../../app/src/main/java/com/aaron/sidegesture/ui/screen/appblacklist/AppBlacklistVM.kt)
+- [AppBlacklistListState.kt](../../app/src/main/java/com/aaron/sidegesture/ui/screen/appblacklist/AppBlacklistListState.kt)
 - [ServiceSettingsStore.kt](../../app/src/main/java/com/aaron/sidegesture/feature/servicesettings/ServiceSettingsStore.kt)
 - [GestureWindowManager.kt](../../app/src/main/java/com/aaron/sidegesture/feature/gesture/GestureWindowManager.kt)

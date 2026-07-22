@@ -4,7 +4,7 @@
 
 当前处于下一轮功能更新的实施阶段。11 项需求已按复杂度拆成四批，其中需求 7、8 共用亮度状态与系统适配链，合并为一份 SPEC。
 
-需求 10、1、4、3、7、8 已完成实现与对应验证。需求 7、8 已覆盖 Android 15／API 35 AOSP 模拟器、Android 16／API 36 小米真机、WRITE_SETTINGS、仅 Shizuku、系统观察生命周期和快速工具浮层手势入口。
+需求 10、1、4、3、7、8、9 已完成实现与对应验证。需求 9 已覆盖保存重进、会话内稳定顺序、缺失包名保留、服务重启和前台应用触摸命中。
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
@@ -22,10 +22,11 @@
 - [x] 2026-07-19：完成需求 4，新增默认关闭的“输入法时隐藏触钮”设置，以独立输入法可见状态统一隐藏并禁用全部边缘触钮，输入法消失后恢复原有可见性、触摸和 Left／Right 避让规则。
 - [x] 2026-07-19：完成需求 3，为移屏增加 Following／HoverPending／Selecting 显式状态，支持拖出菜单后恢复跟随、再次悬停、无选择 Tap 回退和 ACTION_UP 末段位移；生产运行时统一使用准星，历史 Magnifier 配置与旧备份自动迁移为 Crosshair。
 - [x] 2026-07-20：完成需求 7、8，统一亮度快照、AOSP 感知映射、WRITE_SETTINGS／Shizuku 写入边界、系统观察读回和快速拖动串行化；Android 15 AOSP 与 Android 16 小米设备矩阵、仅 Shizuku 写入、观察启停／重开和浮层手势入口均已验证。
+- [x] 2026-07-20：完成需求 9，拆分黑名单 canonical 选择集、入口排序基线和会话稳定顺序，修复保存重进丢勾选与点击后立即置顶；Android 15 模拟器已验证 DataStore 写入、服务重启、黑名单命中禁用触摸和离开后恢复。
 
 ## 进行中
 
-当前无业务代码实施项。下一项为第二批需求 9。
+当前无业务代码实施项。下一项为第二批需求 11。
 
 ## 待办
 
@@ -38,7 +39,7 @@
 
 - [x] 需求 3：[移屏悬停后恢复移动并支持再次悬停](docs/spec/03-move-screen-rehover.md)。
 - [x] 需求 7、8：[统一快速工具亮度读写、映射与刷新](docs/spec/07-08-quick-tools-brightness.md)。
-- [ ] 需求 9：[定位并修复应用黑名单持久化与服务命中链路](docs/spec/09-app-blacklist-sync.md)。
+- [x] 需求 9：[定位并修复应用黑名单持久化与服务命中链路](docs/spec/09-app-blacklist-sync.md)。
 - [ ] 需求 11：[快速启动器改为横向整页翻页](docs/spec/11-quick-launcher-horizontal-paging.md)。
 
 ### 第三批：高复杂度或协议待确认
@@ -53,12 +54,10 @@
 ## 阻塞／待确认
 
 - 需求 2：阻塞。需要取得至少一个目标来源应用、Android 版本及真实 Intent／返回协议样本，确认快捷方式数据流方向后才能冻结实现方案。
-- 需求 9：需要先记录 VM 写入值、`:service` 设置快照和窗口命中包名三段证据，再根据真实断点选择修复位置。
 - 需求 6：实现与验收需要覆盖状态栏、刘海／挖孔、横屏和不同边缘窗口 Insets；默认空 Top 集合确保旧用户行为不变。
 
 ## 最近验证
 
-- 2026-07-18：需求 10 目标单测、全量 `:app:testDebugUnitTest`、`:app:assembleDebug`、`:app:assembleDebugAndroidTest` 和 `git diff --check` 独立复验通过，验证前后源码与未跟踪测试哈希一致。
 - 2026-07-18：需求 10 在 `Nexus_5_API_35`（Android 15／API 35）通过 `connectedDebugAndroidTest` 2 项测试；Debug APK 启动正常，UI 树确认标题为“上一个应用排除列表”，crash buffer 为空。
 - 2026-07-18：定位模拟器误判原因为 QA 进程未显式使用正确 AVD home；`AGENTS.md` 已补充 SDK、AVD home、后台启动、设备验证与证据留存规范。
 - 2026-07-19：需求 1 全量 `:app:testDebugUnitTest` 通过，共 12 个测试套件、40 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 6 项测试全绿，其中尺寸动画测试确认中间帧介于起止宽度之间。真实 Slider 连续拖动截图确认 `947 ms` 至 `1000 ms` 的位数变化保持圆角、尖角对齐和边界限位，未发现本应用崩溃。
@@ -68,3 +67,4 @@
 - 2026-07-19：需求 3 在 `Nexus_5_API_35` 完成真实悬浮窗验证：历史 Magnifier 磁盘值被 DataStore migration 改写为 Crosshair，设置页无样式入口；竖屏 Left／Right 与横屏 Bottom 均可拖出后在新锚点再次悬停，Tall cutout 左侧 inset 为 144px，全程仅显示准星且无崩溃。
 - 2026-07-19：需求 7、8 全量 JVM 测试 16 个套件、67 项全部通过，`assembleDebug` 与 `assembleDebugAndroidTest` 通过；Android 15 定向亮度仪器测试 3／3 通过，系统值在测试前后恢复为亮度 `255`、自动模式 `1`，Debug APK 启动与 UI 树读取正常，crash buffer 为空。全量设备测试 13 项中新增亮度测试均通过，另有 1 项既有 AdvancedSettings 显示断言失败，已记录为独立回归问题。
 - 2026-07-20：需求 7、8 完成兼容性验收：Android 16／API 36 小米 `25113PN0EC` 的实际亮度端点为 `1..255`，WRITE_SETTINGS 定向测试 3／3 通过；Android 15 模拟器在 `WRITE_SETTINGS=default` 下仅靠 Shizuku 的生产网关测试 2／2 通过，覆盖写入、自动模式、外部修改、观察停止与重开刷新，测试后恢复亮度 `255`、自动模式 `1`。两台设备均由边缘长滑触发全屏快捷工具动作浮层，未发现本应用崩溃。
+- 2026-07-20：需求 9 新增 8 项 JVM 回归测试，全量 18 个套件、75 项测试全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 15／API 35 模拟器确认勾选后列表不跳位、保存后 DataStore 为 `com.android.settings`、重进保持勾选且置顶，左右触钮在设置前台带 `NOT_TOUCHABLE`、离开后恢复，模拟器与服务重启后仍命中。完整设备测试 15 项中 11 项通过，3 项亮度测试因 `WRITE_SETTINGS` 前置权限未授予被拦截，另 1 项为既有 AdvancedSettings 显示断言；未发现本应用崩溃，测试状态已恢复。

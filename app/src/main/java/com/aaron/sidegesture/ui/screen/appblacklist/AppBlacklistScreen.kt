@@ -39,7 +39,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -116,7 +115,7 @@ fun AppBlacklistScreen(
                         ) { searching ->
                             if (searching) {
                                 SearchTopBarField(
-                                    query = uiState.searchQuery,
+                                    query = uiState.appList.searchQuery,
                                     onQueryChange = vm::updateSearchQuery,
                                     onClose = vm::hideSearch,
                                     delayOnClose = false
@@ -132,7 +131,10 @@ fun AppBlacklistScreen(
                     actions = {
                         if (permissionState.status.isGranted) {
                             if (!uiState.isSearching) {
-                                IconButton(onClick = vm::showSearch) {
+                                IconButton(
+                                    onClick = vm::showSearch,
+                                    enabled = uiState.appList.savedSelectionLoaded
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(id = R.string.search)
@@ -140,14 +142,20 @@ fun AppBlacklistScreen(
                                 }
                             }
                             if (!uiState.isSearching) {
-                                IconButton(onClick = { vm.showResetWarningDialog(true) }) {
+                                IconButton(
+                                    onClick = { vm.showResetWarningDialog(true) },
+                                    enabled = uiState.appList.savedSelectionLoaded
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.Restore,
                                         contentDescription = stringResource(id = R.string.reset_settings)
                                     )
                                 }
                             }
-                            IconButton(onClick = vm::done) {
+                            IconButton(
+                                onClick = vm::done,
+                                enabled = uiState.appList.savedSelectionLoaded
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Done,
                                     contentDescription = stringResource(id = R.string.done)
@@ -178,22 +186,17 @@ fun AppBlacklistScreen(
                                 )
                             }
                         ) {
-                            listOf(
-                                uiState.selectedAppInfos,
-                                uiState.unselectedAppInfos
-                            ).fastForEach { list ->
-                                items(
-                                    items = list,
-                                    key = { it.qualifiedName }
-                                ) { item ->
-                                    AppBlacklistItem(
-                                        appInfo = item,
-                                        selected = item.packageName in uiState.excludeApps,
-                                        onSelect = { selected ->
-                                            vm.selectApp(item, selected)
-                                        }
-                                    )
-                                }
+                            items(
+                                items = uiState.appList.visibleAppInfos,
+                                key = { it.qualifiedName }
+                            ) { item ->
+                                AppBlacklistItem(
+                                    appInfo = item,
+                                    selected = uiState.appList.isSelected(item.packageName),
+                                    onSelect = { selected ->
+                                        vm.selectApp(item, selected)
+                                    }
+                                )
                             }
                         }
                     }

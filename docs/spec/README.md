@@ -18,7 +18,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 4 | 3 | [移屏重新悬停](./03-move-screen-rehover.md) | 中高 | 已完成 | 已实现重新跟随、再次悬停、Tap 回退与历史样式迁移，并通过三边缘、横竖屏和 cutout 验证 |
 | 5 | 7+8 | [快速工具亮度](./07-08-quick-tools-brightness.md) | 中高 | 已完成 | 已覆盖 API 35 AOSP、API 36 小米、WRITE_SETTINGS、仅 Shizuku、观察生命周期和浮层手势入口 |
-| 6 | 9 | [应用黑名单同步](./09-app-blacklist-sync.md) | 中高 | 草案 | 依赖主进程与 `:service` 配置同步路径 |
+| 6 | 9 | [应用黑名单同步](./09-app-blacklist-sync.md) | 中高 | 已完成 | 已拆分 canonical 选择集与会话稳定顺序，并通过保存重进和跨进程触摸验收 |
 | 7 | 11 | [快速启动器横向分页](./11-quick-launcher-horizontal-paging.md) | 中 | 草案 | 依赖分页交互和现有启动器状态模型 |
 
 ## 第三批：高复杂度或协议待确认

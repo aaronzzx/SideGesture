@@ -63,6 +63,13 @@ fun resolveGestureButtonImeState(
     return GestureButtonImeState(hidden = hidden, padding = padding)
 }
 
+fun isGestureBlockedForApp(
+    currentPackageName: String,
+    excludeApps: List<String>
+): Boolean {
+    return currentPackageName.isNotBlank() && currentPackageName in excludeApps
+}
+
 class GestureWindowManager(
     private val service: SideGestureService,
     private val scope: CoroutineScope,
@@ -150,7 +157,10 @@ class GestureWindowManager(
                     advancedSettings.hideLandscape && ScreenUtils.isLandscape() -> false
                     advancedSettings.hideHomeScreen && environmentMonitor.isLauncherForeground() -> false
                     advancedSettings.hideScreenLock && environmentMonitor.isScreenLocked -> false
-                    environmentMonitor.currentPackageName() in advancedSettings.excludeApps -> false
+                    isGestureBlockedForApp(
+                        currentPackageName = environmentMonitor.currentPackageName(),
+                        excludeApps = advancedSettings.excludeApps
+                    ) -> false
                     else -> button.enabled
                 }
                 setFlags(touchEnabled)
