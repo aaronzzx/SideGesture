@@ -8,6 +8,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import com.aaron.sidegesture.entity.GestureButton
+import com.aaron.sidegesture.entity.Position
 
 /**
  * @author aaronzzxup@gmail.com
@@ -59,6 +60,7 @@ class GestureView @JvmOverloads constructor(
     private fun canExcludeSystemGesture(): Boolean {
         val button = button ?: return false
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                button.position != Position.Top &&
                 button.excludeSystemGestureRects
     }
 }

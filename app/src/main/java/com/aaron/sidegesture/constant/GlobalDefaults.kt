@@ -150,6 +150,7 @@ object GestureAnglesDefaults {
     val Left = GestureAngle()
     val Right = GestureAngle()
     val Bottom = GestureAngle(0.12f, 0.40f, 0.60f, 0.88f)
+    val Top = GestureAngle(0.12f, 0.40f, 0.60f, 0.88f)
     const val P1 = 0.12f
     const val P2 = 0.40f
     const val P3 = 0.70f
@@ -213,6 +214,7 @@ object GestureButtonDefaults {
             longSlideActions = GestureActions(center = Action.toList(GlobalActions.RECENT))
         )
     )
+    val TopDefaults = emptyList<GestureButton>()
 }
 
 object ActionSettingsDefaults {

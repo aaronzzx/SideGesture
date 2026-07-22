@@ -306,6 +306,56 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             backgroundColor = Color.Transparent,
                             shape = RectangleShape,
+                            title = stringResource(id = R.string.top_gesture_button_list),
+                            expanded = uiState.isTopGestureButtonListExpanded,
+                            onExpandedChange = { expanded ->
+                                if (expanded) {
+                                    vm.expandTopGestureButtonList(true, gestureButtonListOffset)
+                                } else {
+                                    vm.expandTopGestureButtonList(false)
+                                }
+                            }
+                        ) {
+                            uiState.topGestureButtons.fastForEach { button ->
+                                key(button) {
+                                    MyTextSwitch(
+                                        onTextClick = { onNavToGestureButtonSettings(button) },
+                                        onCheckedChange = { vm.onTopGestureButtonEnabledChange(button, it) },
+                                        checked = button.enabled,
+                                        text = button.buttonTextCompose(),
+                                        secondaryText = run {
+                                            val expected = button.actionTextCompose()
+                                            if (expected.isNotEmpty()) {
+                                                return@run expected
+                                            }
+                                            stringResource(id = R.string.action_none)
+                                        },
+                                        secondaryTextColor = MaterialTheme.colorScheme.primary,
+                                        markColor = when (button.isDefault) {
+                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
+                                            else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
+                                        }
+                                    )
+                                }
+                            }
+                            Text(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = MinItemHeightNoSecondary)
+                                    .onSingleClick {
+                                        vm.addTopGestureButton()
+                                    }
+                                    .wrapContentSize(),
+                                text = stringResource(id = R.string.add_gesture_button),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        MyExpandableColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = Color.Transparent,
+                            shape = RectangleShape,
                             title = stringResource(id = R.string.bottom_gesture_button_list),
                             expanded = uiState.isBottomGestureButtonListExpanded,
                             onExpandedChange = { expanded ->
@@ -406,7 +456,9 @@ fun HomeScreen(
             }
 
             AnimatedVisibility(
-                visible = uiState.isSideGestureButtonListExpanded || uiState.isBottomGestureButtonListExpanded,
+                visible = uiState.isSideGestureButtonListExpanded ||
+                    uiState.isBottomGestureButtonListExpanded ||
+                    uiState.isTopGestureButtonListExpanded,
                 enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMedium)),
                 exit = fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMedium))
             ) {
@@ -415,10 +467,10 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .drawBehind {
-                            val buttons = if (uiState.isSideGestureButtonListExpanded) {
-                                uiState.sideGestureButtons
-                            } else {
-                                uiState.bottomGestureButtons
+                            val buttons = when {
+                                uiState.isTopGestureButtonListExpanded -> uiState.topGestureButtons
+                                uiState.isSideGestureButtonListExpanded -> uiState.sideGestureButtons
+                                else -> uiState.bottomGestureButtons
                             }
                             buttons.fastForEach { button ->
                                 if (!button.enabled) {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -113,8 +114,10 @@ fun GestureAnglesScreen(
             AdjustAngle(
                 modifier = Modifier
                     .let { thisModifier ->
-                        if (uiState.position != Position.Bottom) thisModifier else {
-                            thisModifier.navigationBarsPadding()
+                        when (uiState.position) {
+                            Position.Bottom -> thisModifier.navigationBarsPadding()
+                            Position.Top -> thisModifier.statusBarsPadding()
+                            else -> thisModifier
                         }
                     }
                     .fillMaxSize(),
@@ -133,11 +136,14 @@ fun GestureAnglesScreen(
                                 Position.Left -> Alignment.CenterStart
                                 Position.Right -> Alignment.CenterEnd
                                 Position.Bottom -> Alignment.BottomCenter
+                                Position.Top -> Alignment.TopCenter
                             }
                         )
                         .let {
-                            if (position != Position.Bottom) it else {
-                                it.navigationBarsPadding()
+                            when (position) {
+                                Position.Bottom -> it.navigationBarsPadding()
+                                Position.Top -> it.statusBarsPadding()
+                                else -> it
                             }
                         }
                         .padding(ItemPadding)
@@ -147,6 +153,7 @@ fun GestureAnglesScreen(
                                 Position.Left -> 180f
                                 Position.Right-> 0f
                                 Position.Bottom -> 90f
+                                Position.Top -> 270f
                             }
                         }
                         .clipToBackground(
@@ -162,18 +169,9 @@ fun GestureAnglesScreen(
                 )
             }
 
-            when (uiState.position) {
-                Position.Left -> {
-                    iconBlock(Position.Right)
-                    iconBlock(Position.Bottom)
-                }
-                Position.Right -> {
-                    iconBlock(Position.Left)
-                    iconBlock(Position.Bottom)
-                }
-                Position.Bottom -> {
-                    iconBlock(Position.Left)
-                    iconBlock(Position.Right)
+            Position.entries.fastForEach { position ->
+                if (position != uiState.position) {
+                    iconBlock(position)
                 }
             }
         }
@@ -188,12 +186,12 @@ private fun AdjustAngle(
     position: Position = Position.Left,
     color: Color = MaterialTheme.colorScheme.primary
 ) {
-    val lineWidth = when (position == Position.Bottom) {
+    val lineWidth = when (position == Position.Bottom || position == Position.Top) {
         true -> (4.5).dp
         else -> 6.dp
     }
     // 触点半径
-    val dragHandleRadius = when (position == Position.Bottom) {
+    val dragHandleRadius = when (position == Position.Bottom || position == Position.Top) {
         true -> 15.dp
         else -> 20.dp
     }
@@ -254,10 +252,11 @@ private fun AdjustAngle(
                             Position.Left -> dragOffset.x
                             Position.Right -> circleCenter.x - dragOffset.x
                             Position.Bottom -> circleCenter.y - dragOffset.y
+                            Position.Top -> dragOffset.y - circleCenter.y
                         }
                         val neighbor = when (curPosition) {
                             Position.Left, Position.Right -> circleCenter.y - dragOffset.y
-                            Position.Bottom -> circleCenter.x - dragOffset.x
+                            Position.Bottom, Position.Top -> circleCenter.x - dragOffset.x
                         }
                         val tanVal = opposite / neighbor
                         val radians = atan(tanVal)
@@ -288,12 +287,13 @@ private fun AdjustAngle(
     ) {
         val radius = when (position) {
             Position.Left, Position.Right -> size.minDimension / 2f
-            Position.Bottom -> size.minDimension / 4f
+            Position.Bottom, Position.Top -> size.minDimension / 4f
         }
         val myCenter = when (position) {
             Position.Left -> center.copy(x = 0f)
             Position.Right -> center.copy(x = size.width)
             Position.Bottom -> center.copy(y = size.height)
+            Position.Top -> center.copy(y = 0f)
         }
         circleRadius = radius
         circleCenter = myCenter
@@ -359,25 +359,30 @@ private fun AdjustAngle(
                 0 -> when (position) {
                     Position.Left, Position.Right -> context.getString(R.string.gesture_to_top)
                     Position.Bottom -> context.getString(R.string.gesture_to_left)
+                    Position.Top -> context.getString(R.string.gesture_to_left)
                 }
                 1 -> when (position) {
                     Position.Left -> context.getString(R.string.gesture_to_right_top)
                     Position.Right -> context.getString(R.string.gesture_to_left_top)
                     Position.Bottom -> context.getString(R.string.gesture_to_top_left)
+                    Position.Top -> context.getString(R.string.gesture_to_left_bottom)
                 }
                 2 -> when (position) {
                     Position.Left -> context.getString(R.string.gesture_to_right)
                     Position.Right -> context.getString(R.string.gesture_to_left)
                     Position.Bottom -> context.getString(R.string.gesture_to_top)
+                    Position.Top -> context.getString(R.string.gesture_to_bottom)
                 }
                 3 -> when (position) {
                     Position.Left -> context.getString(R.string.gesture_to_right_bottom)
                     Position.Right -> context.getString(R.string.gesture_to_left_bottom)
                     Position.Bottom -> context.getString(R.string.gesture_to_top_right)
+                    Position.Top -> context.getString(R.string.gesture_to_right_bottom)
                 }
                 4 -> when (position) {
                     Position.Left, Position.Right -> context.getString(R.string.gesture_to_bottom)
                     Position.Bottom -> context.getString(R.string.gesture_to_right)
+                    Position.Top -> context.getString(R.string.gesture_to_right)
                 }
                 else -> ""
             }
@@ -385,14 +390,16 @@ private fun AdjustAngle(
                 Position.Left -> "$hint $displayArcDegree"
                 Position.Right -> "$displayArcDegree $hint"
                 Position.Bottom -> "$displayArcDegree\n$hint"
+                Position.Top -> "$hint\n$displayArcDegree"
             }
             val x = when (position) {
-                Position.Left, Position.Bottom -> textX - textMeasurer.measure(displayText).size.width / 2f
+                Position.Left, Position.Bottom, Position.Top -> textX - textMeasurer.measure(displayText).size.width / 2f
                 Position.Right -> textX - textMeasurer.measure(displayText).size.width
             }.coerceIn(0f, size.width)
             val y = when (position) {
                 Position.Left, Position.Right -> textY - textMeasurer.measure(displayText).size.height / 2f
                 Position.Bottom -> textY - textMeasurer.measure(displayText).size.height
+                Position.Top -> textY
             }.coerceIn(0f, size.height)
             drawText(
                 textMeasurer = textMeasurer,
@@ -429,7 +436,7 @@ private fun calcDragHandleOffset(
     val x = when (position) {
         Position.Left -> circleCenter.x + opposite.toFloat()
         Position.Right -> circleCenter.x - opposite.toFloat()
-        Position.Bottom -> when (pDegree > 90f) {
+        Position.Bottom, Position.Top -> when (pDegree > 90f) {
             true -> circleCenter.x + neighbor.toFloat()
             else -> circleCenter.x - neighbor.toFloat()
         }
@@ -441,6 +448,7 @@ private fun calcDragHandleOffset(
             else -> circleCenter.y - neighbor.toFloat()
         }
         Position.Bottom -> circleCenter.y - opposite.toFloat()
+        Position.Top -> circleCenter.y + opposite.toFloat()
     }
     return Offset(x = x, y = y)
 }

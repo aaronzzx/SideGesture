@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -146,10 +147,31 @@ fun QuickToolsControlCenter(
             val density = LocalDensity.current
             val layoutDirection = LocalLayoutDirection.current
             val cutoutInsets = WindowInsets.displayCutout
-            val safeLeftPadding = with(density) { 16.dp + cutoutInsets.getLeft(density, layoutDirection).toDp() }
-            val safeTopPadding = with(density) { 16.dp + cutoutInsets.getTop(density).toDp() }
-            val safeRightPadding = with(density) { 16.dp + cutoutInsets.getRight(density, layoutDirection).toDp() }
-            val safeBottomPadding = with(density) { 16.dp + cutoutInsets.getBottom(density).toDp() }
+            val systemBarInsets = WindowInsets.systemBars
+            val safeLeftPadding = with(density) {
+                16.dp + maxOf(
+                    cutoutInsets.getLeft(density, layoutDirection),
+                    systemBarInsets.getLeft(density, layoutDirection)
+                ).toDp()
+            }
+            val safeTopPadding = with(density) {
+                16.dp + maxOf(
+                    cutoutInsets.getTop(density),
+                    systemBarInsets.getTop(density)
+                ).toDp()
+            }
+            val safeRightPadding = with(density) {
+                16.dp + maxOf(
+                    cutoutInsets.getRight(density, layoutDirection),
+                    systemBarInsets.getRight(density, layoutDirection)
+                ).toDp()
+            }
+            val safeBottomPadding = with(density) {
+                16.dp + maxOf(
+                    cutoutInsets.getBottom(density),
+                    systemBarInsets.getBottom(density)
+                ).toDp()
+            }
             val panelSize = remember(density) {
                 IntSize(
                     with(density) { QuickToolsGridSpec.PanelWidth.toPx().roundToInt() },
@@ -914,6 +936,10 @@ private fun computePanelOffset(
         Position.Bottom -> {
             val attachLeft = anchor.x <= containerSize.width / 2f
             Offset(if (attachLeft) leftX else rightX, bottomY)
+        }
+        Position.Top -> {
+            val attachLeft = anchor.x <= containerSize.width / 2f
+            Offset(if (attachLeft) leftX else rightX, minY)
         }
     }
 

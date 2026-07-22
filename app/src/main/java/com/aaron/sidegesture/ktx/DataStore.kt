@@ -21,12 +21,13 @@ import java.io.OutputStream
 inline fun <reified T> Context.dataStore(
     fileName: String,
     defValue: T,
+    corruptionValue: T = defValue,
     migrations: List<DataMigration<T>> = emptyList()
 ): DataStore<T> {
     val serializer = createJsonDataStoreSerializer(defValue)
     return MultiProcessDataStoreFactory.create(
         serializer = serializer,
-        corruptionHandler = ReplaceFileCorruptionHandler { defValue },
+        corruptionHandler = ReplaceFileCorruptionHandler { corruptionValue },
         migrations = migrations,
         produceFile = {
             File(filesDir, "ds/$fileName")

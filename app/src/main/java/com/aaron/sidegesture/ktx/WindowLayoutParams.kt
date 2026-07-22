@@ -23,26 +23,20 @@ fun WindowManager.LayoutParams.updateMainView() {
 
 fun WindowManager.LayoutParams.updateGestureButton(button: GestureButton) {
     val rootSize = rootSize
-    val windowWidth = rootSize.width
-    val windowHeight = rootSize.height
-    when (button.position) {
-        Position.Left, Position.Right -> {
-            width = button.width
-            height = (windowHeight * button.fraction).toInt()
-            y = (windowHeight * button.start).toInt()
-        }
-        Position.Bottom -> {
-            width = (windowWidth * button.fraction).toInt()
-            height = button.width
-            x = (windowWidth * button.start).toInt()
-            y = windowHeight - button.width
-        }
+    val bounds = button.bounds(rootSize)
+    width = bounds.width.toInt()
+    height = bounds.height.toInt()
+    x = if (button.position == Position.Right) {
+        (rootSize.width - bounds.right).toInt()
+    } else {
+        bounds.left.toInt()
     }
+    y = bounds.top.toInt()
     @SuppressLint("RtlHardcoded")
     gravity = when (button.position) {
         Position.Left -> Gravity.LEFT or Gravity.TOP
         Position.Right -> Gravity.RIGHT or Gravity.TOP
-        Position.Bottom -> Gravity.LEFT or Gravity.TOP
+        Position.Bottom, Position.Top -> Gravity.LEFT or Gravity.TOP
     }
 }
 

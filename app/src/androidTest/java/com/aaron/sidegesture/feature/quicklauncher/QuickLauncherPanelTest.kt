@@ -281,7 +281,7 @@ class QuickLauncherPanelTest {
     }
 
     @Test
-    fun panelKeepsLeftRightAndBottomEdgeAnchors() {
+    fun panelKeepsAllFourEdgeAnchors() {
         val action = createAppAction(1)
         val state = QuickLauncherPanelState().apply {
             show(listOf(action), Offset(120f, 800f), Position.Left)
@@ -310,9 +310,17 @@ class QuickLauncherPanelTest {
                 bounds.centerX() < screenWidth / 2 && bounds.centerY() > leftBounds.centerY()
             }
 
+            scenario.onActivity {
+                state.show(listOf(action), Offset(120f, 800f), Position.Top)
+            }
+            val topBounds = waitForTextBounds("应用 1") { bounds ->
+                bounds.centerX() < screenWidth / 2 && bounds.centerY() < leftBounds.centerY()
+            }
+
             assertTrue(rightBounds.centerX() > leftBounds.centerX())
             assertTrue(bottomBounds.centerY() > leftBounds.centerY())
-            captureScreenshot("quick-launcher-bottom-edge.png")
+            assertTrue(topBounds.centerY() < leftBounds.centerY())
+            captureScreenshot("quick-launcher-top-edge.png")
         } finally {
             scenario.close()
         }

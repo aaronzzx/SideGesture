@@ -38,5 +38,6 @@ fun WaveStyle.getIconInitialRotation(position: Position): Float {
         Position.Left -> 0f
         Position.Right -> 180f
         Position.Bottom -> 270f
+        Position.Top -> 90f
     }
 }

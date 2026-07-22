@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ui.screen.gesturebuttonsettings
 
 import android.os.Build
 import android.util.Log
+import androidx.datastore.core.DataStore
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
@@ -11,6 +12,7 @@ import com.aaron.compose.base.BaseComposeVM
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonLength
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.GestureButtonSettings
+import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.fraction
 import com.aaron.sidegesture.ktx.rootSize
 import com.aaron.sidegesture.ui.screen.gesturebuttonsettings.GestureButtonSettingsVM.UiEvent
@@ -41,6 +43,14 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
 
     private var loadDataJob: Job? = null
 
+    private val gestureButtonsDataStore: DataStore<List<GestureButton>> = when (
+        gestureButtonSettings.position
+    ) {
+        Position.Left, Position.Right -> DataStoreHolder.sideGestureButtons
+        Position.Bottom -> DataStoreHolder.bottomGestureButtons
+        Position.Top -> DataStoreHolder.topGestureButtons
+    }
+
     init {
         loadData()
     }
@@ -60,20 +70,10 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     fun deleteGestureButton() {
         viewModelScope.launch {
             loadDataJob?.cancel()
-            if (gestureButtonSettings.isSideButton) {
-                DataStoreHolder.sideGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        removeAll { item ->
-                            item.id == uiState.gestureButton?.id
-                        }
-                    }
-                }
-            } else {
-                DataStoreHolder.bottomGestureButtons.updateData {
-                    it.toMutableList().apply {
-                        removeAll { item ->
-                            item.id == uiState.gestureButton?.id
-                        }
+            gestureButtonsDataStore.updateData {
+                it.toMutableList().apply {
+                    removeAll { item ->
+                        item.id == uiState.gestureButton?.id
                     }
                 }
             }
@@ -250,14 +250,8 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
     fun saveSettings() {
         viewModelScope.launch {
             launch {
-                if (gestureButtonSettings.isSideButton) {
-                    DataStoreHolder.sideGestureButtons.updateData {
-                        uiState.gestureButtons
-                    }
-                } else {
-                    DataStoreHolder.bottomGestureButtons.updateData {
-                        uiState.gestureButtons
-                    }
+                gestureButtonsDataStore.updateData {
+                    uiState.gestureButtons
                 }
             }
         }
@@ -275,31 +269,21 @@ class GestureButtonSettingsVM(savedStateHandle: SavedStateHandle) : BaseComposeV
                 )
             }
             launch {
-                if (gestureButtonSettings.isSideButton) {
-                    DataStoreHolder
-                        .sideGestureButtons
-                        .data
-                        .collectLatest { items ->
-                            val button = items.find {
-                                it.id == gestureButtonSettings.buttonId &&
-                                        it.position == gestureButtonSettings.position
+                gestureButtonsDataStore.data.collectLatest { items ->
+                    val button = items.find {
+                        it.id == gestureButtonSettings.buttonId &&
+                            it.position == gestureButtonSettings.position
+                    }
+                    updateUiState {
+                        it.copy(
+                            gestureButtons = items,
+                            alignRegion = if (gestureButtonSettings.isSideButton) {
+                                button?.alignRegion ?: true
+                            } else {
+                                false
                             }
-                            updateUiState {
-                                it.copy(
-                                    gestureButtons = items,
-                                    alignRegion = button?.alignRegion ?: true
-                                )
-                            }
-                        }
-                } else {
-                    DataStoreHolder
-                        .bottomGestureButtons
-                        .data
-                        .collectLatest { items ->
-                            updateUiState {
-                                it.copy(gestureButtons = items)
-                            }
-                        }
+                        )
+                    }
                 }
             }
         }

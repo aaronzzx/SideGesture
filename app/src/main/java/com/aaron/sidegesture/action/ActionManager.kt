@@ -12,6 +12,8 @@ class ActionManager(
 
     private val dispatcher = ActionDispatcher(handlers)
     private var started = false
+    @Volatile
+    private var blocked = false
 
     fun start() {
         if (started) return
@@ -24,15 +26,20 @@ class ActionManager(
     }
 
     fun submit(request: ActionRequest) {
-        if (request.action == Action.NONE) return
+        if (blocked || request.action == Action.NONE) return
         coroutineScope.launch(Dispatchers.Main.immediate) {
             handle(request)
         }
     }
 
     suspend fun handle(request: ActionRequest): Boolean {
-        if (request.action == Action.NONE) return false
+        if (blocked || request.action == Action.NONE) return false
         return dispatcher.dispatch(request)
+    }
+
+    fun setBlocked(blocked: Boolean) {
+        this.blocked = blocked
+        if (blocked) dismissOverlays()
     }
 
     fun onForegroundAppChanged(snapshot: ForegroundAppAware.Snapshot) {

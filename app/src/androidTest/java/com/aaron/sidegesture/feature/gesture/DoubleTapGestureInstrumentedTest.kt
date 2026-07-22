@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
 class DoubleTapGestureInstrumentedTest {
 
     @Test
-    fun leftRightAndBottomUseTheSameDoubleTapStateMachine() = runBlocking {
+    fun allFourEdgesUseTheSameDoubleTapStateMachine() = runBlocking {
         Position.entries.forEach { position ->
             withState(
                 buttons = listOf(button(position)),
@@ -251,6 +251,7 @@ class DoubleTapGestureInstrumentedTest {
             Position.Left -> Offset(1f, size.height / 2f)
             Position.Right -> Offset(size.width - 1f, size.height / 2f)
             Position.Bottom -> Offset(size.width / 2f, size.height - 1f)
+            Position.Top -> Offset(size.width / 2f, 1f)
         }
     }
 }

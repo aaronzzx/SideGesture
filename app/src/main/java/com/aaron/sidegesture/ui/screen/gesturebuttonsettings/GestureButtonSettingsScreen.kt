@@ -122,6 +122,7 @@ fun GestureButtonSettingsScreen(
                             Position.Left -> stringResource(id = R.string.left_gesture_button)
                             Position.Right -> stringResource(id = R.string.right_gesture_button)
                             Position.Bottom -> stringResource(id = R.string.bottom_gesture_button)
+                            Position.Top -> stringResource(id = R.string.top_gesture_button)
                         }
                     },
                     postfixTitle = {
@@ -323,7 +324,13 @@ fun GestureButtonSettingsScreen(
                                 onValueChange = { vm.onGestureButtonPositionChange(it.start, it.endInclusive) },
                                 onValueChangeFinished = { vm.onGestureButtonAdjustFinish() },
                                 text = stringResource(id = R.string.gesture_button_length),
-                                sliderValueHint = stringResource(id = R.string.top) to stringResource(id = R.string.bottom),
+                                sliderValueHint = if (gestureButton.position == Position.Top ||
+                                    gestureButton.position == Position.Bottom
+                                ) {
+                                    stringResource(id = R.string.left) to stringResource(id = R.string.right)
+                                } else {
+                                    stringResource(id = R.string.top) to stringResource(id = R.string.bottom)
+                                },
                                 valueRange = MinGestureButtonPosition..MaxGestureButtonPosition,
                                 valueFormatter = ::formatSliderPercentage
                             )
@@ -425,27 +432,30 @@ private fun MySideGestureSettings(
                 Position.Left -> stringResource(id = R.string.slide_to_right)
                 Position.Right -> stringResource(id = R.string.slide_to_left)
                 Position.Bottom -> stringResource(id = R.string.slide_to_top)
+                Position.Top -> stringResource(id = R.string.slide_to_bottom)
             }
             Up -> when (gestureButton.position) {
                 Position.Left -> stringResource(id = R.string.slide_to_top_right)
                 Position.Right -> stringResource(id = R.string.slide_to_top_left)
                 Position.Bottom -> stringResource(id = R.string.slide_to_top_left)
+                Position.Top -> stringResource(id = R.string.slide_to_bottom_left)
             }
             Down -> when (gestureButton.position) {
                 Position.Left -> stringResource(id = R.string.slide_to_bottom_right)
                 Position.Right -> stringResource(id = R.string.slide_to_bottom_left)
                 Position.Bottom -> stringResource(id = R.string.slide_to_top_right)
+                Position.Top -> stringResource(id = R.string.slide_to_bottom_right)
             }
             Center2 -> stringResource(R.string.long_press)
             Click -> stringResource(R.string.single_tap)
             DoubleClick -> stringResource(R.string.double_tap)
             Up2 -> when (gestureButton.position) {
                 Position.Left, Position.Right -> stringResource(id = R.string.slide_to_top)
-                Position.Bottom -> stringResource(id = R.string.slide_to_left)
+                Position.Bottom, Position.Top -> stringResource(id = R.string.slide_to_left)
             }
             Down2 -> when (gestureButton.position) {
                 Position.Left, Position.Right -> stringResource(id = R.string.slide_to_bottom)
-                Position.Bottom -> stringResource(id = R.string.slide_to_right)
+                Position.Bottom, Position.Top -> stringResource(id = R.string.slide_to_right)
             }
         },
         secondaryText = run {
@@ -470,27 +480,30 @@ private fun MySideGestureSettings(
                                 Position.Left -> -45f
                                 Position.Right -> -135f
                                 Position.Bottom -> -135f
+                                Position.Top -> 135f
                             }
                             Center -> when (position) {
                                 Position.Left -> 0f
                                 Position.Right -> 180f
                                 Position.Bottom -> -90f
+                                Position.Top -> 90f
                             }
                             Down -> when (position) {
                                 Position.Left -> 45f
                                 Position.Right -> 135f
                                 Position.Bottom -> -45f
+                                Position.Top -> 45f
                             }
                             Up2 -> when (position) {
                                 Position.Left, Position.Right -> -90f
-                                Position.Bottom -> -180f
+                                Position.Bottom, Position.Top -> -180f
                             }
                             Center2 -> 0f
                             Click -> 0f
                             DoubleClick -> 0f
                             Down2 -> when (position) {
                                 Position.Left, Position.Right -> 90f
-                                Position.Bottom -> 0f
+                                Position.Bottom, Position.Top -> 0f
                             }
                         }
                     }

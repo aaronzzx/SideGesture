@@ -1,6 +1,7 @@
 package com.aaron.sidegesture.ui.screen.actionselect
 
 import android.graphics.Bitmap
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -67,6 +68,14 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     private val actionSelect = savedStateHandle.toRoute<ActionSelect>()
+
+    private val gestureButtonsDataStore: DataStore<List<GestureButton>> = when (
+        actionSelect.position
+    ) {
+        Position.Left, Position.Right -> DataStoreHolder.sideGestureButtons
+        Position.Bottom -> DataStoreHolder.bottomGestureButtons
+        Position.Top -> DataStoreHolder.topGestureButtons
+    }
 
     override val initialState: UiState = UiState(
         title = createTitle(),
@@ -666,27 +675,30 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 Position.Left -> context.getString(R.string.slide_to_right)
                 Position.Right -> context.getString(R.string.slide_to_left)
                 Position.Bottom -> context.getString(R.string.slide_to_top)
+                Position.Top -> context.getString(R.string.slide_to_bottom)
             }
             TriggerDirection.Up -> when (actionSelect.position) {
                 Position.Left -> context.getString(R.string.slide_to_top_right)
                 Position.Right -> context.getString(R.string.slide_to_top_left)
                 Position.Bottom -> context.getString(R.string.slide_to_top_left)
+                Position.Top -> context.getString(R.string.slide_to_bottom_left)
             }
             TriggerDirection.Down -> when (actionSelect.position) {
                 Position.Left -> context.getString(R.string.slide_to_bottom_right)
                 Position.Right -> context.getString(R.string.slide_to_bottom_left)
                 Position.Bottom -> context.getString(R.string.slide_to_top_right)
+                Position.Top -> context.getString(R.string.slide_to_bottom_right)
             }
             TriggerDirection.Center2 -> context.getString(R.string.long_press)
             TriggerDirection.Click -> context.getString(R.string.single_tap)
             TriggerDirection.DoubleClick -> context.getString(R.string.double_tap)
             TriggerDirection.Up2 -> when (actionSelect.position) {
                 Position.Left, Position.Right -> context.getString(R.string.slide_to_top)
-                Position.Bottom -> context.getString(R.string.slide_to_left)
+                Position.Bottom, Position.Top -> context.getString(R.string.slide_to_left)
             }
             TriggerDirection.Down2 -> when (actionSelect.position) {
                 Position.Left, Position.Right -> context.getString(R.string.slide_to_bottom)
-                Position.Bottom -> context.getString(R.string.slide_to_right)
+                Position.Bottom, Position.Top -> context.getString(R.string.slide_to_right)
             }
         }
         if (
@@ -705,15 +717,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun loadData() {
         viewModelScope.launch {
-            val buttons = if (actionSelect.isSideButton) {
-                DataStoreHolder.sideGestureButtons
-            } else {
-                DataStoreHolder.bottomGestureButtons
-            }
             DataStoreHolder
                 .gestureSettings
                 .data
-                .combine(buttons.data) { f1, f2 ->
+                .combine(gestureButtonsDataStore.data) { f1, f2 ->
                     f1 to f2
                 }
                 .take(1)
@@ -831,12 +838,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
 
     private fun saveSettings() {
         viewModelScope.launch {
-            val buttons = if (actionSelect.isSideButton) {
-                DataStoreHolder.sideGestureButtons
-            } else {
-                DataStoreHolder.bottomGestureButtons
-            }
-            buttons.updateData { list ->
+            gestureButtonsDataStore.updateData { list ->
                 val mutableList = list.toMutableList()
                 val actionSelect = actionSelect
                 var button: GestureButton? = null

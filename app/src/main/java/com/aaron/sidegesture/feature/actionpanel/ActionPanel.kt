@@ -22,12 +22,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -263,6 +266,12 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     val verticalPaddingPx = verticalPadding.toPx()
     val edgePaddingPx = FolderEdgePadding.toPx()
     val cornerSafePaddingPx = FolderCornerSafePadding.toPx()
+    val cutoutInsets = WindowInsets.displayCutout
+    val systemBarInsets = WindowInsets.systemBars
+    val topSafeInsetPx = maxOf(
+        cutoutInsets.getTop(density),
+        systemBarInsets.getTop(density)
+    ).toFloat()
     val scrollHotZonePx = actionPanelStyle.scrollHotZoneHeight.coerceAtLeast(1).toFloat()
     val autoScrollSpeedPxPerFrame = actionPanelStyle.scrollSpeed.coerceAtLeast(1).toFloat()
     val columns = actionPanelStyle.columns.coerceAtLeast(1)
@@ -385,7 +394,8 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
             panelWidthPx,
             panelHeightPx,
             edgePaddingPx,
-            cornerSafePaddingPx
+            cornerSafePaddingPx,
+            topSafeInsetPx
         ) {
             folderPanelAnchor(
                 parentSize = parentSize,
@@ -394,7 +404,8 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                 panelWidthPx = panelWidthPx,
                 panelHeightPx = panelHeightPx,
                 edgePaddingPx = edgePaddingPx,
-                cornerSafePaddingPx = cornerSafePaddingPx
+                cornerSafePaddingPx = cornerSafePaddingPx,
+                topSafeInsetPx = topSafeInsetPx
             )
         }
 
@@ -476,7 +487,8 @@ private fun folderPanelAnchor(
     panelWidthPx: Float,
     panelHeightPx: Float,
     edgePaddingPx: Float,
-    cornerSafePaddingPx: Float
+    cornerSafePaddingPx: Float,
+    topSafeInsetPx: Float
 ): Offset {
     if (parentSize.isEmpty()) return Offset.Zero
 
@@ -510,6 +522,14 @@ private fun folderPanelAnchor(
             ),
             y = parentSize.height - edgePaddingPx - panelHeightPx
         )
+
+        Position.Top -> Offset(
+            x = (safeOrigin.x - panelWidthPx / 2f).coerceInSafely(
+                minimumValue = cornerSafePaddingPx,
+                maximumValue = parentSize.width - cornerSafePaddingPx - panelWidthPx
+            ),
+            y = topSafeInsetPx + edgePaddingPx
+        )
     }
 }
 
@@ -533,6 +553,12 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
     val itemSpacingRatio = actionPanelStyle.itemSpacingRatio.coerceAtLeast(0.1f)
     val edgePaddingPx = SectorEdgePadding.toPx()
     val cornerSafePaddingPx = SectorCornerSafePadding.toPx()
+    val cutoutInsets = WindowInsets.displayCutout
+    val systemBarInsets = WindowInsets.systemBars
+    val topSafeInsetPx = maxOf(
+        cutoutInsets.getTop(density),
+        systemBarInsets.getTop(density)
+    ).toFloat()
     val minItemSizePx = SectorMinItemSize.toPx()
     var parentSize by remember { mutableStateOf(Size.Zero) }
     var stableOrigin by remember { mutableStateOf(Offset.Unspecified) }
@@ -601,7 +627,8 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
             itemOffsets,
             itemSizePx,
             edgePaddingPx,
-            cornerSafePaddingPx
+            cornerSafePaddingPx,
+            topSafeInsetPx
         ) {
             sectorAnchor(
                 parentSize = parentSize,
@@ -610,7 +637,8 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                 itemOffsets = itemOffsets,
                 itemSizePx = itemSizePx,
                 edgePaddingPx = edgePaddingPx,
-                cornerSafePaddingPx = cornerSafePaddingPx
+                cornerSafePaddingPx = cornerSafePaddingPx,
+                topSafeInsetPx = topSafeInsetPx
             )
         }
 
@@ -716,7 +744,7 @@ private fun sectorItemSizePx(
     )
     val availableSize = when (position) {
         Position.Left, Position.Right -> parentSize.height
-        Position.Bottom -> parentSize.width
+        Position.Bottom, Position.Top -> parentSize.width
     } - cornerSafePaddingPx * 2f
     if (requiredSize <= availableSize || availableSize <= 0f) {
         return defaultItemSizePx
@@ -740,7 +768,7 @@ private fun sectorRequiredSafeAxisSize(
             maxY - minY + itemSizePx
         }
 
-        Position.Bottom -> {
+        Position.Bottom, Position.Top -> {
             val minX = itemOffsets.minOf { it.x }
             val maxX = itemOffsets.maxOf { it.x }
             maxX - minX + itemSizePx
@@ -780,6 +808,7 @@ private fun sectorItemOffsets(
                 Position.Left -> Offset(inward.toFloat(), cross.toFloat())
                 Position.Right -> Offset((-inward).toFloat(), cross.toFloat())
                 Position.Bottom -> Offset(cross.toFloat(), (-inward).toFloat())
+                Position.Top -> Offset(cross.toFloat(), inward.toFloat())
             }
         }
     }
@@ -1131,7 +1160,8 @@ private fun sectorAnchor(
     itemOffsets: List<Offset>,
     itemSizePx: Float,
     edgePaddingPx: Float,
-    cornerSafePaddingPx: Float
+    cornerSafePaddingPx: Float,
+    topSafeInsetPx: Float
 ): Offset {
     if (parentSize.isEmpty()) return Offset.Zero
 
@@ -1166,6 +1196,17 @@ private fun sectorAnchor(
             y = safeOrigin.y.coerceInSafely(
                 minimumValue = cornerSafePaddingPx + itemSizeHalf - minY,
                 maximumValue = parentSize.height - edgePaddingPx - itemSizeHalf - maxY
+            )
+        )
+
+        Position.Top -> Offset(
+            x = safeOrigin.x.coerceInSafely(
+                minimumValue = cornerSafePaddingPx + itemSizeHalf - minX,
+                maximumValue = parentSize.width - cornerSafePaddingPx - itemSizeHalf - maxX
+            ),
+            y = safeOrigin.y.coerceInSafely(
+                minimumValue = topSafeInsetPx + edgePaddingPx + itemSizeHalf - minY,
+                maximumValue = parentSize.height - cornerSafePaddingPx - itemSizeHalf - maxY
             )
         )
     }
@@ -1324,6 +1365,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                     iconOffset,
                                     parentSize.width - iconOffset
                                 )
+                                Position.Top -> it.coerceIn(
+                                    iconOffset,
+                                    parentSize.width - iconOffset
+                                )
                             }
                         }
                         val oy = origin.y.let {
@@ -1334,6 +1379,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 )
 
                                 Position.Bottom -> it.coerceAtLeast(parentSize.height / 2f)
+                                Position.Top -> it.coerceAtMost(parentSize.height / 2f)
                             }
                         }
                         translationX = ox - itemSizeHalf
@@ -1358,11 +1404,13 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                             Position.Left -> opposite
                             Position.Right -> -opposite
                             Position.Bottom -> neighbor
+                            Position.Top -> neighbor
                         }
                         // 需要移动的y距离
                         val transY = when (actionPanelState.position) {
                             Position.Left, Position.Right -> neighbor
                             Position.Bottom -> -opposite
+                            Position.Top -> opposite
                         }
                         Offset(x = transX.toFloat(), y = transY.toFloat())
                     }

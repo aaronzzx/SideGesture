@@ -9,6 +9,9 @@ import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.entity.global.InitialSettings
+import com.aaron.sidegesture.entity.global.RestoreCoordination
+import com.aaron.sidegesture.entity.global.RestoreJournal
+import com.aaron.sidegesture.entity.global.RestorePhase
 import com.aaron.sidegesture.entity.global.UpdateState
 import com.aaron.sidegesture.ktx.dataStore
 
@@ -58,9 +61,32 @@ object DataStoreHolder {
         App.getContext().dataStore(fileName, defValue)
     }
 
+    val topGestureButtons: DataStore<List<GestureButton>> = run {
+        val fileName = DataStoreFiles.TOP_GESTURE_BUTTONS
+        val defValue = GestureButton.TopDefaults
+        App.getContext().dataStore(fileName, defValue)
+    }
+
     val updateState: DataStore<UpdateState> = run {
         val fileName = DataStoreFiles.UPDATE_STATE
         val defValue = UpdateState()
+        App.getContext().dataStore(fileName, defValue)
+    }
+
+    val restoreCoordination: DataStore<RestoreCoordination> = run {
+        val fileName = DataStoreFiles.RESTORE_COORDINATION
+        val defValue = RestoreCoordination()
+        val corruptionValue = RestoreCoordination(
+            phase = RestorePhase.BlockRequested,
+            inProgress = true,
+            failureReason = "Restore coordination is corrupt"
+        )
+        App.getContext().dataStore(fileName, defValue, corruptionValue)
+    }
+
+    val restoreJournal: DataStore<RestoreJournal> = run {
+        val fileName = DataStoreFiles.RESTORE_JOURNAL
+        val defValue = RestoreJournal()
         App.getContext().dataStore(fileName, defValue)
     }
 
@@ -71,5 +97,6 @@ object DataStoreHolder {
         actionSettings.updateData { ActionSettings() }
         sideGestureButtons.updateData { GestureButton.SideDefaults }
         bottomGestureButtons.updateData { GestureButton.BottomDefaults }
+        topGestureButtons.updateData { GestureButton.TopDefaults }
     }
 }

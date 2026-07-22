@@ -44,6 +44,7 @@ data class GestureButton(
 
         val SideDefaults: List<GestureButton> get() = GestureButtonDefaults.SideDefaults
         val BottomDefaults: List<GestureButton> get() = GestureButtonDefaults.BottomDefaults
+        val TopDefaults: List<GestureButton> get() = GestureButtonDefaults.TopDefaults
 
         fun createSidePair(): List<GestureButton> {
             val id = SystemClock.uptimeMillis().toString()
@@ -70,6 +71,18 @@ data class GestureButton(
                 id = id,
                 position = Position.Bottom,
                 color = color
+            )
+        }
+
+        fun createTop(): GestureButton {
+            val id = SystemClock.uptimeMillis().toString()
+            val colorInt = ColorUtils.getRandomColor(false)
+            val color = Color(colorInt).toArgb()
+            return GestureButton(
+                id = id,
+                position = Position.Top,
+                color = color,
+                alignRegion = false
             )
         }
     }

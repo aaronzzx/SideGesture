@@ -338,7 +338,7 @@ class SideGestureState(
                     fingerXAnim.snapTo(0f)
                     fingerYAnim.snapTo(offset.y)
                 }
-                Position.Bottom -> {
+                Position.Bottom, Position.Top -> {
                     fingerXAnim.snapTo(offset.x)
                     fingerYAnim.snapTo(0f)
                 }
@@ -572,7 +572,7 @@ class SideGestureState(
                         launch { fingerXAnim.animateTo(0f, animationSpec) }
                         launch { fingerYAnim.animateTo(originYAnimVal, animationSpec) }
                     }
-                    Position.Bottom -> {
+                    Position.Bottom, Position.Top -> {
                         launch { fingerYAnim.animateTo(0f, animationSpec) }
                         launch { fingerXAnim.animateTo(originXAnimVal, animationSpec) }
                     }
@@ -606,13 +606,14 @@ class SideGestureState(
         val slideDistance = if (triggerDirection == Up2 || triggerDirection == Down2) {
             when (button.position) {
                 Position.Left, Position.Right -> originY - fingerY
-                Position.Bottom -> fingerX - originX
+                Position.Bottom, Position.Top -> fingerX - originX
             }
         } else {
             when (button.position) {
                 Position.Left -> fingerX - originX
                 Position.Right -> originX - fingerX
                 Position.Bottom -> originY - fingerY
+                Position.Top -> fingerY - originY
             }
         }
         // 解决触钮往回滑还能触发的问题
@@ -643,7 +644,7 @@ class SideGestureState(
             val edge1 = slideDistance
             val edge2 = when (button.position) {
                 Position.Left, Position.Right -> abs(fingerY - originY)
-                Position.Bottom -> abs(fingerX - originX)
+                Position.Bottom, Position.Top -> abs(fingerX - originX)
             }
             val hypot = hypot(edge1, edge2)
             canDistanceTriggered = if (isLongSlide) {
@@ -702,16 +703,17 @@ class SideGestureState(
             Position.Left -> finger.x - buttonBounds.left
             Position.Right -> buttonBounds.right - finger.x
             Position.Bottom -> buttonBounds.bottom - finger.y
+            Position.Top -> finger.y - buttonBounds.top
         }
         val neighbor = when (button.position) {
             Position.Left, Position.Right -> abs(finger.y - origin.y)
-            Position.Bottom -> abs(finger.x - origin.x)
+            Position.Bottom, Position.Top -> abs(finger.x - origin.x)
         }
         val tanVal = opposite / neighbor
         val radians = atan(tanVal)
         val isPreviousArea = when (button.position) {
             Position.Left, Position.Right -> finger.y < origin.y
-            Position.Bottom -> finger.x < origin.x
+            Position.Bottom, Position.Top -> finger.x < origin.x
         }
         val degree = if (isPreviousArea) {
             // 上半区
@@ -724,6 +726,7 @@ class SideGestureState(
             Position.Left -> activeGestureSettings.angles.left
             Position.Right -> activeGestureSettings.angles.right
             Position.Bottom -> activeGestureSettings.angles.bottom
+            Position.Top -> activeGestureSettings.angles.top
         }
         return angle.getTriggerDirection(degree.toFloat())
     }

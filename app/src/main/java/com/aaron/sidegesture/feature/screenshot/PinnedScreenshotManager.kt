@@ -764,7 +764,10 @@ private data class PinSafeInsets(
                     systemInsets.right,
                     buttons.filter { it.enabled && it.position == Position.Right }.maxOfOrNull { it.width } ?: fallback
                 ),
-                top = max(systemInsets.top, fallback),
+                top = max(
+                    systemInsets.top,
+                    buttons.filter { it.enabled && it.position == Position.Top }.maxOfOrNull { it.width } ?: fallback
+                ),
                 bottom = max(
                     systemInsets.bottom,
                     buttons.filter { it.enabled && it.position == Position.Bottom }.maxOfOrNull { it.width } ?: fallback

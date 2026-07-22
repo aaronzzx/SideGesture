@@ -57,6 +57,7 @@
     <string name="backup_success">备份成功</string>
     <string name="backup_failed">备份失败</string>
     <string name="restore_success">恢复成功</string>
+    <string name="restore_success_without_top">恢复成功，备份未包含顶部触钮</string>
     <string name="restore_success_with_date">恢复成功(来源：%1$s)</string>
     <string name="restore_failed">恢复失败</string>
     <string name="check_update">检查更新</string>
@@ -98,6 +99,7 @@
     <string name="gesture_button_list">触钮集合</string>
     <string name="side_gesture_button_list">侧边触钮</string>
     <string name="bottom_gesture_button_list">底部触钮</string>
+    <string name="top_gesture_button_list">顶部触钮</string>
     <string name="exclude_app">应用黑名单</string>
     <string name="exclude_app_hint">选择不识别手势的应用</string>
     <string name="volume_button_switch_song">音量键切歌(息屏长按)</string>
@@ -187,6 +189,7 @@
     <string name="left_gesture_button">左侧触钮</string>
     <string name="right_gesture_button">右侧触钮</string>
     <string name="bottom_gesture_button">底部触钮</string>
+    <string name="top_gesture_button">顶部触钮</string>
     <string name="gesture_button_size_max">已达到最大触钮数量</string>
     <string name="request_get_apps_permission">获取应用列表</string>
     <string name="goto_grant_get_apps_permission">开启“获取应用列表权限”</string>
@@ -241,6 +244,8 @@
     <string name="slide_to_bottom_left">向左下滑动</string>
     <string name="slide_to_top">向上滑动</string>
     <string name="slide_to_bottom">向下滑动</string>
+    <string name="left">左</string>
+    <string name="right">右</string>
     <string name="single_tap">单击</string>
     <string name="gesture_button_width">触钮宽度</string>
     <string name="gesture_button_length">触钮长度</string>

@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -17,21 +18,57 @@ import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.ui.SideGestureApp
 import com.aaron.sidegesture.feature.update.ui.UpdateVM
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.aaron.sidegesture.utils.BackupHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
     // 与 SideGestureApp 内 viewModel() 同为 Activity 作用域，解析到同一实例
     private val updateVM: UpdateVM by viewModels()
+    private var contentReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         myEnableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        lifecycleScope.launch {
+            val recovery = withContext(Dispatchers.IO) {
+                runCatching { BackupHelper.recoverIncompleteRestore(this@MainActivity) }
+            }
+            if (recovery.isFailure) {
+                Toast.makeText(
+                    this@MainActivity,
+                    R.string.restore_failed,
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+                return@launch
+            }
+            startMainContent()
+        }
+    }
+
+    // singleTask 复用实例时不走 onCreate，这里重新评估状态（通知再次点击等）
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (contentReady) updateVM.onEntry()
+    }
+
+    // 从最近任务返回（无新 Intent）时浮出下载完成/失败入口，但不重复弹「有新版」
+    override fun onResume() {
+        super.onResume()
+        if (contentReady) updateVM.onForeground()
+    }
+
+    private fun startMainContent() {
         setContent {
             SideGestureApp()
         }
+        contentReady = true
 
         // 冷启动入口（含通知拉起）：读状态评估是否调起更新弹窗
         updateVM.onEntry()
@@ -43,19 +80,6 @@ class MainActivity : ComponentActivity() {
                 myEnableEdgeToEdge(item.dayNightMode)
             }
         }
-    }
-
-    // singleTask 复用实例时不走 onCreate，这里重新评估状态（通知再次点击等）
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        updateVM.onEntry()
-    }
-
-    // 从最近任务返回（无新 Intent）时浮出下载完成/失败入口，但不重复弹「有新版」
-    override fun onResume() {
-        super.onResume()
-        updateVM.onForeground()
     }
 }
 

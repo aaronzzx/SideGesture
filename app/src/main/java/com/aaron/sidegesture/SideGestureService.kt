@@ -28,8 +28,11 @@ import com.aaron.sidegesture.feature.screenshot.CleanScreenshotCoordinator
 import com.aaron.sidegesture.feature.screenshot.PinnedScreenshotManager
 import com.aaron.sidegesture.feature.screenshot.WindowVisibilityController
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
+import com.aaron.sidegesture.feature.servicesettings.RestoreServiceGate
+import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsSnapshot
 import com.aaron.sidegesture.feature.update.UpdateCheckScheduler
 import com.aaron.sidegesture.feature.volumebutton.VolumeButtonController
+import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 
@@ -40,7 +43,12 @@ import kotlinx.coroutines.cancel
 class SideGestureService : ComponentAccessibilityService() {
 
     private val serviceScope = MainScope()
-    private val settingsStore = ServiceSettingsStore(serviceScope)
+    private val settingsStore = ServiceSettingsStore(
+        scope = serviceScope,
+        coordinationSource = DataStoreHolder.restoreCoordination.data
+    )
+    private var restoreBlocked = true
+    private var runtimeInitialized = false
     private val pinnedScreenshotManager: PinnedScreenshotManager by lazy {
         PinnedScreenshotManager(this)
     }
@@ -131,8 +139,18 @@ class SideGestureService : ComponentAccessibilityService() {
         UpdateCheckScheduler(this, serviceScope, settingsStore)
     }
 
+    private val restoreServiceGate by lazy {
+        RestoreServiceGate(
+            scope = serviceScope,
+            settingsStore = settingsStore,
+            onBlocked = ::blockRuntimeForRestore,
+            onApply = ::applyRuntimeAfterRestore
+        )
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        if (restoreBlocked || !runtimeInitialized) return
         if (environmentMonitor.onConfigurationChanged(newConfig)) {
             actionManager.onConfigurationChanged()
             gestureWindowManager.onConfigurationChanged()
@@ -144,6 +162,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (restoreBlocked || !runtimeInitialized) return
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             actionManager.onForegroundAppChanged(
                 ForegroundAppAware.Snapshot(
@@ -158,6 +177,7 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
+        if (restoreBlocked || !runtimeInitialized) return super.onKeyEvent(event)
         if (volumeButtonController.handle(event)) return true
         return super.onKeyEvent(event)
     }
@@ -166,21 +186,43 @@ class SideGestureService : ComponentAccessibilityService() {
     }
 
     override fun onDestroy() {
-        actionManager.dismissOverlays()
-        updateCheckScheduler.stop()
-        environmentMonitor.stop()
-        actionOverlayHost.release()
-        gestureWindowManager.release()
-        pinnedScreenshotManager.release()
+        restoreServiceGate.release()
+        if (runtimeInitialized) {
+            actionManager.setBlocked(true)
+            updateCheckScheduler.stop()
+            environmentMonitor.stop()
+            actionOverlayHost.release()
+            gestureWindowManager.release()
+            pinnedScreenshotManager.release()
+        }
         serviceScope.cancel()
         super.onDestroy()
     }
 
     override fun onSetOverlay() {
+        restoreServiceGate.start()
+    }
+
+    private fun blockRuntimeForRestore() {
+        restoreBlocked = true
+        if (!runtimeInitialized) return
+        actionManager.setBlocked(true)
+        updateCheckScheduler.stop()
+        environmentMonitor.stop()
+        actionOverlayHost.release()
+        gestureWindowManager.release()
+        pinnedScreenshotManager.release()
+    }
+
+    private fun applyRuntimeAfterRestore(@Suppress("UNUSED_PARAMETER") snapshot: ServiceSettingsSnapshot) {
+        actionManager.setBlocked(true)
         actionManager.start()
+        runtimeInitialized = true
         environmentMonitor.start()
         gestureWindowManager.startOrReattach()
         actionOverlayHost.attach(actionHandlers.filterIsInstance<OverlayActionHandler>())
         updateCheckScheduler.start()
+        restoreBlocked = false
+        actionManager.setBlocked(false)
     }
 }

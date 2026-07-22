@@ -13,4 +13,7 @@ object DataStoreFiles {
     const val BOTTOM_GESTURE_BUTTONS = "ee"
     const val ACTION_SETTINGS = "ff"
     const val UPDATE_STATE = "gg"
+    const val TOP_GESTURE_BUTTONS = "hh"
+    const val RESTORE_COORDINATION = "ii"
+    const val RESTORE_JOURNAL = "jj"
 }

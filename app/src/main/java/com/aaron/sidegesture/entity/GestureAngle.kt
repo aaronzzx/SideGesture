@@ -8,6 +8,7 @@ import com.aaron.sidegesture.constant.GestureAnglesDefaults.P2
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.P3
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.P4
 import com.aaron.sidegesture.constant.GestureAnglesDefaults.Right
+import com.aaron.sidegesture.constant.GestureAnglesDefaults.Top
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,7 +21,8 @@ import kotlinx.serialization.Serializable
 data class GestureAngles(
     val left: GestureAngle = Left,
     val right: GestureAngle = Right,
-    val bottom: GestureAngle = Bottom
+    val bottom: GestureAngle = Bottom,
+    val top: GestureAngle = Top
 )
 
 @Serializable

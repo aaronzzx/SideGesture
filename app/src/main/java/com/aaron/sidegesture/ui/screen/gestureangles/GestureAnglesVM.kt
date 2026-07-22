@@ -24,6 +24,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
     private lateinit var leftAngle: GestureAngle
     private lateinit var rightAngle: GestureAngle
     private lateinit var bottomAngle: GestureAngle
+    private lateinit var topAngle: GestureAngle
 
     init {
         loadData()
@@ -47,6 +48,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                 Position.Left -> leftAngle = angle
                 Position.Right -> rightAngle = angle
                 Position.Bottom -> bottomAngle = angle
+                Position.Top -> topAngle = angle
             }
             it.copy(angle = angle)
         }
@@ -60,7 +62,8 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                         angles = GestureAngles(
                             left = getGestureAngle(Position.Left),
                             right = getGestureAngle(Position.Right),
-                            bottom = getGestureAngle(Position.Bottom)
+                            bottom = getGestureAngle(Position.Bottom),
+                            top = getGestureAngle(Position.Top)
                         )
                     )
                 }
@@ -101,6 +104,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
                     leftAngle = item.angles.left
                     rightAngle = item.angles.right
                     bottomAngle = item.angles.bottom
+                    topAngle = item.angles.top
                     updateUiState {
                         it.copy(angle = getGestureAngle(it.position))
                     }
@@ -113,6 +117,7 @@ class GestureAnglesVM : BaseComposeVM<UiState, UiEvent>() {
             Position.Left -> if (reset) GestureAngle() else leftAngle
             Position.Right -> if (reset) GestureAngle() else rightAngle
             Position.Bottom -> if (reset) GestureAngle() else bottomAngle
+            Position.Top -> if (reset) GestureAngles().top else topAngle
         }
     }
 

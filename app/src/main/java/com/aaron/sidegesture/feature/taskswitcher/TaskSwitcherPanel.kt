@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -111,10 +112,31 @@ fun TaskSwitcherPanel(
             val density = LocalDensity.current
             val layoutDirection = LocalLayoutDirection.current
             val cutoutInsets = WindowInsets.displayCutout
-            val safeLeft = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getLeft(density, layoutDirection) }
-            val safeTop = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getTop(density) }
-            val safeRight = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getRight(density, layoutDirection) }
-            val safeBottom = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getBottom(density) }
+            val systemBarInsets = WindowInsets.systemBars
+            val safeLeft = with(density) {
+                EDGE_PADDING.toPx() + maxOf(
+                    cutoutInsets.getLeft(density, layoutDirection),
+                    systemBarInsets.getLeft(density, layoutDirection)
+                )
+            }
+            val safeTop = with(density) {
+                EDGE_PADDING.toPx() + maxOf(
+                    cutoutInsets.getTop(density),
+                    systemBarInsets.getTop(density)
+                )
+            }
+            val safeRight = with(density) {
+                EDGE_PADDING.toPx() + maxOf(
+                    cutoutInsets.getRight(density, layoutDirection),
+                    systemBarInsets.getRight(density, layoutDirection)
+                )
+            }
+            val safeBottom = with(density) {
+                EDGE_PADDING.toPx() + maxOf(
+                    cutoutInsets.getBottom(density),
+                    systemBarInsets.getBottom(density)
+                )
+            }
             val panelWidthPx = with(density) { PANEL_WIDTH.toPx() }
             val containerHeightPx = with(density) { maxHeight.toPx() }
             val measuredPanelHeightPx = remember { mutableFloatStateOf(0f) }
@@ -327,12 +349,13 @@ private fun computeTaskSwitcherOffset(
     val x = when (triggerEdge) {
         Position.Left -> leftX
         Position.Right -> rightX
-        Position.Bottom -> {
+        Position.Bottom, Position.Top -> {
             if (anchor.x <= containerWidth / 2f) leftX else rightX
         }
     }
     val y = when (triggerEdge) {
         Position.Bottom -> maxY
+        Position.Top -> minY
         else -> (anchor.y - panelHeight / 2f).coerceIn(minY, maxY)
     }
     return Offset(x, y)
