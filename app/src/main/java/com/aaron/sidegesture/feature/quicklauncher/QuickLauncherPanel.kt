@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -190,7 +191,7 @@ fun QuickLauncherPanel(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(PANEL_PADDING)
+                        .padding(vertical = PANEL_PADDING)
                 ) {
                     HorizontalPager(
                         modifier = Modifier
@@ -201,6 +202,7 @@ fun QuickLauncherPanel(
                         LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
                             columns = GridCells.Fixed(GRID_COLUMNS),
+                            contentPadding = PaddingValues(horizontal = PANEL_PADDING),
                             horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING),
                             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
                             userScrollEnabled = false

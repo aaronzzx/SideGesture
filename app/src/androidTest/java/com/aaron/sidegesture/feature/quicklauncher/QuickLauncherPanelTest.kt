@@ -30,6 +30,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.math.roundToInt
 
 @RunWith(AndroidJUnit4::class)
 class QuickLauncherPanelTest {
@@ -44,6 +45,7 @@ class QuickLauncherPanelTest {
         const val EMPTY_AREA_X_OFFSET = 180
         const val EMPTY_AREA_Y_OFFSET = 60
         const val BACKGROUND_EDGE_OFFSET = 12
+        const val PANEL_WIDTH_DP = 260f
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -63,7 +65,11 @@ class QuickLauncherPanelTest {
             val swipeStart = Point(fourthItemBounds.centerX(), fourthItemBounds.centerY())
             val swipeEnd = Point(firstItemBounds.centerX(), firstItemBounds.centerY())
 
-            injectSwipe(start = swipeStart, end = swipeEnd)
+            injectSwipe(
+                start = swipeStart,
+                end = swipeEnd,
+                onHalfway = { captureScreenshot("quick-launcher-page-transition.png") }
+            )
             waitForPageDescription("第 2 页，共 2 页")
 
             waitForTextBounds("应用 17")
@@ -90,6 +96,32 @@ class QuickLauncherPanelTest {
 
             waitForTextBounds("应用 1")
             assertTrue(launches.isEmpty())
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun pagerViewportReachesPanelEdgesWhileItemsKeepContentPadding() {
+        val state = QuickLauncherPanelState().apply {
+            show((1..17).map(::createAppAction), Offset(120f, 320f), Position.Left)
+        }
+        val scenario = launchPanel(state) { _, _ -> }
+        try {
+            val pagerBounds = waitForNodeBounds("horizontal pager") { node ->
+                node.isScrollable
+            }
+            val indicatorBounds = waitForPageDescription("第 1 页，共 2 页")
+            val firstItemBounds = waitForTextBounds("应用 1")
+            val expectedPanelWidth = (
+                PANEL_WIDTH_DP * instrumentation.targetContext.resources.displayMetrics.density
+            ).roundToInt()
+
+            assertTrue(pagerBounds.width() in expectedPanelWidth - 1..expectedPanelWidth + 1)
+            assertEquals(indicatorBounds.left, pagerBounds.left)
+            assertEquals(indicatorBounds.right, pagerBounds.right)
+            assertTrue(firstItemBounds.left > pagerBounds.left)
+            assertTrue(firstItemBounds.right < pagerBounds.right)
         } finally {
             scenario.close()
         }
@@ -218,8 +250,8 @@ class QuickLauncherPanelTest {
         return scenario
     }
 
-    private fun waitForPageDescription(description: String) {
-        waitForNodeBounds("page description '$description'") { node ->
+    private fun waitForPageDescription(description: String): Rect {
+        return waitForNodeBounds("page description '$description'") { node ->
             node.contentDescription?.toString() == description
         }
     }
@@ -330,7 +362,11 @@ class QuickLauncherPanelTest {
         instrumentation.waitForIdleSync()
     }
 
-    private fun injectSwipe(start: Point, end: Point) {
+    private fun injectSwipe(
+        start: Point,
+        end: Point,
+        onHalfway: (() -> Unit)? = null
+    ) {
         val downTime = SystemClock.uptimeMillis()
         injectMotionEvent(MotionEvent.ACTION_DOWN, downTime, start)
         repeat(SWIPE_STEPS) { index ->
@@ -344,6 +380,9 @@ class QuickLauncherPanelTest {
                     (start.y + (end.y - start.y) * progress).toInt()
                 )
             )
+            if (index + 1 == SWIPE_STEPS / 2) {
+                onHalfway?.invoke()
+            }
         }
         injectMotionEvent(MotionEvent.ACTION_UP, downTime, end)
         instrumentation.waitForIdleSync()
@@ -393,8 +432,8 @@ class QuickLauncherPanelTest {
             value = GlobalActions.EXTRA_LAUNCH_APP,
             data = JsonHelper.encodeToString(
                 AppInfo(
-                    packageName = "com.example.app$index",
-                    className = "com.example.app$index.MainActivity",
+                    packageName = instrumentation.targetContext.packageName,
+                    className = "com.aaron.sidegesture.MainActivity",
                     label = "应用 $index",
                     miniWindow = miniWindow
                 )

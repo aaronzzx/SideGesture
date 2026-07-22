@@ -25,6 +25,7 @@
 - [x] 2026-07-20：完成需求 9，拆分黑名单 canonical 选择集、入口排序基线和会话稳定顺序，修复保存重进丢勾选与点击后立即置顶；Android 15 模拟器已验证 DataStore 写入、服务重启、黑名单命中禁用触摸和离开后恢复。
 - [x] 2026-07-22：完成需求 11，将快速启动器改为 4 列横向整页分页，按可用高度和字体缩放冻结会话容量，多页显示圆点指示器；点击、长按小窗、背景关闭、重开归零及 Left／Right／Bottom 锚点保持兼容。
 - [x] 2026-07-22：补充自动化测试范围规范，默认定向验证，明确历史测试不重复执行、全量回归触发条件及互斥设备前置条件的分组与恢复要求。
+- [x] 2026-07-23：修复快速启动器横滑图标在浮层内侧提前被裁剪的问题，使 Pager 铺满浮层并由页内网格保留静止布局留白。
 
 ## 进行中
 
@@ -60,7 +61,6 @@
 
 ## 最近验证
 
-- 2026-07-19：需求 1 全量 `:app:testDebugUnitTest` 通过，共 12 个测试套件、40 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 6 项测试全绿，其中尺寸动画测试确认中间帧介于起止宽度之间。真实 Slider 连续拖动截图确认 `947 ms` 至 `1000 ms` 的位数变化保持圆角、尖角对齐和边界限位，未发现本应用崩溃。
 - 2026-07-19：需求 4 全量 `:app:testDebugUnitTest` 通过，共 14 个测试套件、49 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 9 项测试全部通过。
 - 2026-07-19：需求 4 在 Android 15／API 35 模拟器完成运行时验证：设置项可见且可保存；输入法弹出时 Left、Right、Bottom 窗口均不可见、无 Surface 且不可触摸，收起后按原状态恢复；主进程、`:service` 进程和 crash buffer 均无致命日志。
 - 2026-07-19：需求 3 全量 `:app:testDebugUnitTest` 通过，共 15 个测试套件、58 项测试，失败、错误和跳过均为 0；`assembleDebug`、`assembleDebugAndroidTest` 与准星 Compose 定向仪器测试通过，crash buffer 为空。
@@ -70,3 +70,4 @@
 - 2026-07-20：需求 9 新增 8 项 JVM 回归测试，全量 18 个套件、75 项测试全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 15／API 35 模拟器确认勾选后列表不跳位、保存后 DataStore 为 `com.android.settings`、重进保持勾选且置顶，左右触钮在设置前台带 `NOT_TOUCHABLE`、离开后恢复，模拟器与服务重启后仍命中。完整设备测试 15 项中 11 项通过，3 项亮度测试因 `WRITE_SETTINGS` 前置权限未授予被拦截，另 1 项为既有 AdvancedSettings 显示断言；未发现本应用崩溃，测试状态已恢复。
 - 2026-07-22：需求 11 全量 JVM 测试 19 个套件、82 项全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 17／API 37 `Medium_Phone` 模拟器以 `UiAutomation` 直接注入触摸完成 4 项设备测试，覆盖正向／反向／连续翻页、末页边界、横滑不误启动、点击／长按、背景关闭、重开归零和 Left／Right／Bottom 锚点，真实密度截图布局正常，crash buffer 为空。
 - 2026-07-22：`AGENTS.md` 已明确自动化测试默认按改动目标定向执行，历史用例不自动重复，全量回归仅由明确条件触发；互斥权限测试须分组并恢复设备状态。
+- 2026-07-23：快速启动器裁剪边界修复通过 `QuickLauncherPagingTest` 定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的 `QuickLauncherPanelTest` 5 项全部通过，新增断言确认 Pager 与 260dp 浮层同宽且静止页保留左右留白，横滑中间帧确认图标只在浮层真实边界处裁剪，crash buffer 为空。
