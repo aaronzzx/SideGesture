@@ -9,6 +9,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Down2
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.TriggerDirection.Up2
+import com.aaron.sidegesture.entity.Vibrations
 import com.aaron.sidegesture.entity.WaveStyle
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.entity.global.GestureSettings
@@ -96,6 +98,13 @@ fun SideGestureContainer(
     }
 
     SideEffect {
+        sideGestureState.onTapDispatch = { action, finger, button ->
+            submitAction(
+                action = action,
+                finger = finger,
+                button = button
+            )
+        }
         sideGestureState.onLongPress = { action ->
             submitAction(
                 action = action,
@@ -197,15 +206,22 @@ private fun rememberSideGestureState(
     gestureSettings: GestureSettings = GestureSettings()
 ): SideGestureState {
     val coroutineScope = rememberCoroutineScope()
-    return remember(coroutineScope, buttons, gestureSettings) {
+    val state = remember(coroutineScope) {
         SideGestureState(coroutineScope, buttons, gestureSettings)
     }
+    SideEffect {
+        state.updateConfiguration(buttons, gestureSettings)
+    }
+    DisposableEffect(state) {
+        onDispose(state::release)
+    }
+    return state
 }
 
 class SideGestureState(
     private val coroutineScope: CoroutineScope,
-    private val buttons: List<GestureButton>,
-    private val gestureSettings: GestureSettings = GestureSettings()
+    buttons: List<GestureButton>,
+    gestureSettings: GestureSettings = GestureSettings()
 ) {
 
     var isCanceled: Boolean by mutableStateOf(false)
@@ -232,11 +248,17 @@ class SideGestureState(
     private val fingerYAnim = Animatable(Float.NaN)
 
     var onLongPress: (Action) -> Unit = {}
+    var onTapDispatch: (Action, Offset, GestureButton) -> Unit = { _, _, _ -> }
 
+    private var latestButtons = buttons
+    private var latestGestureSettings = gestureSettings
+    private var activeGestureSettings = gestureSettings
     private var longSlideFirstTriggerMs = 0L
     private var calcLongPressJob: Job? = null
+    private var doubleTapTimeoutJob: Job? = null
     private var downTime = 0L
     private var hasMovedBeyondSlop = false
+    private var isSecondTapCandidate = false
 
     private val animationSpec = spring<Float>(stiffness = 3000f)
 
@@ -248,16 +270,55 @@ class SideGestureState(
     private var slideVibrationFlags = false
 
     private val viewConfiguration = ViewConfiguration.get(App.getContext())
+    private val doubleTapStateMachine = DoubleTapStateMachine<TapDispatch>(
+        timeoutMillis = ViewConfiguration.getDoubleTapTimeout().toLong(),
+        doubleTapSlop = viewConfiguration.scaledDoubleTapSlop.toFloat()
+    )
+
+    fun updateConfiguration(
+        buttons: List<GestureButton>,
+        gestureSettings: GestureSettings
+    ) {
+        latestButtons = buttons
+        latestGestureSettings = gestureSettings
+    }
 
     fun onDragStart(offset: Offset, imePadding: Int) {
         downTime = SystemClock.uptimeMillis()
+        activeGestureSettings = latestGestureSettings
         origin = offset
         finger = offset
-        button = buttons.find(offset, imePadding)
+        button = latestButtons.find(offset, imePadding)
         buttonBounds = button?.bounds(imePadding)
 
+        val downResult = doubleTapStateMachine.onDown(
+            buttonKey = button?.let(::buttonKey),
+            downX = offset.x,
+            downY = offset.y,
+            downTimeMillis = downTime
+        )
+        when (downResult.resolution) {
+            DoubleTapStateMachine.DownResolution.NoPending -> Unit
+            DoubleTapStateMachine.DownResolution.Matched -> {
+                doubleTapTimeoutJob?.cancel()
+                doubleTapTimeoutJob = null
+                isSecondTapCandidate = true
+            }
+            DoubleTapStateMachine.DownResolution.Rejected -> {
+                doubleTapTimeoutJob?.cancel()
+                doubleTapTimeoutJob = null
+                isSecondTapCandidate = false
+            }
+            DoubleTapStateMachine.DownResolution.Expired -> {
+                doubleTapTimeoutJob?.cancel()
+                doubleTapTimeoutJob = null
+                isSecondTapCandidate = false
+                downResult.expiredSingleTap?.let(::dispatchTap)
+            }
+        }
+
         val button = button ?: return
-        val gestureSettings = gestureSettings
+        val gestureSettings = activeGestureSettings
 
         val action = button.slideActions.center2.firstOrNull()
         if (action != null && action != Action.NONE) {
@@ -296,6 +357,7 @@ class SideGestureState(
         val minus = finger - origin
         if (minus.x.absoluteValue > touchSlop || minus.y.absoluteValue > touchSlop) {
             hasMovedBeyondSlop = true
+            cancelPendingDoubleTap()
             if (calcLongPressJob?.isActive == true) {
                 calcLongPressJob?.cancel()
             }
@@ -307,7 +369,7 @@ class SideGestureState(
         val newDirection = calcDirection(button) ?: return null
         triggerDirection = newDirection
 
-        val gestureSettings = gestureSettings
+        val gestureSettings = activeGestureSettings
         if (gestureSettings.isPreciseSlideType) {
             if (newDirection == Center) {
                 if (!isOhoGestureEverCanTriggered) {
@@ -353,14 +415,19 @@ class SideGestureState(
 
     fun onDragEnd(): Action {
         calcLongPressJob?.cancel()
-        val button = button ?: return Action.NONE
-        val gestureSettings = gestureSettings
+        val button = button ?: run {
+            cancelPendingDoubleTap()
+            resetCurrent()
+            return Action.NONE
+        }
+        val gestureSettings = activeGestureSettings
         val triggerDirection = triggerDirection
         val longSlideDelayMs = gestureSettings.longSlideTriggerDelayMs
+        val upTime = SystemClock.uptimeMillis()
         var returnAction = Action.NONE
         if (!gestureSettings.longSlideTriggerImmediately &&
             canDistanceTriggered(button, true) &&
-            SystemClock.uptimeMillis() - longSlideFirstTriggerMs >= longSlideDelayMs
+            upTime - longSlideFirstTriggerMs >= longSlideDelayMs
         ) {
             val actions = button.longSlideActions.actionsBy(triggerDirection)
             val action = actions.firstOrNull()
@@ -380,15 +447,41 @@ class SideGestureState(
         }
         if (returnAction == Action.NONE &&
             !hasMovedBeyondSlop &&
-            SystemClock.uptimeMillis() - downTime <= gestureSettings.longPressTriggerDelayMs
+            upTime - downTime <= gestureSettings.longPressTriggerDelayMs
         ) {
-            val clickAction = button.slideActions.click.firstOrNull()
-            if (clickAction != null && clickAction != Action.NONE) {
+            if (isSecondTapCandidate) {
+                val doubleTapDispatch = doubleTapStateMachine.completeSecondTap(upTime)
+                isSecondTapCandidate = false
+                if (doubleTapDispatch != null) {
+                    dispatchTap(doubleTapDispatch)
+                    resetCurrent()
+                    return Action.NONE
+                }
+            }
+            val clickAction = button.slideActions.click.firstOrNull() ?: Action.NONE
+            val doubleClickAction = button.slideActions.doubleClick.firstOrNull {
+                it != Action.NONE
+            }
+            if (gestureSettings.doubleTapEnabled && doubleClickAction != null) {
+                beginDoubleTapWait(
+                    button = button,
+                    down = origin,
+                    up = finger,
+                    upTimeMillis = upTime,
+                    singleTapAction = clickAction,
+                    doubleTapAction = doubleClickAction,
+                    vibrations = gestureSettings.vibrations
+                )
+                resetCurrent()
+                return Action.NONE
+            }
+            if (clickAction != Action.NONE) {
                 gestureSettings.vibrations.tryVibrateForSlide()
                 returnAction = clickAction
             }
         }
-        reset()
+        cancelPendingDoubleTap()
+        resetCurrent()
         return returnAction
     }
 
@@ -398,11 +491,66 @@ class SideGestureState(
 
     fun cancel() {
         if (isCanceled) return
-        reset()
+        cancelPendingDoubleTap()
+        resetCurrent()
         isCanceled = true
     }
 
     fun reset() {
+        cancelPendingDoubleTap()
+        resetCurrent()
+    }
+
+    fun release() {
+        calcLongPressJob?.cancel()
+        calcLongPressJob = null
+        cancelPendingDoubleTap()
+    }
+
+    private fun beginDoubleTapWait(
+        button: GestureButton,
+        down: Offset,
+        up: Offset,
+        upTimeMillis: Long,
+        singleTapAction: Action,
+        doubleTapAction: Action,
+        vibrations: Vibrations
+    ) {
+        doubleTapTimeoutJob?.cancel()
+        val token = doubleTapStateMachine.begin(
+            buttonKey = buttonKey(button),
+            downX = down.x,
+            downY = down.y,
+            upTimeMillis = upTimeMillis,
+            singleTap = TapDispatch(singleTapAction, up, button, vibrations),
+            doubleTap = TapDispatch(doubleTapAction, up, button, vibrations)
+        )
+        doubleTapTimeoutJob = coroutineScope.launch {
+            delay(doubleTapStateMachine.timeoutMillis)
+            val tapDispatch = doubleTapStateMachine.consumeTimeout(token) ?: return@launch
+            doubleTapTimeoutJob = null
+            dispatchTap(tapDispatch)
+        }
+    }
+
+    private fun cancelPendingDoubleTap() {
+        doubleTapTimeoutJob?.cancel()
+        doubleTapTimeoutJob = null
+        doubleTapStateMachine.cancel()
+        isSecondTapCandidate = false
+    }
+
+    private fun dispatchTap(tapDispatch: TapDispatch) {
+        if (tapDispatch.action == Action.NONE) return
+        tapDispatch.vibrations.tryVibrateForSlide()
+        onTapDispatch(tapDispatch.action, tapDispatch.finger, tapDispatch.button)
+    }
+
+    private fun buttonKey(button: GestureButton): String {
+        return "${button.id}|${button.position}"
+    }
+
+    private fun resetCurrent() {
         calcLongPressJob?.cancel()
         calcLongPressJob = null
         isCanceled = false
@@ -410,6 +558,7 @@ class SideGestureState(
         finger = Offset.Unspecified
         longSlideFirstTriggerMs = 0L
         hasMovedBeyondSlop = false
+        isSecondTapCandidate = false
         isOhoGestureEverCanTriggered = false
         slideVibrationFlags = false
 
@@ -440,7 +589,7 @@ class SideGestureState(
         isLongSlide: Boolean,
         judgeAction: Boolean = true
     ): Boolean {
-        val gestureSettings = gestureSettings
+        val gestureSettings = activeGestureSettings
         val slideAction = button.slideActions
         val longSlideAction = button.longSlideActions
         val originX = origin.x
@@ -572,12 +721,19 @@ class SideGestureState(
             GESTURE_ANGLE_BASE - Math.toDegrees(radians.toDouble())
         }
         val angle = when (button.position) {
-            Position.Left -> gestureSettings.angles.left
-            Position.Right -> gestureSettings.angles.right
-            Position.Bottom -> gestureSettings.angles.bottom
+            Position.Left -> activeGestureSettings.angles.left
+            Position.Right -> activeGestureSettings.angles.right
+            Position.Bottom -> activeGestureSettings.angles.bottom
         }
         return angle.getTriggerDirection(degree.toFloat())
     }
+
+    private data class TapDispatch(
+        val action: Action,
+        val finger: Offset,
+        val button: GestureButton,
+        val vibrations: Vibrations
+    )
 }
 
 abstract class LongSlideState {

@@ -46,6 +46,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Center2
 import com.aaron.sidegesture.entity.TriggerDirection.Click
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Down2
+import com.aaron.sidegesture.entity.TriggerDirection.DoubleClick
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.ktx.actionTextCompose
@@ -234,6 +235,15 @@ fun GestureButtonSettingsScreen(
                                 direction = Click,
                                 isLongSlide = false,
                                 secondaryText = gestureButton.slideActions.click.actionTextCompose()
+                            )
+                            MySideGestureSettings(
+                                onClick = {
+                                    navToActionSelect(DoubleClick)
+                                },
+                                gestureButton = gestureButton,
+                                direction = DoubleClick,
+                                isLongSlide = false,
+                                secondaryText = gestureButton.slideActions.doubleClick.actionTextCompose()
                             )
                         }
 
@@ -428,6 +438,7 @@ private fun MySideGestureSettings(
             }
             Center2 -> stringResource(R.string.long_press)
             Click -> stringResource(R.string.single_tap)
+            DoubleClick -> stringResource(R.string.double_tap)
             Up2 -> when (gestureButton.position) {
                 Position.Left, Position.Right -> stringResource(id = R.string.slide_to_top)
                 Position.Bottom -> stringResource(id = R.string.slide_to_left)
@@ -447,7 +458,7 @@ private fun MySideGestureSettings(
         prefix = {
             val imageVector = when (direction) {
                 Center2 -> Icons.Default.Adjust
-                Click -> Icons.Default.TouchApp
+                Click, DoubleClick -> Icons.Default.TouchApp
                 else -> Icons.Default.ArrowForward
             }
             Icon(
@@ -476,6 +487,7 @@ private fun MySideGestureSettings(
                             }
                             Center2 -> 0f
                             Click -> 0f
+                            DoubleClick -> 0f
                             Down2 -> when (position) {
                                 Position.Left, Position.Right -> 90f
                                 Position.Bottom -> 0f

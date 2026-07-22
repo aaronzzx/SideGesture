@@ -104,8 +104,26 @@ fun GestureActions.actionsBy(direction: TriggerDirection): List<Action> {
         TriggerDirection.Center -> center
         TriggerDirection.Down -> down
         TriggerDirection.Up2 -> up2
-        TriggerDirection.Center2, TriggerDirection.Click -> emptyList()
+        TriggerDirection.Center2 -> center2
+        TriggerDirection.Click -> click
         TriggerDirection.Down2 -> down2
+        TriggerDirection.DoubleClick -> doubleClick
+    }
+}
+
+fun GestureActions.copyActionsBy(
+    direction: TriggerDirection,
+    actions: List<Action>
+): GestureActions {
+    return when (direction) {
+        TriggerDirection.Up -> copy(up = actions)
+        TriggerDirection.Center -> copy(center = actions)
+        TriggerDirection.Down -> copy(down = actions)
+        TriggerDirection.Up2 -> copy(up2 = actions)
+        TriggerDirection.Center2 -> copy(center2 = actions)
+        TriggerDirection.Down2 -> copy(down2 = actions)
+        TriggerDirection.Click -> copy(click = actions)
+        TriggerDirection.DoubleClick -> copy(doubleClick = actions)
     }
 }
 

@@ -25,6 +25,7 @@ import com.aaron.sidegesture.entity.TriggerDirection.Center2
 import com.aaron.sidegesture.entity.TriggerDirection.Click
 import com.aaron.sidegesture.entity.TriggerDirection.Down
 import com.aaron.sidegesture.entity.TriggerDirection.Down2
+import com.aaron.sidegesture.entity.TriggerDirection.DoubleClick
 import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.entity.WaveStyle
@@ -484,7 +485,7 @@ private fun getTriggerRotationOffset(
             Position.Right -> 45f
             Position.Bottom -> -45f
         }
-        Center, Center2, Click -> 0f
+        Center, Center2, Click, DoubleClick -> 0f
         Down -> when (position) {
             Position.Left -> 45f
             Position.Right -> -45f

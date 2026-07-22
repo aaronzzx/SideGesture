@@ -52,6 +52,7 @@ object GestureSettingsDefaults {
     const val LongSlideTriggerDelayMs = 100L
     const val IsCustomVibration = false
     const val IsPreciseSlideType = true
+    const val DoubleTapEnabled = false
     val Vibrations = Vibrations()
 }
 
@@ -139,6 +140,7 @@ object GestureActionsDefaults {
     val Up2 = emptyList<Action>()
     val Down2 = emptyList<Action>()
     val Click = emptyList<Action>()
+    val DoubleClick = emptyList<Action>()
     const val ActionValue = GlobalActions.NONE
     val ActionNone = Action(value = ActionValue, data = "")
 }

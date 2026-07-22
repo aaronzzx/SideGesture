@@ -26,7 +26,9 @@ import com.aaron.sidegesture.platform.freeform.RomType
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
+import com.aaron.sidegesture.ktx.copyActionsBy
 import com.aaron.sidegesture.ktx.getIcon
+import com.aaron.sidegesture.ktx.actionsBy
 import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.qualifiedNameWithIntents
 import com.aaron.sidegesture.ktx.quickLauncherActionData
@@ -677,6 +679,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             }
             TriggerDirection.Center2 -> context.getString(R.string.long_press)
             TriggerDirection.Click -> context.getString(R.string.single_tap)
+            TriggerDirection.DoubleClick -> context.getString(R.string.double_tap)
             TriggerDirection.Up2 -> when (actionSelect.position) {
                 Position.Left, Position.Right -> context.getString(R.string.slide_to_top)
                 Position.Bottom -> context.getString(R.string.slide_to_left)
@@ -686,7 +689,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                 Position.Bottom -> context.getString(R.string.slide_to_right)
             }
         }
-        if (actionSelect.direction == TriggerDirection.Center2 || actionSelect.direction == TriggerDirection.Click) {
+        if (
+            actionSelect.direction == TriggerDirection.Center2 ||
+            actionSelect.direction == TriggerDirection.Click ||
+            actionSelect.direction == TriggerDirection.DoubleClick
+        ) {
             return str1
         }
         val str2 = when (actionSelect.isLongSlide) {
@@ -729,15 +736,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                             true -> button.longSlideActions
                             else -> button.slideActions
                         }
-                        val actions = when (actionSelect.direction) {
-                            TriggerDirection.Center -> gestureActions.center
-                            TriggerDirection.Up -> gestureActions.up
-                            TriggerDirection.Down -> gestureActions.down
-                            TriggerDirection.Center2 -> gestureActions.center2
-                            TriggerDirection.Click -> gestureActions.click
-                            TriggerDirection.Up2 -> gestureActions.up2
-                            TriggerDirection.Down2 -> gestureActions.down2
-                        }
+                        val actions = gestureActions.actionsBy(actionSelect.direction)
                         updateUiState {
                             if (actionSelect.isQuickLauncher) {
                                 val pending = pendingQuickLauncherAction
@@ -887,43 +886,12 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         FileUtils.delete(shortcutInfo.iconPath)
                     }
                 }
-                val newGestureActions = when (actionSelect.direction) {
-                    TriggerDirection.Center -> {
-                        val oldActions = gestureActions.center
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(center = newActions)
-                    }
-                    TriggerDirection.Up -> {
-                        val oldActions = gestureActions.up
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(up = newActions)
-                    }
-                    TriggerDirection.Down -> {
-                        val oldActions = gestureActions.down
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(down = newActions)
-                    }
-                    TriggerDirection.Center2 -> {
-                        val oldActions = gestureActions.center2
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(center2 = newActions)
-                    }
-                    TriggerDirection.Click -> {
-                        val oldActions = gestureActions.click
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(click = newActions)
-                    }
-                    TriggerDirection.Up2 -> {
-                        val oldActions = gestureActions.up2
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(up2 = newActions)
-                    }
-                    TriggerDirection.Down2 -> {
-                        val oldActions = gestureActions.down2
-                        tryDeleteShortcutIcons(oldActions, newActions)
-                        gestureActions.copy(down2 = newActions)
-                    }
-                }
+                val oldActions = gestureActions.actionsBy(actionSelect.direction)
+                tryDeleteShortcutIcons(oldActions, newActions)
+                val newGestureActions = gestureActions.copyActionsBy(
+                    direction = actionSelect.direction,
+                    actions = newActions
+                )
                 button = if (actionSelect.isLongSlide) {
                     button.copy(longSlideActions = newGestureActions)
                 } else {

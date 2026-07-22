@@ -106,6 +106,10 @@ fun GestureSettingsScreen(
                         text = stringResource(id = R.string.precise_slide_type),
                         secondaryText = stringResource(id = R.string.precise_slide_type_hint)
                     )
+                    DoubleTapSetting(
+                        checked = uiState.doubleTapEnabled,
+                        onCheckedChange = vm::onDoubleTapEnabledChange
+                    )
                 }
                 MySection(
                     modifier = Modifier.padding(top = SectionPadding),
@@ -281,4 +285,17 @@ fun GestureSettingsScreen(
             }
         }
     }
+}
+
+@Composable
+fun DoubleTapSetting(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    MyTextSwitch(
+        onCheckedChange = onCheckedChange,
+        checked = checked,
+        text = stringResource(id = R.string.double_tap),
+        secondaryText = stringResource(id = R.string.double_tap_hint)
+    )
 }

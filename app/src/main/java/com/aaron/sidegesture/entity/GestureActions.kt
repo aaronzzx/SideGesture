@@ -9,6 +9,7 @@ import com.aaron.sidegesture.constant.GestureActionsDefaults.Center2
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Click
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Down2
+import com.aaron.sidegesture.constant.GestureActionsDefaults.DoubleClick
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up
 import com.aaron.sidegesture.constant.GestureActionsDefaults.Up2
 import kotlinx.parcelize.Parcelize
@@ -31,7 +32,8 @@ data class GestureActions(
     val center2: List<Action> = Center2,
     val up2: List<Action> = Up2,
     val down2: List<Action> = Down2,
-    val click: List<Action> = Click
+    val click: List<Action> = Click,
+    val doubleClick: List<Action> = DoubleClick
 )
 
 @Parcelize
