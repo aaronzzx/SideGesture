@@ -218,6 +218,10 @@ object ActionSettingsDefaults {
     const val MoveScreenRate = 3f
     const val MoveScreenHoverDelayMs = 600L
     const val GotoBottomStrength = 10
+    const val QuickLauncherRows = 4
+    const val QuickLauncherColumns = 4
+    const val QuickLauncherIconSizeDp = 44
+    const val QuickLauncherTextSizeSp = 11
     const val ShellCommandTimeoutMs = 10_000L
     const val ShellCommandMaxOutputLength = 4096
     val QuickToolItems = listOf(
@@ -233,5 +237,6 @@ object ActionSettingsDefaults {
         com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.LockScreen),
         com.aaron.sidegesture.entity.global.QuickToolItem(com.aaron.sidegesture.entity.global.QuickToolType.Screenshot)
     )
+    val QuickLauncher = com.aaron.sidegesture.entity.global.QuickLauncherSettings()
     val QuickTools = com.aaron.sidegesture.entity.global.QuickToolsSettings()
 }

@@ -38,6 +38,10 @@ data object QuickToolsConfig
 
 @Keep
 @Serializable
+data object QuickLauncherConfig
+
+@Keep
+@Serializable
 data object AppBlacklist
 
 @Keep

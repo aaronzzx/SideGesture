@@ -12,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.test.core.app.ActivityScenario
@@ -21,6 +22,7 @@ import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.global.QuickLauncherSettings
 import com.aaron.sidegesture.utils.JsonHelper
 import java.io.File
 import java.io.FileOutputStream
@@ -43,9 +45,9 @@ class QuickLauncherPanelTest {
         const val SWIPE_STEP_DURATION_MILLIS = 16L
         const val PAGER_SETTLE_MILLIS = 500L
         const val EMPTY_AREA_X_OFFSET = 180
-        const val EMPTY_AREA_Y_OFFSET = 60
         const val BACKGROUND_EDGE_OFFSET = 12
         const val PANEL_WIDTH_DP = 260f
+        const val COMPACT_PANEL_WIDTH_DP = 140f
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -60,10 +62,11 @@ class QuickLauncherPanelTest {
         val scenario = launchPanel(state) { action, _ -> launches += action }
         try {
             waitForPageDescription("第 1 页，共 2 页")
-            val firstItemBounds = waitForTextBounds("应用 1")
-            val fourthItemBounds = waitForTextBounds("应用 4")
-            val swipeStart = Point(fourthItemBounds.centerX(), fourthItemBounds.centerY())
-            val swipeEnd = Point(firstItemBounds.centerX(), firstItemBounds.centerY())
+            val pagerBounds = waitForNodeBounds("horizontal pager") { node ->
+                node.isScrollable
+            }
+            val swipeStart = Point(pagerBounds.right - 40, pagerBounds.centerY())
+            val swipeEnd = Point(pagerBounds.left + 40, pagerBounds.centerY())
 
             injectSwipe(
                 start = swipeStart,
@@ -128,6 +131,92 @@ class QuickLauncherPanelTest {
     }
 
     @Test
+    fun customRowsAndColumnsControlPageCapacity() {
+        val state = QuickLauncherPanelState().apply {
+            show((1..13).map(::createAppAction), Offset(120f, 320f), Position.Left)
+        }
+        val settings = QuickLauncherSettings(rows = 2, columns = 3)
+        val scenario = launchPanel(state, settings) { _, _ -> }
+        try {
+            waitForPageDescription("第 1 页，共 3 页")
+            val firstRowY = waitForTextBounds("应用 1").centerY()
+            assertEquals(firstRowY, waitForTextBounds("应用 2").centerY())
+            assertEquals(firstRowY, waitForTextBounds("应用 3").centerY())
+            assertTrue(waitForTextBounds("应用 4").centerY() > firstRowY)
+            assertFalse(hasText("应用 7"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun manyPagesKeepWindowedIndicatorInsidePanel() {
+        val state = QuickLauncherPanelState().apply {
+            show((1..20).map(::createAppAction), Offset(120f, 320f), Position.Left)
+        }
+        val settings = QuickLauncherSettings(rows = 1, columns = 2)
+        val scenario = launchPanel(state, settings) { _, _ -> }
+        try {
+            val pagerBounds = waitForNodeBounds("horizontal pager") { node ->
+                node.isScrollable
+            }
+            val expectedPanelWidth = (
+                COMPACT_PANEL_WIDTH_DP *
+                    instrumentation.targetContext.resources.displayMetrics.density
+            ).roundToInt()
+            var indicatorBounds = waitForPageDescription("第 1 页，共 10 页")
+            val swipeStart = Point(pagerBounds.right - 40, pagerBounds.centerY())
+            val swipeEnd = Point(pagerBounds.left + 40, pagerBounds.centerY())
+
+            repeat(5) { pageIndex ->
+                injectSwipe(swipeStart, swipeEnd)
+                indicatorBounds = waitForPageDescription(
+                    "第 ${pageIndex + 2} 页，共 10 页"
+                )
+            }
+
+            assertTrue(pagerBounds.width() in expectedPanelWidth - 1..expectedPanelWidth + 1)
+            assertEquals(pagerBounds.left, indicatorBounds.left)
+            assertEquals(pagerBounds.right, indicatorBounds.right)
+            captureScreenshot("quick-launcher-compact-indicator.png")
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun layoutSettingsStayFrozenUntilNextPanelSession() {
+        val items = (1..17).map(::createAppAction)
+        val state = QuickLauncherPanelState().apply {
+            show(items, Offset(120f, 320f), Position.Left)
+        }
+        val settings = mutableStateOf(QuickLauncherSettings())
+        val scenario = launchPanel(
+            state = state,
+            settingsProvider = { settings.value },
+            onLaunch = { _, _ -> }
+        )
+        try {
+            waitForPageDescription("第 1 页，共 2 页")
+
+            scenario.onActivity {
+                settings.value = QuickLauncherSettings(rows = 1, columns = 2)
+            }
+            instrumentation.waitForIdleSync()
+            assertTrue(hasContentDescription("第 1 页，共 2 页"))
+            assertFalse(hasContentDescription("第 1 页，共 9 页"))
+
+            scenario.onActivity {
+                state.hide()
+                state.show(items, Offset(120f, 320f), Position.Left)
+            }
+            waitForPageDescription("第 1 页，共 9 页")
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
     fun itemTapAndLongPressKeepExistingMiniWindowRule() {
         val action = createAppAction(index = 1, miniWindow = false)
         val launches = CopyOnWriteArrayList<Pair<Action, Boolean>>()
@@ -171,7 +260,7 @@ class QuickLauncherPanelTest {
             injectTap(
                 Point(
                     itemBounds.centerX() + EMPTY_AREA_X_OFFSET,
-                    itemBounds.centerY() + EMPTY_AREA_Y_OFFSET
+                    itemBounds.centerY()
                 )
             )
             scenario.onActivity { assertTrue(state.visible) }
@@ -231,6 +320,8 @@ class QuickLauncherPanelTest {
 
     private fun launchPanel(
         state: QuickLauncherPanelState,
+        settings: QuickLauncherSettings = QuickLauncherSettings(),
+        settingsProvider: () -> QuickLauncherSettings = { settings },
         onLaunch: (Action, Boolean) -> Unit
     ): ActivityScenario<ComponentActivity> {
         instrumentation.uiAutomation.executeShellCommand("cmd statusbar collapse").close()
@@ -240,6 +331,7 @@ class QuickLauncherPanelTest {
                 MaterialTheme {
                     QuickLauncherPanel(
                         state = state,
+                        settings = settingsProvider(),
                         onLaunch = onLaunch,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -347,6 +439,13 @@ class QuickLauncherPanelTest {
             findNode(root) { node ->
                 node.contentDescription?.toString() == value
             } != null
+        }
+    }
+
+    private fun hasText(value: String): Boolean {
+        instrumentation.waitForIdleSync()
+        return accessibilityRoots().any { root ->
+            findNode(root) { node -> node.text?.toString() == value } != null
         }
     }
 

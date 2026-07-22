@@ -46,6 +46,7 @@ import com.aaron.sidegesture.entity.GestureSettings
 import com.aaron.sidegesture.entity.Home
 import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.MiniWindowSettings
+import com.aaron.sidegesture.entity.QuickLauncherConfig
 import com.aaron.sidegesture.entity.QuickToolsConfig
 import com.aaron.sidegesture.entity.SectorActionPanelStyle
 import com.aaron.sidegesture.entity.Unlock
@@ -69,6 +70,7 @@ import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsScreen
 import com.aaron.sidegesture.ui.screen.home.HomeScreen
 import com.aaron.sidegesture.ui.screen.iconresize.IconResizeScreen
 import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsScreen
+import com.aaron.sidegesture.ui.screen.quicklauncher.QuickLauncherSettingsScreen
 import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
@@ -159,6 +161,9 @@ fun SideGestureApp() {
                 myComposable<QuickToolsConfig> {
                     QuickToolsSettingsScreen(onBack = { navController.navigateUp() })
                 }
+                myComposable<QuickLauncherConfig> {
+                    QuickLauncherSettingsScreen(onBack = { navController.navigateUp() })
+                }
                 myComposable<ActionPanelStyleSelect> {
                     ActionPanelStyleSelectScreen(
                         onBack = { navController.navigateUp() },
@@ -209,7 +214,10 @@ fun SideGestureApp() {
                         onBack = { navController.navigateUp() },
                         onNavToIconResize = { navController.navigate(it) },
                         onNavToQuickTools = { navController.navigate(QuickToolsConfig) },
-                        onNavToQuickLauncher = { navController.navigate(it) }
+                        onNavToQuickLauncher = { navController.navigate(it) },
+                        onNavToQuickLauncherSettings = {
+                            navController.navigate(QuickLauncherConfig)
+                        }
                     )
                 }
                 myComposable<IconResize> {

@@ -4,6 +4,7 @@ import androidx.annotation.Keep
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.GotoBottomStrength
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenHoverDelayMs
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.MoveScreenRate
+import com.aaron.sidegesture.constant.ActionSettingsDefaults.QuickLauncher
 import com.aaron.sidegesture.constant.ActionSettingsDefaults.QuickTools
 import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.serialization.Serializable
@@ -18,6 +19,7 @@ data class ActionSettings(
     val moveScreen: MoveScreen = MoveScreen(),
     val previousApp: PreviousApp = PreviousApp(),
     val gotoBottom: GotoBottom = GotoBottom(),
+    val quickLauncher: QuickLauncherSettings = QuickLauncher,
     val quickTools: QuickToolsSettings = QuickTools,
     val miniWindow: MiniWindow = MiniWindow()
 ) {

@@ -159,6 +159,7 @@ fun ActionSelectScreen(
     onNavToIconResize: (IconResize) -> Unit,
     onNavToQuickTools: () -> Unit,
     onNavToQuickLauncher: (ActionSelect) -> Unit = {},
+    onNavToQuickLauncherSettings: () -> Unit = {},
     vm: ActionSelectVM = viewModel()
 ) {
     UDFComponent(
@@ -341,16 +342,18 @@ fun ActionSelectScreen(
                                 onSelect = { action, selected ->
                                     vm.select(action, selected)
                                 },
+                                onQuickLauncherItemsClick = {
+                                    onNavToQuickLauncher(vm.getQuickLauncherRoute())
+                                },
                                 onSettingsClick = { action ->
-                                    when (action.value) {
-                                        GlobalActions.QUICK_TOOLS -> onNavToQuickTools()
-                                        GlobalActions.QUICK_LAUNCHER -> {
-                                            onNavToQuickLauncher(vm.getQuickLauncherRoute())
-                                        }
-                                        GlobalActions.SHIZUKU_SHELL -> {
+                                    when (resolveActionSelectSettingsTarget(action.value)) {
+                                        ActionSelectSettingsTarget.QuickTools -> onNavToQuickTools()
+                                        ActionSelectSettingsTarget.QuickLauncher ->
+                                            onNavToQuickLauncherSettings()
+                                        ActionSelectSettingsTarget.Shell -> {
                                             vm.shellActionDialog.show(true, action)
                                         }
-                                        else -> {
+                                        ActionSelectSettingsTarget.Generic -> {
                                             vm.actionSettingsDialog.show(true, action)
                                         }
                                     }
@@ -495,6 +498,7 @@ fun ActionSelectScreen(
 @Composable
 private fun ActionPage(
     onSettingsClick: (Action) -> Unit,
+    onQuickLauncherItemsClick: (Action) -> Unit,
     onSelect: (Action, Boolean) -> Unit,
     actions: List<Action>,
     selectedRecord: SelectedRecord,
@@ -517,17 +521,22 @@ private fun ActionPage(
                 selectSingle = selectSingle,
                 enabled = canActionEnabled(selectedRecord, item, maxSelectCount),
                 onSelect = { selected ->
-                    val isShellAction = item.value == GlobalActions.SHIZUKU_SHELL
                     val isSelected = selectedRecord.isSelected(item)
-                    when {
-                        item.value == GlobalActions.QUICK_LAUNCHER -> onSettingsClick(item)
-                        isShellAction && (selectSingle || !isSelected) -> onSettingsClick(item)
-                        else -> onSelect(item, selected)
+                    when (resolveActionSelectPrimaryTarget(
+                        actionValue = item.value,
+                        selectSingle = selectSingle,
+                        isSelected = isSelected
+                    )) {
+                        ActionSelectPrimaryTarget.QuickLauncherItems ->
+                            onQuickLauncherItemsClick(item)
+                        ActionSelectPrimaryTarget.Settings -> onSettingsClick(item)
+                        ActionSelectPrimaryTarget.Selection -> onSelect(item, selected)
                     }
                 },
                 showSettings = item.value == GlobalActions.MOVE_SCREEN ||
                     item.value == GlobalActions.PREVIOUS_APP ||
                     item.value == GlobalActions.GOTO_BOTTOM ||
+                    item.value == GlobalActions.QUICK_LAUNCHER ||
                     item.value == GlobalActions.SHIZUKU_SHELL,
                 onSettingsClick = {
                     onSettingsClick(item)
@@ -621,7 +630,7 @@ private fun ActionItem(
                     Icon(
                         modifier = Modifier.size(20.dp),
                         imageVector = Icons.Default.Settings,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.settings),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

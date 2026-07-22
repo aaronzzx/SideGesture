@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -64,6 +65,7 @@ import coil.imageLoader
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.Position
+import com.aaron.sidegesture.entity.global.QuickLauncherSettings
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.getIcon
@@ -71,32 +73,30 @@ import com.aaron.sidegesture.ktx.shortcutInfo
 import com.aaron.sidegesture.utils.VibrateUtils
 import kotlin.math.roundToInt
 
-private const val GRID_COLUMNS = 4
-private val ITEM_ICON_SIZE = 44.dp
+private val ITEM_HORIZONTAL_PADDING = 6.dp
 private val ITEM_VERTICAL_PADDING = 4.dp
 private val ITEM_LABEL_TOP_PADDING = 4.dp
-private val ITEM_LABEL_LINE_HEIGHT = 14.sp
 private val GRID_HORIZONTAL_SPACING = 4.dp
 private val GRID_VERTICAL_SPACING = 8.dp
 private val PANEL_CORNER_RADIUS = 20.dp
 private val PANEL_PADDING = 12.dp
-private val PANEL_WIDTH = 260.dp
-private val PANEL_MIN_HEIGHT = 200.dp
-private val PANEL_MAX_HEIGHT = 360.dp
 private val EDGE_PADDING = 16.dp
 private val PAGE_INDICATOR_SIZE = 8.dp
 private val PAGE_INDICATOR_SPACING = 8.dp
+private const val MAX_PAGE_INDICATOR_DOTS = 7
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun QuickLauncherPanel(
     state: QuickLauncherPanelState,
+    settings: QuickLauncherSettings,
     onLaunch: (Action, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
+    val currentSettings = remember(settings) { settings.normalized() }
 
     AnimatedVisibility(
         modifier = modifier.fillMaxSize(),
@@ -122,27 +122,42 @@ fun QuickLauncherPanel(
             val safeTop = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getTop(density) }
             val safeRight = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getRight(density, layoutDirection) }
             val safeBottom = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getBottom(density) }
-            val panelWidthPx = with(density) { PANEL_WIDTH.toPx() }
+            val containerWidthPx = with(density) { maxWidth.toPx() }
             val containerHeightPx = with(density) { maxHeight.toPx() }
+            val availableWidth = containerWidthPx - safeLeft - safeRight
             val availableHeight = containerHeightPx - safeTop - safeBottom
+            val sessionSettings = remember(state.sessionId) { currentSettings }
+            val horizontalLayout = remember(state.sessionId) {
+                calculateQuickLauncherHorizontalLayout(
+                    columns = sessionSettings.columns,
+                    requestedIconSize = with(density) { sessionSettings.iconSizeDp.dp.toPx() },
+                    availableWidth = availableWidth,
+                    itemHorizontalPadding = with(density) { ITEM_HORIZONTAL_PADDING.toPx() },
+                    itemSpacing = with(density) { GRID_HORIZONTAL_SPACING.toPx() },
+                    contentPadding = with(density) { PANEL_PADDING.toPx() }
+                )
+            }
+            val panelWidthPx = horizontalLayout.panelWidth
+            val textSize = sessionSettings.textSizeSp.sp
+            val labelLineHeight = (sessionSettings.textSizeSp + 3).sp
             val itemHeightPx = with(density) {
-                ITEM_ICON_SIZE.toPx() +
+                horizontalLayout.iconSize +
                     ITEM_VERTICAL_PADDING.toPx() * 2f +
                     ITEM_LABEL_TOP_PADDING.toPx() +
-                    ITEM_LABEL_LINE_HEIGHT.toPx()
+                    labelLineHeight.toPx()
             }
             val pageLayout = remember(state.sessionId) {
                 calculateQuickLauncherPageLayout(
                     itemCount = state.items.size,
                     availableHeight = availableHeight,
-                    minPanelHeight = with(density) { PANEL_MIN_HEIGHT.toPx() },
-                    maxPanelHeight = with(density) { PANEL_MAX_HEIGHT.toPx() },
+                    maxPanelHeight = availableHeight,
                     itemHeight = itemHeightPx,
                     rowSpacing = with(density) { GRID_VERTICAL_SPACING.toPx() },
                     contentPadding = with(density) { PANEL_PADDING.toPx() },
                     indicatorHeight = with(density) { PAGE_INDICATOR_SIZE.toPx() },
                     indicatorSpacing = with(density) { PAGE_INDICATOR_SPACING.toPx() },
-                    columns = GRID_COLUMNS
+                    columns = sessionSettings.columns,
+                    maxRows = sessionSettings.rows
                 )
             }
             val pages = remember(state.sessionId, pageLayout.itemsPerPage) {
@@ -152,16 +167,18 @@ fun QuickLauncherPanel(
                 PagerState(currentPage = 0) { pages.size }
             }
             val itemHeight = with(density) { itemHeightPx.toDp() }
+            val iconSize = with(density) { horizontalLayout.iconSize.toDp() }
+            val panelWidth = with(density) { panelWidthPx.toDp() }
             val panelHeight = with(density) { pageLayout.panelHeight.toDp() }
 
             val panelOffset = remember(
                 maxWidth, maxHeight,
                 state.fingerAnchor, state.triggerEdge,
                 safeLeft, safeTop, safeRight, safeBottom,
-                pageLayout.panelHeight
+                panelWidthPx, pageLayout.panelHeight
             ) {
                 computeQuickLauncherOffset(
-                    containerWidth = with(density) { maxWidth.toPx() },
+                    containerWidth = containerWidthPx,
                     containerHeight = containerHeightPx,
                     panelWidth = panelWidthPx,
                     panelHeight = pageLayout.panelHeight,
@@ -177,7 +194,7 @@ fun QuickLauncherPanel(
             Surface(
                 modifier = Modifier
                     .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
-                    .width(PANEL_WIDTH)
+                    .width(panelWidth)
                     .height(panelHeight)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -201,7 +218,7 @@ fun QuickLauncherPanel(
                     ) { page ->
                         LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
-                            columns = GridCells.Fixed(GRID_COLUMNS),
+                            columns = GridCells.Fixed(sessionSettings.columns),
                             contentPadding = PaddingValues(horizontal = PANEL_PADDING),
                             horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING),
                             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
@@ -216,6 +233,9 @@ fun QuickLauncherPanel(
                                 QuickLauncherItem(
                                     action = action,
                                     itemHeight = itemHeight,
+                                    iconSize = iconSize,
+                                    textSize = textSize,
+                                    lineHeight = labelLineHeight,
                                     onClick = {
                                         val appInfo = action.appInfo
                                         val shortcutInfo = action.shortcutInfo
@@ -254,6 +274,9 @@ fun QuickLauncherPanel(
 private fun QuickLauncherItem(
     action: Action,
     itemHeight: Dp,
+    iconSize: Dp,
+    textSize: TextUnit,
+    lineHeight: TextUnit,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -285,7 +308,7 @@ private fun QuickLauncherItem(
                 contentDescription = label,
                 imageLoader = context.imageLoader,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(ITEM_ICON_SIZE)
+                modifier = Modifier.size(iconSize)
             )
             if (hasMiniWindow) {
                 Icon(
@@ -298,8 +321,8 @@ private fun QuickLauncherItem(
         }
         Text(
             text = label,
-            fontSize = 11.sp,
-            lineHeight = ITEM_LABEL_LINE_HEIGHT,
+            fontSize = textSize,
+            lineHeight = lineHeight,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -333,7 +356,13 @@ private fun QuickLauncherPageIndicator(
         ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(pageCount) { page ->
+        val visibleDotCount = pageCount.coerceAtMost(MAX_PAGE_INDICATOR_DOTS)
+        val firstVisiblePage = (currentPage - visibleDotCount / 2).coerceIn(
+            minimumValue = 0,
+            maximumValue = (pageCount - visibleDotCount).coerceAtLeast(0)
+        )
+        repeat(visibleDotCount) { index ->
+            val page = firstVisiblePage + index
             Box(
                 modifier = Modifier
                     .size(if (page == currentPage) PAGE_INDICATOR_SIZE else 6.dp)

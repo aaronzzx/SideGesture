@@ -103,7 +103,7 @@ class SideGestureService : ComponentAccessibilityService() {
             ShellActionHandler(this),
             HideGestureButtonActionHandler(gestureWindowManager),
             TaskSwitcherActionHandler(this, serviceScope),
-            QuickLauncherActionHandler(),
+            QuickLauncherActionHandler(settingsStore),
             QuickToolsActionHandler(this, settingsStore),
             SmartScreenshotActionHandler(
                 this,

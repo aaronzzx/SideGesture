@@ -3,6 +3,7 @@ package com.aaron.sidegesture.ktx
 import androidx.datastore.core.CorruptionException
 import com.aaron.sidegesture.defaults.MoveScreenStyleMigration
 import com.aaron.sidegesture.entity.global.ActionSettings
+import com.aaron.sidegesture.entity.global.QuickLauncherSettings
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -33,6 +34,31 @@ class DataStoreSerializerTest {
 
         assertEquals(ActionSettings.MoveScreen.Style.Crosshair, value.moveScreen.style)
         assertTrue(value.moveScreen.popupEnabled)
+    }
+
+    @Test
+    fun readFromAppliesQuickLauncherDefaultsToOldActionSettingsJson() = runBlocking {
+        val serializer = createActionSettingsSerializer()
+        val oldJson = """
+            {
+              "moveScreen": {
+                "rate": 1.5,
+                "hoverDelayMs": 500,
+                "radius": 24
+              },
+              "gotoBottom": {
+                "strength": 8
+              }
+            }
+        """.trimIndent()
+
+        val value = serializer.readFrom(oldJson.byteInputStream())
+
+        assertEquals(QuickLauncherSettings(), value.quickLauncher)
+        assertEquals(4, value.quickLauncher.rows)
+        assertEquals(4, value.quickLauncher.columns)
+        assertEquals(44, value.quickLauncher.iconSizeDp)
+        assertEquals(11, value.quickLauncher.textSizeSp)
     }
 
     @Test

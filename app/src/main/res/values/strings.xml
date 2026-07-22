@@ -415,6 +415,10 @@
     <string name="refresh">刷新</string>
     <string name="quick_tools_settings">快速工具</string>
     <string name="quick_tools_settings_hint">排序、隐藏和重置控制中心项目</string>
+    <string name="quick_launcher_settings">快速启动器设置</string>
+    <string name="quick_launcher_appearance">外观</string>
+    <string name="text_size">文字大小</string>
+    <string name="settings">设置</string>
     <string name="quick_tools_reset_default">恢复默认</string>
     <string name="quick_tools_reset_default_hint">恢复默认显示和排序</string>
     <string name="quick_tools_reorder_hint">长按拖拽排序，关闭开关隐藏项目</string>

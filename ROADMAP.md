@@ -4,7 +4,7 @@
 
 当前处于下一轮功能更新的实施阶段。11 项需求已按复杂度拆成四批，其中需求 7、8 共用亮度状态与系统适配链，合并为一份 SPEC。
 
-需求 10、1、4、3、7、8、9、11 已完成实现与对应验证。需求 11 已覆盖稳定分页容量、会话重开归零、正反向边界、点击／长按冲突和三边锚点。
+需求 10、1、4、3、7、8、9、11 已完成实现与对应验证。需求 11 已覆盖可配置行列与图标／文字尺寸、浮层宽高自适应、稳定分页容量、会话重开归零、正反向边界、点击／长按冲突和三边锚点。
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
@@ -26,6 +26,7 @@
 - [x] 2026-07-22：完成需求 11，将快速启动器改为 4 列横向整页分页，按可用高度和字体缩放冻结会话容量，多页显示圆点指示器；点击、长按小窗、背景关闭、重开归零及 Left／Right／Bottom 锚点保持兼容。
 - [x] 2026-07-22：补充自动化测试范围规范，默认定向验证，明确历史测试不重复执行、全量回归触发条件及互斥设备前置条件的分组与恢复要求。
 - [x] 2026-07-23：修复快速启动器横滑图标在浮层内侧提前被裁剪的问题，使 Pager 铺满浮层并由页内网格保留静止布局留白。
+- [x] 2026-07-23：新增快速启动器全局配置页，可分别调整每页行数、每行列数、图标大小和文字大小；ActionSelect 整行保留项目编辑入口，独立设置按钮进入外观配置；浮层宽高按配置与屏幕安全空间自适应。
 
 ## 进行中
 
@@ -61,7 +62,6 @@
 
 ## 最近验证
 
-- 2026-07-19：需求 4 全量 `:app:testDebugUnitTest` 通过，共 14 个测试套件、49 项测试；`assembleDebug`、`assembleDebugAndroidTest`、`git diff --check` 通过；`Nexus_5_API_35` 上 `connectedDebugAndroidTest` 9 项测试全部通过。
 - 2026-07-19：需求 4 在 Android 15／API 35 模拟器完成运行时验证：设置项可见且可保存；输入法弹出时 Left、Right、Bottom 窗口均不可见、无 Surface 且不可触摸，收起后按原状态恢复；主进程、`:service` 进程和 crash buffer 均无致命日志。
 - 2026-07-19：需求 3 全量 `:app:testDebugUnitTest` 通过，共 15 个测试套件、58 项测试，失败、错误和跳过均为 0；`assembleDebug`、`assembleDebugAndroidTest` 与准星 Compose 定向仪器测试通过，crash buffer 为空。
 - 2026-07-19：需求 3 在 `Nexus_5_API_35` 完成真实悬浮窗验证：历史 Magnifier 磁盘值被 DataStore migration 改写为 Crosshair，设置页无样式入口；竖屏 Left／Right 与横屏 Bottom 均可拖出后在新锚点再次悬停，Tall cutout 左侧 inset 为 144px，全程仅显示准星且无崩溃。
@@ -71,3 +71,4 @@
 - 2026-07-22：需求 11 全量 JVM 测试 19 个套件、82 项全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 17／API 37 `Medium_Phone` 模拟器以 `UiAutomation` 直接注入触摸完成 4 项设备测试，覆盖正向／反向／连续翻页、末页边界、横滑不误启动、点击／长按、背景关闭、重开归零和 Left／Right／Bottom 锚点，真实密度截图布局正常，crash buffer 为空。
 - 2026-07-22：`AGENTS.md` 已明确自动化测试默认按改动目标定向执行，历史用例不自动重复，全量回归仅由明确条件触发；互斥权限测试须分组并恢复设备状态。
 - 2026-07-23：快速启动器裁剪边界修复通过 `QuickLauncherPagingTest` 定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的 `QuickLauncherPanelTest` 5 项全部通过，新增断言确认 Pager 与 260dp 浮层同宽且静止页保留左右留白，横滑中间帧确认图标只在浮层真实边界处裁剪，crash buffer 为空。
+- 2026-07-23：快速启动器配置与自适应浮层通过 22 项定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的浮层 8 项、设置页 1 项设备测试全部通过，覆盖紧凑尺寸收缩、自定义行列容量、宽度扩展与安全夹取、会话冻结、10 页窗口化指示器、配置保存及旧数据默认值。真实 ActionSelect UI 树确认整行与设置按钮正确分流，截图布局正常，crash buffer 为空。
