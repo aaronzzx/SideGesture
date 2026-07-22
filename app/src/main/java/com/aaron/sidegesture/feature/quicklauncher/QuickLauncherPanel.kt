@@ -12,19 +12,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrandingWatermark
@@ -33,26 +37,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.actionText
@@ -64,12 +72,19 @@ import kotlin.math.roundToInt
 
 private const val GRID_COLUMNS = 4
 private val ITEM_ICON_SIZE = 44.dp
+private val ITEM_VERTICAL_PADDING = 4.dp
+private val ITEM_LABEL_TOP_PADDING = 4.dp
+private val ITEM_LABEL_LINE_HEIGHT = 14.sp
+private val GRID_HORIZONTAL_SPACING = 4.dp
+private val GRID_VERTICAL_SPACING = 8.dp
 private val PANEL_CORNER_RADIUS = 20.dp
 private val PANEL_PADDING = 12.dp
 private val PANEL_WIDTH = 260.dp
 private val PANEL_MIN_HEIGHT = 200.dp
 private val PANEL_MAX_HEIGHT = 360.dp
 private val EDGE_PADDING = 16.dp
+private val PAGE_INDICATOR_SIZE = 8.dp
+private val PAGE_INDICATOR_SPACING = 8.dp
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -108,34 +123,47 @@ fun QuickLauncherPanel(
             val safeBottom = with(density) { EDGE_PADDING.toPx() + cutoutInsets.getBottom(density) }
             val panelWidthPx = with(density) { PANEL_WIDTH.toPx() }
             val containerHeightPx = with(density) { maxHeight.toPx() }
-            val measuredPanelHeightPx = remember { mutableFloatStateOf(0f) }
             val availableHeight = containerHeightPx - safeTop - safeBottom
-            val panelMaxHeightPx = with(density) {
-                PANEL_MAX_HEIGHT.toPx().coerceAtMost(availableHeight)
+            val itemHeightPx = with(density) {
+                ITEM_ICON_SIZE.toPx() +
+                    ITEM_VERTICAL_PADDING.toPx() * 2f +
+                    ITEM_LABEL_TOP_PADDING.toPx() +
+                    ITEM_LABEL_LINE_HEIGHT.toPx()
             }
-            val clampedMaxHeight = with(density) { panelMaxHeightPx.toDp() }
-            val estimatedPanelHeight = with(density) {
-                val rows = ((state.items.size + GRID_COLUMNS - 1) / GRID_COLUMNS).coerceAtLeast(1)
-                val rowHeight = ITEM_ICON_SIZE.toPx() + 8.dp.toPx() + 14.sp.toPx() + 4.dp.toPx()
-                val spacing = 8.dp.toPx()
-                val content = rows * rowHeight + (rows - 1) * spacing + PANEL_PADDING.toPx() * 2
-                content.coerceIn(PANEL_MIN_HEIGHT.toPx(), panelMaxHeightPx)
+            val pageLayout = remember(state.sessionId) {
+                calculateQuickLauncherPageLayout(
+                    itemCount = state.items.size,
+                    availableHeight = availableHeight,
+                    minPanelHeight = with(density) { PANEL_MIN_HEIGHT.toPx() },
+                    maxPanelHeight = with(density) { PANEL_MAX_HEIGHT.toPx() },
+                    itemHeight = itemHeightPx,
+                    rowSpacing = with(density) { GRID_VERTICAL_SPACING.toPx() },
+                    contentPadding = with(density) { PANEL_PADDING.toPx() },
+                    indicatorHeight = with(density) { PAGE_INDICATOR_SIZE.toPx() },
+                    indicatorSpacing = with(density) { PAGE_INDICATOR_SPACING.toPx() },
+                    columns = GRID_COLUMNS
+                )
             }
-            val panelHeightForOffset = measuredPanelHeightPx.floatValue
-                .takeIf { it > 0f }
-                ?: estimatedPanelHeight
+            val pages = remember(state.sessionId, pageLayout.itemsPerPage) {
+                buildQuickLauncherPages(state.items, pageLayout.itemsPerPage)
+            }
+            val pagerState = remember(state.sessionId) {
+                PagerState(currentPage = 0) { pages.size }
+            }
+            val itemHeight = with(density) { itemHeightPx.toDp() }
+            val panelHeight = with(density) { pageLayout.panelHeight.toDp() }
 
             val panelOffset = remember(
                 maxWidth, maxHeight,
                 state.fingerAnchor, state.triggerEdge,
                 safeLeft, safeTop, safeRight, safeBottom,
-                state.items.size, panelHeightForOffset
+                pageLayout.panelHeight
             ) {
                 computeQuickLauncherOffset(
                     containerWidth = with(density) { maxWidth.toPx() },
                     containerHeight = containerHeightPx,
                     panelWidth = panelWidthPx,
-                    panelHeight = panelHeightForOffset,
+                    panelHeight = pageLayout.panelHeight,
                     fingerAnchor = state.fingerAnchor,
                     triggerEdge = state.triggerEdge,
                     safeLeft = safeLeft,
@@ -149,10 +177,7 @@ fun QuickLauncherPanel(
                 modifier = Modifier
                     .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
                     .width(PANEL_WIDTH)
-                    .heightIn(min = PANEL_MIN_HEIGHT, max = clampedMaxHeight)
-                    .onGloballyPositioned { coordinates ->
-                        measuredPanelHeightPx.floatValue = coordinates.size.height.toFloat()
-                    }
+                    .height(panelHeight)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -162,35 +187,59 @@ fun QuickLauncherPanel(
                 tonalElevation = 3.dp,
                 shadowElevation = if (isDarkTheme) 8.dp else 12.dp
             ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(GRID_COLUMNS),
-                    contentPadding = PaddingValues(PANEL_PADDING),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(PANEL_PADDING)
                 ) {
-                    items(
-                        items = state.items,
-                        key = { it.data }
-                    ) { action ->
-                        QuickLauncherItem(
-                            action = action,
-                            onClick = {
-                                val appInfo = action.appInfo
-                                val shortcutInfo = action.shortcutInfo
-                                val hasMiniWindow = appInfo?.miniWindow
-                                    ?: shortcutInfo?.miniWindow ?: false
-                                onLaunch(action, hasMiniWindow)
-                                state.hide()
-                            },
-                            onLongClick = {
-                                VibrateUtils.vibrate(context)
-                                val appInfo = action.appInfo
-                                val shortcutInfo = action.shortcutInfo
-                                val hasMiniWindow = appInfo?.miniWindow
-                                    ?: shortcutInfo?.miniWindow ?: false
-                                onLaunch(action, !hasMiniWindow)
-                                state.hide()
+                    HorizontalPager(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        state = pagerState
+                    ) { page ->
+                        LazyVerticalGrid(
+                            modifier = Modifier.fillMaxSize(),
+                            columns = GridCells.Fixed(GRID_COLUMNS),
+                            horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING),
+                            verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
+                            userScrollEnabled = false
+                        ) {
+                            itemsIndexed(
+                                items = pages[page],
+                                key = { index, action ->
+                                    "${action.value}:${action.data}:$index"
+                                }
+                            ) { _, action ->
+                                QuickLauncherItem(
+                                    action = action,
+                                    itemHeight = itemHeight,
+                                    onClick = {
+                                        val appInfo = action.appInfo
+                                        val shortcutInfo = action.shortcutInfo
+                                        val hasMiniWindow = appInfo?.miniWindow
+                                            ?: shortcutInfo?.miniWindow ?: false
+                                        onLaunch(action, hasMiniWindow)
+                                        state.hide()
+                                    },
+                                    onLongClick = {
+                                        VibrateUtils.vibrate(context)
+                                        val appInfo = action.appInfo
+                                        val shortcutInfo = action.shortcutInfo
+                                        val hasMiniWindow = appInfo?.miniWindow
+                                            ?: shortcutInfo?.miniWindow ?: false
+                                        onLaunch(action, !hasMiniWindow)
+                                        state.hide()
+                                    }
+                                )
                             }
+                        }
+                    }
+                    if (pageLayout.showPageIndicator) {
+                        Spacer(modifier = Modifier.height(PAGE_INDICATOR_SPACING))
+                        QuickLauncherPageIndicator(
+                            currentPage = pagerState.currentPage,
+                            pageCount = pages.size
                         )
                     }
                 }
@@ -202,6 +251,7 @@ fun QuickLauncherPanel(
 @Composable
 private fun QuickLauncherItem(
     action: Action,
+    itemHeight: Dp,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -213,13 +263,14 @@ private fun QuickLauncherItem(
 
     Column(
         modifier = Modifier
-            .pointerInput(Unit) {
+            .height(itemHeight)
+            .pointerInput(action) {
                 detectTapGestures(
                     onTap = { onClick() },
                     onLongPress = { onLongClick() }
                 )
             }
-            .padding(vertical = 4.dp),
+            .padding(vertical = ITEM_VERTICAL_PADDING),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
@@ -246,13 +297,54 @@ private fun QuickLauncherItem(
         Text(
             text = label,
             fontSize = 11.sp,
+            lineHeight = ITEM_LABEL_LINE_HEIGHT,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp)
+                .padding(top = ITEM_LABEL_TOP_PADDING)
         )
+    }
+}
+
+@Composable
+private fun QuickLauncherPageIndicator(
+    currentPage: Int,
+    pageCount: Int
+) {
+    val pageDescription = stringResource(
+        R.string.quick_launcher_page_description,
+        currentPage + 1,
+        pageCount
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(PAGE_INDICATOR_SIZE)
+            .clearAndSetSemantics {
+                contentDescription = pageDescription
+            },
+        horizontalArrangement = Arrangement.spacedBy(
+            space = PAGE_INDICATOR_SPACING,
+            alignment = Alignment.CenterHorizontally
+        ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(pageCount) { page ->
+            Box(
+                modifier = Modifier
+                    .size(if (page == currentPage) PAGE_INDICATOR_SIZE else 6.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (page == currentPage) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                        }
+                    )
+            )
+        }
     }
 }
 

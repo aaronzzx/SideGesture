@@ -2,7 +2,7 @@
 
 ## 状态
 
-草案，待交互实现与真机验证。当前为纵向网格滚动，尚未实现横向分页。
+已完成。2026-07-22 已实现横向整页分页、会话级页码、页指示器与三边锚点兼容，并通过自动化和 Android 17／API 37 模拟器交互验证。
 
 ## 复杂度
 
@@ -10,11 +10,11 @@
 
 ## 问题与目标
 
-当前快速启动器使用 4 列 `LazyVerticalGrid`，项目数量增加后依赖纵向滚动。纵向滚动与从边缘触发的面板空间、长按小窗操作和可见高度之间耦合，用户难以确认还有多少项目。
+改造前的快速启动器使用 4 列 `LazyVerticalGrid`，项目数量增加后依赖纵向滚动。纵向滚动与从边缘触发的面板空间、长按小窗操作和可见高度之间耦合，用户难以确认还有多少项目。
 
 目标是改为离散的横向分页：每页内部保持 4 列网格，根据打开时可用高度计算稳定行数和容量；多页时显示轻量页指示器；保持排序、点击启动、长按小窗、背景 dismiss 和 Left／Right／Bottom 锚点行为。明确不做 `LazyRow` 连续横向滚动。
 
-## 当前行为与证据
+## 改造前行为与证据
 
 - [QuickLauncherPanel.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicklauncher/QuickLauncherPanel.kt) 定义 `GRID_COLUMNS = 4`，根据所有项目行数估算面板高度，并在面板内使用 `LazyVerticalGrid`；相关代码在 65-72、111-123、148-196 行。
 - 同文件背景层点击会调用 `state.hide()`，项目点击和长按分别通过 `onLaunch(action, hasMiniWindow)` 与 `onLaunch(action, !hasMiniWindow)` 后隐藏面板；相关代码在 91-100、165-194 行。
@@ -46,11 +46,12 @@
 
 ## 技术方案
 
-1. 在 `QuickLauncherPanel` 的测量阶段使用安全区和面板上下限计算可用内容高度，按固定项目高度、行间距和内边距求稳定行数；容量至少为一页，项目分组只在 `state.show()` 或面板进入可见时生成一次。
-2. 以分页后的 `List<List<Action>>` 驱动 `HorizontalPager`，每个 page 内部使用 `LazyVerticalGrid(columns = GridCells.Fixed(4))`。使用 Action 数据作为稳定 key，避免翻页时项目状态错位。
-3. 页状态与面板状态分离：面板打开时页索引初始化为 0；项目点击、长按、背景 dismiss 或服务销毁时释放 pager 状态。页数变化仅在下一次打开时生效。
-4. 保持 `computeQuickLauncherOffset()` 的输入输出不变，分页面板的实际高度先测量再参与 Left／Right／Bottom 偏移计算；安全区和 display cutout 仍由现有逻辑统一处理。
-5. 明确手势优先级：HorizontalPager 只消费面板内部的横向滑动，项目项的点击／长按使用现有 pointer 处理；验证短横移、长按、快速横移和从边缘进入时不会误启动或误 dismiss。
+1. 新增 `QuickLauncherPaging.kt` 纯计算层，按安全区、面板上下限、固定项目高度、行间距、内边距和指示器空间计算稳定行数、每页容量与面板高度。
+2. `QuickLauncherPanelState.show()` 复制当前 Action 列表并递增会话编号；分页快照、布局结果和 `PagerState` 均以该会话为边界，打开期间不随重组漂移。
+3. 以分页后的 `List<List<Action>>` 驱动 `HorizontalPager`，每页内部使用禁止纵向滚动的 4 列 `LazyVerticalGrid`；项目 key 由 Action 数据与页内索引共同组成。
+4. 页码使用非 `rememberSaveable` 的会话级 `PagerState`，每次打开明确从第 0 页开始，避免 Activity 或 Compose 保存状态恢复旧页码。
+5. 保持 `computeQuickLauncherOffset()` 的输入输出不变，预先算出的稳定面板高度直接参与 Left／Right／Bottom 偏移；安全区和 display cutout 继续走原逻辑。
+6. 多页使用 8dp 圆点指示器，当前页使用主题主色；单页完全隐藏，并提供“第 N 页，共 M 页”无障碍描述。
 
 ## 状态／数据与兼容性
 
@@ -69,14 +70,16 @@
 - 项目为空、恰好一页、跨多页、最后一页不足 4 列、字体缩放、横竖屏和服务销毁均无崩溃或布局越界。
 - 真机验证快速横滑、反向滑动、连续翻页、长按与边缘手势并发，不出现重复启动、误关闭或页指示器卡顿。
 
-## 风险与待确认
+## 验证结论与剩余边界
 
-- Compose `HorizontalPager` 与项目项长按的 pointer 竞争需要真机确认，必要时调整最小横移阈值，但不能退化为连续滚动。
-- 固定行高与不同字体缩放可能使某些设备只能容纳一行；行数下限、面板高度上限和指示器占用空间需由视觉验收确认。
-- 面板打开期间不动态重排意味着旋转或分屏尺寸变化可能需要关闭再打开，需确认用户是否接受。
-- 需要确认页指示器的具体样式、无障碍文案和是否在单页时完全隐藏。
+- 7 项 JVM 回归测试覆盖单页、多页、短屏、大字体行高、空列表、连续分组和会话快照。
+- Android 17／API 37 模拟器上的 4 项 `UiAutomation` 设备测试覆盖正向／反向／连续翻页、末页不循环、横滑不误启动、点击／长按小窗规则、背景 dismiss、重开归零及 Left／Right／Bottom 锚点；crash buffer 为空。
+- 真实密度截图确认最后一页不足 4 列时面板高度保持稳定，多页圆点位于底部且单页不显示指示器。
+- 面板会话内仍不响应旋转或分屏导致的动态容量变化，继续遵循关闭后按新尺寸重新打开计算的既定边界。
+- 当前自动化交互验证设备为模拟器；发版前仍建议在至少一台物理设备复核厂商触摸调度与长按振动体感。
 
 ## 关联代码
 
 - [QuickLauncherPanel.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicklauncher/QuickLauncherPanel.kt)
 - [QuickLauncherPanelState.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicklauncher/QuickLauncherPanelState.kt)
+- [QuickLauncherPaging.kt](../../app/src/main/java/com/aaron/sidegesture/feature/quicklauncher/QuickLauncherPaging.kt)

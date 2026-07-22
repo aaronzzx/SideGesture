@@ -320,6 +320,7 @@
     <string name="action_rotate_left">向左旋转</string>
     <string name="action_inverse_color">颜色反转</string>
     <string name="action_quick_app_panel">快速启动面板</string>
+    <string name="quick_launcher_page_description">第 %1$d 页，共 %2$d 页</string>
     <string name="action_launch_app">启动应用程序</string>
     <string name="action_launch_app_in_popup">在小窗中启动应用程序</string>
     <string name="action_task_switcher">任务切换器(Shizuku)</string>

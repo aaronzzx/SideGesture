@@ -45,6 +45,14 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 
 文档或注释类改动不要求编译，但需要验证格式、行数或相关约束。
 
+### 自动化测试范围
+
+- 默认只运行与本次改动、修复或当前验收目标直接相关的测试类／测试任务；不得因为“重新跑测试”自动扩大为历史用例全集。
+- 验证顺序为失败项定向复跑、受影响功能测试、必要的模块级回归；已经通过且与本次改动无关的历史测试不重复执行。
+- 仅在用户明确要求全量回归、修改共享基础设施／测试框架／跨功能公共链路，或进行发版验收时，运行 `connectedDebugAndroidTest`、全量 JVM 测试等完整测试集。
+- 仪器测试默认使用 `android.testInstrumentationRunnerArguments.class` 或等价方式限定测试类；汇报时必须区分定向结果、分组结果与单次全量结果。
+- 测试存在互斥设备前置条件时，例如 `WRITE_SETTINGS=allow` 与 `WRITE_SETTINGS=default`、Shizuku 授权态，按条件分组运行，只切换当前组必需状态，并在结束后恢复原状态。
+
 ## 架构要点
 
 - 主进程承载 `MainActivity`、Compose UI、ViewModel 与用户配置交互。
@@ -107,7 +115,7 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 启动前检查 `$env:ANDROID_AVD_HOME`、`$env:ANDROID_USER_HOME` 以及 `$env:USERPROFILE\.android\avd`。环境变量缺失但默认 AVD 目录存在时，只在当前验证进程显式设置正确的 AVD home，并使用解析出的 SDK `emulator.exe -list-avds` 重新列出 AVD。
 - 只有在正确的 AVD home 上列表为空，且不存在 `emulator` 或 `qemu` 进程时，才能判定没有可用模拟器；普通权限与提权上下文结果不一致时必须继续核对，不能直接下结论。
 - 不得自动创建或删除 AVD；后台启动使用隐藏、无窗口方式，并且只关闭本轮由自己启动的 AVD。
-- 存在可用 AVD 时运行 `connectedDebugAndroidTest`；涉及真实 UI 的验收按 UI tree 定位和坐标操作，并保留截图与 logcat 证据。
+- 存在可用 AVD 时，默认按“自动化测试范围”运行定向仪器测试；仅满足全量触发条件时运行 `connectedDebugAndroidTest`。涉及真实 UI 的验收按 UI tree 定位和坐标操作，并保留截图与 logcat 证据。
 
 ## 新目录约定
 
