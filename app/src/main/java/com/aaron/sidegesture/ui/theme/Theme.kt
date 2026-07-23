@@ -7,7 +7,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.global.AdvancedSettings
 import com.aaron.sidegesture.ui.theme.generator.AppTheme
-import com.aaron.sidegesture.ui.widget.ComposeToast
 import com.aaron.sidegesture.utils.DataStoreHolder
 
 @Composable
@@ -27,6 +26,5 @@ fun SideGestureTheme(content: @Composable () -> Unit) {
         dynamicColor = dynamicColor
     ) {
         content()
-        ComposeToast()
     }
 }

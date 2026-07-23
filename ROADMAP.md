@@ -29,6 +29,7 @@
 - [x] 2026-07-23：新增快速启动器全局配置页，可分别调整每页行数、每行列数、图标大小和文字大小；ActionSelect 整行保留项目编辑入口，独立设置按钮进入外观配置；浮层宽高按配置与屏幕安全空间自适应。
 - [x] 2026-07-23：完成需求 5，新增默认关闭的双击手势开关和独立双击动作配置；以通用状态机统一 Left／Right／Bottom 的双击、延迟单击、Slop、跨触钮、取消、配置快照和服务释放行为。
 - [x] 2026-07-23：完成需求 6，新增默认空的顶部触钮、独立 DataStore 和设置入口；触钮按完整屏幕宽度直接贴顶并固定 `y = 0`，接入四边手势、三种动画、动作浮层和固定截图安全区；备份恢复增加 generation／session／digest／journal 门禁，支持有／无服务提交、崩溃重放与回滚。
+- [x] 2026-07-23：修复 `:service` 进程 Compose Toast 被动作浮层遮挡的问题；主进程改为单一 Toast 宿主，服务进程按消息动态创建最高层、不可触摸的无障碍浮层，并保持系统截图期间的临时隐藏行为。
 
 ## 进行中
 
@@ -64,7 +65,6 @@
 
 ## 最近验证
 
-- 2026-07-19：需求 3 在 `Nexus_5_API_35` 完成真实悬浮窗验证：历史 Magnifier 磁盘值被 DataStore migration 改写为 Crosshair，设置页无样式入口；竖屏 Left／Right 与横屏 Bottom 均可拖出后在新锚点再次悬停，Tall cutout 左侧 inset 为 144px，全程仅显示准星且无崩溃。
 - 2026-07-19：需求 7、8 全量 JVM 测试 16 个套件、67 项全部通过，`assembleDebug` 与 `assembleDebugAndroidTest` 通过；Android 15 定向亮度仪器测试 3／3 通过，系统值在测试前后恢复为亮度 `255`、自动模式 `1`，Debug APK 启动与 UI 树读取正常，crash buffer 为空。全量设备测试 13 项中新增亮度测试均通过，另有 1 项既有 AdvancedSettings 显示断言失败，已记录为独立回归问题。
 - 2026-07-20：需求 7、8 完成兼容性验收：Android 16／API 36 小米 `25113PN0EC` 的实际亮度端点为 `1..255`，WRITE_SETTINGS 定向测试 3／3 通过；Android 15 模拟器在 `WRITE_SETTINGS=default` 下仅靠 Shizuku 的生产网关测试 2／2 通过，覆盖写入、自动模式、外部修改、观察停止与重开刷新，测试后恢复亮度 `255`、自动模式 `1`。两台设备均由边缘长滑触发全屏快捷工具动作浮层，未发现本应用崩溃。
 - 2026-07-20：需求 9 新增 8 项 JVM 回归测试，全量 18 个套件、75 项测试全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 15／API 35 模拟器确认勾选后列表不跳位、保存后 DataStore 为 `com.android.settings`、重进保持勾选且置顶，左右触钮在设置前台带 `NOT_TOUCHABLE`、离开后恢复，模拟器与服务重启后仍命中。完整设备测试 15 项中 11 项通过，3 项亮度测试因 `WRITE_SETTINGS` 前置权限未授予被拦截，另 1 项为既有 AdvancedSettings 显示断言；未发现本应用崩溃，测试状态已恢复。
@@ -74,3 +74,4 @@
 - 2026-07-23：快速启动器配置与自适应浮层通过 22 项定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的浮层 8 项、设置页 1 项设备测试全部通过，覆盖紧凑尺寸收缩、自定义行列容量、宽度扩展与安全夹取、会话冻结、10 页窗口化指示器、配置保存及旧数据默认值。真实 ActionSelect UI 树确认整行与设置按钮正确分流，截图布局正常，crash buffer 为空。
 - 2026-07-23：需求 5 的 12 项定向 JVM 测试、10 项 API 36 仪器测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；真实设置页完成开关保存重启和独立双击动作保存回显，左侧 `42px` 无障碍触钮双击“主页键”成功切换到系统 Launcher，单次点击未误执行双击，crash buffer 为空，测试后的开关、动作和无障碍服务已恢复为关闭／无动作／禁用状态。
 - 2026-07-23：需求 6 全量 JVM 回归 25 个套件、111 项全部通过；API 36 定向设备测试 26 项全部通过，并在横屏额外复跑顶部 Window 参数，覆盖 `y = 0`、五方向／反向手势、四边双击、独立 DataStore、顶部浮层锚点、旧备份保留／显式清空／非法项拒绝、有／无 `:service` 握手及 journal 重放／回滚。真实首页 UI tree 确认“顶部触钮”分组与空态“添加触钮”入口；`assembleDebug`、`assembleDebugAndroidTest`、R8 `assembleRelease` 与 `git diff --check` 通过；真实 `SideGestureService` 冷启动完成系统绑定并创建 9 个 Overlay Window，crash buffer 为空，验证后无障碍、旋转和弹窗状态均已恢复。
+- 2026-07-23：`:service` Toast 修复通过 `ServiceToastOverlayInstrumentedTest` 定向仪器测试 1／1 与 `assembleDebug`；Android 16／API 36 `Medium_Phone` 模拟器由左侧手势打开快捷工具后触发相机权限提示，截图确认 Toast 显示在快捷工具浮层上方，服务 Overlay Window 从 8 个增至 9 个且新窗口位于原最高窗口之前；crash buffer 为空，无障碍服务与测试配置已恢复。

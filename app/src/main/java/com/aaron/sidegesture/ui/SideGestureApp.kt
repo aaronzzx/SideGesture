@@ -78,6 +78,7 @@ import com.aaron.sidegesture.feature.update.ui.NotificationPermissionDialog
 import com.aaron.sidegesture.feature.update.ui.UpdateDialog
 import com.aaron.sidegesture.feature.update.ui.UpdateVM
 import com.aaron.sidegesture.feature.update.ui.rememberNotificationPermissionRequest
+import com.aaron.sidegesture.ui.widget.ComposeToast
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.utils.AboutUtils
 import com.aaron.sidegesture.feature.update.UpdateChecker
@@ -243,6 +244,7 @@ fun SideGestureApp() {
                 }
             }
             UpdateHost(vm = updateVm)
+            ComposeToast()
         }
     }
 }

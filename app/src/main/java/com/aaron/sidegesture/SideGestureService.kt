@@ -30,6 +30,7 @@ import com.aaron.sidegesture.feature.screenshot.WindowVisibilityController
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsStore
 import com.aaron.sidegesture.feature.servicesettings.RestoreServiceGate
 import com.aaron.sidegesture.feature.servicesettings.ServiceSettingsSnapshot
+import com.aaron.sidegesture.feature.toast.ServiceToastOverlayHost
 import com.aaron.sidegesture.feature.update.UpdateCheckScheduler
 import com.aaron.sidegesture.feature.volumebutton.VolumeButtonController
 import com.aaron.sidegesture.utils.DataStoreHolder
@@ -55,6 +56,10 @@ class SideGestureService : ComponentAccessibilityService() {
 
     private val actionOverlayHost by lazy {
         ActionOverlayHost(this, serviceScope)
+    }
+
+    private val toastOverlayHost by lazy {
+        ServiceToastOverlayHost(this, serviceScope)
     }
 
     private val environmentMonitor: ServiceEnvironmentMonitor by lazy {
@@ -90,11 +95,13 @@ class SideGestureService : ComponentAccessibilityService() {
                 override fun hideWindowsForScreenshot() {
                     gestureWindowManager.setTemporarilyHidden(true)
                     actionOverlayHost.setTemporarilyHidden(true)
+                    toastOverlayHost.setTemporarilyHidden(true)
                 }
 
                 override fun restoreWindowsAfterScreenshot() {
                     gestureWindowManager.setTemporarilyHidden(false)
                     actionOverlayHost.setTemporarilyHidden(false)
+                    toastOverlayHost.setTemporarilyHidden(false)
                 }
             }
         )
@@ -192,6 +199,7 @@ class SideGestureService : ComponentAccessibilityService() {
             updateCheckScheduler.stop()
             environmentMonitor.stop()
             actionOverlayHost.release()
+            toastOverlayHost.release()
             gestureWindowManager.release()
             pinnedScreenshotManager.release()
         }
@@ -210,6 +218,7 @@ class SideGestureService : ComponentAccessibilityService() {
         updateCheckScheduler.stop()
         environmentMonitor.stop()
         actionOverlayHost.release()
+        toastOverlayHost.release()
         gestureWindowManager.release()
         pinnedScreenshotManager.release()
     }
@@ -221,6 +230,7 @@ class SideGestureService : ComponentAccessibilityService() {
         environmentMonitor.start()
         gestureWindowManager.startOrReattach()
         actionOverlayHost.attach(actionHandlers.filterIsInstance<OverlayActionHandler>())
+        toastOverlayHost.start()
         updateCheckScheduler.start()
         restoreBlocked = false
         actionManager.setBlocked(false)

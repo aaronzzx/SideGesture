@@ -1,5 +1,3 @@
-@file:OptIn(DelicateCoroutinesApi::class)
-
 package com.aaron.sidegesture.ui.widget
 
 import androidx.annotation.StringRes
@@ -26,10 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aaron.compose.ktx.clipToBackground
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -38,13 +35,16 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 
 @Composable
-fun ComposeToast(modifier: Modifier = Modifier) {
+fun ComposeToast(
+    modifier: Modifier = Modifier,
+    messages: Flow<ToastMessage> = observeComposeToastMessages()
+) {
     Box(modifier = modifier.fillMaxSize()) {
         val context = LocalContext.current
         val snackbarHostState = remember { SnackbarHostState() }
-        var toastData by remember { mutableStateOf(ToastData.None) }
-        LaunchedEffect(key1 = Unit) {
-            for (data in channel) {
+        var toastData by remember { mutableStateOf(ToastMessage.None) }
+        LaunchedEffect(messages) {
+            messages.collect { data ->
                 if (!data.isEmpty) {
                     toastData = data
                 }
@@ -56,7 +56,7 @@ fun ComposeToast(modifier: Modifier = Modifier) {
                     true -> context.getString(toastData.resId)
                     else -> toastData.text
                 }
-                withTimeoutOrNull(toastData.duration) {
+                withTimeoutOrNull(toastData.durationMillis) {
                     snackbarHostState.showSnackbar(text)
                 }
             }
@@ -91,16 +91,18 @@ fun ComposeToast(modifier: Modifier = Modifier) {
 }
 
 fun showComposeToast(@StringRes resId: Int, duration: ToastDuration = ToastDuration.Short) {
-    GlobalScope.launch {
-        channel.send(ToastData(resId = resId, duration = getTimeMillis(duration)))
-    }
+    toastMessageChannel.trySend(
+        ToastMessage(resId = resId, durationMillis = getTimeMillis(duration))
+    )
 }
 
 fun showComposeToast(text: String, duration: ToastDuration = ToastDuration.Short) {
-    GlobalScope.launch {
-        channel.send(ToastData(text = text, duration = getTimeMillis(duration)))
-    }
+    toastMessageChannel.trySend(
+        ToastMessage(text = text, durationMillis = getTimeMillis(duration))
+    )
 }
+
+fun observeComposeToastMessages(): Flow<ToastMessage> = toastMessages
 
 private fun getTimeMillis(duration: ToastDuration): Long {
     return when (duration) {
@@ -114,13 +116,13 @@ enum class ToastDuration {
     Short, Long
 }
 
-private class ToastData(
+class ToastMessage(
     @StringRes val resId: Int = 0,
     val text: String = "",
-    val duration: Long = TOAST_SHORT
+    val durationMillis: Long = TOAST_SHORT
 ) {
     companion object {
-        val None = ToastData()
+        val None = ToastMessage()
     }
 
     val isEmpty: Boolean = resId == 0 && text.isEmpty()
@@ -129,4 +131,5 @@ private class ToastData(
 private const val TOAST_SHORT = 2000L
 private const val TOAST_LONG = 3500L
 
-private val channel = Channel<ToastData>()
+private val toastMessageChannel = Channel<ToastMessage>(Channel.UNLIMITED)
+private val toastMessages = toastMessageChannel.receiveAsFlow()
