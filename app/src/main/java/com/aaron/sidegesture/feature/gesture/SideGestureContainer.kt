@@ -462,7 +462,7 @@ class SideGestureState(
             val doubleClickAction = button.slideActions.doubleClick.firstOrNull {
                 it != Action.NONE
             }
-            if (gestureSettings.doubleTapEnabled && doubleClickAction != null) {
+            if (doubleClickAction != null) {
                 beginDoubleTapWait(
                     button = button,
                     down = origin,

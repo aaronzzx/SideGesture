@@ -52,7 +52,6 @@ object GestureSettingsDefaults {
     const val LongSlideTriggerDelayMs = 100L
     const val IsCustomVibration = false
     const val IsPreciseSlideType = true
-    const val DoubleTapEnabled = false
     val Vibrations = Vibrations()
 }
 

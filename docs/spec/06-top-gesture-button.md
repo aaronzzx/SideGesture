@@ -153,11 +153,11 @@ Top 以 Bottom 的垂直镜像为基线，局部坐标定义如下：
 
 ### 双击复用（需求 5）
 
-Top 不另起双击状态机，复用需求 5 为 `GestureActions.doubleClick` 增加的全局开关和 `SideGestureState` 双击等待契约：
+Top 不另起双击状态机，复用需求 5 的 `GestureActions.doubleClick` 和 `SideGestureState` 双击等待契约：
 
 - Top 的按钮设置页和动作选择页提供 `doubleClick` 动作配置，配置为空或全部为 `Action.NONE` 时视为未配置；Top 的普通 `Click` 配置仍保持独立。
-- 全局双击开关关闭时，Top 单击在当前 `onDragEnd()` 路径即时派发，不创建等待 Job、不监听第二击，行为与 Left／Right／Bottom 的关闭路径一致。
-- 开关开启且当前 Top 按钮配置了有效 `doubleClick` 时，第一次满足单击条件后才进入系统双击等待窗口；第二击必须命中同一按钮，并满足系统时间窗口和双击 slop，成功后只派发一次 `doubleClick`，取消单击。
+- 当前 Top 按钮没有有效 `doubleClick` 时，单击在当前 `onDragEnd()` 路径即时派发，不创建等待 Job、不监听第二击。
+- 当前 Top 按钮配置了有效 `doubleClick` 时，第一次满足单击条件后才进入系统双击等待窗口；第二击必须命中同一按钮，并满足系统时间窗口和双击 slop，成功后只派发一次 `doubleClick`，取消单击。
 - 滑动、长按已经触发、跨按钮、超时、`CANCEL`、服务销毁和恢复门禁均必须取消等待 Job 并清空按钮／触点／候选动作，禁止旧单击在下一次手势中泄漏。双击逻辑不能改变 Top 的 inward／cross 方向数学或长滑阈值。
 
 ### 角度设置
@@ -192,7 +192,7 @@ Top 不另起双击状态机，复用需求 5 为 `GestureActions.doubleClick` �
 - [`HomeScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/home/HomeScreen.kt) 增加顶部触钮分组、空列表添加入口、开关、动作摘要、颜色标记和 bounds 高亮。Top 分组的展开状态与 Bottom／Side 互斥，但列表数据不能混合；预览使用与真实 Window 相同的完整屏幕 `y = 0` bounds。
 - [`GestureButton.kt` 扩展](../../app/src/main/java/com/aaron/sidegesture/ktx/GestureButton.kt) 增加 Top 文案。资源文案必须区分“顶部触钮”“向下”“向左”“向右”及斜向动作。
 - [`GestureButtonSettingsScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/gesturebuttonsettings/GestureButtonSettingsScreen.kt) 增加 Top 标题和方向文案；Top 隐藏 side 复制、对齐和仅 side 可用的系统返回手势选项。长度滑块的提示改为“左／右”，预览直接贴页面模型顶边。
-- 同一设置页和 [`ActionSelectScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/actionselect/ActionSelectScreen.kt) 必须显示 Top 的 `doubleClick` 配置入口，并传递 Top 的 `position`；全局双击开关关闭时入口可以保留但运行时不得创建等待，开启且本按钮没有有效 `doubleClick` 时仍走即时单击。
+- 同一设置页和 [`ActionSelectScreen.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/actionselect/ActionSelectScreen.kt) 必须显示 Top 的 `doubleClick` 配置入口，并传递 Top 的 `position`；本按钮没有有效 `doubleClick` 时走即时单击。
 - [`GestureButtonSettingsVM.kt`](../../app/src/main/java/com/aaron/sidegesture/ui/screen/gesturebuttonsettings/GestureButtonSettingsVM.kt) 按 `position` 选择对应 DataStore：Left／Right → side，Bottom → bottom，Top → top。删除、保存、加载、颜色和动作变更均不得将 Top 写入 bottom。
 - [`Routes.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/Routes.kt) 保持 `GestureButtonSettings(buttonId, position)` 的序列化形状；`isSideButton` 继续只表示 Left／Right，调用方不得把 `!isSideButton` 当作 Bottom。
 
@@ -235,8 +235,8 @@ Top 不另起双击状态机，复用需求 5 为 `GestureActions.doubleClick` �
 | 斜向滑动 | 上下斜向 | 左右斜向 | 左下／右下 | 角度区间和文案一致，`GestureAngle` 可调 |
 | 水平／长滑 | `Up2`／`Down2` | `Up2`／`Down2` | 左／右 `Up2`／`Down2` | 方向、长滑阈值、精确滑取消均正确 |
 | 点击／长按／取消 | 既有行为 | 既有行为 | Click、Center2、CANCEL 清理完整 | 每次最多一个动作，无旧状态泄漏 |
-| 双击关闭 | 即时单击、不监听第二击 | 即时单击、不监听第二击 | Top 即时单击、不监听第二击 | 全局开关关闭时不创建等待 Job，单击时序与旧版一致 |
-| 双击开启 | 同按钮／time／slop 契约 | 同按钮／time／slop 契约 | 配置 `doubleClick` 才等待；同按钮、系统 time／slop 成功后只发双击 | 未配置仍即时单击；滑动、长按、跨按钮、超时、CANCEL 清理等待 |
+| 未配置双击 | 即时单击、不监听第二击 | 即时单击、不监听第二击 | Top 即时单击、不监听第二击 | 不创建等待 Job，单击时序与旧版一致 |
+| 已配置双击 | 同按钮／time／slop 契约 | 同按钮／time／slop 契约 | 同按钮、系统 time／slop 成功后只发双击 | 滑动、长按、跨按钮、超时、CANCEL 清理等待 |
 | 动画 | 三种样式 | 三种样式 | 镜像起点、方向、回弹、safeBounds | 无残影、无 NaN、图标方向与文案一致 |
 | ActionPanel | 侧边锚点 | 向上展开 | 向下展开 | Folder／Sector 不遮挡安全区，手指选中准确 |
 | QuickLauncher／QuickTools／TaskSwitcher | 现有锚点 | 现有锚点 | 顶部安全区锚点 | 背景 dismiss、内容点击、触摸禁用不回归 |

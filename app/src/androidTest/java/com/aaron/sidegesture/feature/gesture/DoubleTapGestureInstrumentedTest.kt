@@ -31,7 +31,7 @@ class DoubleTapGestureInstrumentedTest {
         Position.entries.forEach { position ->
             withState(
                 buttons = listOf(button(position)),
-                gestureSettings = gestureSettings(doubleTapEnabled = true)
+                gestureSettings = gestureSettings()
             ) { state, dispatched ->
                 val offset = tapOffset(position)
 
@@ -45,24 +45,16 @@ class DoubleTapGestureInstrumentedTest {
     }
 
     @Test
-    fun disabledOrUnconfiguredDoubleTapKeepsSingleTapImmediate() = runBlocking {
+    fun unconfiguredDoubleTapKeepsSingleTapImmediate() = runBlocking {
         val position = Position.Left
-        val configuredButton = button(position)
-        withState(
-            buttons = listOf(configuredButton),
-            gestureSettings = gestureSettings(doubleTapEnabled = false)
-        ) { state, dispatched ->
-            assertEquals(Action("single-Left"), tap(state, tapOffset(position)))
-            delay(ViewConfiguration.getDoubleTapTimeout().toLong() + 50L)
-            assertTrue(dispatched.isEmpty())
+        val singleOnlyButton = button(position).let { button ->
+            button.copy(
+                slideActions = button.slideActions.copy(doubleClick = emptyList())
+            )
         }
-
-        val singleOnlyButton = configuredButton.copy(
-            slideActions = configuredButton.slideActions.copy(doubleClick = emptyList())
-        )
         withState(
             buttons = listOf(singleOnlyButton),
-            gestureSettings = gestureSettings(doubleTapEnabled = true)
+            gestureSettings = gestureSettings()
         ) { state, dispatched ->
             assertEquals(Action("single-Left"), tap(state, tapOffset(position)))
             delay(ViewConfiguration.getDoubleTapTimeout().toLong() + 50L)
@@ -75,7 +67,7 @@ class DoubleTapGestureInstrumentedTest {
         val position = Position.Bottom
         withState(
             buttons = listOf(button(position)),
-            gestureSettings = gestureSettings(doubleTapEnabled = true)
+            gestureSettings = gestureSettings()
         ) { state, dispatched ->
             assertEquals(Action.NONE, tap(state, tapOffset(position)))
 
@@ -90,7 +82,7 @@ class DoubleTapGestureInstrumentedTest {
         val buttons = listOf(button(Position.Left), button(Position.Right))
         withState(
             buttons = buttons,
-            gestureSettings = gestureSettings(doubleTapEnabled = true)
+            gestureSettings = gestureSettings()
         ) { state, dispatched ->
             assertEquals(Action.NONE, tap(state, tapOffset(Position.Left)))
             delay(40L)
@@ -105,7 +97,7 @@ class DoubleTapGestureInstrumentedTest {
     @Test
     fun movementCancelAndReleasePreventDeferredSingleTap() = runBlocking {
         val position = Position.Left
-        val settings = gestureSettings(doubleTapEnabled = true)
+        val settings = gestureSettings()
         withState(listOf(button(position)), settings) { state, dispatched ->
             val offset = tapOffset(position)
             assertEquals(Action.NONE, tap(state, offset))
@@ -142,7 +134,7 @@ class DoubleTapGestureInstrumentedTest {
                 slideActions = button.slideActions.copy(center2 = listOf(longPressAction))
             )
         }
-        val settings = gestureSettings(doubleTapEnabled = true).copy(
+        val settings = gestureSettings().copy(
             longPressTriggerDelayMs = 30L
         )
         withState(listOf(configuredButton), settings) { state, dispatched ->
@@ -171,7 +163,7 @@ class DoubleTapGestureInstrumentedTest {
         val originalButton = button(position)
         withState(
             buttons = listOf(originalButton),
-            gestureSettings = gestureSettings(doubleTapEnabled = true)
+            gestureSettings = gestureSettings()
         ) { state, dispatched ->
             val offset = tapOffset(position)
             assertEquals(Action.NONE, tap(state, offset))
@@ -185,7 +177,7 @@ class DoubleTapGestureInstrumentedTest {
                         )
                     )
                 ),
-                gestureSettings = gestureSettings(doubleTapEnabled = false)
+                gestureSettings = gestureSettings()
             )
             delay(40L)
             assertEquals(Action.NONE, tap(state, offset))
@@ -222,11 +214,10 @@ class DoubleTapGestureInstrumentedTest {
         }
     }
 
-    private fun gestureSettings(doubleTapEnabled: Boolean): GestureSettings {
+    private fun gestureSettings(): GestureSettings {
         return GestureSettings(
             longPressTriggerDelayMs = 1_000L,
-            vibrations = Vibrations(slideEnabled = false),
-            doubleTapEnabled = doubleTapEnabled
+            vibrations = Vibrations(slideEnabled = false)
         )
     }
 

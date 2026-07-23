@@ -1,49 +1,43 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
+import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import org.junit.Assert.assertTrue
+import androidx.navigation.compose.rememberNavController
+import androidx.test.platform.app.InstrumentationRegistry
+import com.aaron.sidegesture.R
+import com.aaron.sidegesture.ktx.LocalNavController
 import org.junit.Rule
 import org.junit.Test
 
 class DoubleTapSettingTest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun settingDisplaysExplanationAndUpdatesValue() {
-        var checked by mutableStateOf(false)
-        var callbackValue = false
+    fun gestureSettingsDoesNotShowDoubleTapSwitch() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
         composeTestRule.setContent {
             MaterialTheme {
-                DoubleTapSetting(
-                    checked = checked,
-                    onCheckedChange = {
-                        callbackValue = it
-                        checked = it
-                    }
-                )
+                val navController = rememberNavController()
+                CompositionLocalProvider(LocalNavController provides navController) {
+                    GestureSettingsScreen(
+                        onNavToGestureAngles = {},
+                        onBack = {}
+                    )
+                }
             }
         }
 
-        composeTestRule.onNodeWithText("双击").assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("仅已配置双击动作的触钮会等待第二次点击")
+            .onNodeWithText(context.getString(R.string.gesture_settings))
             .assertIsDisplayed()
-        composeTestRule.onNode(isToggleable()).assertIsOff().performClick()
-        composeTestRule.waitForIdle()
-
-        assertTrue(callbackValue)
-        composeTestRule.onNode(isToggleable()).assertIsOn()
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.double_tap))
+            .assertDoesNotExist()
     }
 }

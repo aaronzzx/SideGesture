@@ -3,8 +3,7 @@ package com.aaron.sidegesture.ktx
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aaron.sidegesture.entity.global.GestureSettings
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
@@ -13,22 +12,26 @@ import java.io.ByteArrayOutputStream
 class GestureSettingsSerializationTest {
 
     @Test
-    fun oldJsonDefaultsDoubleTapToDisabled() = runBlocking {
+    fun emptyJsonUsesGestureSettingsDefaults() = runBlocking {
         val serializer = createJsonDataStoreSerializer(GestureSettings())
 
         val value = serializer.readFrom("{}".byteInputStream())
 
-        assertFalse(value.doubleTapEnabled)
+        assertEquals(GestureSettings(), value)
     }
 
     @Test
-    fun enabledDoubleTapSurvivesRoundTrip() = runBlocking {
+    fun gestureSettingsSurviveRoundTrip() = runBlocking {
         val serializer = createJsonDataStoreSerializer(GestureSettings())
+        val expected = GestureSettings(
+            longPressTriggerDelayMs = 500L,
+            isPreciseSlideType = false
+        )
         val output = ByteArrayOutputStream()
-        serializer.writeTo(GestureSettings(doubleTapEnabled = true), output)
+        serializer.writeTo(expected, output)
 
         val value = serializer.readFrom(output.toByteArray().inputStream())
 
-        assertTrue(value.doubleTapEnabled)
+        assertEquals(expected, value)
     }
 }

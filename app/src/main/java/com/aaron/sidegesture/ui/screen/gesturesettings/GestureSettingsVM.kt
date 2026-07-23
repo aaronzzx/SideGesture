@@ -36,8 +36,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                         longSlideTriggerDelayMs = uiState.longSlideTriggerDelayMs,
                         isCustomVibration = uiState.isCustomVibration,
                         vibrations = uiState.vibrations,
-                        isPreciseSlideType = uiState.isPreciseSlideTypeEnabled,
-                        doubleTapEnabled = uiState.doubleTapEnabled
+                        isPreciseSlideType = uiState.isPreciseSlideTypeEnabled
                     )
                 }
             }
@@ -60,13 +59,6 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
     fun onPreciseSlideTypeChange(value: Boolean) {
         updateUiState {
             it.copy(isPreciseSlideTypeEnabled = value)
-        }
-        saveSettings()
-    }
-
-    fun onDoubleTapEnabledChange(value: Boolean) {
-        updateUiState {
-            it.copy(doubleTapEnabled = value)
         }
         saveSettings()
     }
@@ -152,8 +144,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
                             longSlideTriggerDelayMs = item.longSlideTriggerDelayMs,
                             isCustomVibration = item.isCustomVibration,
                             vibrations = item.vibrations,
-                            isPreciseSlideTypeEnabled = item.isPreciseSlideType,
-                            doubleTapEnabled = item.doubleTapEnabled
+                            isPreciseSlideTypeEnabled = item.isPreciseSlideType
                         )
                     }
                 }
@@ -170,8 +161,7 @@ class GestureSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         val isCustomVibration: Boolean = false,
         val vibrations: Vibrations = Vibrations(),
         val showPredefinedVibrationDropdown: Boolean = false,
-        val isPreciseSlideTypeEnabled: Boolean = false,
-        val doubleTapEnabled: Boolean = false
+        val isPreciseSlideTypeEnabled: Boolean = false
     )
 
     sealed interface UiEvent {

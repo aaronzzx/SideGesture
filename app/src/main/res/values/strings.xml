@@ -400,7 +400,6 @@
     <string name="strength">强度</string>
     <string name="tap">单击</string>
     <string name="double_tap">双击</string>
-    <string name="double_tap_hint">仅已配置双击动作的触钮会等待第二次点击</string>
     <string name="hover_trigger_delay">悬停触发延迟</string>
     <string name="intercept_system_back_gesture">拦截系统返回手势</string>
     <string name="intercept_system_back_gesture_hint">使用系统接口拦截，可能有兼容性问题</string>
