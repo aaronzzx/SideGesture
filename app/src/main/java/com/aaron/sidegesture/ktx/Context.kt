@@ -22,6 +22,7 @@ import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.platform.freeform.MiniWindowUtils
+import com.aaron.sidegesture.platform.userprofile.ProfileAppManager
 import com.aaron.sidegesture.utils.showToast
 import com.aaron.sidegesture.utils.showVersionTooLowToast
 import com.blankj.utilcode.util.AppUtils
@@ -107,7 +108,11 @@ fun Context.launchAppInfo(
     miniWindow: Boolean = appInfo.miniWindow,
     miniWindowSettings: ActionSettings.MiniWindow = ActionSettings.MiniWindow()
 ): Boolean {
-    val launchSucceed = launchApp(appInfo.packageName, appInfo.className, miniWindow, miniWindowSettings)
+    val launchSucceed = if (appInfo.profileSerialNumber != null) {
+        ProfileAppManager.launch(this, appInfo)
+    } else {
+        launchApp(appInfo.packageName, appInfo.className, miniWindow, miniWindowSettings)
+    }
     if (!launchSucceed) {
         showToast(getString(R.string.launch_app_info_failed, appInfo.label))
     }

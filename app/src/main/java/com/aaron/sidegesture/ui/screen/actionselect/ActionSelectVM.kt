@@ -24,6 +24,7 @@ import com.aaron.sidegesture.event.IconResizeEvent
 import com.aaron.sidegesture.event.QuickLauncherConfigEvent
 import com.aaron.sidegesture.platform.freeform.RomDetector
 import com.aaron.sidegesture.platform.freeform.RomType
+import com.aaron.sidegesture.platform.userprofile.ProfileAppManager
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.coerceTimeMillis
@@ -147,8 +148,8 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
         val isMiniWindowIntent = when (obj) {
             is AppInfo -> {
                 selectAppInfo(obj, selected)
-                // 勾选应用即有小窗使用可能（应用可配小窗打开）
-                selected
+                // 工作资料应用仅支持系统普通启动，不参与小窗能力提示
+                selected && obj.profileSerialNumber == null
             }
             is LauncherInfo.ShortcutInfo -> {
                 selectShortcutInfo(obj, selected)
@@ -184,6 +185,7 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
     }
 
     fun toggleMiniWindow(appInfo: AppInfo) {
+        if (appInfo.profileSerialNumber != null) return
         val switchToMiniWindow = !appInfo.miniWindow
         updateUiState {
             val updatedApp = appInfo.copy(miniWindow = switchToMiniWindow)
@@ -605,7 +607,10 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
             val appInfos = withContext(Dispatchers.IO) {
                 coerceTimeMillis(500) {
                     PinyinSearchUtils.sortAppInfos(
-                        AppInfoUtils.queryLauncherActivities(App.getContext())
+                        AppInfoUtils.queryLauncherActivities(
+                            context = App.getContext(),
+                            includeAssociatedProfiles = true
+                        )
                     )
                 }
             }
@@ -623,10 +628,13 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                         .list
                         .filterIsInstance<AppInfo>()
                         .forEach { selectedApp ->
-                            val uninstalled = !appInfos.any { app ->
+                            val unavailable = !appInfos.any { app ->
                                 selectedApp.qualifiedName == app.qualifiedName
                             }
-                            if (uninstalled) {
+                            val profileRemoved = selectedApp.profileSerialNumber?.let { serialNumber ->
+                                !ProfileAppManager.profileExists(App.getContext(), serialNumber)
+                            } ?: true
+                            if (unavailable && profileRemoved) {
                                 uninstalledList.add(selectedApp)
                             }
                         }
@@ -644,7 +652,11 @@ class ActionSelectVM(savedStateHandle: SavedStateHandle) : BaseComposeVM<UiState
                     if (cache != null) {
                         val appInfo2 = appInfo.copy(
                             iconScale = cache.iconScale,
-                            miniWindow = cache.miniWindow
+                            miniWindow = if (appInfo.profileSerialNumber == null) {
+                                cache.miniWindow
+                            } else {
+                                false
+                            }
                         )
                         list1.add(appInfo2)
                     } else {

@@ -19,5 +19,6 @@ data class AppInfo(
     val label: String,
     val iconScale: Float = ScaleableDefaults.DEFAULT_SCALE,
     val miniWindow: Boolean = false,
-    val iconBgColor: Int = 0
+    val iconBgColor: Int = 0,
+    val profileSerialNumber: Long? = null
 ) : Parcelable

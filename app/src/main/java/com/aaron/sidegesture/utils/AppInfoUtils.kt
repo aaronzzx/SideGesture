@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.ktx.queryIntentActivitiesCompat
+import com.aaron.sidegesture.platform.userprofile.ProfileAppManager
 
 /**
  * @author aaronzzxup@gmail.com
@@ -38,7 +39,11 @@ object AppInfoUtils {
         return list
     }
 
-    fun queryLauncherActivities(context: Context, allowRepeatPackage: Boolean = true): List<AppInfo> {
+    fun queryLauncherActivities(
+        context: Context,
+        allowRepeatPackage: Boolean = true,
+        includeAssociatedProfiles: Boolean = false
+    ): List<AppInfo> {
         val list = mutableListOf<AppInfo>()
         val pkgList = mutableListOf<String>()
         val packageManager = context.packageManager
@@ -59,6 +64,13 @@ object AppInfoUtils {
             )
             list.add(item)
             pkgList.add(packageName)
+        }
+        if (includeAssociatedProfiles) {
+            ProfileAppManager.queryAssociatedProfileApps(context).forEach { appInfo ->
+                if (!allowRepeatPackage && appInfo.packageName in pkgList) return@forEach
+                list.add(appInfo)
+                pkgList.add(appInfo.packageName)
+            }
         }
         return list
     }

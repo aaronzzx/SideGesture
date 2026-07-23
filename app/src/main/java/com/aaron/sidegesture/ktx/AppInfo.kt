@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.aaron.sidegesture.entity.AppInfo
+import com.aaron.sidegesture.platform.userprofile.ProfileAppManager
 
 /**
  * @author aaronzzxup@gmail.com
@@ -15,7 +16,10 @@ import com.aaron.sidegesture.entity.AppInfo
 
 val AppInfo.componentName: ComponentName get() = ComponentName.createRelative(packageName, className)
 
-val AppInfo.qualifiedName: String get() = "$packageName/$className"
+val AppInfo.qualifiedName: String get() {
+    val currentQualifiedName = "$packageName/$className"
+    return profileSerialNumber?.let { "$it@$currentQualifiedName" } ?: currentQualifiedName
+}
 
 val AppInfo.icon: Drawable? @Composable get() {
     val context = LocalContext.current
@@ -23,6 +27,9 @@ val AppInfo.icon: Drawable? @Composable get() {
 }
 
 fun AppInfo.getIcon(context: Context): Drawable? {
+    if (profileSerialNumber != null) {
+        return ProfileAppManager.loadBadgedIcon(context, this)
+    }
     return try {
         val pkgManager = context.packageManager
         if (className.isNotEmpty()) {

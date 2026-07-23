@@ -8,6 +8,8 @@
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
+本轮追加完成关联工作资料中未冻结桌面应用的枚举、选择、持久化、徽标图标和普通启动，手势动作与快速启动器共用的 ActionSelect 应用页均可选择工作资料应用。
+
 ## 已完成
 
 - [x] 2026-07-18：完成 11 项需求的当前代码链、影响范围、依赖、风险和验收边界分析。
@@ -32,6 +34,7 @@
 - [x] 2026-07-23：修复 `:service` 进程 Compose Toast 被动作浮层遮挡的问题；主进程改为单一 Toast 宿主，服务进程按消息动态创建最高层、不可触摸的无障碍浮层，并保持系统截图期间的临时隐藏行为。
 - [x] 2026-07-23：为顶部触钮增加默认关闭且不可删除的全宽主触钮，普通滑动和长滑均不预设动作；厚度继续与其它边缘共用 `60dp` 调节上限。
 - [x] 2026-07-23：为精准点击新增默认开启的“快速移动加速”，设置项紧跟“悬停弹窗”；慢速移动保持基础速率，快速移动按速度曲线平滑提升至现有速率上限，减速、反向、重置及退出悬停选择时立即恢复精细控制。
+- [x] 2026-07-23：支持枚举关联工作资料中的未冻结桌面应用，以资料序列号区分同包同 Activity，显示系统工作徽标并通过 `LauncherApps` 普通启动；ActionSelect 应用页可直接选择并持久化工作资料应用。
 
 ## 进行中
 
@@ -67,7 +70,6 @@
 
 ## 最近验证
 
-- 2026-07-22：需求 11 全量 JVM 测试 19 个套件、82 项全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 17／API 37 `Medium_Phone` 模拟器以 `UiAutomation` 直接注入触摸完成 4 项设备测试，覆盖正向／反向／连续翻页、末页边界、横滑不误启动、点击／长按、背景关闭、重开归零和 Left／Right／Bottom 锚点，真实密度截图布局正常，crash buffer 为空。
 - 2026-07-22：`AGENTS.md` 已明确自动化测试默认按改动目标定向执行，历史用例不自动重复，全量回归仅由明确条件触发；互斥权限测试须分组并恢复设备状态。
 - 2026-07-23：快速启动器裁剪边界修复通过 `QuickLauncherPagingTest` 定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的 `QuickLauncherPanelTest` 5 项全部通过，新增断言确认 Pager 与 260dp 浮层同宽且静止页保留左右留白，横滑中间帧确认图标只在浮层真实边界处裁剪，crash buffer 为空。
 - 2026-07-23：快速启动器配置与自适应浮层通过 22 项定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的浮层 8 项、设置页 1 项设备测试全部通过，覆盖紧凑尺寸收缩、自定义行列容量、宽度扩展与安全夹取、会话冻结、10 页窗口化指示器、配置保存及旧数据默认值。真实 ActionSelect UI 树确认整行与设置按钮正确分流，截图布局正常，crash buffer 为空。
@@ -77,3 +79,4 @@
 - 2026-07-23：移除手势设置页双击总开关及 `GestureSettings.doubleTapEnabled`，改为当前触钮存在有效 `doubleClick` 时自动启用双击等待、未配置时即时派发单击；10 项定向 JVM 测试和 Android 16／API 36 模拟器上的 10 项定向仪器测试全部通过，覆盖四边双击、未配置动作即时单击、配置快照、序列化和设置页无总开关。`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；crash buffer 无本应用记录，仅有测试前的系统 Bluetooth 崩溃。
 - 2026-07-23：顶部默认主触钮与共享 `60dp` 厚度上限通过 `TopDataStoreInstrumentedTest` 定向仪器测试 2／2；Android 16／API 36 `Medium_Phone` 模拟器验证重置后恢复主触钮、默认标识、关闭状态、全宽、空动作及四边共享上限，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
 - 2026-07-23：精准点击快速移动加速通过 20 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；覆盖慢速基础增益、平滑过渡、快速封顶、减速／反向立即恢复、重置清理、退出悬停后的曲线重启及旧配置默认开启。Android 16／API 36 `Medium_Phone` 模拟器上的设置顺序／持久化与准星悬停回归 2 项定向仪器测试全部通过，crash buffer 为空。
+- 2026-07-23：工作资料应用支持通过 2 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；Android 16／API 36 `Medium_Phone` 模拟器创建 `SideGesture-QA` 工作资料后，定向仪器测试 1／1 通过，确认 ActionSelect 数据源同时保留主资料／工作资料同包应用、系统徽标可读取且 `launchAppInfo` 实际启动 `u10` Activity。真实 ActionSelect UI 树与截图确认带公文包徽标的应用可见，选中后提示保存成功并回显到手势动作，crash buffer 为空；按验收需要保留工作资料和测试配置。
