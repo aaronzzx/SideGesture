@@ -31,6 +31,7 @@
 - [x] 2026-07-23：完成需求 6，新增顶部触钮、独立 DataStore 和设置入口；触钮按完整屏幕宽度直接贴顶并固定 `y = 0`，接入四边手势、三种动画、动作浮层和固定截图安全区；备份恢复增加 generation／session／digest／journal 门禁，支持有／无服务提交、崩溃重放与回滚。
 - [x] 2026-07-23：修复 `:service` 进程 Compose Toast 被动作浮层遮挡的问题；主进程改为单一 Toast 宿主，服务进程按消息动态创建最高层、不可触摸的无障碍浮层，并保持系统截图期间的临时隐藏行为。
 - [x] 2026-07-23：为顶部触钮增加默认关闭且不可删除的全宽主触钮，普通滑动和长滑均不预设动作；厚度继续与其它边缘共用 `60dp` 调节上限。
+- [x] 2026-07-23：为精准点击新增默认开启的“快速移动加速”，设置项紧跟“悬停弹窗”；慢速移动保持基础速率，快速移动按速度曲线平滑提升至现有速率上限，减速、反向、重置及退出悬停选择时立即恢复精细控制。
 
 ## 进行中
 
@@ -66,7 +67,6 @@
 
 ## 最近验证
 
-- 2026-07-20：需求 9 新增 8 项 JVM 回归测试，全量 18 个套件、75 项测试全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 15／API 35 模拟器确认勾选后列表不跳位、保存后 DataStore 为 `com.android.settings`、重进保持勾选且置顶，左右触钮在设置前台带 `NOT_TOUCHABLE`、离开后恢复，模拟器与服务重启后仍命中。完整设备测试 15 项中 11 项通过，3 项亮度测试因 `WRITE_SETTINGS` 前置权限未授予被拦截，另 1 项为既有 AdvancedSettings 显示断言；未发现本应用崩溃，测试状态已恢复。
 - 2026-07-22：需求 11 全量 JVM 测试 19 个套件、82 项全部通过，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；Android 17／API 37 `Medium_Phone` 模拟器以 `UiAutomation` 直接注入触摸完成 4 项设备测试，覆盖正向／反向／连续翻页、末页边界、横滑不误启动、点击／长按、背景关闭、重开归零和 Left／Right／Bottom 锚点，真实密度截图布局正常，crash buffer 为空。
 - 2026-07-22：`AGENTS.md` 已明确自动化测试默认按改动目标定向执行，历史用例不自动重复，全量回归仅由明确条件触发；互斥权限测试须分组并恢复设备状态。
 - 2026-07-23：快速启动器裁剪边界修复通过 `QuickLauncherPagingTest` 定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的 `QuickLauncherPanelTest` 5 项全部通过，新增断言确认 Pager 与 260dp 浮层同宽且静止页保留左右留白，横滑中间帧确认图标只在浮层真实边界处裁剪，crash buffer 为空。
@@ -76,3 +76,4 @@
 - 2026-07-23：`:service` Toast 修复通过 `ServiceToastOverlayInstrumentedTest` 定向仪器测试 1／1 与 `assembleDebug`；Android 16／API 36 `Medium_Phone` 模拟器由左侧手势打开快捷工具后触发相机权限提示，截图确认 Toast 显示在快捷工具浮层上方，服务 Overlay Window 从 8 个增至 9 个且新窗口位于原最高窗口之前；crash buffer 为空，无障碍服务与测试配置已恢复。
 - 2026-07-23：移除手势设置页双击总开关及 `GestureSettings.doubleTapEnabled`，改为当前触钮存在有效 `doubleClick` 时自动启用双击等待、未配置时即时派发单击；10 项定向 JVM 测试和 Android 16／API 36 模拟器上的 10 项定向仪器测试全部通过，覆盖四边双击、未配置动作即时单击、配置快照、序列化和设置页无总开关。`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；crash buffer 无本应用记录，仅有测试前的系统 Bluetooth 崩溃。
 - 2026-07-23：顶部默认主触钮与共享 `60dp` 厚度上限通过 `TopDataStoreInstrumentedTest` 定向仪器测试 2／2；Android 16／API 36 `Medium_Phone` 模拟器验证重置后恢复主触钮、默认标识、关闭状态、全宽、空动作及四边共享上限，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
+- 2026-07-23：精准点击快速移动加速通过 20 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；覆盖慢速基础增益、平滑过渡、快速封顶、减速／反向立即恢复、重置清理、退出悬停后的曲线重启及旧配置默认开启。Android 16／API 36 `Medium_Phone` 模拟器上的设置顺序／持久化与准星悬停回归 2 项定向仪器测试全部通过，crash buffer 为空。

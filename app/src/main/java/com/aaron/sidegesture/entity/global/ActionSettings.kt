@@ -32,7 +32,9 @@ data class ActionSettings(
         // 兼容历史序列化字段；DataStore 迁移统一写回 Crosshair，运行时仅使用准星
         val style: Style = Style.Crosshair,
         // 悬停弹窗(单击/双击/长按三选项)开关，关闭则抬手直接单击
-        val popupEnabled: Boolean = true
+        val popupEnabled: Boolean = true,
+        // 快速滑动时临时提高增益
+        val fastMoveAccelerationEnabled: Boolean = true
     ) {
         enum class Action {
             Tap, DoubleTap, LongPress

@@ -41,6 +41,16 @@ class ActionSettingsVM : BaseComposeVM<UiState, UiEvent>() {
         }
     }
 
+    fun onMoveScreenFastMoveAccelerationEnabledChange(enabled: Boolean) {
+        val newActionSettings = uiState.actionSettings.copy(
+            moveScreen = uiState.actionSettings.moveScreen.copy(
+                fastMoveAccelerationEnabled = enabled
+            )
+        )
+        updateUiState { it.copy(actionSettings = newActionSettings) }
+        persistActionSettings(newActionSettings)
+    }
+
     fun onMoveScreenHoverChange(hoverDelayMs: Float) {
         updateUiState {
             it.copy(

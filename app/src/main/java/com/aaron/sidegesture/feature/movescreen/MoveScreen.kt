@@ -54,6 +54,7 @@ import com.aaron.compose.utils.SystemFontScaleHandler
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
 import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
+import com.aaron.sidegesture.constant.GlobalSettings.MaxMoveScreenRate
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.MoveScreenData
 import com.aaron.sidegesture.entity.global.ActionSettings
@@ -69,11 +70,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * @author aaronzzxup@gmail.com
  * @since 2025/5/21
  */
+
+private const val AccelerationStartScreenRatioPerSecond = 0.35f
+private const val AccelerationMaxScreenRatioPerSecond = 1.25f
+private const val AccelerationSpeedSmoothing = 0.5f
+private const val NanosPerSecond = 1_000_000_000f
 
 @Composable
 fun MoveScreen(
@@ -330,6 +337,7 @@ class MoveScreenState(
         IntSize(ScreenUtils.getScreenWidth(), ScreenUtils.getScreenHeight())
     },
     private val hoverDelay: suspend (Long) -> Unit = { delay(it) },
+    private val nanoTimeProvider: () -> Long = System::nanoTime,
     private val onActionSelected: () -> Unit = {}
 ) : LongSlideState() {
 
@@ -359,10 +367,14 @@ class MoveScreenState(
     private var frozenTarget: Offset? by mutableStateOf(null)
     private var hoverGeneration = 0L
     private var popupPointerMoved = false
+    private var lastDragTimeNanos: Long? = null
+    private var smoothedSpeed = 0f
+    private var previousDragAmount = Offset.Zero
 
     override fun onDragStart(offset: Offset) {
         super.onDragStart(offset)
         visible = true
+        restartAccelerationTracking()
     }
 
     override fun onDrag(dragAmount: Offset) {
@@ -373,7 +385,7 @@ class MoveScreenState(
             return
         }
 
-        offset += dragAmount * actionSettings.rate
+        offset += dragAmount * resolveMoveRate(dragAmount)
         srcOffset += dragAmount
         updateHoverState()
     }
@@ -424,6 +436,7 @@ class MoveScreenState(
         pendingAction = null
         popupPointerMoved = false
         phase = MoveScreenPhase.Following
+        clearAccelerationTracking()
     }
 
     private fun updatePopupSelection() {
@@ -452,7 +465,64 @@ class MoveScreenState(
         pendingAction = null
         popupPointerMoved = false
         phase = MoveScreenPhase.Following
+        restartAccelerationTracking()
         updateHoverState()
+    }
+
+    private fun resolveMoveRate(dragAmount: Offset): Float {
+        val baseRate = actionSettings.rate
+        if (!actionSettings.fastMoveAccelerationEnabled) return baseRate
+
+        val now = nanoTimeProvider()
+        val previousTime = lastDragTimeNanos
+        lastDragTimeNanos = now
+        if (dragAmount == Offset.Zero || previousTime == null || now <= previousTime) {
+            smoothedSpeed = 0f
+            return baseRate
+        }
+
+        val reversed = previousDragAmount != Offset.Zero &&
+            previousDragAmount.x * dragAmount.x + previousDragAmount.y * dragAmount.y <= 0f
+        previousDragAmount = dragAmount
+        if (reversed) {
+            smoothedSpeed = 0f
+            return baseRate
+        }
+
+        val elapsedSeconds = (now - previousTime) / NanosPerSecond
+        val distance = sqrt(
+            dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y
+        )
+        val speed = distance / elapsedSeconds
+        smoothedSpeed = if (speed <= smoothedSpeed) {
+            speed
+        } else {
+            smoothedSpeed + (speed - smoothedSpeed) * AccelerationSpeedSmoothing
+        }
+
+        val screenSize = screenSizeProvider()
+        val shortEdge = minOf(screenSize.width, screenSize.height).toFloat()
+        if (shortEdge <= 0f) return baseRate
+
+        val accelerationStart = shortEdge * AccelerationStartScreenRatioPerSecond
+        val accelerationMax = shortEdge * AccelerationMaxScreenRatioPerSecond
+        val linearProgress = (
+            (smoothedSpeed - accelerationStart) / (accelerationMax - accelerationStart)
+        ).coerceIn(0f, 1f)
+        val easedProgress = linearProgress * linearProgress * (3f - 2f * linearProgress)
+        val maxRate = maxOf(baseRate, MaxMoveScreenRate)
+        return baseRate + (maxRate - baseRate) * easedProgress
+    }
+
+    private fun restartAccelerationTracking() {
+        clearAccelerationTracking()
+        lastDragTimeNanos = nanoTimeProvider()
+    }
+
+    private fun clearAccelerationTracking() {
+        lastDragTimeNanos = null
+        smoothedSpeed = 0f
+        previousDragAmount = Offset.Zero
     }
 
     private fun updateHoverState() {

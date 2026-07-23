@@ -286,6 +286,8 @@
     <string name="disable_keep_screen_on">已取消屏幕常亮</string>
     <string name="move_screen_disabled_cause_long_slide_trigger_immediately">无法精准点击，请先开启长距离滑动立即触发</string>
     <string name="move_screen_rate">移动速率</string>
+    <string name="move_screen_fast_move_acceleration">快速移动加速</string>
+    <string name="move_screen_fast_move_acceleration_summary">快速滑动时临时提高移动速率，减速或反向移动后立即恢复</string>
     <string name="move_screen_popup_enabled">悬停弹窗</string>
     <string name="move_screen_popup_enabled_summary">开启后悬停可选单击/双击/长按，关闭则抬手直接单击</string>
 

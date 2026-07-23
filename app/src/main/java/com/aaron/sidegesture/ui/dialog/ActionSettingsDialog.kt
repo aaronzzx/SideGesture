@@ -76,6 +76,16 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
                     text = stringResource(id = R.string.move_screen_popup_enabled),
                     secondaryText = stringResource(id = R.string.move_screen_popup_enabled_summary)
                 )
+                MyTextSwitch(
+                    checked = moveScreen.fastMoveAccelerationEnabled,
+                    onCheckedChange = {
+                        vm.onMoveScreenFastMoveAccelerationEnabledChange(it)
+                    },
+                    text = stringResource(id = R.string.move_screen_fast_move_acceleration),
+                    secondaryText = stringResource(
+                        id = R.string.move_screen_fast_move_acceleration_summary
+                    )
+                )
                 MyTextSlider(
                     value = moveScreen.rate,
                     onValueChange = { vm.onMoveScreenRateChange(it) },

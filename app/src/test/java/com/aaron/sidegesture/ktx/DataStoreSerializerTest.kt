@@ -34,6 +34,7 @@ class DataStoreSerializerTest {
 
         assertEquals(ActionSettings.MoveScreen.Style.Crosshair, value.moveScreen.style)
         assertTrue(value.moveScreen.popupEnabled)
+        assertTrue(value.moveScreen.fastMoveAccelerationEnabled)
     }
 
     @Test
@@ -66,6 +67,7 @@ class DataStoreSerializerTest {
         val legacy = ActionSettings(
             moveScreen = ActionSettings.MoveScreen(
                 rate = 1.5f,
+                fastMoveAccelerationEnabled = true,
                 hoverDelayMs = 500L,
                 radius = 24,
                 style = ActionSettings.MoveScreen.Style.Magnifier,
@@ -79,6 +81,7 @@ class DataStoreSerializerTest {
 
         assertEquals(ActionSettings.MoveScreen.Style.Crosshair, migrated.moveScreen.style)
         assertEquals(1.5f, migrated.moveScreen.rate)
+        assertTrue(migrated.moveScreen.fastMoveAccelerationEnabled)
         assertEquals(500L, migrated.moveScreen.hoverDelayMs)
         assertEquals(24, migrated.moveScreen.radius)
         assertEquals(false, migrated.moveScreen.popupEnabled)

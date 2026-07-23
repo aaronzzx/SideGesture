@@ -239,15 +239,172 @@ class MoveScreenStateTest {
         assertEquals(1, boundaryDelay.pendingCount)
     }
 
+    @Test
+    fun fastMoveAccelerationKeepsSlowMovementPreciseAndCapsFastMovement() {
+        val slowClock = ManualNanoTime()
+        val slowState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = slowClock::read
+        )
+        slowState.onDragStart(Offset(100f, 200f))
+
+        slowClock.advanceMillis(100)
+        slowState.onDrag(Offset(10f, 0f))
+
+        assertEquals(Offset(130f, 200f), slowState.displayFingerOnScreen)
+
+        val mediumClock = ManualNanoTime()
+        val mediumState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = mediumClock::read
+        )
+        mediumState.onDragStart(Offset(100f, 200f))
+
+        mediumClock.advanceMillis(10)
+        mediumState.onDrag(Offset(10f, 0f))
+
+        assertTrue(mediumState.displayFingerOnScreen.x > 130f)
+        assertTrue(mediumState.displayFingerOnScreen.x < 170f)
+
+        val fastClock = ManualNanoTime()
+        val fastState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = fastClock::read
+        )
+        fastState.onDragStart(Offset(100f, 200f))
+
+        fastClock.advanceMillis(1)
+        fastState.onDrag(Offset(10f, 0f))
+
+        assertEquals(Offset(170f, 200f), fastState.displayFingerOnScreen)
+    }
+
+    @Test
+    fun fastMoveAccelerationRestoresBaseRateAsSoonAsMovementSlows() {
+        val clock = ManualNanoTime()
+        val state = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = clock::read
+        )
+        state.onDragStart(Offset(100f, 200f))
+        clock.advanceMillis(1)
+        state.onDrag(Offset(10f, 0f))
+
+        clock.advanceMillis(100)
+        state.onDrag(Offset(10f, 0f))
+
+        assertEquals(Offset(200f, 200f), state.displayFingerOnScreen)
+    }
+
+    @Test
+    fun fastMoveAccelerationRestoresBaseRateImmediatelyWhenDirectionReverses() {
+        val clock = ManualNanoTime()
+        val state = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = clock::read
+        )
+        state.onDragStart(Offset(100f, 200f))
+        clock.advanceMillis(1)
+        state.onDrag(Offset(10f, 0f))
+
+        clock.advanceMillis(1)
+        state.onDrag(Offset(-10f, 0f))
+
+        assertEquals(Offset(140f, 200f), state.displayFingerOnScreen)
+    }
+
+    @Test
+    fun leavingPopupRestartsFastMoveAccelerationCurve() {
+        val hoverDelay = ManualHoverDelay()
+        val resumedClock = ManualNanoTime()
+        val resumedState = createState(
+            hoverDelay = hoverDelay,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = resumedClock::read
+        )
+        resumedState.onDragStart(Offset(100f, 200f))
+        resumedClock.advanceMillis(1)
+        resumedState.onDrag(Offset(10f, 0f))
+        hoverDelay.resumeNext()
+        resumedState.updateActionPopupBounds(Rect(0f, 0f, 300f, 400f))
+        val frozenTarget = resumedState.displayFingerOnScreen
+
+        resumedClock.advanceMillis(1)
+        resumedState.onDrag(Offset(300f, 0f))
+        resumedClock.advanceMillis(10)
+        resumedState.onDrag(Offset(10f, 0f))
+        val resumedDelta = resumedState.displayFingerOnScreen.x - frozenTarget.x
+
+        val freshClock = ManualNanoTime()
+        val freshState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = freshClock::read
+        )
+        freshState.onDragStart(Offset(500f, 600f))
+        freshClock.advanceMillis(10)
+        freshState.onDrag(Offset(10f, 0f))
+        val freshDelta = freshState.displayFingerOnScreen.x - 500f
+
+        assertEquals(freshDelta, resumedDelta, 0.001f)
+    }
+
+    @Test
+    fun disabledAndResetFastMoveAccelerationUseBaseRate() {
+        val disabledClock = ManualNanoTime()
+        val disabledState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            nanoTimeProvider = disabledClock::read
+        )
+        disabledState.onDragStart(Offset(100f, 200f))
+        disabledClock.advanceMillis(1)
+        disabledState.onDrag(Offset(10f, 0f))
+
+        assertEquals(Offset(130f, 200f), disabledState.displayFingerOnScreen)
+
+        val resetClock = ManualNanoTime()
+        val resetState = createState(
+            hoverDelay = ManualHoverDelay(),
+            popupEnabled = false,
+            fastMoveAccelerationEnabled = true,
+            nanoTimeProvider = resetClock::read
+        )
+        resetState.onDragStart(Offset(100f, 200f))
+        resetClock.advanceMillis(1)
+        resetState.onDrag(Offset(10f, 0f))
+        resetState.onDragCancel()
+        resetState.onDragStart(Offset(500f, 600f))
+
+        resetClock.advanceMillis(100)
+        resetState.onDrag(Offset(10f, 0f))
+
+        assertEquals(Offset(530f, 600f), resetState.displayFingerOnScreen)
+    }
+
     private fun createState(
         hoverDelay: ManualHoverDelay,
         popupEnabled: Boolean = true,
+        fastMoveAccelerationEnabled: Boolean = false,
+        nanoTimeProvider: () -> Long = System::nanoTime,
         onActionSelected: () -> Unit = {}
     ): MoveScreenState {
         hoverDelays += hoverDelay
         return MoveScreenState(
             actionSettings = ActionSettings.MoveScreen(
                 rate = 2f,
+                fastMoveAccelerationEnabled = fastMoveAccelerationEnabled,
                 hoverDelayMs = 600L,
                 radius = 20,
                 style = ActionSettings.MoveScreen.Style.Crosshair,
@@ -256,6 +413,7 @@ class MoveScreenStateTest {
             coroutineScope = CoroutineScope(Dispatchers.Unconfined),
             screenSizeProvider = { IntSize(1000, 2000) },
             hoverDelay = hoverDelay::await,
+            nanoTimeProvider = nanoTimeProvider,
             onActionSelected = onActionSelected
         ).also(states::add)
     }
@@ -283,6 +441,17 @@ class MoveScreenStateTest {
             while (continuations.isNotEmpty()) {
                 resumeNext()
             }
+        }
+    }
+
+    private class ManualNanoTime {
+
+        private var now = 0L
+
+        fun read(): Long = now
+
+        fun advanceMillis(millis: Long) {
+            now += millis * 1_000_000L
         }
     }
 }
