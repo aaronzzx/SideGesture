@@ -14,8 +14,8 @@ android {
         applicationId = "gulu.gulugulu"
         minSdk = 23
         targetSdk = 35
-        versionCode = 10504
-        versionName = "1.5.4"
+        versionCode = 10600
+        versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -36,6 +36,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
