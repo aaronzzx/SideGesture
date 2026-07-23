@@ -21,7 +21,7 @@ class AdvancedSettingsScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun hideGestureOnImeSettingDisplaysExplanationAndUpdatesValue() {
+    fun hideGestureOnImeSettingDisplaysLabelAndUpdatesValue() {
         var checked by mutableStateOf(false)
         var callbackValue = false
         composeTestRule.setContent {
@@ -36,10 +36,7 @@ class AdvancedSettingsScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("输入法时隐藏触钮").assertIsDisplayed()
-        composeTestRule
-            .onNodeWithText("输入法弹出时隐藏并禁用所有边缘触钮")
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("弹出软键盘").assertIsDisplayed()
         composeTestRule.onNode(isToggleable()).assertIsOff().performClick()
         composeTestRule.waitForIdle()
 

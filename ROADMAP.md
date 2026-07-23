@@ -2,18 +2,20 @@
 
 ## 当前阶段
 
-当前处于本轮功能更新的收尾阶段。11 项需求已按复杂度拆成四批，其中需求 7、8 共用亮度状态与系统适配链，合并为一份 SPEC。
+本轮需求开发和发布前功能回归已经完成。阶段性 SPEC 文档已完成使命并移除，需求实现与长期状态以代码、自动化测试和本路线图为准。
 
-需求 10、1、4、3、7、8、9、11、5、6 已完成实现与对应验证。需求 6 已覆盖直接贴顶的 Top Window、默认主触钮、四边手势与浮层、独立配置、旧备份兼容，以及主进程／`:service` 的失败关闭恢复事务。
+本轮需求实现已全部完成。需求 6 已覆盖直接贴顶的 Top Window、默认主触钮、四边手势与浮层、独立配置、旧备份兼容，以及主进程／`:service` 的失败关闭恢复事务。
 
 开发基础设施方面已完成本地自动化测试基线；设备测试 APK、`connectedDebugAndroidTest` 与 UI 树运行时验证已在 `Nexus_5_API_35` 上通过，并已补充 AVD 发现与启动规范。
 
 本轮追加完成关联工作资料中未冻结桌面应用的枚举、选择、持久化、徽标图标和普通启动，手势动作与快速启动器共用的 ActionSelect 应用页均可选择工作资料应用。
 
+2026-07-23 发布前功能回归已通过：输入法隐藏设置的测试已按最终文案同步，Shizuku 亮度测试在服务通过无线调试正确启动后连续两轮冷启动通过，结合此前完整回归的当前有效结果为 49／49。当前没有功能性发版阻塞；Release Lint 仍记录备份恢复摘要在 API 23～25 的 `java.nio.file` 兼容风险，本轮暂不处理。
+
 ## 已完成
 
 - [x] 2026-07-18：完成 11 项需求的当前代码链、影响范围、依赖、风险和验收边界分析。
-- [x] 2026-07-18：建立 [SPEC 索引](docs/spec/README.md)，保留原需求编号，并按复杂度定义四个实施批次。
+- [x] 2026-07-18：建立阶段性 SPEC 索引，保留原需求编号，并按复杂度定义四个实施批次。
 - [x] 2026-07-18：完成 10 份 SPEC 草案，需求 7、8 合并为快速工具亮度 SPEC。
 - [x] 2026-07-18：完成第一轮独立静态审查，并修复 Top 的 IME／双击契约、备份恢复门禁、状态复杂度一致性及亮度需求编号问题。
 - [x] 2026-07-18：完成三轮独立静态审查，最终限域复审通过，无剩余文档行动项。
@@ -35,48 +37,31 @@
 - [x] 2026-07-23：为顶部触钮增加默认关闭且不可删除的全宽主触钮，普通滑动和长滑均不预设动作；厚度继续与其它边缘共用 `60dp` 调节上限。
 - [x] 2026-07-23：为精准点击新增默认开启的“快速移动加速”，设置项紧跟“悬停弹窗”；慢速移动保持基础速率，快速移动按速度曲线平滑提升至现有速率上限，减速、反向、重置及退出悬停选择时立即恢复精细控制。
 - [x] 2026-07-23：支持枚举关联工作资料中的未冻结桌面应用，以资料序列号区分同包同 Activity，显示系统工作徽标并通过 `LauncherApps` 普通启动；ActionSelect 应用页可直接选择并持久化工作资料应用。
+- [x] 2026-07-23：本轮需求开发完成后移除阶段性 SPEC 文档，并清理路线图中的失效链接和旧需求待办。
+- [x] 2026-07-23：补充 SPEC 生命周期规范，要求已完成并验证的需求在当次交付中删除对应 SPEC，同时保留未完成文档并同步长期约束与引用。
 
 ## 进行中
 
-当前无可继续实施的业务项。需求 2 等待真实外部快捷方式协议样本，其余已排期需求均已完成。
+当前没有继续实施的产品需求或功能回归失败项。API 23～25 的备份恢复兼容风险本轮暂不处理。
 
 ## 待办
 
-### 第一批：低复杂度优先
-
-- [x] 需求 1：[为文本 Slider 显示格式化后的当前值](docs/spec/01-slider-value-display.md)。
-- [x] 需求 4：[输入法出现时隐藏并禁用手势触钮](docs/spec/04-hide-gesture-on-ime.md)。
-
-### 第二批：中高复杂度／诊断先行
-
-- [x] 需求 3：[移屏悬停后恢复移动并支持再次悬停](docs/spec/03-move-screen-rehover.md)。
-- [x] 需求 7、8：[统一快速工具亮度读写、映射与刷新](docs/spec/07-08-quick-tools-brightness.md)。
-- [x] 需求 9：[定位并修复应用黑名单持久化与服务命中链路](docs/spec/09-app-blacklist-sync.md)。
-- [x] 需求 11：[快速启动器改为横向整页翻页](docs/spec/11-quick-launcher-horizontal-paging.md)。
-
-### 第三批：高复杂度或协议待确认
-
-- [x] 需求 5：[增加双击手势](docs/spec/05-double-tap-gesture.md)。
-- [ ] 需求 2：[支持外部应用与 SideGesture 交换快捷方式](docs/spec/02-external-shortcut-import.md)。
-
-### 第四批：架构级
-
-- [x] 需求 6：[增加顶部手势触钮](docs/spec/06-top-gesture-button.md)。
+本轮无产品需求开发或功能回归待办；已知风险统一记录在“阻塞／待确认”。
 
 ## 阻塞／待确认
 
-- 需求 2：阻塞。需要取得至少一个目标来源应用、Android 版本及真实 Intent／返回协议样本，确认快捷方式数据流方向后才能冻结实现方案。
+- 已知兼容风险，本轮暂不处理：`RestoreDigest` 使用 `File.toPath()` 与 `Path.relativize()`；当前默认 `desugar_jdk_libs` 不为 API 23～25 提供这些 `java.nio.file` API，Release Lint 已报 5 个 `NewApi` 错误。
 - 需求 6 兼容性观察：顶部触钮固定贴 `y = 0`，不因状态栏、刘海／挖孔或系统手势 Insets 下移；仍需在更多 OEM 真机记录系统是否优先抢占顶部触摸，但不阻塞当前交付。
 
 ## 最近验证
 
-- 2026-07-22：`AGENTS.md` 已明确自动化测试默认按改动目标定向执行，历史用例不自动重复，全量回归仅由明确条件触发；互斥权限测试须分组并恢复设备状态。
-- 2026-07-23：快速启动器裁剪边界修复通过 `QuickLauncherPagingTest` 定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的 `QuickLauncherPanelTest` 5 项全部通过，新增断言确认 Pager 与 260dp 浮层同宽且静止页保留左右留白，横滑中间帧确认图标只在浮层真实边界处裁剪，crash buffer 为空。
-- 2026-07-23：快速启动器配置与自适应浮层通过 22 项定向 JVM 测试、`assembleDebug` 和 `assembleDebugAndroidTest`；Android 16／API 36 模拟器上的浮层 8 项、设置页 1 项设备测试全部通过，覆盖紧凑尺寸收缩、自定义行列容量、宽度扩展与安全夹取、会话冻结、10 页窗口化指示器、配置保存及旧数据默认值。真实 ActionSelect UI 树确认整行与设置按钮正确分流，截图布局正常，crash buffer 为空。
-- 2026-07-23：需求 5 的 12 项定向 JVM 测试、10 项 API 36 仪器测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；真实按钮设置页完成独立双击动作保存回显，左侧 `42px` 无障碍触钮双击“主页键”成功切换到系统 Launcher，单次点击未误执行双击，crash buffer 为空，测试后的动作和无障碍服务已恢复为无动作／禁用状态。
-- 2026-07-23：需求 6 全量 JVM 回归 25 个套件、111 项全部通过；API 36 定向设备测试 26 项全部通过，并在横屏额外复跑顶部 Window 参数，覆盖 `y = 0`、五方向／反向手势、四边双击、独立 DataStore、顶部浮层锚点、旧备份保留／显式清空／非法项拒绝、有／无 `:service` 握手及 journal 重放／回滚。真实首页 UI tree 确认“顶部触钮”分组与空态“添加触钮”入口；`assembleDebug`、`assembleDebugAndroidTest`、R8 `assembleRelease` 与 `git diff --check` 通过；真实 `SideGestureService` 冷启动完成系统绑定并创建 9 个 Overlay Window，crash buffer 为空，验证后无障碍、旋转和弹窗状态均已恢复。
 - 2026-07-23：`:service` Toast 修复通过 `ServiceToastOverlayInstrumentedTest` 定向仪器测试 1／1 与 `assembleDebug`；Android 16／API 36 `Medium_Phone` 模拟器由左侧手势打开快捷工具后触发相机权限提示，截图确认 Toast 显示在快捷工具浮层上方，服务 Overlay Window 从 8 个增至 9 个且新窗口位于原最高窗口之前；crash buffer 为空，无障碍服务与测试配置已恢复。
 - 2026-07-23：移除手势设置页双击总开关及 `GestureSettings.doubleTapEnabled`，改为当前触钮存在有效 `doubleClick` 时自动启用双击等待、未配置时即时派发单击；10 项定向 JVM 测试和 Android 16／API 36 模拟器上的 10 项定向仪器测试全部通过，覆盖四边双击、未配置动作即时单击、配置快照、序列化和设置页无总开关。`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；crash buffer 无本应用记录，仅有测试前的系统 Bluetooth 崩溃。
 - 2026-07-23：顶部默认主触钮与共享 `60dp` 厚度上限通过 `TopDataStoreInstrumentedTest` 定向仪器测试 2／2；Android 16／API 36 `Medium_Phone` 模拟器验证重置后恢复主触钮、默认标识、关闭状态、全宽、空动作及四边共享上限，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
 - 2026-07-23：精准点击快速移动加速通过 20 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；覆盖慢速基础增益、平滑过渡、快速封顶、减速／反向立即恢复、重置清理、退出悬停后的曲线重启及旧配置默认开启。Android 16／API 36 `Medium_Phone` 模拟器上的设置顺序／持久化与准星悬停回归 2 项定向仪器测试全部通过，crash buffer 为空。
 - 2026-07-23：工作资料应用支持通过 2 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；Android 16／API 36 `Medium_Phone` 模拟器创建 `SideGesture-QA` 工作资料后，定向仪器测试 1／1 通过，确认 ActionSelect 数据源同时保留主资料／工作资料同包应用、系统徽标可读取且 `launchAppInfo` 实际启动 `u10` Activity。真实 ActionSelect UI 树与截图确认带公文包徽标的应用可见，选中后提示保存成功并回显到手势动作，crash buffer 为空；按验收需要保留工作资料和测试配置。
+- 2026-07-23：发布前完整回归中 Debug／Release JVM 测试各 118 项全部通过，Debug、测试 APK 与 R8 Release 构建成功；Android 16／API 36 `Medium_Phone` 模拟器上的 49 项仪器测试共 46 项通过、3 项稳定失败，失败为输入法隐藏设置文案 1 项和 Shizuku 亮度能力 2 项。Release／Debug Lint 分别发现 11／12 个 Error，其中 `RestoreDigest` 的 5 个 API 兼容错误影响 API 23～25；WRITE_SETTINGS 亮度组 3 项、工作资料、真实首页与高级设置 UI、无障碍服务冷启动及 10 个 Overlay Window 均验证通过，crash buffer 为空，测试后的亮度、旋转、权限、无障碍和前台页面状态均已恢复。
+- 2026-07-23：确认高级设置“弹出软键盘”为最终产品文案且不需要副说明，将 `AdvancedSettingsScreenTest` 改为校验新文案和开关状态；`assembleDebug`、`assembleDebugAndroidTest` 与 API 36 定向仪器测试 1／1 通过，crash buffer 为空。结合完整回归结果，当前仪器测试有效结果更新为 47／49，通过项不再包含文案误报，剩余失败均为 Shizuku 亮度能力测试；API 23～25 的备份恢复兼容风险按当前决定暂不处理。
+- 2026-07-23：用户确认本轮需求开发完毕后移除全部阶段性 SPEC 文档；路线图已删除失效链接、需求批次和需求 2 的旧待办状态，并保留发布状态与已知兼容风险。
+- 2026-07-23：Shizuku 服务通过无线调试正确启动后，此前的亮度测试失败未再复现，当前证据支持其属于测试环境前置条件问题而非产品代码回归；Shizuku 服务以 `shell` 用户运行、应用已授予 `API_V23` 且 `WRITE_SETTINGS` 保持 `default` 时，`QuickToolsBrightnessShizukuInstrumentedTest` 连续两轮强制冷启动均为 2／2 通过，共 4／4。测试覆盖亮度写入、自动模式切换、外部变化观察及停止／重启读回；结束后亮度恢复为 102、手动模式，权限状态保持不变，crash buffer 为空。结合此前结果，当前 49 项仪器测试有效结果为 49／49。
+- 2026-07-23：`AGENTS.md` 新增 SPEC 生命周期规范，明确需求实现并验证后当次删除对应 SPEC，整轮完成后清理剩余 SPEC、索引与空目录；删除前必须沉淀长期约束并清理引用，未完成或未验证的 SPEC 保留。该清理为严格限于 SPEC 的项目级预授权，不扩展到其他文件。
