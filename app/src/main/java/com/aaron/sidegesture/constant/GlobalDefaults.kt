@@ -213,7 +213,16 @@ object GestureButtonDefaults {
             longSlideActions = GestureActions(center = Action.toList(GlobalActions.RECENT))
         )
     )
-    val TopDefaults = emptyList<GestureButton>()
+    val TopDefaults = listOf(
+        GestureButton(
+            id = ID_DEFAULT,
+            position = Position.Top,
+            enabled = false,
+            start = 0.0f,
+            end = 1.0f,
+            alignRegion = false
+        )
+    )
 }
 
 object ActionSettingsDefaults {

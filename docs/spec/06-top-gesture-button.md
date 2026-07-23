@@ -2,7 +2,7 @@
 
 ## 状态
 
-已完成（2026-07-23）。顶部触钮、四边手势／动画／动作浮层、独立设置与 DataStore、备份兼容及跨进程恢复门禁均已实现；顶部触钮 Window 按完整屏幕宽度计算并固定 `y = 0`。全量 JVM、定向仪器测试、真实无障碍服务冷启动及 Debug／Release 构建已通过。
+已完成（2026-07-23）。顶部触钮、四边手势／动画／动作浮层、独立设置与 DataStore、备份兼容及跨进程恢复门禁均已实现；顶部默认提供一个关闭且不可删除的全宽主触钮，Window 按完整屏幕宽度计算并固定 `y = 0`。全量 JVM、定向仪器测试、真实无障碍服务冷启动及 Debug／Release 构建已通过。
 
 ## 复杂度
 
@@ -16,7 +16,7 @@
 
 - 新增 `Position.Top`，顶部触钮使用独立的 `topGestureButtons` 集合和独立 DataStore，不混入 side 集合。side 仍保留 Left／Right 成对创建、复制和对齐语义。
 - Top 的几何和方向以 Bottom 的镜像为基线，主要方向为向下进入屏幕；水平滑动、斜向滑动、长滑、长按和点击复用通用输入模型，并在验收矩阵中写清坐标和动作方向。
-- 旧版本没有 Top 数据时读取为空集合，不自动生成或启用任何 Top 触钮；旧用户的 Left、Right、Bottom 配置、触摸时序和动作不改变。
+- 旧版本没有 Top 数据时读取默认关闭的主触钮，不自动启用 Top 触摸；旧用户的 Left、Right、Bottom 配置、触摸时序和动作不改变。
 - 顶部触钮效仿 Bottom 直接贴边：使用全屏宽度比例计算横向区间，`y = 0`，不叠加状态栏、display cutout 或系统手势 Insets 偏移。
 - ActionPanel、QuickLauncher、QuickTools、TaskSwitcher、PinnedScreenshot 等可见动作浮层能够识别 Top 锚点，并在系统安全区内展示；触钮命中区和可见浮层安全区是两套明确边界。
 
@@ -65,7 +65,7 @@
 ## 非目标
 
 - 不把 Top 触钮复制到 side 集合，不改变 Left／Right 的成对创建、复制、对齐、拦截系统返回手势和最大数量语义。
-- 不为旧用户自动生成 Top 默认触钮，不自动把 Bottom 或 side 的动作、颜色、位置迁移到 Top。
+- 不自动启用 Top 默认触钮，不把用户已有的 Bottom 或 side 配置迁移到 Top。
 - 不重定义 `GestureActions`、`TriggerDirection` 的业务含义，不新增第二套手势识别状态机或新的持久化动作格式。
 - 不给 Top 触钮增加状态栏、刘海、display cutout 或 mandatory gesture 的安全偏移；它必须和 Bottom 一样直接贴边，不能把可见浮层的安全区反向用于触钮定位。
 - 不修改 Release 签名、无障碍权限、截图协议、其它动作 Handler 的业务语义或不相关页面布局。
@@ -73,11 +73,11 @@
 
 ## 产品／交互决策
 
-1. **入口和默认值**：首页新增独立“顶部触钮”分组，默认折叠且为空；只有用户点击“添加触钮”才创建 Top。Top 默认 `enabled = true`、随机颜色、单个稳定 id，不创建镜像按钮。
+1. **入口和默认值**：首页新增独立“顶部触钮”分组，默认折叠并提供一个全宽主触钮。主触钮默认关闭、不可删除，不预设普通滑动或长滑动作；用户点击“添加触钮”可继续创建默认启用、随机颜色的普通 Top，单个稳定 id，不创建镜像按钮。
 2. **位置语义**：Top 触钮水平分布，`start/end` 表示屏幕宽度比例，`width` 表示触钮沿顶部边缘向下的厚度。主要滑动是从顶部向下，映射为 `Center`；向左／向右的水平长滑分别为 `Up2`／`Down2`，斜向区间沿角度设置解释。
 3. **编辑语义**：Top 只编辑自身列表项；不显示“复制另一侧”和 side 对齐开关。Top 的颜色、长度、厚度、动作和长滑动作独立保存。首版不显示系统手势排除选项，`excludeSystemGestureRects` 保持默认关闭。
 4. **浮层锚点**：Top 触发的动作面板和快捷工具面板从系统安全区顶部向下展开；快速启动器、任务切换器在安全区内以触点横坐标对齐。可见面板不能遮盖状态栏或 cutout，但这不改变 Top 触钮本身 `y = 0` 的命中区。
-5. **兼容行为**：没有 Top 配置时服务不创建 Top Window、不改变现有 `buttons` 的有效触摸、不改变截图安全区和现有三边动画。关闭或删除最后一个 Top 后，所有 Top 状态和窗口都应释放。
+5. **兼容行为**：没有 Top 配置文件时 DataStore 发射默认关闭的主触钮，服务即使挂载对应透明 Window 也不得启用触摸，不改变截图安全区和现有三边动画。普通 Top 全部删除后仍保留不可删除的主触钮。
 6. **方向文案**：设置页、角度页和动画图标必须使用“向下／左／右”及明确的斜向描述；禁止沿用 Bottom 的“向上”文案造成反向误解。
 
 ## 数据模型与兼容性
@@ -85,19 +85,19 @@
 ### Position 与按钮模型
 
 - 在 [`Position.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/Position.kt) 末尾新增 `Top`，保持现有枚举序列化值可读。不要重排已有枚举常量。
-- 在 [`GestureButton.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/GestureButton.kt) 新增 `TopDefaults`（默认空列表）和 `createTop()`。`compareTo()` 继续按 id、position 排序；同一 Top id 不代表存在另一个配对项。
-- `GestureButton` 的字段格式保持不变。Top 默认 `start/end` 使用现有长度约束，并直接按完整屏幕宽度换算；`alignRegion` 对 Top 固定为 false 或在 UI 中隐藏，不能传播到 side。
+- 在 [`GestureButton.kt`](../../app/src/main/java/com/aaron/sidegesture/entity/GestureButton.kt) 新增 `TopDefaults` 和 `createTop()`。`TopDefaults` 包含 `ID_DEFAULT` 主触钮，长度和开关状态与 Bottom 主触钮对齐，但普通滑动与长滑动作均为空；`compareTo()` 继续按 id、position 排序，同一 Top id 不代表存在另一个配对项。
+- `GestureButton` 的字段格式保持不变。Top 主触钮的 `start/end` 为 `0f..1f`，普通 Top 使用现有长度约束，两者都直接按完整屏幕宽度换算；`alignRegion` 对 Top 固定为 false 或在 UI 中隐藏，不能传播到 side。
 
 ### DataStore 与服务快照
 
 - 在 [`DataStoreFiles.kt`](../../app/src/main/java/com/aaron/sidegesture/constant/DataStoreFiles.kt) 使用已确认无历史占用的 `hh` 作为 `TOP_GESTURE_BUTTONS` 文件名，`ii`、`jj` 分别保存恢复协调状态和 journal。
-- 在 [`DataStoreHolder.kt`](../../app/src/main/java/com/aaron/sidegesture/utils/DataStoreHolder.kt) 增加 `topGestureButtons: DataStore<List<GestureButton>>`，默认值为 `GestureButton.TopDefaults`；`resetAll()` 必须同时清空 Top。
+- 在 [`DataStoreHolder.kt`](../../app/src/main/java/com/aaron/sidegesture/utils/DataStoreHolder.kt) 增加 `topGestureButtons: DataStore<List<GestureButton>>`，默认值为 `GestureButton.TopDefaults`；`resetAll()` 必须恢复 Top 主触钮。
 - [`ServiceSettingsSnapshot`](../../app/src/main/java/com/aaron/sidegesture/feature/servicesettings/ServiceSettingsStore.kt) 的来源改为 side、bottom、top 三条独立 Flow。运行时可继续提供按稳定顺序拼接的 `buttons`，但 UI、数量上限、复制和备份不得依赖拼接列表推导集合归属；建议同时保留 `topGestureButtons` 字段以便诊断和测试。
-- 服务侧必须等待三条 DataStore 均发射后再创建窗口；Top 首次缺失按空集合，不以 `GestureButton.TopDefaults` 中的非空值替代真实配置。
+- 服务侧必须等待三条 DataStore 均真实发射后再创建窗口；Top 配置文件缺失时由 DataStore 发射默认关闭的 `GestureButton.TopDefaults`，不得在真实数据发射前由服务层自行代入模型默认值。
 
 ### 版本和旧数据
 
-- 旧版本配置文件没有 `TOP_GESTURE_BUTTONS` 时，DataStore 首次读取为空集合；升级过程不写入任何 Top 文件，不自动出现触钮。
+- 旧版本配置文件没有 `TOP_GESTURE_BUTTONS` 时，DataStore 首次读取默认关闭的主触钮；升级过程不自动启用触摸，也不改写已有 side／bottom 配置。已经显式保存为空的 Top 列表继续尊重为空，不做强制迁移。
 - 新版本读取旧 `GestureButton` JSON 时，未知的 Top 不会出现在旧列表；旧 side／bottom 列表中的位置值保持原样。若序列化库对未知枚举采用失败策略，需在导入边界拒绝并提示，不得静默改成 Bottom。
 - 新版本写出的 Top 配置可被同版本恢复；是否允许旧版本打开含 Top 的备份由备份版本字段和明确错误提示控制，不能让旧版本误把 Top 当作 Bottom。
 
@@ -216,19 +216,19 @@ Top 不另起双击状态机，复用需求 5 的 `GestureActions.doubleClick` �
 以下阶段均已完成实现和直接验证：
 
 1. **数据与序列化**：新增 Position.Top、TopDefaults／createTop、DataStoreFiles／Holder、GestureAngles.top、Backup.top；补充缺失字段的兼容测试和 `resetAll()` 测试。
-2. **设置／首页**：接入 HomeVM／HomeScreen、按钮文案、GestureButtonSettings 路由和 VM 的四路存储分流；验证空集合不会自动出现触钮，Top 添加／删除／开关／动作保存可回读。
+2. **设置／首页**：接入 HomeVM／HomeScreen、按钮文案、GestureButtonSettings 路由和 VM 的四路存储分流；验证默认主触钮不可删除且不预设动作，Top 普通触钮添加／删除、开关和动作保存可回读，厚度继续与其它边缘共用 `60dp` 上限。
 3. **窗口和命中**：实现 Bottom 镜像的 `y = 0` 贴边几何、WindowLayoutParams、GestureButton.bounds、GestureWindowManager 的 Top Window 创建／更新／释放；验证状态栏、cutout、`hideGestureOnIme`、横屏和系统手势下 Window 与预览都保持同一完整屏幕坐标，IME 显示时必须隐藏且不可命中。
 4. **手势数学和动画**：补齐 SideGestureState 的 Top 方向、距离、长滑、长按、取消和回弹；接入 GestureAnglesScreen、Capsule／Bubble／Wave；验证正向下、水平、斜向、反向回滑和阈值。
 5. **动作浮层**：接入 ActionPanel、QuickLauncher、QuickTools、TaskSwitcher、ActionOverlayHost 锚点和 PinnedScreenshot 安全区；验证 Top 面板向下展开、不会遮挡系统区域，触摸状态和截图隐藏／恢复正确。
 6. **备份兼容与恢复门禁**：补 Backup／BackupHelper 新旧文件恢复、缺失字段保留策略、非法项拒绝和 `generation`／`phase/inProgress`／`serviceSession`／`blockedGenerationAck`／目标 digest／`commitReadyAck`／`appliedAck`／journal 协调；验证运行中的 service 先确认阻断再写入，无 service 走明确无消费者路径，恢复期间 fail closed，服务在 COMPLETE 前不发布快照，完成后只应用一次最终快照，崩溃可重放或回滚，协调状态不被备份覆盖。
-7. **四边回归**：对 Left、Right、Bottom、Top 做 portrait／landscape、cutout／无 cutout、三键／手势导航、`hideGestureOnIme`、锁屏、launcher、排除应用、截图、双击和服务重启回归；确认无 Top 配置的旧用户行为字节级／行为级不变。
+7. **四边回归**：对 Left、Right、Bottom、Top 做 portrait／landscape、cutout／无 cutout、三键／手势导航、`hideGestureOnIme`、锁屏、launcher、排除应用、截图、双击和服务重启回归；确认默认关闭的 Top 主触钮不改变旧用户触摸行为。
 
 ## 验收矩阵
 
 | 场景 | Left／Right | Bottom | Top | 通过标准 |
 | --- | --- | --- | --- | --- |
-| 旧配置启动 | 默认 side 列表 | 默认 bottom 列表 | 缺失字段为空、不创建 Window | 旧用户不出现 Top，不改变三边触摸和动作 |
-| 首页增删改 | 成对创建、复制、对齐保持 | 单个创建保持 | 单个创建，独立列表，无复制／对齐 | UI、DataStore、服务快照最终一致 |
+| 旧配置启动 | 默认 side 列表 | 默认 bottom 列表 | 缺失配置时显示默认关闭的主触钮 | Top 不启用触摸，不改变三边触摸和动作 |
+| 首页增删改 | 成对创建、复制、对齐保持 | 单个创建保持 | 主触钮不可删除，普通触钮单个创建，独立列表，无复制／对齐 | UI、DataStore、服务快照最终一致 |
 | 窗口贴边几何 | 侧边历史坐标不变 | 底部继续直接贴边 | 始终按完整屏幕宽度且 `y = 0`，不叠加 status／cutout／mandatory gesture Insets | Window、bounds、预览同一完整屏幕坐标；横竖屏重算比例 |
 | `hideGestureOnIme` | 既有 IME 规则不回归 | 既有 IME 规则不回归 | `imeVisible = true` 时隐藏且不可命中；消失后恢复 `y = 0` | `imePadding` 为零、浮动键盘或过渡期间仍无 Top 触摸／动作，恢复后不改变 `start/end` |
 | 正向滑动 | 左／右向内 | 向上 | 向下 | 触发 `Center`，距离和动作正确 |
@@ -254,7 +254,7 @@ Top 不另起双击状态机，复用需求 5 的 `GestureActions.doubleClick` �
 - 系统 mandatory gesture 通常集中在左右／底部，但 OEM 可能扩展顶部保护区；首版保持 `excludeSystemGestureRects = false`，记录系统是否抢占，不据此改变贴边几何。
 - `GestureAngle` 的 Top 文案和 `Up`／`Down` 斜向命名存在产品解释风险。实施前应以坐标图确认“左下／右下”与动作方向，不能仅凭 Bottom 文案镜像。
 - 顶部触钮与状态栏下拉、通知 shade、浏览器顶部手势的竞争需要真机验证；系统优先级不可控时记录兼容性结果，不自动缩短、下移或禁用 Top。
-- Top 数量上限固定为 10，默认 `width` 沿用 Bottom 的 16dp，首页分组放在 Bottom 与 Side 之前；默认空集合，不写入不可逆迁移。
+- Top 数量上限固定为 10，默认 `width` 沿用 Bottom 的 `16dp`，可调厚度与其它边缘共用 `60dp` 上限，首页分组放在 Bottom 与 Side 之前；主触钮默认关闭且不预设动作，不写入不可逆迁移。
 - 旧版本打开含 Top 的备份时的提示方式、非法 Top 项的部分恢复策略和导入失败是否整体回滚需要确认；默认采用不静默转换、已知字段可恢复的安全策略。
 - `PinnedScreenshotManager` 的 top 安全区与固定截图拖拽边界可能改变已有顶部截图位置，需要独立做无 Top／有 Top A/B 回归。
 - 恢复握手会增加主进程、`:service`、MultiProcess DataStore 和 journal 的时序耦合；必须实测 service 运行、未运行、恢复中启动、通知乱序、摘要不一致、超时和双进程崩溃，任何未确认状态都保持 fail closed，不能用清除 `inProgress` 掩盖故障。

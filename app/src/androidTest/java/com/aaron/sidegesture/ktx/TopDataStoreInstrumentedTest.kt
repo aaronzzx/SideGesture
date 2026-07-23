@@ -1,14 +1,17 @@
 package com.aaron.sidegesture.ktx
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.GestureActions
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.feature.servicesettings.RestoreDigest
 import com.aaron.sidegesture.utils.DataStoreHolder
+import com.blankj.utilcode.util.ConvertUtils
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,7 +20,7 @@ import org.junit.runner.RunWith
 class TopDataStoreInstrumentedTest {
 
     @Test
-    fun topStoreIsIndependentAndResetAllRestoresEmptyDefault() = runBlocking {
+    fun topStoreIsIndependentAndResetAllRestoresMainDefault() = runBlocking {
         val original = RestoreDigest.readPayload()
         val top = GestureButton(
             id = "top-store-test",
@@ -41,7 +44,18 @@ class TopDataStoreInstrumentedTest {
 
             DataStoreHolder.resetAll()
 
-            assertTrue(DataStoreHolder.topGestureButtons.data.first().isEmpty())
+            val defaults = DataStoreHolder.topGestureButtons.data.first()
+            assertEquals(GestureButton.TopDefaults, defaults)
+            assertEquals(1, defaults.size)
+            val mainButton = defaults.single()
+            assertTrue(mainButton.isDefault)
+            assertEquals(Position.Top, mainButton.position)
+            assertFalse(mainButton.enabled)
+            assertEquals(0f, mainButton.start)
+            assertEquals(1f, mainButton.end)
+            assertFalse(mainButton.alignRegion)
+            assertEquals(GestureActions(), mainButton.slideActions)
+            assertEquals(GestureActions(), mainButton.longSlideActions)
         } finally {
             DataStoreHolder.initialSettings.updateData { original.initialSettings }
             DataStoreHolder.advancedSettings.updateData { original.advancedSettings }
@@ -51,5 +65,13 @@ class TopDataStoreInstrumentedTest {
             DataStoreHolder.bottomGestureButtons.updateData { original.bottomGestureButtons }
             DataStoreHolder.topGestureButtons.updateData { original.topGestureButtons }
         }
+    }
+
+    @Test
+    fun gestureButtonWidthLimitRemainsSharedAcrossEdges() {
+        assertEquals(
+            ConvertUtils.dp2px(60f),
+            GlobalSettings.MaxGestureButtonWidth
+        )
     }
 }
