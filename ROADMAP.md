@@ -12,6 +12,8 @@
 
 2026-07-23 发布前功能回归已通过：输入法隐藏设置的测试已按最终文案同步，Shizuku 亮度测试在服务通过无线调试正确启动后连续两轮冷启动通过，结合此前完整回归的当前有效结果为 49／49。当前没有功能性发版阻塞；Release Lint 仍记录备份恢复摘要在 API 23～25 的 `java.nio.file` 兼容风险，本轮暂不处理。
 
+2026-07-24 已定位并修复线上 1.6.0 的 Shizuku 能力失效问题：UserService 迁移包路径后 Release keep 规则未同步，导致 R8 改名并移除反射所需构造函数；修复已通过 Release 产物审计和 Android 16 模拟器运行时验证，待纳入后续版本发布。
+
 ## 已完成
 
 - [x] 2026-07-18：完成 11 项需求的当前代码链、影响范围、依赖、风险和验收边界分析。
@@ -40,14 +42,16 @@
 - [x] 2026-07-23：本轮需求开发完成后移除阶段性 SPEC 文档，并清理路线图中的失效链接和旧需求待办。
 - [x] 2026-07-23：补充 SPEC 生命周期规范，要求已完成并验证的需求在当次交付中删除对应 SPEC，同时保留未完成文档并同步长期约束与引用。
 - [x] 2026-07-24：修复手势角度设置页顶部切换入口和顶部角度画布被工具栏覆盖的问题，顶部入口与四个拖拽点统一避开工具栏实际高度，并补充顶部入口触摸和角度拖拽回归测试。
+- [x] 2026-07-24：修复线上 1.6.0 因 Shizuku UserService 包迁移后 keep 规则失效导致的全部 Shizuku 动作故障，为反射入口增加双重保留并补充 Release 配置回归测试；测试改用局部路径读取，消除 Android Studio 对测试类共享成员的错误解析；同步审计应用内反射、Manifest 组件和 R8 移除结果，未发现其他有效混淆缺陷。
 
 ## 进行中
 
-当前没有继续实施的产品需求或功能回归失败项。API 23～25 的备份恢复兼容风险本轮暂不处理。
+Shizuku 混淆修复已完成本地验证，待纳入后续版本发布；本任务不执行公开发布。API 23～25 的备份恢复兼容风险本轮暂不处理。
 
 ## 待办
 
-本轮无产品需求开发或功能回归待办；已知风险统一记录在“阻塞／待确认”。
+- 将已验证的 Shizuku 混淆修复纳入后续版本发布。
+- 已知风险统一记录在“阻塞／待确认”。
 
 ## 阻塞／待确认
 
@@ -56,7 +60,6 @@
 
 ## 最近验证
 
-- 2026-07-23：移除手势设置页双击总开关及 `GestureSettings.doubleTapEnabled`，改为当前触钮存在有效 `doubleClick` 时自动启用双击等待、未配置时即时派发单击；10 项定向 JVM 测试和 Android 16／API 36 模拟器上的 10 项定向仪器测试全部通过，覆盖四边双击、未配置动作即时单击、配置快照、序列化和设置页无总开关。`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；crash buffer 无本应用记录，仅有测试前的系统 Bluetooth 崩溃。
 - 2026-07-23：顶部默认主触钮与共享 `60dp` 厚度上限通过 `TopDataStoreInstrumentedTest` 定向仪器测试 2／2；Android 16／API 36 `Medium_Phone` 模拟器验证重置后恢复主触钮、默认标识、关闭状态、全宽、空动作及四边共享上限，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
 - 2026-07-23：精准点击快速移动加速通过 20 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；覆盖慢速基础增益、平滑过渡、快速封顶、减速／反向立即恢复、重置清理、退出悬停后的曲线重启及旧配置默认开启。Android 16／API 36 `Medium_Phone` 模拟器上的设置顺序／持久化与准星悬停回归 2 项定向仪器测试全部通过，crash buffer 为空。
 - 2026-07-23：工作资料应用支持通过 2 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；Android 16／API 36 `Medium_Phone` 模拟器创建 `SideGesture-QA` 工作资料后，定向仪器测试 1／1 通过，确认 ActionSelect 数据源同时保留主资料／工作资料同包应用、系统徽标可读取且 `launchAppInfo` 实际启动 `u10` Activity。真实 ActionSelect UI 树与截图确认带公文包徽标的应用可见，选中后提示保存成功并回显到手势动作，crash buffer 为空；按验收需要保留工作资料和测试配置。
@@ -66,3 +69,4 @@
 - 2026-07-23：Shizuku 服务通过无线调试正确启动后，此前的亮度测试失败未再复现，当前证据支持其属于测试环境前置条件问题而非产品代码回归；Shizuku 服务以 `shell` 用户运行、应用已授予 `API_V23` 且 `WRITE_SETTINGS` 保持 `default` 时，`QuickToolsBrightnessShizukuInstrumentedTest` 连续两轮强制冷启动均为 2／2 通过，共 4／4。测试覆盖亮度写入、自动模式切换、外部变化观察及停止／重启读回；结束后亮度恢复为 102、手动模式，权限状态保持不变，crash buffer 为空。结合此前结果，当前 49 项仪器测试有效结果为 49／49。
 - 2026-07-23：`AGENTS.md` 新增 SPEC 生命周期规范，明确需求实现并验证后当次删除对应 SPEC，整轮完成后清理剩余 SPEC、索引与空目录；删除前必须沉淀长期约束并清理引用，未完成或未验证的 SPEC 保留。该清理为严格限于 SPEC 的项目级预授权，不扩展到其他文件。
 - 2026-07-24：手势角度页顶部入口与拖拽区域修复通过真机 `MGFVB20402001742` 定向仪器测试 2／2，覆盖顶部入口实际触摸命中和顶部角度拖拽回调；`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。真机 UI 树确认顶部入口由工具栏覆盖区 `[0,0][1080,264]` 下移到 `[468,312][612,456]`，实触后成功切换到顶部角度；截图确认圆弧与四个拖拽点完整位于工具栏下方，crash buffer 为空。
+- 2026-07-24：线上 1.6.0 Shizuku 故障修复通过 Debug／Release 定向 JVM 测试各 2／2、`assembleDebug`、R8 `assembleRelease` 与产物审计；`ShizukuShellUserService` 在 mapping 中保持原名，无参构造、`execute()`、`destroy()` 及 AIDL Stub／Proxy 均被保留。Android 16／API 36 `Medium_Phone` 模拟器以修复后的 R8 APK 反射创建 UserService 成功，任务切换器最近任务查询返回 9 项且 `exitCode=0`，独立亮度查询返回 `102` 且 `exitCode=0`；应用内其他反射均指向系统／厂商类，Manifest 组件由 AGP 自动保留，未发现其他有效混淆缺陷。测试文件改用局部项目路径并直接读取目标源码后，Android Studio 的 4 个未解析引用和 3 个连带检查结果全部消失，仅保留专有名词 `Shizuku` 的拼写提示。

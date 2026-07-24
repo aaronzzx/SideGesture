@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -22,17 +24,17 @@ android {
             useSupportLibrary = true
         }
     }
-//    signingConfigs {
-//        val properties = Properties()
-//        val inputStream = project.rootProject.file("local.properties").inputStream()
-//        properties.load(inputStream)
-//        register("release") {
-//            storeFile = file(properties.getProperty("STORE_FILE_NAME"))
-//            storePassword = properties.getProperty("KEYSTORE_PASSWORD")
-//            keyAlias = properties.getProperty("STORE_ALIAS")
-//            keyPassword = properties.getProperty("KEY_PASSWORD")
-//        }
-//    }
+    signingConfigs {
+        val properties = Properties()
+        val inputStream = project.rootProject.file("local.properties").inputStream()
+        properties.load(inputStream)
+        register("release") {
+            storeFile = file(properties.getProperty("STORE_FILE_NAME"))
+            storePassword = properties.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = properties.getProperty("STORE_ALIAS")
+            keyPassword = properties.getProperty("KEY_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -41,7 +43,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-//            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".dev"

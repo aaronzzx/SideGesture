@@ -1,8 +1,10 @@
 package com.aaron.sidegesture.platform.shizuku
 
+import androidx.annotation.Keep
 import com.aaron.sidegesture.platform.shell.ShellCommandRunner
 import com.aaron.sidegesture.platform.shell.ShellResult
 
+@Keep
 class ShizukuShellUserService : IShizukuShellService.Stub() {
 
     override fun execute(command: String): ShellResult {

@@ -21,7 +21,7 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.aaron.sidegesture.entity.** { *; }
--keep class com.aaron.sidegesture.shizuku.** { *; }
+-keep class com.aaron.sidegesture.platform.shizuku.** { *; }
 
 # 有了verbose这句话，混淆后就会生成映射文件
 # 包含有类名->混淆后类名的映射关系
