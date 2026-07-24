@@ -2,7 +2,7 @@
 
 ## 项目概览
 
-SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听屏幕边缘滑动手势，并触发启动应用、系统动作、快捷方式等自定义操作。
+SideGesture 是 Android 屏幕边缘手势控制应用，通过无障碍服务监听 Left／Right／Bottom／Top 四边滑动手势，并触发启动应用、系统动作、快捷方式等自定义操作。
 
 ## 技术栈
 
@@ -13,6 +13,8 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - FastCompose
 
 ## 目录结构
+
+除另有说明外，以下源码目录均相对于 `app/src/main/java/com/aaron/sidegesture/`：
 
 - `app/src/main/java/com/aaron/sidegesture/`：应用主代码
 - `feature/`：具体业务功能模块，例如快捷启动、快速工具、截图、任务切换、更新、手势运行时、动作面板和移屏
@@ -28,7 +30,16 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 
 ## 构建与验证
 
-优先使用 Windows 环境命令：
+根据当前操作系统使用仓库自带的 Gradle Wrapper，不依赖 IDE。macOS／Linux 使用：
+
+```bash
+bash gradlew assembleDebug
+bash gradlew assembleRelease
+bash gradlew installDebug
+bash gradlew lint
+```
+
+Windows 使用：
 
 ```powershell
 .\gradlew.bat assembleDebug
@@ -39,8 +50,9 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 
 常规代码改动后至少跑：
 
-```powershell
-.\gradlew.bat assembleDebug
+```text
+macOS／Linux：bash gradlew assembleDebug
+Windows：.\gradlew.bat assembleDebug
 ```
 
 文档或注释类改动不要求编译，但需要验证格式、行数或相关约束。
@@ -106,7 +118,7 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 - 动画绘制层只消费通用状态并负责渲染，不直接触发业务动作，也不直接读写持久化配置。
 - 动画结束态、取消态、回弹态必须兼容现有 `Animatable` 回收流程，避免残影、状态卡死或手势结束后仍占屏。
 - 若动画依赖图标、路径、粒子等视觉元素，优先抽成可替换资源或参数，不把具体样式硬编码进通用手势容器。
-- 新动画必须同时考虑 `Left`、`Right`、`Bottom` 三种边缘方位，不能只对单边成立。
+- 新动画必须同时考虑 `Left`、`Right`、`Bottom`、`Top` 四种边缘方位，不能只对单边成立。
 - 需要做吸附感、阻尼感、形变感时，优先作为可配置视觉参数接入，不要通过修改手势判定阈值伪造视觉效果。
 - 修改动画前先确认输入数据来自哪一层，再决定改渲染层还是手势层，避免用 UI 修手势问题。
 
@@ -119,10 +131,10 @@ SideGesture 是 Android 侧边手势控制应用，通过无障碍服务监听�
 ## Android 模拟器 QA
 
 - 需要设备行为验证时，先运行 `adb devices -l`；如果没有在线设备，应主动查找并启动已有 AVD，不得直接跳过设备验证。
-- 先从仓库 `local.properties` 解析 `sdk.dir`，再用 `where.exe adb` 和 `where.exe emulator` 核对命令来源；若 PATH 命令缺失或指向其他 SDK，优先使用解析出的 SDK 目录下的 `platform-tools\adb.exe` 和 `emulator\emulator.exe`。
-- 启动前检查 `$env:ANDROID_AVD_HOME`、`$env:ANDROID_USER_HOME` 以及 `$env:USERPROFILE\.android\avd`。环境变量缺失但默认 AVD 目录存在时，只在当前验证进程显式设置正确的 AVD home，并使用解析出的 SDK `emulator.exe -list-avds` 重新列出 AVD。
+- 先从仓库 `local.properties` 解析 `sdk.dir`，再核对 PATH 中的 `adb` 和 `emulator` 来源；macOS／Linux 使用 `command -v`，Windows 使用 `where.exe`。若 PATH 命令缺失或指向其他 SDK，优先使用解析出的 SDK：macOS／Linux 为 `<sdk.dir>/platform-tools/adb` 和 `<sdk.dir>/emulator/emulator`，Windows 为 `<sdk.dir>\platform-tools\adb.exe` 和 `<sdk.dir>\emulator\emulator.exe`。
+- 启动前检查 `ANDROID_AVD_HOME`、`ANDROID_USER_HOME` 和当前系统的默认 AVD 目录；macOS／Linux 默认为 `${HOME}/.android/avd`，Windows 默认为 `$env:USERPROFILE\.android\avd`。环境变量缺失但默认 AVD 目录存在时，只在当前验证进程显式设置正确的 AVD home，并使用解析出的 `emulator -list-avds` 重新列出 AVD。
 - 只有在正确的 AVD home 上列表为空，且不存在 `emulator` 或 `qemu` 进程时，才能判定没有可用模拟器；普通权限与提权上下文结果不一致时必须继续核对，不能直接下结论。
-- 不得自动创建或删除 AVD；后台启动使用隐藏、无窗口方式，并且只关闭本轮由自己启动的 AVD。
+- 不得自动创建或删除 AVD；后台启动使用当前系统支持的无窗口方式，并且只关闭本轮由自己启动的 AVD。
 - 存在可用 AVD 时，默认按“自动化测试范围”运行定向仪器测试；仅满足全量触发条件时运行 `connectedDebugAndroidTest`。涉及真实 UI 的验收按 UI tree 定位和坐标操作，并保留截图与 logcat 证据。
 
 ## 新目录约定

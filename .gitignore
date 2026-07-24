@@ -35,5 +35,8 @@ google-services.json
 app/mapping.txt
 app/proguardMapping.txt
 
-.claude
 .gradle-verify
+.DS_Store
+.agents
+.claude
+.codex
