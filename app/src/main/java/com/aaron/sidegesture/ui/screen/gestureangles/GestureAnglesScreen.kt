@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -17,6 +16,7 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -59,6 +60,7 @@ import com.aaron.sidegesture.ktx.getArcDegrees
 import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
+import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
 import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.ui.theme.MinInteractiveSize
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
@@ -81,29 +83,52 @@ fun GestureAnglesScreen(
     vm: GestureAnglesVM = viewModel()
 ) {
     UDFComponent(component = vm.udfComponent, onEvent = { }) { uiState ->
-        if (uiState.showResetWarningDialog) {
-            MyAlertDialog(
-                onDismissRequest = {
-                    vm.showResetWarningDialog(false)
-                },
-                title = stringResource(id = R.string.reset_default_settings_warning),
-                text = stringResource(id = R.string.reset_gesture_angles_warning_desc),
-                onConfirmClick = { vm.reset() }
-            )
-        }
-        Box {
+        GestureAnglesContent(
+            uiState = uiState,
+            onBack = onBack,
+            onShowResetWarningDialog = vm::showResetWarningDialog,
+            onReset = vm::reset,
+            onSave = vm::saveSettings,
+            onSwitchPosition = vm::switchPosition,
+            onAngleChange = vm::updateGestureAngle
+        )
+    }
+}
+
+@Composable
+fun GestureAnglesContent(
+    uiState: UiState,
+    onBack: () -> Unit,
+    onShowResetWarningDialog: (Boolean) -> Unit,
+    onReset: () -> Unit,
+    onSave: () -> Unit,
+    onSwitchPosition: (Position) -> Unit,
+    onAngleChange: (GestureAngle) -> Unit
+) {
+    if (uiState.showResetWarningDialog) {
+        MyAlertDialog(
+            onDismissRequest = {
+                onShowResetWarningDialog(false)
+            },
+            title = stringResource(id = R.string.reset_default_settings_warning),
+            text = stringResource(id = R.string.reset_gesture_angles_warning_desc),
+            onConfirmClick = onReset
+        )
+    }
+    Scaffold(
+        topBar = {
             TopBar(
                 modifier = Modifier.zIndex(1f),
                 onBack = onBack,
                 title = stringResource(id = R.string.gesture_angles),
                 actions = {
-                    IconButton(onClick = { vm.showResetWarningDialog(true) }) {
+                    IconButton(onClick = { onShowResetWarningDialog(true) }) {
                         Icon(
                             imageVector = Icons.Default.Restore,
                             contentDescription = stringResource(id = R.string.reset_settings)
                         )
                     }
-                    IconButton(onClick = { vm.saveSettings() }) {
+                    IconButton(onClick = onSave) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = stringResource(id = R.string.save_settings)
@@ -111,20 +136,24 @@ fun GestureAnglesScreen(
                     }
                 }
             )
+        }
+    ) { contentPadding ->
+        Box(modifier = Modifier.testTag("gesture_angle_content_${uiState.position.name}")) {
             AdjustAngle(
                 modifier = Modifier
                     .let { thisModifier ->
                         when (uiState.position) {
                             Position.Bottom -> thisModifier.navigationBarsPadding()
-                            Position.Top -> thisModifier.statusBarsPadding()
+                            Position.Top -> thisModifier.padding(
+                                top = contentPadding.calculateTopPadding()
+                            )
                             else -> thisModifier
                         }
                     }
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .testTag("gesture_angle_canvas_${uiState.position.name}"),
                 angle = uiState.angle,
-                onAngleChange = {
-                    vm.updateGestureAngle(it)
-                },
+                onAngleChange = onAngleChange,
                 position = uiState.position
             )
 
@@ -142,7 +171,9 @@ fun GestureAnglesScreen(
                         .let {
                             when (position) {
                                 Position.Bottom -> it.navigationBarsPadding()
-                                Position.Top -> it.statusBarsPadding()
+                                Position.Top -> it.padding(
+                                    top = contentPadding.calculateTopPadding()
+                                )
                                 else -> it
                             }
                         }
@@ -151,7 +182,7 @@ fun GestureAnglesScreen(
                         .graphicsLayer {
                             rotationZ = when (position) {
                                 Position.Left -> 180f
-                                Position.Right-> 0f
+                                Position.Right -> 0f
                                 Position.Bottom -> 90f
                                 Position.Top -> 270f
                             }
@@ -161,8 +192,9 @@ fun GestureAnglesScreen(
                             shape = CircleShape
                         )
                         .onClick {
-                            vm.switchPosition(position)
-                        },
+                            onSwitchPosition(position)
+                        }
+                        .testTag("gesture_angle_position_${position.name}"),
                     imageVector = Icons.Default.KeyboardArrowRight,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary

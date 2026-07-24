@@ -39,6 +39,7 @@
 - [x] 2026-07-23：支持枚举关联工作资料中的未冻结桌面应用，以资料序列号区分同包同 Activity，显示系统工作徽标并通过 `LauncherApps` 普通启动；ActionSelect 应用页可直接选择并持久化工作资料应用。
 - [x] 2026-07-23：本轮需求开发完成后移除阶段性 SPEC 文档，并清理路线图中的失效链接和旧需求待办。
 - [x] 2026-07-23：补充 SPEC 生命周期规范，要求已完成并验证的需求在当次交付中删除对应 SPEC，同时保留未完成文档并同步长期约束与引用。
+- [x] 2026-07-24：修复手势角度设置页顶部切换入口和顶部角度画布被工具栏覆盖的问题，顶部入口与四个拖拽点统一避开工具栏实际高度，并补充顶部入口触摸和角度拖拽回归测试。
 
 ## 进行中
 
@@ -55,7 +56,6 @@
 
 ## 最近验证
 
-- 2026-07-23：`:service` Toast 修复通过 `ServiceToastOverlayInstrumentedTest` 定向仪器测试 1／1 与 `assembleDebug`；Android 16／API 36 `Medium_Phone` 模拟器由左侧手势打开快捷工具后触发相机权限提示，截图确认 Toast 显示在快捷工具浮层上方，服务 Overlay Window 从 8 个增至 9 个且新窗口位于原最高窗口之前；crash buffer 为空，无障碍服务与测试配置已恢复。
 - 2026-07-23：移除手势设置页双击总开关及 `GestureSettings.doubleTapEnabled`，改为当前触钮存在有效 `doubleClick` 时自动启用双击等待、未配置时即时派发单击；10 项定向 JVM 测试和 Android 16／API 36 模拟器上的 10 项定向仪器测试全部通过，覆盖四边双击、未配置动作即时单击、配置快照、序列化和设置页无总开关。`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过；crash buffer 无本应用记录，仅有测试前的系统 Bluetooth 崩溃。
 - 2026-07-23：顶部默认主触钮与共享 `60dp` 厚度上限通过 `TopDataStoreInstrumentedTest` 定向仪器测试 2／2；Android 16／API 36 `Medium_Phone` 模拟器验证重置后恢复主触钮、默认标识、关闭状态、全宽、空动作及四边共享上限，`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。
 - 2026-07-23：精准点击快速移动加速通过 20 项定向 JVM 测试、`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check`；覆盖慢速基础增益、平滑过渡、快速封顶、减速／反向立即恢复、重置清理、退出悬停后的曲线重启及旧配置默认开启。Android 16／API 36 `Medium_Phone` 模拟器上的设置顺序／持久化与准星悬停回归 2 项定向仪器测试全部通过，crash buffer 为空。
@@ -65,3 +65,4 @@
 - 2026-07-23：用户确认本轮需求开发完毕后移除全部阶段性 SPEC 文档；路线图已删除失效链接、需求批次和需求 2 的旧待办状态，并保留发布状态与已知兼容风险。
 - 2026-07-23：Shizuku 服务通过无线调试正确启动后，此前的亮度测试失败未再复现，当前证据支持其属于测试环境前置条件问题而非产品代码回归；Shizuku 服务以 `shell` 用户运行、应用已授予 `API_V23` 且 `WRITE_SETTINGS` 保持 `default` 时，`QuickToolsBrightnessShizukuInstrumentedTest` 连续两轮强制冷启动均为 2／2 通过，共 4／4。测试覆盖亮度写入、自动模式切换、外部变化观察及停止／重启读回；结束后亮度恢复为 102、手动模式，权限状态保持不变，crash buffer 为空。结合此前结果，当前 49 项仪器测试有效结果为 49／49。
 - 2026-07-23：`AGENTS.md` 新增 SPEC 生命周期规范，明确需求实现并验证后当次删除对应 SPEC，整轮完成后清理剩余 SPEC、索引与空目录；删除前必须沉淀长期约束并清理引用，未完成或未验证的 SPEC 保留。该清理为严格限于 SPEC 的项目级预授权，不扩展到其他文件。
+- 2026-07-24：手势角度页顶部入口与拖拽区域修复通过真机 `MGFVB20402001742` 定向仪器测试 2／2，覆盖顶部入口实际触摸命中和顶部角度拖拽回调；`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。真机 UI 树确认顶部入口由工具栏覆盖区 `[0,0][1080,264]` 下移到 `[468,312][612,456]`，实触后成功切换到顶部角度；截图确认圆弧与四个拖拽点完整位于工具栏下方，crash buffer 为空。
