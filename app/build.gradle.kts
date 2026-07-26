@@ -80,6 +80,10 @@ android {
 }
 
 dependencies {
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
     implementation(files("libs/tinypinyin-2.0.3.jar"))
     implementation(libs.org.ahocorasick)
     implementation(libs.androidx.core.ktx)
