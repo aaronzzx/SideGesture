@@ -3,7 +3,6 @@ package com.aaron.sidegesture.feature.movescreen
 import com.aaron.sidegesture.feature.gesture.LongSlideState
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -49,11 +48,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import com.aaron.compose.utils.SystemFontScaleHandler
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.constant.GlobalSettings.MaxMoveScreenRate
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.MoveScreenData
@@ -63,6 +60,12 @@ import com.aaron.sidegesture.entity.global.ActionSettings.MoveScreen.Action.Long
 import com.aaron.sidegesture.entity.global.ActionSettings.MoveScreen.Action.Tap
 import com.aaron.sidegesture.entity.global.GestureSettings
 import com.aaron.sidegesture.ktx.tryVibrateForMoveScreen
+import com.aaron.sidegesture.ui.theme.MoveScreenDimensions
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.elevations
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.utils.JsonHelper
 import com.blankj.utilcode.util.ScreenUtils
 import kotlinx.coroutines.CoroutineScope
@@ -87,13 +90,17 @@ fun MoveScreen(
     screenshot: Bitmap,
     state: MoveScreenState,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.Black
+    backgroundColor: Color? = null
 ) {
+    val dimensions = MaterialTheme.dimensions.moveScreen
+    val appColors = MaterialTheme.appColors
+    val alpha = MaterialTheme.alpha
+    val resolvedBackgroundColor = backgroundColor ?: appColors.fixedBlack
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .background(color = backgroundColor)
+                .background(color = resolvedBackgroundColor)
                 .drawBehind {
                     val left = if (state.showMoveScreenActionPopup) 0f else -state.offset.x
                     val top = if (state.showMoveScreenActionPopup) 0f else -state.offset.y
@@ -105,13 +112,15 @@ fun MoveScreen(
                     }
 
                     if (state.showMoveScreenActionPopup) {
-                        drawRect(color = Color.Black.copy(alpha = DimAlpha))
+                        drawRect(
+                            color = appColors.fixedBlack.copy(alpha = alpha.lowEmphasis)
+                        )
                     }
                 }
                 .displayCutoutPadding()
                 .drawBehind {
                     val offset = state.displayFingerOnScreen
-                    val magnifierSize = 80.dp
+                    val magnifierSize = dimensions.magnifierSize
                     val path = Path().also {
                         it.addOval(
                             Rect(
@@ -140,12 +149,12 @@ fun MoveScreen(
                         x = center.x,
                         y = magnifierSize.toPx() / 2f
                     )
-                    val lineLength = 16.dp.toPx()
+                    val lineLength = dimensions.crosshairLineLength.toPx()
                     val ringRadius = magnifierSize.toPx() / 2f
-                    val coreStroke = 2.dp.toPx()
-                    val haloStroke = coreStroke + 3.5.dp.toPx()
-                    val coreColor = Color.White
-                    val haloColor = Color.Black.copy(alpha = 0.6f)
+                    val coreStroke = dimensions.crosshairCoreStroke.toPx()
+                    val haloStroke = coreStroke + dimensions.crosshairHaloExtraStroke.toPx()
+                    val coreColor = appColors.fixedWhite
+                    val haloColor = appColors.fixedBlack.copy(alpha = alpha.moveScreenHalo)
 
                     fun DrawScope.drawAim(color: Color, stroke: Float) {
                         drawLine(
@@ -200,15 +209,25 @@ fun CrosshairScreen(
     state: MoveScreenState,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = MaterialTheme.dimensions.moveScreen
+    val appColors = MaterialTheme.appColors
+    val alpha = MaterialTheme.alpha
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .drawBehind {
                     if (state.showMoveScreenActionPopup) {
-                        drawRect(color = Color.Black.copy(alpha = DimAlpha))
+                        drawRect(
+                            color = appColors.fixedBlack.copy(alpha = alpha.lowEmphasis)
+                        )
                     }
-                    drawSniperReticle(state.displayFingerOnScreen)
+                    drawSniperReticle(
+                        center = state.displayFingerOnScreen,
+                        dimensions = dimensions,
+                        coreColor = appColors.fixedWhite,
+                        haloColor = appColors.fixedBlack.copy(alpha = alpha.moveScreenHalo)
+                    )
                 }
         )
 
@@ -220,16 +239,19 @@ fun CrosshairScreen(
  * 狙击镜准星：外圈圆环 + 中心点 + 四向断口十字。准星不做边界限制，跟随目标自由移动
  * (越界时自然移出屏幕，实际点击的越界拦截由 MoveScreenActionHandler 校验)。
  */
-private fun DrawScope.drawSniperReticle(center: Offset) {
-    val radius = 22.dp.toPx()
+private fun DrawScope.drawSniperReticle(
+    center: Offset,
+    dimensions: MoveScreenDimensions,
+    coreColor: Color,
+    haloColor: Color
+) {
+    val radius = dimensions.indicatorRadius.toPx()
     // 断口十字内端与中心点的间距，留足空当避免贴住中心点
-    val gap = 11.dp.toPx()
-    val coreStroke = 2.dp.toPx()
-    val haloStroke = coreStroke + 3.5.dp.toPx()
-    val coreDot = 2.5.dp.toPx()
-    val haloDot = coreDot + 1.6.dp.toPx()
-    val coreColor = Color.White
-    val haloColor = Color.Black.copy(alpha = 0.6f)
+    val gap = dimensions.indicatorGap.toPx()
+    val coreStroke = dimensions.crosshairCoreStroke.toPx()
+    val haloStroke = coreStroke + dimensions.crosshairHaloExtraStroke.toPx()
+    val coreDot = dimensions.indicatorCoreDotRadius.toPx()
+    val haloDot = coreDot + dimensions.indicatorHaloExtraRadius.toPx()
 
     // 外圈圆环 + 四向断口十字，画两遍：先深色粗描边垫底，再纯白细芯叠上
     fun DrawScope.drawShape(color: Color, stroke: Float) {
@@ -249,10 +271,12 @@ private fun DrawScope.drawSniperReticle(center: Offset) {
 @Composable
 private fun MoveScreenActionPopup(state: MoveScreenState) {
     val colorScheme = MaterialTheme.colorScheme
+    val dimensions = MaterialTheme.dimensions.moveScreen
+    val motion = MaterialTheme.motion
     val showLocation = state.popupAnchor
-    val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
-    val parentWidth = 70.dp
-    val parentHeight = 150.dp
+    val animationSpec = spring<Float>(stiffness = motion.moveScreenPopupStiffness)
+    val parentWidth = dimensions.popupWidth
+    val parentHeight = dimensions.popupHeight
     AnimatedVisibility(
         modifier = Modifier
             .graphicsLayer {
@@ -262,8 +286,10 @@ private fun MoveScreenActionPopup(state: MoveScreenState) {
                 translationY = showLocation.y - offsetY
             },
         visible = state.showMoveScreenActionPopup,
-        enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f),
-        exit = fadeOut(animationSpec) + scaleOut(animationSpec, 0.9f)
+        enter = fadeIn(animationSpec) +
+            scaleIn(animationSpec, MaterialTheme.motion.moveScreenEnterScale),
+        exit = fadeOut(animationSpec) +
+            scaleOut(animationSpec, MaterialTheme.motion.moveScreenEnterScale)
     ) {
         Column(
             modifier = Modifier
@@ -273,7 +299,7 @@ private fun MoveScreenActionPopup(state: MoveScreenState) {
                     state.updateActionPopupBounds(it.boundsInRoot())
                 }
                 .shadow(
-                    elevation = 4.dp,
+                    elevation = MaterialTheme.elevations.moveScreenPopup,
                     shape = MaterialTheme.shapes.small
                 )
                 .background(

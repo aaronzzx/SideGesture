@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.ui.screen.gesturesettings
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -45,11 +44,8 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinVibrationDurationMs
 import com.aaron.sidegesture.constant.GlobalSettings.getPredefinedVibrationEffectText
 import com.aaron.sidegesture.entity.VibrationEffects
 import com.aaron.sidegesture.ui.screen.gesturesettings.GestureSettingsVM.UiEvent
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -73,6 +69,8 @@ fun GestureSettingsScreen(
 ) {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
+    val settingsContentPlacementStiffness =
+        MaterialTheme.motion.settingsContentPlacementStiffness
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
@@ -81,7 +79,7 @@ fun GestureSettingsScreen(
                     coroutineScope.launch {
                         scrollState.animateScrollBy(
                             value = 1000f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            animationSpec = spring(stiffness = settingsContentPlacementStiffness)
                         )
                     }
                 }
@@ -108,7 +106,7 @@ fun GestureSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.slide_action)
                 ) {
                     MyTextSwitch(
@@ -137,7 +135,7 @@ fun GestureSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.long_slide_action)
                 ) {
                     MyTextSwitch(
@@ -172,7 +170,7 @@ fun GestureSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.vibration)
                 ) {
                     MyTextSwitch(
@@ -197,16 +195,22 @@ fun GestureSettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(min = MinItemHeightNoSecondary)
+                                        .heightIn(
+                                            min = MaterialTheme.dimensions.listItem.singleLineMinHeight
+                                        )
                                         .onSingleClick {
                                             vm.showPredefinedVibrationDropdown(true)
                                         }
                                         .padding(
-                                            horizontal = ContentPaddingHorizontal,
-                                            vertical = ContentPaddingVerticalWithSection
+                                            horizontal =
+                                                MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                                            vertical =
+                                                MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
                                         ),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        MaterialTheme.dimensions.listItem.contentGap
+                                    )
                                 ) {
                                     Text(
                                         modifier = Modifier.weight(1f),

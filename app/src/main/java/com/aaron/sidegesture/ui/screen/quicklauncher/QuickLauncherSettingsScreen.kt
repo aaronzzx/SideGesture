@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ui.screen.quicklauncher
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -9,7 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.global.QuickLauncherSettings
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSlider
@@ -51,7 +52,7 @@ fun QuickLauncherSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(R.string.quick_launcher_appearance)
                 ) {
                     MyTextSlider(

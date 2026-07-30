@@ -36,9 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -52,13 +50,8 @@ import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
-import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.SearchTopBarField
@@ -123,7 +116,7 @@ fun AppBlacklistScreen(
                             } else {
                                 Text(
                                     text = stringResource(id = R.string.exclude_app),
-                                    style = TextStyle(fontSize = 18.sp)
+                                    style = MaterialTheme.textStyles.screenSearchField
                                 )
                             }
                         }
@@ -182,7 +175,8 @@ fun AppBlacklistScreen(
                                 PaddingValues(
                                     start = contentPadding.calculateStartPadding(direction),
                                     end = contentPadding.calculateEndPadding(direction),
-                                    bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                    bottom = contentPadding.calculateBottomPadding() +
+                                        MaterialTheme.dimensions.layout.scrollBottomPadding
                                 )
                             }
                         ) {
@@ -246,14 +240,14 @@ private fun AppBlacklistItem(
             .onClick {
                 onSelect(!selected)
             }
-            .padding(vertical = ContentPaddingVertical),
+            .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
         AsyncImage(
             modifier = Modifier
-                .padding(start = ContentPaddingHorizontal * 2)
-                .size(MinInteractiveSize),
+                .padding(start = MaterialTheme.dimensions.layout.nestedItemIndent)
+                .size(MaterialTheme.dimensions.listItem.minimumTouchTarget),
             model = appInfo.icon,
             contentDescription = null,
             imageLoader = context.imageLoader,
@@ -261,7 +255,10 @@ private fun AppBlacklistItem(
         )
         Column(
             modifier = Modifier
-                .padding(start = IconTextPadding, end = ItemPadding)
+                .padding(
+                    start = MaterialTheme.dimensions.listItem.iconTextGap,
+                    end = MaterialTheme.dimensions.listItem.contentGap
+                )
                 .weight(1f)
         ) {
             Text(
@@ -280,7 +277,7 @@ private fun AppBlacklistItem(
             )
         }
         Checkbox(
-            modifier = Modifier.padding(end = TopBarPaddingExtra),
+            modifier = Modifier.padding(end = MaterialTheme.dimensions.topBar.contentInset),
             checked = selected,
             onCheckedChange = onSelect
         )

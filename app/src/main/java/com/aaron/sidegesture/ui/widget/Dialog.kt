@@ -48,8 +48,6 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -59,7 +57,6 @@ import com.aaron.compose.ui.BottomDialog
 import com.aaron.compose.utils.SystemFontScaleHandler
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.gotoAlipayScan
@@ -71,9 +68,10 @@ import com.aaron.sidegesture.ui.dialog.GotoBottomSettingsContent
 import com.aaron.sidegesture.ui.dialog.MoveScreenSettingsContent
 import com.aaron.sidegesture.ui.dialog.PreviousAppSettingsContent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.ShellActionDialogValue
-import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
-import com.aaron.sidegesture.ui.theme.DialogTitlePadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.utils.AboutUtils
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ToastUtils
@@ -168,13 +166,15 @@ fun MyAppsDialog(
                 )
         ) {
             Text(
-                modifier = Modifier.padding(DialogTitlePadding),
+                modifier = Modifier.padding(MaterialTheme.dimensions.dialog.titlePadding),
                 text = stringResource(id = R.string.my_apps_dialog_title),
-                fontSize = DialogTitleFontSize,
+                style = MaterialTheme.textStyles.dialogTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                modifier = Modifier.padding(horizontal = DialogTitlePadding),
+                modifier = Modifier.padding(
+                    horizontal = MaterialTheme.dimensions.dialog.titlePadding
+                ),
                 text = stringResource(id = R.string.my_apps_dialog_desc),
                 color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.titleSmall
@@ -189,9 +189,11 @@ fun MyAppsDialog(
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(450.dp),
-                contentPadding = PaddingValues(ItemPadding),
-                horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                    .height(MaterialTheme.dimensions.dialog.showcaseHeight),
+                contentPadding = PaddingValues(MaterialTheme.dimensions.dialog.contentPadding),
+                horizontalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.dialog.contentGap
+                )
             ) {
                 items(imgList) { item ->
                     AsyncImage(
@@ -242,13 +244,15 @@ fun DonateDialog(
                 )
         ) {
             Text(
-                modifier = Modifier.padding(DialogTitlePadding),
+                modifier = Modifier.padding(MaterialTheme.dimensions.dialog.titlePadding),
                 text = stringResource(id = R.string.donate),
-                fontSize = DialogTitleFontSize,
+                style = MaterialTheme.textStyles.dialogTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                modifier = Modifier.padding(horizontal = DialogTitlePadding),
+                modifier = Modifier.padding(
+                    horizontal = MaterialTheme.dimensions.dialog.titlePadding
+                ),
                 text = stringResource(id = R.string.donate_dialog_desc),
                 color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.titleSmall
@@ -262,9 +266,11 @@ fun DonateDialog(
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(450.dp),
-                contentPadding = PaddingValues(ItemPadding),
-                horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                    .height(MaterialTheme.dimensions.dialog.showcaseHeight),
+                contentPadding = PaddingValues(MaterialTheme.dimensions.dialog.contentPadding),
+                horizontalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.dialog.contentGap
+                )
             ) {
                 items(imgList) { item ->
                     AsyncImage(
@@ -370,15 +376,17 @@ fun ColorPickerDialog(
                         .onSingleClick {
                             showModifyColorValueDialog = true
                         }
-                        .padding(ItemPadding),
+                        .padding(MaterialTheme.dimensions.dialog.contentPadding),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(ItemPadding / 2)
+                    horizontalArrangement = Arrangement.spacedBy(
+                        MaterialTheme.dimensions.dialog.actionGap
+                    )
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(MaterialTheme.dimensions.dialog.optionSize)
                             .border(
-                                width = 1.dp,
+                                width = MaterialTheme.dimensions.dialog.optionBorderWidth,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 shape = CircleShape
                             )
@@ -391,8 +399,8 @@ fun ColorPickerDialog(
                         ) {
                             items(5 * 5) { index ->
                                 val color = when (index % 2 == 0) {
-                                    true -> Color.LightGray
-                                    else -> Color.White
+                                    true -> MaterialTheme.appColors.checkerboardLight
+                                    else -> MaterialTheme.appColors.fixedWhite
                                 }
                                 Box(
                                     modifier = Modifier
@@ -412,11 +420,10 @@ fun ColorPickerDialog(
 
                     SystemFontScaleHandler(false) {
                         Text(
-                            modifier = Modifier.width(120.dp),
+                            modifier = Modifier.width(MaterialTheme.dimensions.dialog.progressWidth),
                             text = "#$hexColor",
                             color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontSize = 20.sp
+                            style = MaterialTheme.textStyles.dialogProgress
                         )
                     }
                 }
@@ -470,7 +477,9 @@ fun ColorPickerDialog(
                     prefix = {
                         Text(
                             text = "#",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = DimAlpha)
+                            color = MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = MaterialTheme.alpha.lowEmphasis
+                            )
                         )
                     }
                 )
@@ -580,7 +589,9 @@ fun ShellActionSettingsDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.dialog.contentGap
+                )
             ) {
                 Text(
                     text = context.shizukuStatusSummary(value.status),
@@ -622,7 +633,11 @@ fun ShellActionSettingsDialog(
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.dialog.actionGap
+                )
+            ) {
                 TextButton(onClick = onRequestShizukuPermission) {
                     Text(text = stringResource(R.string.shizuku_request_permission))
                 }

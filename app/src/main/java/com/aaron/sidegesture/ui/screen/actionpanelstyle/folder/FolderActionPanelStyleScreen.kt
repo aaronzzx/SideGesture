@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ui.screen.actionpanelstyle.folder
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -20,7 +21,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelItemSize
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelRows
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelScrollHotZoneHeight
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelScrollSpeed
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSlider
@@ -72,7 +73,7 @@ fun FolderActionPanelStyleScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.scroll)
                 ) {
                     MyTextSlider(
@@ -95,7 +96,7 @@ fun FolderActionPanelStyleScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.background)
                 ) {
                     MyTextSlider(

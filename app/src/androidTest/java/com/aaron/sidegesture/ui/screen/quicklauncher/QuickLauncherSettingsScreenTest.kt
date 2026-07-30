@@ -5,7 +5,6 @@ import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ActivityScenario
@@ -13,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.aaron.sidegesture.entity.global.QuickLauncherSettings
 import com.aaron.sidegesture.ktx.LocalNavController
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.utils.DataStoreHolder
 import java.io.File
 import java.io.FileOutputStream
@@ -50,7 +50,7 @@ class QuickLauncherSettingsScreenTest {
         try {
             scenario.onActivity { activity ->
                 activity.setContent {
-                    MaterialTheme {
+                    AppTheme(darkTheme = false, dynamicColor = false) {
                         val navController = rememberNavController()
                         CompositionLocalProvider(LocalNavController provides navController) {
                             QuickLauncherSettingsScreen(onBack = {}, vm = vm)

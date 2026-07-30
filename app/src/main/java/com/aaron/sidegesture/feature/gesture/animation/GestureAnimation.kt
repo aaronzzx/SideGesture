@@ -2,6 +2,7 @@ package com.aaron.sidegesture.feature.gesture.animation
 
 import com.aaron.sidegesture.feature.gesture.SideGestureState
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -14,7 +15,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.unit.dp
 import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.entity.AnimationStyle
 import com.aaron.sidegesture.entity.BubbleStyle
@@ -35,6 +35,7 @@ import com.aaron.sidegesture.ktx.getCapsuleIcon
 import com.aaron.sidegesture.ktx.getCapsuleIconInitialRotation
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.getIconInitialRotation
+import com.aaron.sidegesture.ui.theme.dimensions
 
 /**
  * @author aaronzzxup@gmail.com
@@ -292,14 +293,23 @@ private fun WaveGestureAnimation(
     val button = sideGestureState.button ?: return
     val icon = animationStyle.getIcon()
     val bezierPath = remember { Path() }
+    val dimensions = MaterialTheme.dimensions.gestureAnimation
     // 贝塞尔偏移值
     val bezierOffset = when (button.position) {
         // 使贝塞尔显示在手指落点上方
-        Position.Left, Position.Right -> if (animationStyle.safeBounds) 70.dp.toPx() else 0f
+        Position.Left, Position.Right -> if (animationStyle.safeBounds) {
+            dimensions.safeEdgeInset.toPx()
+        } else {
+            0f
+        }
         Position.Bottom, Position.Top -> 0f
     }
     // 贝塞尔与边界间距
-    val bezierSpacing = if (animationStyle.safeBounds) 40.dp.toPx() else 0f
+    val bezierSpacing = if (animationStyle.safeBounds) {
+        dimensions.safeBezierSpacing.toPx()
+    } else {
+        0f
+    }
     // 贝塞尔的最大宽度
     val bezierMaxWidth = animationStyle.width.toFloat()
     // 贝塞尔长度的一半
@@ -368,7 +378,7 @@ private fun WaveGestureAnimation(
             path.moveTo(moveToX, moveToY)
 
             // 避免边缘出现没覆盖全的白边
-            val factor = 1.dp.toPx()
+            val factor = dimensions.edgeOverlap.toPx()
             var safeFingerX: Float
             var safeFingerY: Float
             when (button.position) {

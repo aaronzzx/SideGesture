@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.animationstyle.wave
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -44,9 +43,10 @@ import com.aaron.sidegesture.entity.WaveStyle.Companion.ICON_TYPE_ARROW_NEW
 import com.aaron.sidegesture.entity.WaveStyle.Companion.ICON_TYPE_TRIANGLE
 import com.aaron.sidegesture.ktx.getWaveStyleIcon
 import com.aaron.sidegesture.ui.screen.animationstyle.wave.WaveStyleVM.UiEvent
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
-import com.aaron.sidegesture.ui.theme.SectionPadding
-import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyColorDisplay
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -73,6 +73,8 @@ fun WaveStyleScreen(
 ) {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
+    val settingsContentPlacementStiffness =
+        MaterialTheme.motion.settingsContentPlacementStiffness
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
@@ -81,7 +83,7 @@ fun WaveStyleScreen(
                     coroutineScope.launch {
                         scrollState.animateScrollBy(
                             value = 1000f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            animationSpec = spring(stiffness = settingsContentPlacementStiffness)
                         )
                     }
                 }
@@ -146,7 +148,7 @@ fun WaveStyleScreen(
                 }
 
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.shape_size)
                 ) {
                     MyTextSlider(
@@ -182,7 +184,7 @@ fun WaveStyleScreen(
                 }
 
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.icon)
                 ) {
                     MyTextButton(
@@ -217,7 +219,7 @@ fun WaveStyleScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(MinInteractiveSize),
+                                .height(MaterialTheme.dimensions.listItem.minimumTouchTarget),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
@@ -230,11 +232,13 @@ fun WaveStyleScreen(
                                 val selected = uiState.animationStyle.iconType == iconType
                                 Image(
                                     modifier = Modifier
-                                        .size(SubMinInteractiveSize)
+                                        .size(MaterialTheme.dimensions.listItem.compactControlVisualSize)
                                         .clipToBackground(
                                             color = when (selected) {
                                                 true -> MaterialTheme.colorScheme.primary
-                                                else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                                else -> MaterialTheme.colorScheme.primary.copy(
+                                                    alpha = MaterialTheme.alpha.lowEmphasis
+                                                )
                                             },
                                             shape = CircleShape
                                         )
@@ -244,7 +248,9 @@ fun WaveStyleScreen(
                                     painter = getWaveStyleIcon(iconType),
                                     contentDescription = null,
                                     contentScale = ContentScale.Inside,
-                                    colorFilter = ColorFilter.tint(color = Color.White)
+                                    colorFilter = ColorFilter.tint(
+                                        color = MaterialTheme.appColors.fixedWhite
+                                    )
                                 )
                             }
                         }

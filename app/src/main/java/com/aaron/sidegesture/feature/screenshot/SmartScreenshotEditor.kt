@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CropSquare
@@ -67,6 +66,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -86,6 +89,9 @@ fun SmartScreenshotEditor(
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
+    val dimensions = MaterialTheme.dimensions.screenshotEditor
+    val appColors = MaterialTheme.appColors
+    val alpha = MaterialTheme.alpha
     var interaction by remember { mutableStateOf<SelectionInteraction?>(null) }
     var idleTick by remember { mutableIntStateOf(0) }
 
@@ -100,13 +106,13 @@ fun SmartScreenshotEditor(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(appColors.fixedBlack)
     ) {
         val density = LocalDensity.current
         val layoutDirection = LocalLayoutDirection.current
         val cutoutInsets = WindowInsets.displayCutout
-        val edgeMarginPx = with(density) { 12.dp.toPx() }
-        val toolbarGapPx = with(density) { 14.dp.toPx() }
+        val edgeMarginPx = with(density) { dimensions.edgeMargin.toPx() }
+        val toolbarGapPx = with(density) { dimensions.toolbarGap.toPx() }
         val containerSize = remember(maxWidth, maxHeight, density) {
             IntSize(
                 width = with(density) { maxWidth.roundToPx() },
@@ -159,13 +165,13 @@ fun SmartScreenshotEditor(
         val bottomToolbarBounds = toolbarBounds(bottomToolbarOffset, bottomToolbarSize)
         val latestTopToolbarBounds = rememberUpdatedState(topToolbarBounds)
         val latestBottomToolbarBounds = rememberUpdatedState(bottomToolbarBounds)
-        val dimTapSlopPx = with(density) { 8.dp.toPx() }
+        val dimTapSlopPx = with(density) { dimensions.dimTapSlop.toPx() }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawImage(imageBitmap)
 
             val rect = state.selectionRect
-            val frameStroke = 3.dp.toPx()
+            val frameStroke = dimensions.frameStrokeWidth.toPx()
             val fullPath = Path().apply { addRect(Rect(Offset.Zero, size)) }
             val selectedPath = Path().apply {
                 when (state.shape) {
@@ -175,10 +181,13 @@ fun SmartScreenshotEditor(
             }
             drawPath(
                 path = Path.combine(PathOperation.Difference, fullPath, selectedPath),
-                color = Color.Black.copy(alpha = 0.58f)
+                color = appColors.fixedBlack.copy(alpha = alpha.screenshotScrim)
             )
             val ovalFramePathEffect = PathEffect.dashPathEffect(
-                intervals = floatArrayOf(12.dp.toPx(), 8.dp.toPx())
+                intervals = floatArrayOf(
+                    dimensions.frameDashLength.toPx(),
+                    dimensions.frameDashGap.toPx()
+                )
             )
 
             when (state.shape) {
@@ -230,8 +239,8 @@ fun SmartScreenshotEditor(
                 )
             }
 
-            val handleRadius = 8.dp.toPx()
-            val handleStroke = 2.dp.toPx()
+            val handleRadius = dimensions.handleRadius.toPx()
+            val handleStroke = dimensions.handleStrokeWidth.toPx()
             listOf(
                 rect.topLeft,
                 Offset(rect.right, rect.top),
@@ -248,8 +257,8 @@ fun SmartScreenshotEditor(
             }
 
             val center = rect.center
-            val lineLength = 14.dp.toPx()
-            val lineStroke = 2.dp.toPx()
+            val lineLength = dimensions.crosshairLineLength.toPx()
+            val lineStroke = dimensions.crosshairStrokeWidth.toPx()
             drawLine(
                 color = primaryColor,
                 start = Offset(center.x - lineLength, center.y),
@@ -276,7 +285,7 @@ fun SmartScreenshotEditor(
                         interaction = resolveInteraction(
                             position = down.position,
                             rect = state.selectionRect,
-                            handleRadius = 36.dp.toPx(),
+                            handleRadius = HandleTouchRadiusDp.dp.toPx(),
                             shape = state.shape
                         )
                         val isDimTapCandidate = interaction == null &&
@@ -448,12 +457,17 @@ private fun ToolbarBubble(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        color = surfaceColor.copy(alpha = 0.92f)
+        shape = MaterialTheme.componentShapes.screenshotToolbar,
+        color = surfaceColor.copy(alpha = MaterialTheme.alpha.screenshotToolbar)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(
+                horizontal = MaterialTheme.dimensions.screenshotEditor.toolbarHorizontalPadding,
+                vertical = MaterialTheme.dimensions.screenshotEditor.toolbarVerticalPadding
+            ),
+            horizontalArrangement = Arrangement.spacedBy(
+                MaterialTheme.dimensions.screenshotEditor.toolbarItemSpacing
+            ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             content()
@@ -499,9 +513,13 @@ private fun ToolbarDivider(
 ) {
     Box(
         modifier = modifier
-            .height(24.dp)
-            .width(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f))
+            .height(MaterialTheme.dimensions.screenshotEditor.dividerHeight)
+            .width(MaterialTheme.dimensions.screenshotEditor.dividerWidth)
+            .background(
+                MaterialTheme.colorScheme.outlineVariant.copy(
+                    alpha = MaterialTheme.alpha.screenshotDivider
+                )
+            )
     )
 }
 
@@ -688,3 +706,4 @@ private fun Rect?.containsPoint(point: Offset): Boolean {
 }
 
 private const val EDITOR_AUTO_DISMISS_DELAY_MS = 8_000L
+private const val HandleTouchRadiusDp = 36f

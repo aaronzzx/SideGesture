@@ -2,7 +2,6 @@ package com.aaron.sidegesture.ui.widget
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -281,5 +281,9 @@ class SliderDisplayTest {
 
 @Composable
 private fun SliderTestTheme(content: @Composable () -> Unit) {
-    MaterialTheme(content = content)
+    AppTheme(
+        darkTheme = false,
+        dynamicColor = false,
+        content = content
+    )
 }

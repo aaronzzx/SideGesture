@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,9 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.aaron.compose.ktx.clipToBackground
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -65,24 +65,24 @@ fun ComposeToast(
         SnackbarHost(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 100.dp),
+                .padding(horizontal = MaterialTheme.dimensions.toast.horizontalMargin)
+                .padding(bottom = MaterialTheme.dimensions.toast.bottomMargin),
             hostState = snackbarHostState
         ) { snackbarData ->
             Text(
                 modifier = Modifier
-                    .widthIn(max = 300.dp)
+                    .widthIn(max = MaterialTheme.dimensions.toast.maxWidth)
                     .clipToBackground(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = RoundedCornerShape(16.dp)
+                        shape = MaterialTheme.componentShapes.toast
                     )
                     .padding(
-                        vertical = 8.dp,
-                        horizontal = 16.dp
+                        vertical = MaterialTheme.dimensions.toast.verticalPadding,
+                        horizontal = MaterialTheme.dimensions.toast.horizontalPadding
                     )
                     .wrapContentSize(),
                 text = snackbarData.visuals.message,
-                fontSize = 14.sp,
+                style = MaterialTheme.textStyles.toast,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )

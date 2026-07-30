@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
@@ -46,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -57,26 +55,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.RecentTask
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.elevations
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.utils.VibrateUtils
 import kotlin.math.roundToInt
-
-private val ITEM_ICON_SIZE = 36.dp
-private val ROW_HEIGHT = 48.dp
-private val ACTION_BUTTON_SIZE = 36.dp
-private val PANEL_CORNER_RADIUS = 28.dp
-private val PANEL_PADDING = 12.dp
-private val PANEL_WIDTH = 240.dp
-private val PANEL_MIN_HEIGHT = 120.dp
-private val PANEL_MAX_HEIGHT = 300.dp
-private val CLOSE_ALL_HEIGHT = 52.dp
-private val EDGE_PADDING = 16.dp
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -90,6 +81,8 @@ fun TaskSwitcherPanel(
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val dimensions = MaterialTheme.dimensions.taskSwitcher
+    val alpha = MaterialTheme.alpha
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
 
     AnimatedVisibility(
@@ -101,7 +94,11 @@ fun TaskSwitcherPanel(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isDarkTheme) Color.Black.copy(alpha = 0.52f) else Color.Black.copy(alpha = 0.28f))
+                .background(
+                    MaterialTheme.appColors.fixedBlack.copy(
+                        alpha = if (isDarkTheme) alpha.overlayScrimDark else alpha.overlayScrimLight
+                    )
+                )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -114,42 +111,45 @@ fun TaskSwitcherPanel(
             val cutoutInsets = WindowInsets.displayCutout
             val systemBarInsets = WindowInsets.systemBars
             val safeLeft = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getLeft(density, layoutDirection),
                     systemBarInsets.getLeft(density, layoutDirection)
                 )
             }
             val safeTop = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getTop(density),
                     systemBarInsets.getTop(density)
                 )
             }
             val safeRight = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getRight(density, layoutDirection),
                     systemBarInsets.getRight(density, layoutDirection)
                 )
             }
             val safeBottom = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getBottom(density),
                     systemBarInsets.getBottom(density)
                 )
             }
-            val panelWidthPx = with(density) { PANEL_WIDTH.toPx() }
+            val panelWidthPx = with(density) { dimensions.panelWidth.toPx() }
             val containerHeightPx = with(density) { maxHeight.toPx() }
             val measuredPanelHeightPx = remember { mutableFloatStateOf(0f) }
             val availableHeight = containerHeightPx - safeTop - safeBottom
             val panelMaxHeightPx = with(density) {
-                PANEL_MAX_HEIGHT.toPx().coerceAtMost(availableHeight)
+                dimensions.panelMaxHeight.toPx().coerceAtMost(availableHeight)
             }
             val clampedMaxHeight = with(density) { panelMaxHeightPx.toDp() }
-            val listMaxHeight = (clampedMaxHeight - CLOSE_ALL_HEIGHT).coerceAtLeast(ROW_HEIGHT)
+            val listMaxHeight = (clampedMaxHeight - dimensions.closeAllHeight)
+                .coerceAtLeast(dimensions.rowHeight)
             val estimatedPanelHeight = with(density) {
                 val rows = state.items.size.coerceAtLeast(1).coerceAtMost(6)
-                val content = rows * ROW_HEIGHT.toPx() + CLOSE_ALL_HEIGHT.toPx() + PANEL_PADDING.toPx() * 2
-                content.coerceIn(PANEL_MIN_HEIGHT.toPx(), panelMaxHeightPx)
+                val content = rows * dimensions.rowHeight.toPx() +
+                    dimensions.closeAllHeight.toPx() +
+                    dimensions.panelPadding.toPx() * 2
+                content.coerceIn(dimensions.panelMinHeight.toPx(), panelMaxHeightPx)
             }
             val panelHeightForOffset = measuredPanelHeightPx.floatValue
                 .takeIf { it > 0f }
@@ -178,8 +178,8 @@ fun TaskSwitcherPanel(
             Surface(
                 modifier = Modifier
                     .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
-                    .width(PANEL_WIDTH)
-                    .heightIn(min = PANEL_MIN_HEIGHT, max = clampedMaxHeight)
+                    .width(dimensions.panelWidth)
+                    .heightIn(min = dimensions.panelMinHeight, max = clampedMaxHeight)
                     .onGloballyPositioned { coordinates ->
                         measuredPanelHeightPx.floatValue = coordinates.size.height.toFloat()
                     }
@@ -187,10 +187,14 @@ fun TaskSwitcherPanel(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                 ) { },
-                shape = RoundedCornerShape(PANEL_CORNER_RADIUS),
+                shape = MaterialTheme.componentShapes.taskSwitcherPanel,
                 color = colorScheme.surface,
-                tonalElevation = 3.dp,
-                shadowElevation = if (isDarkTheme) 8.dp else 12.dp
+                tonalElevation = MaterialTheme.elevations.overlayTonal,
+                shadowElevation = if (isDarkTheme) {
+                    MaterialTheme.elevations.overlayShadowDark
+                } else {
+                    MaterialTheme.elevations.overlayShadowLight
+                }
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth()
@@ -200,12 +204,12 @@ fun TaskSwitcherPanel(
                             .fillMaxWidth()
                             .heightIn(max = listMaxHeight),
                         contentPadding = PaddingValues(
-                            start = PANEL_PADDING,
-                            top = PANEL_PADDING,
-                            end = PANEL_PADDING,
-                            bottom = 4.dp
+                            start = dimensions.panelPadding,
+                            top = dimensions.panelPadding,
+                            end = dimensions.panelPadding,
+                            bottom = dimensions.sectionBottomPadding
                         ),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(dimensions.itemSpacing)
                     ) {
                         items(
                             items = state.items,
@@ -223,15 +227,20 @@ fun TaskSwitcherPanel(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(CLOSE_ALL_HEIGHT)
-                            .padding(horizontal = PANEL_PADDING, vertical = 6.dp),
+                            .height(dimensions.closeAllHeight)
+                            .padding(
+                                horizontal = dimensions.closeAllHorizontalPadding,
+                                vertical = dimensions.itemVerticalPadding
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         TextButton(
                             enabled = state.items.any { it.packageName !in lockedPackageNames },
                             colors = ButtonDefaults.textButtonColors(
                                 contentColor = colorScheme.onSurface,
-                                disabledContentColor = colorScheme.onSurface.copy(alpha = 0.38f)
+                                disabledContentColor = colorScheme.onSurface.copy(
+                                    alpha = MaterialTheme.alpha.disabledContent
+                                )
                             ),
                             onClick = {
                                 val closeTargets = state.items.filter { it.packageName !in lockedPackageNames }
@@ -240,7 +249,7 @@ fun TaskSwitcherPanel(
                         ) {
                             Text(
                                 text = stringResource(R.string.task_switcher_close_all),
-                                fontSize = 15.sp,
+                                style = MaterialTheme.textStyles.taskSwitcherLabel,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -261,6 +270,7 @@ private fun TaskSwitcherRow(
     onToggleLock: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val dimensions = MaterialTheme.dimensions.taskSwitcher
     val context = LocalContext.current
     val icon = remember(task.packageName, context) {
         runCatching {
@@ -271,8 +281,8 @@ private fun TaskSwitcherRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(ROW_HEIGHT)
-            .clip(RoundedCornerShape(10.dp))
+            .height(dimensions.rowHeight)
+            .clip(MaterialTheme.componentShapes.taskSwitcherItem)
             .combinedClickable(
                 onClick = onLaunch,
                 onLongClick = {
@@ -280,7 +290,10 @@ private fun TaskSwitcherRow(
                     onToggleLock()
                 }
             )
-            .padding(start = 8.dp, end = 4.dp),
+            .padding(
+                start = dimensions.itemStartPadding,
+                end = dimensions.itemEndPadding
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -288,21 +301,21 @@ private fun TaskSwitcherRow(
             contentDescription = task.label,
             imageLoader = context.imageLoader,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(ITEM_ICON_SIZE)
+            modifier = Modifier.size(dimensions.itemIconSize)
         )
         Text(
             text = task.label,
             color = colorScheme.onSurface,
-            fontSize = 15.sp,
+            style = MaterialTheme.textStyles.taskSwitcherLabel,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = dimensions.panelPadding)
         )
         Box(
             modifier = Modifier
-                .size(ACTION_BUTTON_SIZE)
+                .size(dimensions.actionButtonSize)
                 .clip(CircleShape)
                 .clickable(
                     enabled = !locked,
@@ -317,7 +330,7 @@ private fun TaskSwitcherRow(
                 imageVector = if (locked) Icons.Default.Lock else Icons.Default.Close,
                 contentDescription = null,
                 tint = if (locked) colorScheme.onSurfaceVariant else colorScheme.onSurface,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(dimensions.closeAllIconSize)
             )
         }
     }

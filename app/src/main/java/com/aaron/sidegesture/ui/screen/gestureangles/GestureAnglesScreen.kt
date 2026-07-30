@@ -61,8 +61,9 @@ import com.aaron.sidegesture.ktx.getDegree
 import com.aaron.sidegesture.ktx.getDegrees
 import com.aaron.sidegesture.ktx.getKProperty
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlin.math.atan
@@ -177,8 +178,8 @@ fun GestureAnglesContent(
                                 else -> it
                             }
                         }
-                        .padding(ItemPadding)
-                        .size(MinInteractiveSize)
+                        .padding(MaterialTheme.dimensions.listItem.contentGap)
+                        .size(MaterialTheme.dimensions.listItem.minimumTouchTarget)
                         .graphicsLayer {
                             rotationZ = when (position) {
                                 Position.Left -> 180f
@@ -188,7 +189,9 @@ fun GestureAnglesContent(
                             }
                         }
                         .clipToBackground(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            color = MaterialTheme.colorScheme.primary.copy(
+                                alpha = MaterialTheme.alpha.gestureAngleGuide
+                            ),
                             shape = CircleShape
                         )
                         .onClick {
@@ -218,14 +221,19 @@ private fun AdjustAngle(
     position: Position = Position.Left,
     color: Color = MaterialTheme.colorScheme.primary
 ) {
+    val dimensions = MaterialTheme.dimensions.gestureAngles
+    val alpha = MaterialTheme.alpha
+    val labelStyle = MaterialTheme.textStyles.gestureAngleLabel.copy(
+        fontWeight = FontWeight.Bold
+    )
     val lineWidth = when (position == Position.Bottom || position == Position.Top) {
-        true -> (4.5).dp
-        else -> 6.dp
+        true -> dimensions.topEdgeAnchorRadius
+        else -> dimensions.sideEdgeAnchorRadius
     }
     // 触点半径
     val dragHandleRadius = when (position == Position.Bottom || position == Position.Top) {
-        true -> 15.dp
-        else -> 20.dp
+        true -> dimensions.topEdgeIndicatorRadius
+        else -> dimensions.sideEdgeIndicatorRadius
     }
     // 触点所在轨道半圆半径
     var circleRadius by remember { mutableFloatStateOf(0f) }
@@ -338,14 +346,14 @@ private fun AdjustAngle(
                 color = color,
                 radius = radius,
                 center = myCenter,
-                alpha = 0.1f
+                alpha = alpha.gestureAngleGuide
             )
             drawCircle(
                 color = color,
                 radius = radius,
                 center = myCenter,
-                alpha = 0.35f,
-                style = Stroke(width = 2.dp.toPx())
+                alpha = alpha.subtleBorder,
+                style = Stroke(width = dimensions.guideStrokeWidth.toPx())
             )
         }
 
@@ -375,16 +383,9 @@ private fun AdjustAngle(
             val (textX, textY) = calcDragHandleOffset(
                 position = position,
                 circleCenter = myCenter,
-                circleRadius = radius + 40.dp.toPx(),
+                circleRadius = radius + dimensions.arcTouchExpansion.toPx(),
                 pDegree = degree - (arcDegree / 2f)
             )
-
-            // debug text,textY
-//            drawCircle(
-//                color = Color.Red,
-//                radius = 10.dp.toPx(),
-//                center = Offset(textX, textY)
-//            )
 
             val displayArcDegree = "${arcDegree.roundToInt()}"
             val hint = when (index) {
@@ -437,11 +438,7 @@ private fun AdjustAngle(
                 textMeasurer = textMeasurer,
                 text = displayText,
                 topLeft = Offset(x = x, y = y),
-                style = TextStyle.Default.copy(
-                    color = color,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                style = labelStyle.copy(color = color)
             )
         }
     }

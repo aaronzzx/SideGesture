@@ -4,7 +4,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -44,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
@@ -54,7 +54,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
@@ -62,11 +61,9 @@ import com.aaron.sidegesture.ktx.buttonTextCompose
 import com.aaron.sidegesture.ktx.gotoAccessibilitySettings
 import com.aaron.sidegesture.ktx.gotoIgnoreBatteryOptimizations
 import com.aaron.sidegesture.ui.screen.home.HomeVM.UiEvent
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
-import com.aaron.sidegesture.ui.theme.RootPadding
-import com.aaron.sidegesture.ui.theme.SectionPadding
-import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MyExpandableColumn
@@ -93,6 +90,9 @@ fun HomeScreen(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val settingsContentPlacementStiffness =
+        MaterialTheme.motion.settingsContentPlacementStiffness
+    val overlayVisibilityStiffness = MaterialTheme.motion.overlayVisibilityStiffness
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
@@ -100,13 +100,13 @@ fun HomeScreen(
                 is UiEvent.ScrollToBottom -> {
                     scrollState.animateScrollTo(
                         value = scrollState.maxValue,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        animationSpec = spring(stiffness = settingsContentPlacementStiffness)
                     )
                 }
                 is UiEvent.ScrollToEvent -> {
                     scrollState.animateScrollTo(
                         value = event.offsetY,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        animationSpec = spring(stiffness = settingsContentPlacementStiffness)
                     )
                 }
             }
@@ -178,7 +178,10 @@ fun HomeScreen(
                         DropdownMenu(
                             containerColor = MaterialTheme.colorScheme.surface,
                             shape = MaterialTheme.shapes.medium,
-                            offset = DpOffset(-(TopBarPaddingExtra / 2), 0.dp),
+                            offset = DpOffset(
+                                -MaterialTheme.dimensions.topBar.popupAnchorOffset,
+                                0.dp
+                            ),
                             expanded = uiState.showMoreMenu,
                             onDismissRequest = { vm.showMoreMenu(false) }
                         ) {
@@ -273,7 +276,9 @@ fun HomeScreen(
                     }
 
                     MySection(
-                        modifier = Modifier.padding(top = SectionPadding),
+                        modifier = Modifier.padding(
+                            top = MaterialTheme.dimensions.layout.sectionSpacing
+                        ),
                         title = stringResource(id = R.string.global_settings)
                     ) {
                         MyTextButton(
@@ -289,6 +294,7 @@ fun HomeScreen(
                     }
 
                     val density = LocalDensity.current
+                    val screenPadding = MaterialTheme.dimensions.layout.screenPadding
                     var gestureButtonListOffset by remember { mutableIntStateOf(Int.MAX_VALUE) }
                     MySection(
                         modifier = Modifier
@@ -296,10 +302,10 @@ fun HomeScreen(
                                 density.run {
                                     val position = it.positionInParent()
                                     gestureButtonListOffset =
-                                        (position.y + RootPadding.toPx()).toInt()
+                                        (position.y + screenPadding.toPx()).toInt()
                                 }
                             }
-                            .padding(top = SectionPadding),
+                            .padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                         title = stringResource(id = R.string.gesture_button_list)
                     ) {
                         MyExpandableColumn(
@@ -332,8 +338,12 @@ fun HomeScreen(
                                         },
                                         secondaryTextColor = MaterialTheme.colorScheme.primary,
                                         markColor = when (button.isDefault) {
-                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
+                                            true -> MaterialTheme.colorScheme.primary.copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
+                                            else -> Color(button.color).copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
                                         }
                                     )
                                 }
@@ -341,7 +351,9 @@ fun HomeScreen(
                             Text(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = MinItemHeightNoSecondary)
+                                    .heightIn(
+                                        min = MaterialTheme.dimensions.listItem.singleLineMinHeight
+                                    )
                                     .onSingleClick {
                                         vm.addTopGestureButton()
                                     }
@@ -382,8 +394,12 @@ fun HomeScreen(
                                         },
                                         secondaryTextColor = MaterialTheme.colorScheme.primary,
                                         markColor = when (button.isDefault) {
-                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
+                                            true -> MaterialTheme.colorScheme.primary.copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
+                                            else -> Color(button.color).copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
                                         }
                                     )
                                 }
@@ -391,7 +407,9 @@ fun HomeScreen(
                             Text(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = MinItemHeightNoSecondary)
+                                    .heightIn(
+                                        min = MaterialTheme.dimensions.listItem.singleLineMinHeight
+                                    )
                                     .onSingleClick {
                                         vm.addBottomGestureButton()
                                     }
@@ -432,8 +450,12 @@ fun HomeScreen(
                                         },
                                         secondaryTextColor = MaterialTheme.colorScheme.primary,
                                         markColor = when (button.isDefault) {
-                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
+                                            true -> MaterialTheme.colorScheme.primary.copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
+                                            else -> Color(button.color).copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
                                         }
                                     )
                                 }
@@ -441,7 +463,9 @@ fun HomeScreen(
                             Text(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = MinItemHeightNoSecondary)
+                                    .heightIn(
+                                        min = MaterialTheme.dimensions.listItem.singleLineMinHeight
+                                    )
                                     .onSingleClick {
                                         vm.addSideGestureButton()
                                     }
@@ -459,10 +483,11 @@ fun HomeScreen(
                 visible = uiState.isSideGestureButtonListExpanded ||
                     uiState.isBottomGestureButtonListExpanded ||
                     uiState.isTopGestureButtonListExpanded,
-                enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMedium)),
-                exit = fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMedium))
+                enter = fadeIn(animationSpec = spring(stiffness = overlayVisibilityStiffness)),
+                exit = fadeOut(animationSpec = spring(stiffness = overlayVisibilityStiffness))
             ) {
                 val colorScheme = MaterialTheme.colorScheme
+                val gestureButtonAlpha = MaterialTheme.alpha.gestureButton
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -479,8 +504,8 @@ fun HomeScreen(
                                 val bounds = button.bounds()
                                 drawRect(
                                     color = when (button.isDefault) {
-                                        true -> colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                        else -> Color(button.color).copy(alpha = GestureButtonColorAlpha)
+                                        true -> colorScheme.primary.copy(alpha = gestureButtonAlpha)
+                                        else -> Color(button.color).copy(alpha = gestureButtonAlpha)
                                     },
                                     topLeft = bounds.topLeft,
                                     size = bounds.size
@@ -505,7 +530,7 @@ private fun BackupRestoreDialog(
             shape = AlertDialogDefaults.shape,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.padding(MaterialTheme.dimensions.dialog.titlePadding)) {
                 MySection {
                     MyTextButton(
                         onClick = onBackupRequest,
@@ -513,7 +538,11 @@ private fun BackupRestoreDialog(
                         secondaryText = stringResource(id = R.string.backup_hint)
                     )
                 }
-                MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                MySection(
+                    modifier = Modifier.padding(
+                        top = MaterialTheme.dimensions.layout.compactSectionSpacing
+                    )
+                ) {
                     MyTextButton(
                         onClick = onRestoreRequest,
                         text = stringResource(id = R.string.restore),

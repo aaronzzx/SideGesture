@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.ui.dialog
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -12,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.ktx.LocalNavController
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.utils.DataStoreHolder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -53,7 +53,7 @@ class MoveScreenSettingsTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         try {
             composeTestRule.setContent {
-                MaterialTheme {
+                AppTheme(darkTheme = false, dynamicColor = false) {
                     val navController = rememberNavController()
                     CompositionLocalProvider(LocalNavController provides navController) {
                         MoveScreenSettingsContent(vm)

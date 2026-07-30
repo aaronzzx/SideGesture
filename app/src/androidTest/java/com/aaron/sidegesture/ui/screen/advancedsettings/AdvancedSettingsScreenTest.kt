@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.advancedsettings
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +10,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -25,7 +25,7 @@ class AdvancedSettingsScreenTest {
         var checked by mutableStateOf(false)
         var callbackValue = false
         composeTestRule.setContent {
-            MaterialTheme {
+            AppTheme(darkTheme = false, dynamicColor = false) {
                 HideGestureOnImeSetting(
                     checked = checked,
                     onCheckedChange = {

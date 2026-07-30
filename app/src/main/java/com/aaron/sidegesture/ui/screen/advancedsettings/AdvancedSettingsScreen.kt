@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,12 +34,7 @@ import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.entity.DayNightMode
 import com.aaron.sidegesture.entity.normalizeActionPanelStyleType
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.feature.update.ui.NotificationPermissionDialog
 import com.aaron.sidegesture.feature.update.ui.rememberNotificationPermissionRequest
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -79,7 +75,7 @@ fun AdvancedSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.gesture_button_extension)
                 ) {
                     MyTextSwitch(
@@ -97,7 +93,7 @@ fun AdvancedSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.action_panel)
                 ) {
                     MyTextButton(
@@ -122,7 +118,7 @@ fun AdvancedSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.hide_gesture_button)
                 ) {
                     MyTextSwitch(
@@ -146,7 +142,7 @@ fun AdvancedSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.app_settings)
                 ) {
                     MyTextButton(
@@ -183,16 +179,19 @@ fun AdvancedSettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = MinItemHeightNoSecondary)
+                            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
                             .onSingleClick {
                                 vm.showDayNightModeDropdownMenu(true)
                             }
                             .padding(
-                                horizontal = ContentPaddingHorizontal,
-                                vertical = ContentPaddingVerticalWithSection
+                                horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                                vertical =
+                                    MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
                             ),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                        horizontalArrangement = Arrangement.spacedBy(
+                            MaterialTheme.dimensions.listItem.contentGap
+                        )
                     ) {
                         Text(
                             modifier = Modifier.weight(1f),
@@ -215,7 +214,10 @@ fun AdvancedSettingsScreen(
                             }
                             DropdownMenu(
                                 containerColor = MaterialTheme.colorScheme.surface,
-                                offset = DpOffset(x = -EdgeMenuPadding, y = 0.dp),
+                                offset = DpOffset(
+                                    x = -MaterialTheme.dimensions.topBar.edgeMenuOffset,
+                                    y = 0.dp
+                                ),
                                 shape = MaterialTheme.shapes.medium,
                                 expanded = uiState.showDayNightModeDropdownMenu,
                                 onDismissRequest = { vm.showDayNightModeDropdownMenu(false) }

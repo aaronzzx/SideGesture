@@ -8,6 +8,22 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import com.aaron.sidegesture.ui.theme.AppAlpha
+import com.aaron.sidegesture.ui.theme.AppComponentShapes
+import com.aaron.sidegesture.ui.theme.AppDimensions
+import com.aaron.sidegesture.ui.theme.AppElevations
+import com.aaron.sidegesture.ui.theme.AppMotion
+import com.aaron.sidegesture.ui.theme.AppShapes
+import com.aaron.sidegesture.ui.theme.AppTextStyles
+import com.aaron.sidegesture.ui.theme.LocalAppAlpha
+import com.aaron.sidegesture.ui.theme.LocalAppColors
+import com.aaron.sidegesture.ui.theme.LocalAppComponentShapes
+import com.aaron.sidegesture.ui.theme.LocalAppDimensions
+import com.aaron.sidegesture.ui.theme.LocalAppElevations
+import com.aaron.sidegesture.ui.theme.LocalAppMotion
+import com.aaron.sidegesture.ui.theme.LocalAppTextStyles
+import com.aaron.sidegesture.ui.theme.appColors
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -257,6 +273,12 @@ fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
+    dimensions: AppDimensions = AppDimensions(),
+    textStyles: AppTextStyles = AppTextStyles(),
+    componentShapes: AppComponentShapes = AppComponentShapes(),
+    elevations: AppElevations = AppElevations(),
+    motion: AppMotion = AppMotion(),
+    alpha: AppAlpha = AppAlpha(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -269,10 +291,21 @@ fun AppTheme(
         else -> lightScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalAppDimensions provides dimensions,
+        LocalAppTextStyles provides textStyles,
+        LocalAppComponentShapes provides componentShapes,
+        LocalAppElevations provides elevations,
+        LocalAppMotion provides motion,
+        LocalAppAlpha provides alpha,
+        LocalAppColors provides appColors(colorScheme)
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content
+        )
+    }
 }
 

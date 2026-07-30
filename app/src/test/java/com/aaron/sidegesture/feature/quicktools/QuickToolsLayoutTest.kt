@@ -1,10 +1,13 @@
 package com.aaron.sidegesture.feature.quicktools
 
 import com.aaron.sidegesture.entity.global.QuickToolType
+import com.aaron.sidegesture.ui.theme.QuickToolsDimensions
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class QuickToolsLayoutTest {
+
+    private val layout = calculateQuickToolsLayout(QuickToolsDimensions())
 
     @Test
     fun mediaControlUsesFourColumnsAndTwoRows() {
@@ -13,8 +16,8 @@ class QuickToolsLayoutTest {
         assertEquals(4, span.columnSpan)
         assertEquals(2, span.rowSpan)
         assertEquals(
-            QuickToolsGridSpec.RowHeight * 2f + QuickToolsGridSpec.ItemSpacing,
-            span.itemHeight()
+            layout.rowHeight * 2f + layout.itemSpacing,
+            span.itemHeight(layout)
         )
     }
 
@@ -25,7 +28,7 @@ class QuickToolsLayoutTest {
 
             assertEquals(4, span.columnSpan)
             assertEquals(1, span.rowSpan)
-            assertEquals(QuickToolsGridSpec.RowHeight, span.itemHeight())
+            assertEquals(layout.rowHeight, span.itemHeight(layout))
         }
     }
 
@@ -45,7 +48,7 @@ class QuickToolsLayoutTest {
 
             assertEquals(1, span.columnSpan)
             assertEquals(1, span.rowSpan)
-            assertEquals(QuickToolsGridSpec.RowHeight, span.itemHeight())
+            assertEquals(layout.rowHeight, span.itemHeight(layout))
         }
     }
 }

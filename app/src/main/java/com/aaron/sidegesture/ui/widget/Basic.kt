@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -90,19 +91,10 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.aaron.compose.ktx.onClick
 import com.aaron.compose.ktx.onSingleClick
-import com.aaron.sidegesture.constant.GlobalSettings
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.DividerHeight
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MainSecondaryTextPadding
-import com.aaron.sidegesture.ui.theme.MarkColorSize
-import com.aaron.sidegesture.ui.theme.MinItemHeight
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
-import com.aaron.sidegesture.ui.theme.RootPadding
-import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
-import com.aaron.sidegesture.ui.theme.SectionTitlePadding
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -123,14 +115,13 @@ fun MyColumn(
         modifier = modifier
             .verticalScroll(scrollState)
             .navigationBarsPadding()
-            .padding(RootPadding)
-            .padding(bottom = ScrollBottomPadding),
+            .padding(MaterialTheme.dimensions.layout.screenPadding)
+            .padding(bottom = MaterialTheme.dimensions.layout.scrollBottomPadding),
         verticalArrangement = verticalArrangement,
         horizontalAlignment = horizontalAlignment,
         content = content
     )
 }
-
 @Composable
 fun MySection(
     modifier: Modifier = Modifier,
@@ -141,8 +132,8 @@ fun MySection(
         if (title.isNotEmpty()) {
             Text(
                 modifier = Modifier
-                    .padding(bottom = SectionTitlePadding)
-                    .padding(horizontal = ContentPaddingHorizontal),
+                    .padding(bottom = MaterialTheme.dimensions.layout.sectionTitleSpacing)
+                    .padding(horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding),
                 text = title,
                 color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.labelMedium,
@@ -180,16 +171,16 @@ fun MyExpandableColumn(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = MinItemHeightNoSecondary)
+                    .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
                     .onClick {
                         onExpandedChange(!expanded)
                     }
                     .padding(
-                        horizontal = ContentPaddingHorizontal,
-                        vertical = ContentPaddingVerticalWithSection
+                        horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                        vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
                     ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
@@ -240,13 +231,13 @@ fun MyTextSlider(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeightNoSecondary)
-            .padding(vertical = ContentPaddingVerticalWithSection),
-        verticalArrangement = Arrangement.spacedBy(IconTextPadding)
+            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
+            .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.iconTextGap)
     ) {
         Text(
             modifier = Modifier
-                .padding(horizontal = ContentPaddingHorizontal)
+                .padding(horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding)
                 .fillMaxWidth(),
             text = text,
             style = MaterialTheme.typography.titleMedium,
@@ -256,7 +247,7 @@ fun MyTextSlider(
         if (sliderValueHint != null) {
             Box(
                 modifier = Modifier
-                    .padding(horizontal = ContentPaddingHorizontal)
+                    .padding(horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding)
                     .fillMaxWidth()
             ) {
                 Text(
@@ -277,8 +268,8 @@ fun MyTextSlider(
         }
         MySlider(
             modifier = Modifier
-                .padding(horizontal = ContentPaddingHorizontal - 6.dp)
-                .height(30.dp),
+                .padding(horizontal = MaterialTheme.dimensions.slider.horizontalPadding)
+                .height(MaterialTheme.dimensions.slider.containerHeight),
             enabled = enabled,
             value = value,
             onValueChange = onValueChange,
@@ -305,13 +296,13 @@ fun MyTextRangeSlider(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeightNoSecondary)
-            .padding(vertical = ContentPaddingVerticalWithSection),
-        verticalArrangement = Arrangement.spacedBy(IconTextPadding)
+            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
+            .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.iconTextGap)
     ) {
         Text(
             modifier = Modifier
-                .padding(horizontal = ContentPaddingHorizontal)
+                .padding(horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding)
                 .fillMaxWidth(),
             text = text,
             style = MaterialTheme.typography.titleMedium,
@@ -321,7 +312,7 @@ fun MyTextRangeSlider(
         if (sliderValueHint != null) {
             Box(
                 modifier = Modifier
-                    .padding(horizontal = ContentPaddingHorizontal)
+                    .padding(horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding)
                     .fillMaxWidth()
             ) {
                 Text(
@@ -342,8 +333,8 @@ fun MyTextRangeSlider(
         }
         MyRangeSlider(
             modifier = sliderModifier
-                .padding(horizontal = ContentPaddingHorizontal - 6.dp)
-                .height(30.dp),
+                .padding(horizontal = MaterialTheme.dimensions.slider.horizontalPadding)
+                .height(MaterialTheme.dimensions.slider.containerHeight),
             enabled = enabled,
             value = value,
             onValueChange = onValueChange,
@@ -405,7 +396,9 @@ fun MySlider(
                         value = sliderState.value,
                         valueRange = valueRange,
                         sliderWidthPx = it.boundsInWindow.width,
-                        thumbWidthPx = with(density) { SliderThumbSize.roundToPx() },
+                        thumbWidthPx = with(density) {
+                            MaterialTheme.dimensions.slider.thumbSize.roundToPx()
+                        },
                         isRtl = isRtl
                     )
                 }
@@ -413,7 +406,7 @@ fun MySlider(
         },
         track = { sliderState ->
             SliderDefaults.Track(
-                modifier = Modifier.height(8.dp),
+                modifier = Modifier.height(MaterialTheme.dimensions.slider.trackHeight),
                 colors = colors,
                 enabled = enabled,
                 sliderState = sliderState,
@@ -467,7 +460,9 @@ fun MyRangeSlider(
                         value = value.start,
                         valueRange = valueRange,
                         sliderWidthPx = it.boundsInWindow.width,
-                        thumbWidthPx = with(density) { SliderThumbSize.roundToPx() },
+                        thumbWidthPx = with(density) {
+                            MaterialTheme.dimensions.slider.thumbSize.roundToPx()
+                        },
                         isRtl = isRtl
                     )
                 }
@@ -487,7 +482,9 @@ fun MyRangeSlider(
                         value = value.endInclusive,
                         valueRange = valueRange,
                         sliderWidthPx = it.boundsInWindow.width,
-                        thumbWidthPx = with(density) { SliderThumbSize.roundToPx() },
+                        thumbWidthPx = with(density) {
+                            MaterialTheme.dimensions.slider.thumbSize.roundToPx()
+                        },
                         isRtl = isRtl
                     )
                 }
@@ -495,7 +492,7 @@ fun MyRangeSlider(
         },
         track = { sliderState ->
             SliderDefaults.Track(
-                modifier = Modifier.height(8.dp),
+                modifier = Modifier.height(MaterialTheme.dimensions.slider.trackHeight),
                 colors = colors,
                 enabled = enabled,
                 rangeSliderState = sliderState,
@@ -603,16 +600,17 @@ private fun SliderValueThumb(
     thumbCenterPx: Int?
 ) {
     val isDragged by interactionSource.collectIsDraggedAsState()
+    val thumbCenterRadius = MaterialTheme.dimensions.slider.thumbCenterRadius
     Box {
         SliderDefaults.Thumb(
             modifier = Modifier
-                .requiredSize(SliderThumbSize)
+                .requiredSize(MaterialTheme.dimensions.slider.thumbSize)
                 .drawWithContent {
                     drawContent()
                     if (enabled) {
                         drawCircle(
                             color = colorScheme.onPrimary,
-                            radius = SliderThumbCenterRadius.toPx()
+                            radius = thumbCenterRadius.toPx()
                         )
                     }
                 },
@@ -635,7 +633,6 @@ private fun SliderValueThumb(
         }
     }
 }
-
 @Composable
 private fun SliderValueBubblePopup(
     text: String,
@@ -673,6 +670,10 @@ private fun SliderValueBubble(
 ) {
     val bubbleColor = MaterialTheme.colorScheme.primary
     val bubbleContentColor = MaterialTheme.colorScheme.onPrimary
+    val sliderDimensions = MaterialTheme.dimensions.slider
+    val sliderBubbleShape = MaterialTheme.componentShapes.sliderBubble
+    val sliderBubbleResizeDurationMillis =
+        MaterialTheme.motion.sliderBubbleResizeDurationMillis
     SubcomposeLayout(modifier = modifier) { constraints ->
         val bodyPlaceable = subcompose(SliderBubbleSlot.Body) {
             Box(
@@ -680,11 +681,11 @@ private fun SliderValueBubble(
                     .testTag(SliderBubbleTestTag)
                     .background(
                         color = bubbleColor,
-                        shape = RoundedCornerShape(SliderBubbleCornerRadius)
+                        shape = sliderBubbleShape
                     )
                     .animateContentSize(
                         animationSpec = tween(
-                            durationMillis = SliderBubbleSizeAnimationDurationMillis
+                            durationMillis = sliderBubbleResizeDurationMillis
                         ),
                         alignment = Alignment.Center
                     ),
@@ -692,8 +693,8 @@ private fun SliderValueBubble(
             ) {
                 Text(
                     modifier = Modifier.padding(
-                        horizontal = SliderBubbleHorizontalPadding,
-                        vertical = SliderBubbleVerticalPadding
+                        horizontal = sliderDimensions.bubbleHorizontalPadding,
+                        vertical = sliderDimensions.bubbleVerticalPadding
                     ),
                     text = text,
                     color = bubbleContentColor,
@@ -708,9 +709,9 @@ private fun SliderValueBubble(
                 maxHeight = constraints.maxHeight
             )
         )
-        val pointerWidthPx = SliderBubblePointerWidth.roundToPx()
-        val pointerHeightPx = SliderBubblePointerHeight.roundToPx()
-        val pointerOverlapPx = SliderBubblePointerOverlap.roundToPx()
+        val pointerWidthPx = sliderDimensions.bubblePointerWidth.roundToPx()
+        val pointerHeightPx = sliderDimensions.bubblePointerHeight.roundToPx()
+        val pointerOverlapPx = sliderDimensions.bubblePointerOverlap.roundToPx()
         val layoutWidth = constraints.maxWidth
         val placement = calculateSliderBubbleHorizontalPlacement(
             containerWidthPx = layoutWidth,
@@ -721,7 +722,7 @@ private fun SliderValueBubble(
             bodyWidthPx = bodyPlaceable.width,
             pointerCenterInBodyPx = placement.pointerCenterInBodyPx,
             pointerWidthPx = pointerWidthPx,
-            cornerInsetPx = SliderBubbleCornerRadius.roundToPx()
+            cornerInsetPx = sliderDimensions.bubblePointerHeight.roundToPx()
         )
         val pointerPlaceable = subcompose(SliderBubbleSlot.Pointer) {
             Canvas(modifier = Modifier) {
@@ -737,7 +738,7 @@ private fun SliderValueBubble(
         val verticalPlacement = calculateSliderBubbleVerticalPlacement(
             pointerHeightPx = pointerPlaceable.height,
             pointerOverlapPx = pointerOverlapPx,
-            bodyToThumbClearancePx = SliderBubbleBodyToThumbClearance.roundToPx()
+            bodyToThumbClearancePx = sliderDimensions.bubbleBodyToThumbClearance.roundToPx()
         )
         layout(
             layoutWidth,
@@ -788,18 +789,7 @@ private enum class SliderBubbleSlot {
     Pointer
 }
 
-private const val SliderBubbleSizeAnimationDurationMillis = 120
 private const val SliderBubbleTestTag = "slider-value-bubble"
-
-private val SliderThumbSize = 20.dp
-private val SliderThumbCenterRadius = 7.dp
-private val SliderBubbleHorizontalPadding = 10.dp
-private val SliderBubbleVerticalPadding = 6.dp
-private val SliderBubbleCornerRadius = 8.dp
-private val SliderBubblePointerWidth = 12.dp
-private val SliderBubblePointerHeight = 8.dp
-private val SliderBubblePointerOverlap = 1.dp
-private val SliderBubbleBodyToThumbClearance = 40.dp
 
 @Composable
 fun MyTextButton(
@@ -811,21 +801,22 @@ fun MyTextButton(
     secondaryTextColor: Color = MaterialTheme.colorScheme.secondary,
     prefix: (@Composable () -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(
-        horizontal = ContentPaddingHorizontal,
-        vertical = ContentPaddingVerticalWithSection
+        horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+        vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
     )
 ) {
+    val disabledAlpha = MaterialTheme.alpha.disabledItem
     Row(
         modifier = modifier
             .graphicsLayer {
-                alpha = if (enabled) 1f else DISABLED_ALPHA
+                alpha = if (enabled) 1f else disabledAlpha
             }
             .fillMaxWidth()
             .let {
                 val minHeight = if (secondaryText.isEmpty()) {
-                    MinItemHeightNoSecondary
+                    MaterialTheme.dimensions.listItem.singleLineMinHeight
                 } else {
-                    MinItemHeight
+                    MaterialTheme.dimensions.listItem.withSupportingTextMinHeight
                 }
                 it.heightIn(min = minHeight)
             }
@@ -834,21 +825,23 @@ fun MyTextButton(
             }
             .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
     ) {
         Row(
             modifier = Modifier
                 .weight(1f)
                 .height(IntrinsicSize.Max),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(IconTextPadding)
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.iconTextGap)
         ) {
             prefix?.invoke()
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .width(IntrinsicSize.Max),
-                verticalArrangement = Arrangement.spacedBy(MainSecondaryTextPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.titleSupportingTextGap
+                )
             ) {
                 Text(
                     modifier = Modifier.width(IntrinsicSize.Max),
@@ -889,21 +882,22 @@ fun MyTextSwitch(
     markColor: Color = Color.Unspecified,
     mainSecondaryTextPadding: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(
-        horizontal = ContentPaddingHorizontal,
-        vertical = ContentPaddingVerticalWithSection
+        horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+        vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
     )
 ) {
+    val disabledAlpha = MaterialTheme.alpha.disabledItem
     Row(
         modifier = modifier
             .graphicsLayer {
-                alpha = if (enabled) 1f else DISABLED_ALPHA
+                alpha = if (enabled) 1f else disabledAlpha
             }
             .fillMaxWidth()
             .let {
                 val minHeight = if (secondaryText.isEmpty()) {
-                    MinItemHeightNoSecondary
+                    MaterialTheme.dimensions.listItem.singleLineMinHeight
                 } else {
-                    MinItemHeight
+                    MaterialTheme.dimensions.listItem.withSupportingTextMinHeight
                 }
                 it.heightIn(min = minHeight)
             }
@@ -916,10 +910,10 @@ fun MyTextSwitch(
             }
             .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
     ) {
         val mainSecondaryPadding = when (mainSecondaryTextPadding) {
-            true -> MainSecondaryTextPadding
+            true -> MaterialTheme.dimensions.listItem.titleSupportingTextGap
             else -> 0.dp
         }
         Column(
@@ -930,7 +924,9 @@ fun MyTextSwitch(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(IconTextPadding),
+                horizontalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.iconTextGap
+                ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -942,7 +938,7 @@ fun MyTextSwitch(
                 if (markColor.isSpecified) {
                     Box(
                         modifier = Modifier
-                            .size(MarkColorSize)
+                            .size(MaterialTheme.dimensions.listItem.markerSize)
                             .background(color = markColor, shape = CircleShape)
                     )
                 }
@@ -960,7 +956,7 @@ fun MyTextSwitch(
         }
         if (onTextClick != null) {
             VerticalDivider(
-                modifier = Modifier.height(DividerHeight),
+                modifier = Modifier.height(MaterialTheme.dimensions.listItem.dividerSlotHeight),
                 color = MaterialTheme.colorScheme.outlineVariant
             )
         }
@@ -985,7 +981,7 @@ fun MySnackbarHost(
 ) {
     val paddingBottom = when (WindowInsets.areNavigationBarsVisible) {
         true -> 0.dp
-        else -> ScrollBottomPadding
+        else -> MaterialTheme.dimensions.layout.scrollBottomPadding
     }
     SnackbarHost(
         modifier = modifier.padding(bottom = paddingBottom),
@@ -1001,13 +997,16 @@ fun MyColorDisplay(
 ) {
     Box(
         modifier = modifier
-            .defaultMinSize(minWidth = 30.dp, minHeight = 30.dp)
+            .defaultMinSize(
+                minWidth = MaterialTheme.dimensions.listItem.colorDisplaySize,
+                minHeight = MaterialTheme.dimensions.listItem.colorDisplaySize
+            )
             .background(
                 color = color,
                 shape = CircleShape
             )
             .border(
-                width = 1.dp,
+                width = MaterialTheme.dimensions.listItem.colorDisplayBorderWidth,
                 color = MaterialTheme.colorScheme.outlineVariant,
                 shape = CircleShape
             )
@@ -1017,10 +1016,8 @@ fun MyColorDisplay(
                 modifier = Modifier.matchParentSize(),
                 imageVector = Icons.Default.Close,
                 contentDescription = null,
-                tint = Color.Red
+                tint = MaterialTheme.colorScheme.error
             )
         }
     }
 }
-
-private const val DISABLED_ALPHA = GlobalSettings.DisabledAlpha

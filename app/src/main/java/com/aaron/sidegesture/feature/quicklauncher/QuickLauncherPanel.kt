@@ -31,7 +31,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material3.Icon
@@ -44,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -71,19 +69,14 @@ import com.aaron.sidegesture.ktx.actionText
 import com.aaron.sidegesture.ktx.appInfo
 import com.aaron.sidegesture.ktx.getIcon
 import com.aaron.sidegesture.ktx.shortcutInfo
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.elevations
 import com.aaron.sidegesture.utils.VibrateUtils
 import kotlin.math.roundToInt
 
-private val ITEM_HORIZONTAL_PADDING = 6.dp
-private val ITEM_VERTICAL_PADDING = 4.dp
-private val ITEM_LABEL_TOP_PADDING = 4.dp
-private val GRID_HORIZONTAL_SPACING = 4.dp
-private val GRID_VERTICAL_SPACING = 8.dp
-private val PANEL_CORNER_RADIUS = 20.dp
-private val PANEL_PADDING = 12.dp
-private val EDGE_PADDING = 16.dp
-private val PAGE_INDICATOR_SIZE = 8.dp
-private val PAGE_INDICATOR_SPACING = 8.dp
 private const val MAX_PAGE_INDICATOR_DOTS = 7
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -96,6 +89,9 @@ fun QuickLauncherPanel(
 ) {
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
+    val dimensions = MaterialTheme.dimensions.quickLauncher
+    val alpha = MaterialTheme.alpha
+    val appColors = MaterialTheme.appColors
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
     val currentSettings = remember(settings) { settings.normalized() }
 
@@ -108,7 +104,11 @@ fun QuickLauncherPanel(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = if (isDarkTheme) 0.52f else 0.28f))
+                .background(
+                    appColors.fixedBlack.copy(
+                        alpha = if (isDarkTheme) alpha.overlayScrimDark else alpha.overlayScrimLight
+                    )
+                )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -121,25 +121,25 @@ fun QuickLauncherPanel(
             val cutoutInsets = WindowInsets.displayCutout
             val systemBarInsets = WindowInsets.systemBars
             val safeLeft = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getLeft(density, layoutDirection),
                     systemBarInsets.getLeft(density, layoutDirection)
                 )
             }
             val safeTop = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getTop(density),
                     systemBarInsets.getTop(density)
                 )
             }
             val safeRight = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getRight(density, layoutDirection),
                     systemBarInsets.getRight(density, layoutDirection)
                 )
             }
             val safeBottom = with(density) {
-                EDGE_PADDING.toPx() + maxOf(
+                dimensions.edgePadding.toPx() + maxOf(
                     cutoutInsets.getBottom(density),
                     systemBarInsets.getBottom(density)
                 )
@@ -154,9 +154,9 @@ fun QuickLauncherPanel(
                     columns = sessionSettings.columns,
                     requestedIconSize = with(density) { sessionSettings.iconSizeDp.dp.toPx() },
                     availableWidth = availableWidth,
-                    itemHorizontalPadding = with(density) { ITEM_HORIZONTAL_PADDING.toPx() },
-                    itemSpacing = with(density) { GRID_HORIZONTAL_SPACING.toPx() },
-                    contentPadding = with(density) { PANEL_PADDING.toPx() }
+                    itemHorizontalPadding = with(density) { dimensions.itemHorizontalPadding.toPx() },
+                    itemSpacing = with(density) { dimensions.gridHorizontalSpacing.toPx() },
+                    contentPadding = with(density) { dimensions.panelPadding.toPx() }
                 )
             }
             val panelWidthPx = horizontalLayout.panelWidth
@@ -164,8 +164,8 @@ fun QuickLauncherPanel(
             val labelLineHeight = (sessionSettings.textSizeSp + 3).sp
             val itemHeightPx = with(density) {
                 horizontalLayout.iconSize +
-                    ITEM_VERTICAL_PADDING.toPx() * 2f +
-                    ITEM_LABEL_TOP_PADDING.toPx() +
+                    dimensions.itemVerticalPadding.toPx() * 2f +
+                    dimensions.itemLabelTopPadding.toPx() +
                     labelLineHeight.toPx()
             }
             val pageLayout = remember(state.sessionId) {
@@ -174,10 +174,10 @@ fun QuickLauncherPanel(
                     availableHeight = availableHeight,
                     maxPanelHeight = availableHeight,
                     itemHeight = itemHeightPx,
-                    rowSpacing = with(density) { GRID_VERTICAL_SPACING.toPx() },
-                    contentPadding = with(density) { PANEL_PADDING.toPx() },
-                    indicatorHeight = with(density) { PAGE_INDICATOR_SIZE.toPx() },
-                    indicatorSpacing = with(density) { PAGE_INDICATOR_SPACING.toPx() },
+                    rowSpacing = with(density) { dimensions.gridVerticalSpacing.toPx() },
+                    contentPadding = with(density) { dimensions.panelPadding.toPx() },
+                    indicatorHeight = with(density) { dimensions.pageIndicatorSize.toPx() },
+                    indicatorSpacing = with(density) { dimensions.pageIndicatorSpacing.toPx() },
                     columns = sessionSettings.columns,
                     maxRows = sessionSettings.rows
                 )
@@ -222,15 +222,19 @@ fun QuickLauncherPanel(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { },
-                shape = RoundedCornerShape(PANEL_CORNER_RADIUS),
+                shape = MaterialTheme.componentShapes.quickLauncherPanel,
                 color = colorScheme.surface,
-                tonalElevation = 3.dp,
-                shadowElevation = if (isDarkTheme) 8.dp else 12.dp
+                tonalElevation = MaterialTheme.elevations.overlayTonal,
+                shadowElevation = if (isDarkTheme) {
+                    MaterialTheme.elevations.overlayShadowDark
+                } else {
+                    MaterialTheme.elevations.overlayShadowLight
+                }
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(vertical = PANEL_PADDING)
+                        .padding(vertical = dimensions.panelPadding)
                 ) {
                     HorizontalPager(
                         modifier = Modifier
@@ -241,9 +245,9 @@ fun QuickLauncherPanel(
                         LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
                             columns = GridCells.Fixed(sessionSettings.columns),
-                            contentPadding = PaddingValues(horizontal = PANEL_PADDING),
-                            horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING),
-                            verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
+                            contentPadding = PaddingValues(horizontal = dimensions.panelPadding),
+                            horizontalArrangement = Arrangement.spacedBy(dimensions.gridHorizontalSpacing),
+                            verticalArrangement = Arrangement.spacedBy(dimensions.gridVerticalSpacing),
                             userScrollEnabled = false
                         ) {
                             itemsIndexed(
@@ -280,7 +284,7 @@ fun QuickLauncherPanel(
                         }
                     }
                     if (pageLayout.showPageIndicator) {
-                        Spacer(modifier = Modifier.height(PAGE_INDICATOR_SPACING))
+                        Spacer(modifier = Modifier.height(dimensions.pageIndicatorSpacing))
                         QuickLauncherPageIndicator(
                             currentPage = pagerState.currentPage,
                             pageCount = pages.size
@@ -303,6 +307,7 @@ private fun QuickLauncherItem(
     onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val dimensions = MaterialTheme.dimensions.quickLauncher
     val appInfo = action.appInfo
     val shortcutInfo = action.shortcutInfo
     val hasMiniWindow = appInfo?.miniWindow ?: shortcutInfo?.miniWindow ?: false
@@ -317,7 +322,7 @@ private fun QuickLauncherItem(
                     onLongPress = { onLongClick() }
                 )
             }
-            .padding(vertical = ITEM_VERTICAL_PADDING),
+            .padding(vertical = dimensions.itemVerticalPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
@@ -336,7 +341,7 @@ private fun QuickLauncherItem(
                 Icon(
                     imageVector = Icons.Default.BrandingWatermark,
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(dimensions.miniWindowBadgeSize),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -350,7 +355,7 @@ private fun QuickLauncherItem(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = ITEM_LABEL_TOP_PADDING)
+                .padding(top = dimensions.itemLabelTopPadding)
         )
     }
 }
@@ -360,6 +365,7 @@ private fun QuickLauncherPageIndicator(
     currentPage: Int,
     pageCount: Int
 ) {
+    val dimensions = MaterialTheme.dimensions.quickLauncher
     val pageDescription = stringResource(
         R.string.quick_launcher_page_description,
         currentPage + 1,
@@ -368,12 +374,12 @@ private fun QuickLauncherPageIndicator(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(PAGE_INDICATOR_SIZE)
+            .height(dimensions.pageIndicatorSize)
             .clearAndSetSemantics {
                 contentDescription = pageDescription
             },
         horizontalArrangement = Arrangement.spacedBy(
-            space = PAGE_INDICATOR_SPACING,
+            space = dimensions.pageIndicatorSpacing,
             alignment = Alignment.CenterHorizontally
         ),
         verticalAlignment = Alignment.CenterVertically
@@ -387,13 +393,21 @@ private fun QuickLauncherPageIndicator(
             val page = firstVisiblePage + index
             Box(
                 modifier = Modifier
-                    .size(if (page == currentPage) PAGE_INDICATOR_SIZE else 6.dp)
+                    .size(
+                        if (page == currentPage) {
+                            dimensions.pageIndicatorSize
+                        } else {
+                            dimensions.inactivePageIndicatorSize
+                        }
+                    )
                     .clip(CircleShape)
                     .background(
                         if (page == currentPage) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = MaterialTheme.alpha.subtleBorder
+                            )
                         }
                     )
             )

@@ -74,10 +74,6 @@ object GlobalSettings {
     const val MaxActionPanelAppSwitchWindowModeDelayMs = 2000L
     const val MinVibrationDurationMs = 0L
     const val MaxVibrationDurationMs = 100L
-    const val GestureButtonColorAlpha = 0.36f
-    const val DisabledAlpha = 0.36f
-    const val DimAlpha = 0.5f
-
     @Composable
     fun getPredefinedVibrationEffectText(effect: VibrationEffects): String {
         return when (effect) {

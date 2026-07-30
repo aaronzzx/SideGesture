@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState.Visible
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -68,7 +67,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
@@ -80,7 +78,6 @@ import com.aaron.compose.ktx.toPx
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.AdvancedSettingsDefaults
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.constant.GlobalSettings.MaxActionPanelAppSwitchWindowModeDelayMs
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelAppSwitchWindowModeDelayMs
 import com.aaron.sidegesture.entity.Action
@@ -101,7 +98,12 @@ import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.ktx.wechatColor
-import com.aaron.sidegesture.ui.theme.RootPadding
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.elevations
+import com.aaron.sidegesture.ui.theme.motion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -129,31 +131,38 @@ fun ActionPanel(
     longPressLaunchPopup: Boolean = false,
     vibrations: Vibrations? = null
 ) {
+    val dimensions = MaterialTheme.dimensions
+    val appColors = MaterialTheme.appColors
+    val motion = MaterialTheme.motion
     AnimatedVisibility(
         modifier = modifier,
         visible = actionPanelState.visible,
-        enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
-        exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
+        enter = fadeIn(spring(stiffness = motion.overlayVisibilityStiffness)),
+        exit = fadeOut(spring(stiffness = motion.overlayVisibilityStiffness))
     ) {
         Box {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(color = Color.Black.copy(DimAlpha))
+                    .background(
+                        color = appColors.fixedBlack.copy(alpha = MaterialTheme.alpha.lowEmphasis)
+                    )
             )
 
             val selectedAction = actionPanelState.selectedAction
             val selectedLabel = actionText(selectedAction)
-            val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
-            val enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f)
-            val exit = fadeOut(animationSpec) + scaleOut(animationSpec, 0.9f)
+            val animationSpec = spring<Float>(stiffness = motion.actionPanelPlacementStiffness)
+            val enter = fadeIn(animationSpec) +
+                scaleIn(animationSpec, MaterialTheme.motion.actionPanelSecondaryEnterScale)
+            val exit = fadeOut(animationSpec) +
+                scaleOut(animationSpec, MaterialTheme.motion.actionPanelSecondaryEnterScale)
 
 
             AnimatedVisibility(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .displayCutoutPadding()
-                    .padding(RootPadding),
+                    .padding(dimensions.layout.overlayContentPadding),
                 visible = selectedAction.value == GlobalActions.EXTRA_LAUNCH_APP ||
                         selectedAction.value == GlobalActions.EXTRA_LAUNCH_SHORTCUT,
                 enter = enter,
@@ -169,7 +178,7 @@ fun ActionPanel(
                                 val spec = spring<Dp>(stiffness = 5000f)
                                 val width by animateDpAsState(
                                     targetValue = when (miniWindow) {
-                                        true -> 200.dp
+                                        true -> dimensions.actionPanel.miniWindowSize
                                         false -> maxWidth
                                     },
                                     animationSpec = spec
@@ -184,8 +193,10 @@ fun ActionPanel(
                                 thisModifier.size(width = width, height = height)
                             }
                             .background(
-                                color = Color.White.copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(8.dp)
+                                color = appColors.fixedWhite.copy(
+                                    alpha = MaterialTheme.alpha.subtleBorder
+                                ),
+                                shape = MaterialTheme.componentShapes.actionPanelMiniWindow
                             )
                     )
                 }
@@ -224,7 +235,7 @@ fun ActionPanel(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .displayCutoutPadding()
-                    .padding(RootPadding),
+                    .padding(dimensions.layout.overlayContentPadding),
                 visible = selectedLabel.isNotEmpty(),
                 enter = enter,
                 exit = exit
@@ -233,18 +244,21 @@ fun ActionPanel(
                     text = selectedLabel,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         shadow = Shadow(
-                            color = Color.Black, offset = Offset(2.0f, 2.0f), blurRadius = 3f
+                            color = appColors.fixedBlack,
+                            offset = Offset(
+                                dimensions.actionPanel.textShadowOffset.value,
+                                dimensions.actionPanel.textShadowOffset.value
+                            ),
+                            blurRadius = dimensions.actionPanel.textShadowBlurRadius.value
                         )
                     ),
-                    color = Color.White
+                    color = appColors.fixedWhite
                 )
             }
         }
     }
 }
 
-private val FolderEdgePadding = 16.dp
-private val FolderCornerSafePadding = 56.dp
 private const val FolderAutoScrollFrameDelayMs = 16L
 
 @Composable
@@ -255,6 +269,8 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     vibrations: Vibrations? = null
 ) {
     val density = LocalDensity.current
+    val dimensions = MaterialTheme.dimensions.actionPanel
+    val motion = MaterialTheme.motion
     val itemSize = actionPanelStyle.itemSize.toDp()
     val itemSpacing = actionPanelStyle.itemSpacing.toDp()
     val horizontalPadding = actionPanelStyle.horizontalPadding.toDp()
@@ -264,8 +280,8 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
     val itemSpacingPx = itemSpacing.toPx()
     val horizontalPaddingPx = horizontalPadding.toPx()
     val verticalPaddingPx = verticalPadding.toPx()
-    val edgePaddingPx = FolderEdgePadding.toPx()
-    val cornerSafePaddingPx = FolderCornerSafePadding.toPx()
+    val edgePaddingPx = dimensions.edgePadding.toPx()
+    val cornerSafePaddingPx = dimensions.cornerSafePadding.toPx()
     val cutoutInsets = WindowInsets.displayCutout
     val systemBarInsets = WindowInsets.systemBars
     val topSafeInsetPx = maxOf(
@@ -424,15 +440,25 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                     panelBounds = it.boundsInRoot()
                 }
                 .animateEnterExit(
-                    enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
-                            scaleIn(spring(stiffness = Spring.StiffnessMedium), 0.92f),
-                    exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) +
-                            scaleOut(spring(stiffness = Spring.StiffnessMedium), 0.92f)
+                    enter = fadeIn(spring(stiffness = motion.overlayVisibilityStiffness)) +
+                            scaleIn(
+                                spring(stiffness = motion.overlayVisibilityStiffness),
+                                MaterialTheme.motion.actionPanelEnterScale
+                            ),
+                    exit = fadeOut(spring(stiffness = motion.overlayVisibilityStiffness)) +
+                            scaleOut(
+                                spring(stiffness = motion.overlayVisibilityStiffness),
+                                MaterialTheme.motion.actionPanelEnterScale
+                            )
                 ),
             shape = RoundedCornerShape(cornerRadius),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 3.dp,
-            shadowElevation = if (isDarkTheme) 8.dp else 12.dp
+            tonalElevation = MaterialTheme.elevations.overlayTonal,
+            shadowElevation = if (isDarkTheme) {
+                MaterialTheme.elevations.overlayShadowDark
+            } else {
+                MaterialTheme.elevations.overlayShadowLight
+            }
         ) {
             LazyVerticalGrid(
                 modifier = Modifier.fillMaxSize(),
@@ -451,8 +477,12 @@ private fun AnimatedVisibilityScope.FolderActionPanel(
                     key = { index, _ -> index }
                 ) { index, action ->
                     val scale by animateFloatAsState(
-                        targetValue = if (actionPanelState.isSelected(action)) 1.15f else 1f,
-                        animationSpec = spring(stiffness = Spring.StiffnessHigh)
+                        targetValue = if (actionPanelState.isSelected(action)) {
+                            MaterialTheme.motion.actionPanelSelectionScale
+                        } else {
+                            1f
+                        },
+                        animationSpec = spring(stiffness = motion.actionPanelSelectionStiffness)
                     )
                     ActionPanelItem(
                         modifier = Modifier
@@ -535,10 +565,6 @@ private fun folderPanelAnchor(
 
 private const val SectorAngleDegree = 180.0
 private const val SectorRadiusStepRatio = 1.25f
-private val SectorEdgePadding = 16.dp
-private val SectorCornerSafePadding = 56.dp
-private val SectorMinItemSize = 32.dp
-
 @Composable
 private fun AnimatedVisibilityScope.SectorActionPanel(
     actionPanelStyle: SectorStyle,
@@ -547,19 +573,21 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
     vibrations: Vibrations? = null
 ) {
     val density = LocalDensity.current
+    val dimensions = MaterialTheme.dimensions.actionPanel
+    val motion = MaterialTheme.motion
     val defaultItemSize = actionPanelStyle.itemSize.toDp()
     val defaultItemSizePx = defaultItemSize.toPx()
     val initialRadiusRatio = actionPanelStyle.initialRadiusRatio.coerceAtLeast(0.1f)
     val itemSpacingRatio = actionPanelStyle.itemSpacingRatio.coerceAtLeast(0.1f)
-    val edgePaddingPx = SectorEdgePadding.toPx()
-    val cornerSafePaddingPx = SectorCornerSafePadding.toPx()
+    val edgePaddingPx = dimensions.edgePadding.toPx()
+    val cornerSafePaddingPx = dimensions.cornerSafePadding.toPx()
     val cutoutInsets = WindowInsets.displayCutout
     val systemBarInsets = WindowInsets.systemBars
     val topSafeInsetPx = maxOf(
         cutoutInsets.getTop(density),
         systemBarInsets.getTop(density)
     ).toFloat()
-    val minItemSizePx = SectorMinItemSize.toPx()
+    val minItemSizePx = dimensions.sectorMinItemSize.toPx()
     var parentSize by remember { mutableStateOf(Size.Zero) }
     var stableOrigin by remember { mutableStateOf(Offset.Unspecified) }
 
@@ -657,6 +685,7 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                 key(index) {
                     val targetAnimOffset = itemOffsets.getOrElse(index) { Offset.Zero }
                     val selectAnim = remember { Animatable(1f) }
+                    val selectionScale = MaterialTheme.motion.actionPanelSelectionScale
                     var originBounds by remember { mutableStateOf(Rect.Zero) }
 
                     LaunchedEffect(transition, actionPanelState, index, action, targetAnimOffset) {
@@ -670,7 +699,7 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                                 val transFinger = finger - targetAnimOffset
                                 if (originBounds.contains(transFinger)) {
                                     if (!actionPanelState.isSelected(action)) {
-                                        launch { selectAnim.animateTo(1.15f) }
+                                        launch { selectAnim.animateTo(selectionScale) }
                                         actionPanelState.select(index, action)
                                         vibrations?.tryVibrateForActionPanel()
                                     }
@@ -695,7 +724,7 @@ private fun AnimatedVisibilityScope.SectorActionPanel(
                                 scaleY = selectAnim.value
                             }
                             .run animateEnterExit@{
-                                val stiffness = Spring.StiffnessMedium
+                                val stiffness = motion.overlayVisibilityStiffness
                                 animateEnterExit(
                                     enter = scaleIn(spring(stiffness = stiffness)) +
                                             slideIn(animationSpec = spring(stiffness = stiffness)) {
@@ -1273,7 +1302,7 @@ private fun ActionPanelItem(
                 contentDescription = null,
                 imageLoader = LocalContext.current.imageLoader,
                 colorFilter = if (!isWechatAlipay) null else {
-                    ColorFilter.tint(Color.White)
+                    ColorFilter.tint(MaterialTheme.appColors.fixedWhite)
                 }
             )
         }
@@ -1313,6 +1342,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
     modifier: Modifier = Modifier,
     vibrations: Vibrations? = null
 ) {
+    val motion = MaterialTheme.motion
     val itemSize = actionPanelStyle.itemSize.toDp()
     // 斜边，从origin原点到item中心的距离，值越大item散得越开
     val hypot = itemSize.toPx() * 2f
@@ -1327,24 +1357,31 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
         )
 
         val selectedLabel: String = actionText(actionPanelState.selectedAction)
-        val animationSpec = spring<Float>(stiffness = Spring.StiffnessHigh)
+        val animationSpec = spring<Float>(stiffness = motion.actionPanelPlacementStiffness)
         AnimatedVisibility(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .displayCutoutPadding()
-                .padding(RootPadding),
+                .padding(MaterialTheme.dimensions.layout.overlayContentPadding),
             visible = selectedLabel.isNotEmpty(),
-            enter = fadeIn(animationSpec) + scaleIn(animationSpec, 0.9f),
-            exit = fadeOut(animationSpec) + scaleOut(animationSpec, 0.9f)
+            enter = fadeIn(animationSpec) +
+                scaleIn(animationSpec, MaterialTheme.motion.actionPanelSecondaryEnterScale),
+            exit = fadeOut(animationSpec) +
+                scaleOut(animationSpec, MaterialTheme.motion.actionPanelSecondaryEnterScale)
         ) {
             Text(
                 text = selectedLabel,
                 style = MaterialTheme.typography.headlineMedium.copy(
                     shadow = Shadow(
-                        color = Color.Black, offset = Offset(2.0f, 2.0f), blurRadius = 3f
+                        color = MaterialTheme.appColors.fixedBlack,
+                        offset = Offset(
+                            MaterialTheme.dimensions.actionPanel.textShadowOffset.value,
+                            MaterialTheme.dimensions.actionPanel.textShadowOffset.value
+                        ),
+                        blurRadius = MaterialTheme.dimensions.actionPanel.textShadowBlurRadius.value
                     )
                 ),
-                color = Color.White
+                color = MaterialTheme.appColors.fixedWhite
             )
         }
 
@@ -1415,6 +1452,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                         Offset(x = transX.toFloat(), y = transY.toFloat())
                     }
                     val selectAnim = remember { Animatable(1f) }
+                    val selectionScale = MaterialTheme.motion.actionPanelSelectionScale
 
                     var originBounds by remember { mutableStateOf(Rect.Zero) }
                     LaunchedEffect(transition, actionPanelState, index, action, selectAnim) {
@@ -1428,7 +1466,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 val transFinger = finger - targetAnimOffset
                                 if (originBounds.contains(transFinger)) {
                                     if (!actionPanelState.isSelected(action)) {
-                                        launch { selectAnim.animateTo(1.15f) }
+                                        launch { selectAnim.animateTo(selectionScale) }
                                         actionPanelState.select(index, action)
                                         vibrations?.tryVibrateForActionPanel()
                                     }
@@ -1460,7 +1498,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 scaleY = selectAnim.value
                             }
                             .run animateEnterExit@{
-                                val stiffness = Spring.StiffnessMedium
+                                val stiffness = motion.overlayVisibilityStiffness
                                 animateEnterExit(
                                     enter = scaleIn(spring(stiffness = stiffness)) +
                                             slideIn(animationSpec = spring(stiffness = stiffness)) {
@@ -1528,7 +1566,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
                                 contentDescription = null,
                                 imageLoader = LocalContext.current.imageLoader,
                                 colorFilter = if (!isWechatAlipay) null else {
-                                    ColorFilter.tint(Color.White)
+                                    ColorFilter.tint(MaterialTheme.appColors.fixedWhite)
                                 }
                             )
                         }

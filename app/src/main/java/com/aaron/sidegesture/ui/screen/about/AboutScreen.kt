@@ -20,14 +20,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.DonateDialog
 import com.aaron.sidegesture.ui.widget.MyAppsDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -72,11 +70,13 @@ fun AboutScreen(
             MyColumn(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(ItemPadding),
+                    verticalArrangement = Arrangement.spacedBy(
+                        MaterialTheme.dimensions.listItem.contentGap
+                    ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AsyncImage(
-                        modifier = Modifier.size(100.dp),
+                        modifier = Modifier.size(MaterialTheme.dimensions.about.logoSize),
                         model = uiState.icon,
                         contentDescription = null,
                         imageLoader = LocalContext.current.imageLoader
@@ -93,7 +93,7 @@ fun AboutScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.overview)
                 ) {
                     val context = LocalContext.current
@@ -102,7 +102,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.check_update),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 painter = painterResource(id = R.drawable.github),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
@@ -114,7 +114,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.feedback_email),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 imageVector = Icons.Default.Mail,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
@@ -126,7 +126,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.feedback_coolapk),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 painter = painterResource(id = R.drawable.coolapk),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
@@ -138,7 +138,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.my_apps),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 imageVector = Icons.Default.Apps,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
@@ -150,7 +150,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.donate),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 imageVector = Icons.Default.Money,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
@@ -162,7 +162,7 @@ fun AboutScreen(
                         text = stringResource(id = R.string.bug_collecting),
                         prefix = {
                             Icon(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(MaterialTheme.dimensions.about.linkIconSize),
                                 imageVector = Icons.Default.BugReport,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary

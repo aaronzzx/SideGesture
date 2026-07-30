@@ -1,5 +1,21 @@
 import java.util.Properties
 
+val releaseSigningProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.isFile) {
+        localPropertiesFile.inputStream().use(::load)
+    }
+}
+val releaseSigningPropertyNames = listOf(
+    "STORE_FILE_NAME",
+    "KEYSTORE_PASSWORD",
+    "STORE_ALIAS",
+    "KEY_PASSWORD"
+)
+val hasReleaseSigningProperties = releaseSigningPropertyNames.all {
+    !releaseSigningProperties.getProperty(it).isNullOrBlank()
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -25,14 +41,13 @@ android {
         }
     }
     signingConfigs {
-        val properties = Properties()
-        val inputStream = project.rootProject.file("local.properties").inputStream()
-        properties.load(inputStream)
-        register("release") {
-            storeFile = file(properties.getProperty("STORE_FILE_NAME"))
-            storePassword = properties.getProperty("KEYSTORE_PASSWORD")
-            keyAlias = properties.getProperty("STORE_ALIAS")
-            keyPassword = properties.getProperty("KEY_PASSWORD")
+        if (hasReleaseSigningProperties) {
+            register("release") {
+                storeFile = file(releaseSigningProperties.getProperty("STORE_FILE_NAME"))
+                storePassword = releaseSigningProperties.getProperty("KEYSTORE_PASSWORD")
+                keyAlias = releaseSigningProperties.getProperty("STORE_ALIAS")
+                keyPassword = releaseSigningProperties.getProperty("KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
@@ -43,7 +58,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfigs.findByName("release")?.let {
+                signingConfig = it
+            }
         }
         debug {
             applicationIdSuffix = ".dev"
@@ -76,6 +93,19 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val releasePackageRequested = allTasks.any { task ->
+        task.name == "assembleRelease" ||
+            task.name == "bundleRelease" ||
+            task.name == "packageRelease"
+    }
+    if (releasePackageRequested && !hasReleaseSigningProperties) {
+        throw GradleException(
+            "Release 打包缺少签名配置：${releaseSigningPropertyNames.joinToString()}"
+        )
     }
 }
 

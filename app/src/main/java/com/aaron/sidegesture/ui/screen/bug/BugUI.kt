@@ -39,15 +39,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.RootPadding
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.TopBar
@@ -111,7 +111,10 @@ fun BugScreen(
                         DropdownMenu(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             shape = MaterialTheme.shapes.medium,
-                            offset = DpOffset(-(TopBarPaddingExtra / 2), 0.dp),
+                            offset = DpOffset(
+                                -MaterialTheme.dimensions.topBar.popupAnchorOffset,
+                                0.dp
+                            ),
                             expanded = uiState.showMoreMenu,
                             onDismissRequest = { vm.showMoreMenu(false) }
                         ) {
@@ -191,7 +194,9 @@ fun BugScreen(
                         modifier = Modifier
                             .background(
                                 color = when (selected) {
-                                    true -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    true -> MaterialTheme.colorScheme.primary.copy(
+                                        alpha = MaterialTheme.alpha.gestureAngleGuide
+                                    )
                                     else -> Color.Transparent
                                 }
                             )
@@ -199,13 +204,15 @@ fun BugScreen(
                             .onClick(enableRipple = false) {
                                 vm.onClickItem(item)
                             }
-                            .padding(RootPadding),
-                        horizontalArrangement = Arrangement.spacedBy(IconTextPadding)
+                            .padding(MaterialTheme.dimensions.layout.screenPadding),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            MaterialTheme.dimensions.listItem.iconTextGap
+                        )
                     ) {
                         Text(
                             modifier = Modifier.weight(1f),
                             text = "${index + 1}. $item",
-                            fontSize = 12.sp,
+                            style = MaterialTheme.textStyles.bugTimestamp,
                             color = MaterialTheme.colorScheme.onBackground,
                             maxLines = when (selected) {
                                 true -> Int.MAX_VALUE

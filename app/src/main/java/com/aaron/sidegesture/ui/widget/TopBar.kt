@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -19,9 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.sp
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 
 /**
  * @author aaronzzxup@gmail.com
@@ -36,7 +37,7 @@ fun TopBar(
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     showBackIcon: Boolean = true,
-    titleStyle: TextStyle = LocalTextStyle.current.copy(fontSize = 18.sp),
+    titleStyle: TextStyle = MaterialTheme.textStyles.topBarTitle,
     containerColor: Color = Color.Transparent,
     postfixTitle: (@Composable () -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null
@@ -52,7 +53,7 @@ fun TopBar(
                     Text(
                         modifier = Modifier.let {
                             if (showBackIcon) it else {
-                                it.padding(start = TopBarPaddingExtra)
+                                it.padding(start = MaterialTheme.dimensions.topBar.contentInset)
                             }
                         },
                         text = title,
@@ -65,7 +66,7 @@ fun TopBar(
         navigationIcon = {
             if (showBackIcon) {
                 IconButton(
-                    modifier = Modifier.padding(start = TopBarPaddingExtra / 2),
+                    modifier = Modifier.padding(start = MaterialTheme.dimensions.topBar.leadingInset),
                     onClick = onBack
                 ) {
                     Icon(
@@ -76,7 +77,7 @@ fun TopBar(
             }
         },
         actions = {
-            Row(modifier = Modifier.padding(end = TopBarPaddingExtra / 2)) {
+            Row(modifier = Modifier.padding(end = MaterialTheme.dimensions.topBar.trailingInset)) {
                 actions()
             }
         }

@@ -1,8 +1,10 @@
 package com.aaron.sidegesture.ktx
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.aaron.sidegesture.ui.theme.appColors
 
 /**
  * @author aaronzzxup@gmail.com
@@ -10,7 +12,7 @@ import androidx.compose.ui.graphics.Color
  */
 
 val ColorScheme.wechatColor: Color
-    @Composable get() = Color(0xFF48C87B)
+    @Composable get() = MaterialTheme.appColors.weChat
 
 val ColorScheme.alipayColor: Color
-    @Composable get() = Color(0xFF16A6EE)
+    @Composable get() = MaterialTheme.appColors.aliPay

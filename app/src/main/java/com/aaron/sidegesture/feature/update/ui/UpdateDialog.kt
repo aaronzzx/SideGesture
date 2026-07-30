@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -36,10 +35,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.aaron.compose.ktx.clipToBackground
 import com.aaron.compose.ui.BottomDialog
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.ui.theme.DialogTitleFontSize
-import com.aaron.sidegesture.ui.theme.DialogTitlePadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
 import com.aaron.sidegesture.feature.update.UpdateChecker
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 
 /**
  * 更新弹窗（唯一交互中心）。状态机五态：
@@ -71,6 +71,7 @@ fun UpdateDialog(
             dismissOnClickOutside = true
         )
     ) {
+        val dimensions = MaterialTheme.dimensions.dialog
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -89,17 +90,17 @@ fun UpdateDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = DialogTitlePadding,
-                        end = ItemPadding / 2,
-                        top = ItemPadding,
-                        bottom = 4.dp
+                        start = dimensions.titlePadding,
+                        end = dimensions.contentPadding / 2,
+                        top = dimensions.contentPadding,
+                        bottom = MaterialTheme.dimensions.updateDialog.notesBottomPadding
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
                     text = stringResource(id = titleRes),
-                    fontSize = DialogTitleFontSize,
+                    style = MaterialTheme.textStyles.dialogTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = onOpenRelease) {
@@ -112,9 +113,9 @@ fun UpdateDialog(
             }
             Text(
                 modifier = Modifier.padding(
-                    start = DialogTitlePadding,
-                    end = DialogTitlePadding,
-                    bottom = ItemPadding
+                    start = dimensions.titlePadding,
+                    end = dimensions.titlePadding,
+                    bottom = dimensions.contentPadding
                 ),
                 text = if (isUpToDate) {
                     UpdateChecker.displayVersion(state.version.ifBlank { localVersion })
@@ -132,15 +133,17 @@ fun UpdateDialog(
             val maxNotesHeight = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
             Text(
                 modifier = Modifier
-                    .padding(horizontal = ItemPadding)
+                    .padding(horizontal = dimensions.contentPadding)
                     .fillMaxWidth()
                     .clipToBackground(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(12.dp)
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = MaterialTheme.alpha.updateNotes
+                        ),
+                        shape = MaterialTheme.componentShapes.updateNotes
                     )
                     .heightIn(max = maxNotesHeight)
                     .verticalScroll(rememberScrollState())
-                    .padding(ItemPadding),
+                    .padding(dimensions.contentPadding),
                 text = state.notes.ifBlank { "—" },
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium
@@ -170,7 +173,7 @@ fun UpdateDialog(
                     ActionRow(onIgnore = onIgnore, onConfirm = onConfirm)
                 }
                 UpdateVM.UpdatePhase.UpToDate -> {
-                    Spacer(modifier = Modifier.padding(ItemPadding))
+                    Spacer(modifier = Modifier.padding(dimensions.contentPadding))
                 }
             }
         }
@@ -182,11 +185,15 @@ private fun ActionRow(
     onIgnore: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val dimensions = MaterialTheme.dimensions.dialog
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = ItemPadding, vertical = ItemPadding),
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+            .padding(
+                horizontal = dimensions.contentPadding,
+                vertical = dimensions.contentPadding
+            ),
+        horizontalArrangement = Arrangement.spacedBy(dimensions.contentGap)
     ) {
         TextButton(
             modifier = Modifier.weight(1f),
@@ -208,10 +215,14 @@ private fun ActionRow(
 
 @Composable
 private fun PrimaryButtonRow(text: String, onClick: () -> Unit) {
+    val dimensions = MaterialTheme.dimensions.dialog
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = ItemPadding, vertical = ItemPadding)
+            .padding(
+                horizontal = dimensions.contentPadding,
+                vertical = dimensions.contentPadding
+            )
     ) {
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -224,6 +235,8 @@ private fun PrimaryButtonRow(text: String, onClick: () -> Unit) {
 
 @Composable
 private fun DownloadingContent(progress: Int) {
+    val dialogDimensions = MaterialTheme.dimensions.dialog
+    val updateDimensions = MaterialTheme.dimensions.updateDialog
     val animatedFraction by animateFloatAsState(
         targetValue = (progress / 100f).coerceIn(0f, 1f),
         label = "downloadProgress"
@@ -231,7 +244,10 @@ private fun DownloadingContent(progress: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = DialogTitlePadding, vertical = ItemPadding / 2)
+            .padding(
+                horizontal = dialogDimensions.titlePadding,
+                vertical = dialogDimensions.contentPadding / 2
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -249,18 +265,18 @@ private fun DownloadingContent(progress: Int) {
                 style = MaterialTheme.typography.titleMedium
             )
         }
-        Spacer(modifier = Modifier.height(ItemPadding / 2))
+        Spacer(modifier = Modifier.height(dialogDimensions.contentPadding / 2))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
+                .height(updateDimensions.progressTrackHeight)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(animatedFraction)
-                    .height(8.dp)
+                    .height(updateDimensions.progressTrackHeight)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
             )

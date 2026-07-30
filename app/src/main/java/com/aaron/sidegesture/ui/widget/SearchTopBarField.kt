@@ -24,10 +24,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.sp
 import com.aaron.sidegesture.R
+import com.aaron.sidegesture.ui.theme.textStyles
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -51,7 +50,7 @@ fun SearchTopBarField(
         value = query,
         onValueChange = onQueryChange,
         singleLine = true,
-        textStyle = TextStyle(fontSize = 16.sp),
+        textStyle = MaterialTheme.textStyles.searchField,
         placeholder = {
             Text(
                 modifier = Modifier.basicMarquee(),

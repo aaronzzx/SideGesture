@@ -1,7 +1,6 @@
 package com.aaron.sidegesture.feature.movescreen
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import com.aaron.sidegesture.entity.MoveScreenData
 import com.aaron.sidegesture.entity.global.ActionSettings
 import com.aaron.sidegesture.entity.global.ActionSettings.MoveScreen.Action.DoubleTap
 import com.aaron.sidegesture.entity.global.ActionSettings.MoveScreen.Action.Tap
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.utils.JsonHelper
 import kotlinx.coroutines.channels.Channel
 import org.junit.Assert.assertEquals
@@ -61,7 +61,7 @@ class MoveScreenPopupTest {
                     it.onDragStart(Offset(540f, 900f))
                 }
             }
-            MaterialTheme {
+            AppTheme(darkTheme = false, dynamicColor = false) {
                 CrosshairScreen(state, Modifier.fillMaxSize())
             }
         }

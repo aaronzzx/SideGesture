@@ -56,14 +56,12 @@ import coil.compose.AsyncImage
 import com.aaron.compose.component.UDFComponent
 import com.aaron.compose.ktx.onClick
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GlobalSettings.DimAlpha
 import com.aaron.sidegesture.constant.ScaleableDefaults.DEFAULT_SCALE
 import com.aaron.sidegesture.constant.ScaleableDefaults.MAX_SCALE
 import com.aaron.sidegesture.constant.ScaleableDefaults.MIN_SCALE
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MySection
@@ -119,10 +117,12 @@ fun IconResizeScreen(
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(
-                        vertical = ContentPaddingVerticalWithSection,
-                        horizontal = ContentPaddingHorizontal * 2
+                        vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection,
+                        horizontal = MaterialTheme.dimensions.layout.nestedItemIndent
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(ContentPaddingHorizontal)
+                    horizontalArrangement = Arrangement.spacedBy(
+                        MaterialTheme.dimensions.layout.contentHorizontalPadding
+                    )
                 ) {
                     itemsIndexed(
                         items = uiState.ids,
@@ -130,7 +130,7 @@ fun IconResizeScreen(
                     ) { _, id ->
                         Box(
                             modifier = Modifier
-                                .size(MinInteractiveSize)
+                                .size(MaterialTheme.dimensions.listItem.minimumTouchTarget)
                                 .onClick(enableRipple = false) {
                                     vm.onSelectedIdChange(id)
                                 }
@@ -153,13 +153,18 @@ fun IconResizeScreen(
                             androidx.compose.animation.AnimatedVisibility(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = 4.dp, y = (-4).dp),
+                                    .offset(
+                                        x = MaterialTheme.dimensions.iconResize.badgeOffset,
+                                        y = -MaterialTheme.dimensions.iconResize.badgeOffset
+                                    ),
                                 visible = visible,
                                 enter = fadeIn() + scaleIn(),
                                 exit = fadeOut() + scaleOut()
                             ) {
                                 Badge(
-                                    modifier = Modifier.requiredSize(16.dp),
+                                    modifier = Modifier.requiredSize(
+                                        MaterialTheme.dimensions.iconResize.badgeSize
+                                    ),
                                     containerColor = MaterialTheme.colorScheme.primary
                                 ) {
                                     Icon(
@@ -173,12 +178,17 @@ fun IconResizeScreen(
                 }
             }
 
+            val previewMaskColor = MaterialTheme.appColors.fixedBlack.copy(
+                alpha = MaterialTheme.alpha.lowEmphasis
+            )
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .width(250.dp),
+                    .width(MaterialTheme.dimensions.iconResize.previewWidth),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.contentGap
+                )
             ) {
                 Box(
                     modifier = Modifier
@@ -192,7 +202,7 @@ fun IconResizeScreen(
                             onDrawWithContent {
                                 drawContent()
                                 clipPath(path = path, clipOp = ClipOp.Difference) {
-                                    drawRect(color = Color.Black.copy(DimAlpha))
+                                    drawRect(color = previewMaskColor)
                                 }
                             }
                         }
@@ -206,8 +216,8 @@ fun IconResizeScreen(
                     ) {
                         items(11 * 11) { index ->
                             val color = when (index % 2 == 0) {
-                                true -> Color.LightGray
-                                else -> Color.White
+                                true -> MaterialTheme.appColors.checkerboardLight
+                                else -> MaterialTheme.appColors.fixedWhite
                             }
                             Box(
                                 modifier = Modifier

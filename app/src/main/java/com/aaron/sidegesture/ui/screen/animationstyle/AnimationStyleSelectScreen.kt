@@ -43,10 +43,8 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.AnimationStyles
 import com.aaron.sidegesture.ui.screen.animationstyle.AnimationStyleSelectVM.AnimationStyleItem
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.TopBar
 
@@ -66,7 +64,11 @@ fun AnimationStyleSelectScreen(
                 onBack = onBack,
                 title = stringResource(id = R.string.animation_style)
             )
-            MyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            MyColumn(
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.styleCard.listSpacing
+                )
+            ) {
                 uiState.items.forEach { item ->
                     AnimationStyleCard(
                         item = item,
@@ -91,17 +93,21 @@ private fun AnimationStyleCard(
     val borderColor = if (selected) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+        MaterialTheme.colorScheme.outline.copy(alpha = MaterialTheme.alpha.subtleBorder)
     }
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        MaterialTheme.colorScheme.primary.copy(alpha = MaterialTheme.alpha.subtleContainer)
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clipToBorder(width = 1.5.dp, color = borderColor, shape = shape)
+            .clipToBorder(
+                width = MaterialTheme.dimensions.styleCard.selectedBorderWidth,
+                color = borderColor,
+                shape = shape
+            )
             .onSingleClick { onClick() },
         shape = shape,
         color = containerColor
@@ -109,16 +115,18 @@ private fun AnimationStyleCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = MinItemHeightNoSecondary + 28.dp)
+                .heightIn(min = MaterialTheme.dimensions.styleCard.minHeight)
                 .padding(
-                    horizontal = ContentPaddingHorizontal,
-                    vertical = ContentPaddingVerticalWithSection
+                    horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                    vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
                 ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+            horizontalArrangement = Arrangement.spacedBy(
+                MaterialTheme.dimensions.listItem.contentGap
+            )
         ) {
             Box(
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier.size(MaterialTheme.dimensions.styleCard.previewSize)
             ) {
                 when (item.type) {
                     AnimationStyles.TYPE_WAVE -> WaveStylePreview(
@@ -149,7 +157,9 @@ private fun AnimationStyleCard(
                     }
                 )
                 Text(
-                    modifier = Modifier.padding(top = 2.dp),
+                    modifier = Modifier.padding(
+                        top = MaterialTheme.dimensions.styleCard.subtitleTopPadding
+                    ),
                     text = stringResource(id = item.descriptionRes),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
@@ -161,17 +171,19 @@ private fun AnimationStyleCard(
             if (selected && item.hasSettings) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(MaterialTheme.dimensions.styleCard.radioSize)
                         .clipToBorder(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            width = MaterialTheme.dimensions.styleCard.radioBorderWidth,
+                            color = MaterialTheme.colorScheme.primary.copy(
+                                alpha = MaterialTheme.alpha.selectedIndicator
+                            ),
                             shape = CircleShape
                         )
                         .onSingleClick { onSettingsClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(MaterialTheme.dimensions.styleCard.editIconSize),
                         imageVector = Icons.Default.Settings,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
@@ -189,10 +201,11 @@ private fun CapsuleStylePreview(
     PreviewStage(modifier = modifier) {
         val colorScheme = MaterialTheme.colorScheme
         val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
+        val styleCardDimensions = MaterialTheme.dimensions.styleCard
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val thickness = 26.dp.toPx()
-            val capsuleWidth = 48.dp.toPx()
-            val cornerRadius = 13.dp.toPx()
+            val thickness = styleCardDimensions.capsuleThickness.toPx()
+            val capsuleWidth = styleCardDimensions.capsuleWidth.toPx()
+            val cornerRadius = styleCardDimensions.capsuleCornerRadius.toPx()
             val startX = -capsuleWidth * 0.20f
             val top = size.height / 2f - thickness / 2f
             val center = Offset(startX + capsuleWidth / 2f, top + thickness / 2f)
@@ -204,7 +217,7 @@ private fun CapsuleStylePreview(
                 cornerRadius = CornerRadius(cornerRadius, cornerRadius)
             )
 
-            val iconSize = 15.dp.toPx()
+            val iconSize = styleCardDimensions.capsuleIconSize.toPx()
             rotate(0f, pivot = center) {
                 translate(left = center.x, top = center.y - iconSize / 2f) {
                     drawPreviewIcon(
@@ -262,8 +275,8 @@ private fun WaveStylePreview(
         Image(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 6.dp)
-                .size(18.dp),
+                .padding(start = MaterialTheme.dimensions.styleCard.waveIconStartPadding)
+                .size(MaterialTheme.dimensions.styleCard.previewIconSize),
             painter = iconPainter,
             contentDescription = null,
             colorFilter = ColorFilter.tint(colorScheme.onPrimary)
@@ -278,8 +291,9 @@ private fun BubbleStylePreview(
     PreviewStage(modifier = modifier) {
         val colorScheme = MaterialTheme.colorScheme
         val iconPainter = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
+        val bubbleDiameter = MaterialTheme.dimensions.styleCard.bubbleDiameter
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val diameter = 34.dp.toPx()
+            val diameter = bubbleDiameter.toPx()
             val radius = diameter / 2f
             val center = Offset(x = radius * 0.65f, y = size.height / 2f)
 
@@ -293,8 +307,8 @@ private fun BubbleStylePreview(
         Image(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 4.dp)
-                .size(18.dp),
+                .padding(start = MaterialTheme.dimensions.styleCard.bubbleIconStartPadding)
+                .size(MaterialTheme.dimensions.styleCard.previewIconSize),
             painter = iconPainter,
             contentDescription = null,
             colorFilter = ColorFilter.tint(colorScheme.onPrimary)
@@ -316,10 +330,12 @@ private fun PreviewStage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp)
+                .padding(MaterialTheme.dimensions.styleCard.previewBorderPadding)
                 .clipToBorder(
-                    width = 1.dp,
-                    color = colorScheme.outlineVariant.copy(alpha = 0.9f),
+                    width = MaterialTheme.dimensions.styleCard.radioBorderWidth,
+                    color = colorScheme.outlineVariant.copy(
+                        alpha = MaterialTheme.alpha.previewDivider
+                    ),
                     shape = MaterialTheme.shapes.small
                 ),
             content = content

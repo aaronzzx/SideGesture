@@ -1,32 +1,48 @@
 package com.aaron.sidegesture.feature.quicktools
 
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.aaron.sidegesture.entity.global.QuickToolType
+import com.aaron.sidegesture.ui.theme.QuickToolsDimensions
 
 object QuickToolsGridSpec {
     const val Columns = 4
     const val ViewportRows = 6
+}
 
-    val PanelWidth = 240.dp
-    val PanelHeight = 300.dp
-    val PanelCornerRadius = 28.dp
-    val PanelOuterPadding = 0.dp
-    val PanelInnerPadding = 10.dp
-    val ItemSpacing = 8.dp
+data class QuickToolsLayoutMetrics(
+    val panelWidth: Dp,
+    val panelHeight: Dp,
+    val panelOuterPadding: Dp,
+    val panelInnerPadding: Dp,
+    val itemSpacing: Dp,
+    val rowHeight: Dp,
+    val compactButtonSize: Dp
+)
 
-    val ViewportHeight = PanelHeight - (PanelInnerPadding * 2f)
-    val RowHeight = (ViewportHeight - (ItemSpacing * (ViewportRows - 1).toFloat())) / ViewportRows
-    val CompactButtonSize = minOf(RowHeight, 40.dp)
+fun calculateQuickToolsLayout(dimensions: QuickToolsDimensions): QuickToolsLayoutMetrics {
+    val viewportHeight = dimensions.panelHeight - (dimensions.panelInnerPadding * 2f)
+    val rowHeight = (
+        viewportHeight -
+            (dimensions.itemSpacing * (QuickToolsGridSpec.ViewportRows - 1).toFloat())
+        ) / QuickToolsGridSpec.ViewportRows
+    return QuickToolsLayoutMetrics(
+        panelWidth = dimensions.panelWidth,
+        panelHeight = dimensions.panelHeight,
+        panelOuterPadding = dimensions.panelOuterPadding,
+        panelInnerPadding = dimensions.panelInnerPadding,
+        itemSpacing = dimensions.itemSpacing,
+        rowHeight = rowHeight,
+        compactButtonSize = minOf(rowHeight, dimensions.compactButtonMaxSize)
+    )
 }
 
 data class QuickToolLayoutSpan(
     val columnSpan: Int,
     val rowSpan: Int
 ) {
-    fun itemHeight(): Dp {
-        return (QuickToolsGridSpec.RowHeight * rowSpan.toFloat()) +
-            (QuickToolsGridSpec.ItemSpacing * (rowSpan - 1).toFloat())
+    fun itemHeight(layout: QuickToolsLayoutMetrics): Dp {
+        return (layout.rowHeight * rowSpan.toFloat()) +
+            (layout.itemSpacing * (rowSpan - 1).toFloat())
     }
 }
 

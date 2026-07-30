@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,11 +46,8 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalSettings.MinMiniWindowSizeDp
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindow.Bounds
 import com.aaron.sidegesture.entity.global.ActionSettings.MiniWindowMode
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.EdgeMenuPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
@@ -125,7 +123,11 @@ fun MiniWindowSettingsScreen(
                     }
                 )
                 // 整页可滚动，短屏(横屏/分屏/小窗/大字体)下不裁切
-                MyColumn(verticalArrangement = Arrangement.spacedBy(ItemPadding)) {
+                MyColumn(
+                    verticalArrangement = Arrangement.spacedBy(
+                        MaterialTheme.dimensions.listItem.contentGap
+                    )
+                ) {
                     MySection {
                         ModeRow(
                             mode = uiState.mode,
@@ -153,8 +155,14 @@ fun MiniWindowSettingsScreen(
                         )
                         Text(
                             modifier = Modifier
-                                .padding(horizontal = ContentPaddingHorizontal)
-                                .padding(bottom = ContentPaddingVerticalWithSection),
+                                .padding(
+                                    horizontal =
+                                        MaterialTheme.dimensions.layout.contentHorizontalPadding
+                                )
+                                .padding(
+                                    bottom =
+                                        MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
+                                ),
                             text = stringResource(id = R.string.mini_window_scale_hint),
                             color = MaterialTheme.colorScheme.secondary,
                             style = MaterialTheme.typography.labelMedium
@@ -237,8 +245,15 @@ fun MiniWindowSettingsScreen(
                 modifier = Modifier
                     .offset(x = bounds.leftDp.dp, y = bounds.topDp.dp)
                     .size(width = bounds.widthDp.dp, height = bounds.heightDp.dp)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                    .border(2.dp, MaterialTheme.colorScheme.primary)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = MaterialTheme.alpha.miniWindowPreview
+                        )
+                    )
+                    .border(
+                        MaterialTheme.dimensions.colorPreview.miniWindowBorderWidth,
+                        MaterialTheme.colorScheme.primary
+                    )
             )
         }
     }
@@ -266,14 +281,14 @@ private fun ModeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeightNoSecondary)
+            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
             .onSingleClick { onExpandedChange(true) }
             .padding(
-                horizontal = ContentPaddingHorizontal,
-                vertical = ContentPaddingVerticalWithSection
+                horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
     ) {
         Text(
             modifier = Modifier.weight(1f),
@@ -296,7 +311,10 @@ private fun ModeRow(
             }
             DropdownMenu(
                 containerColor = MaterialTheme.colorScheme.surface,
-                offset = DpOffset(x = -EdgeMenuPadding, y = 0.dp),
+                offset = DpOffset(
+                    x = -MaterialTheme.dimensions.topBar.edgeMenuOffset,
+                    y = 0.dp
+                ),
                 shape = MaterialTheme.shapes.medium,
                 expanded = expanded,
                 onDismissRequest = { onExpandedChange(false) }
@@ -326,7 +344,7 @@ private fun OrientationChips(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
     ) {
         OrientationChip(
             modifier = Modifier.weight(1f),
@@ -364,8 +382,10 @@ private fun OrientationChip(
         modifier = modifier
             .clipToBackground(color = backgroundColor, shape = MaterialTheme.shapes.medium)
             .onClick { onClick() }
-            .heightIn(min = MinItemHeightNoSecondary)
-            .padding(vertical = ContentPaddingVerticalWithSection),
+            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
+            .padding(
+                vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(

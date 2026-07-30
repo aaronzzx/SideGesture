@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -59,7 +59,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
@@ -70,7 +69,13 @@ import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.entity.GestureButton
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ktx.rootSize
+import com.aaron.sidegesture.ui.theme.PinnedScreenshotDimensions
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import com.blankj.utilcode.util.ConvertUtils
 import kotlin.math.abs
 import kotlin.math.max
@@ -86,6 +91,7 @@ class PinnedScreenshotManager(
     private val windows = linkedMapOf<String, PinWindow>()
     private val deleteTargetState = PinDeleteTargetState()
     private var deleteTargetWindow: DeleteTargetWindow? = null
+    private var pinnedDimensions = PinnedScreenshotDimensions()
     private var isScreenLocked = false
     private var safeInsets = PinSafeInsets.from(service, windowManager, emptyList())
 
@@ -96,7 +102,7 @@ class PinnedScreenshotManager(
         ensureDeleteTargetWindow()
         val root = rootSize
         val minScale = minScale(bitmap)
-        val chromeSize = pinChromeSizePx()
+        val chromeSize = pinChromeSizePx(pinnedDimensions)
         val targetScale = min(
             1f,
             min(
@@ -118,7 +124,8 @@ class PinnedScreenshotManager(
                 ?: ((root.width - startWindowWidth) / 2f).coerceAtLeast(0f),
             y = sourceRect?.let { it.top - chromeSize }
                 ?: ((root.height - startWindowHeight) / 2f).coerceAtLeast(0f),
-            safeInsets = safeInsets
+            safeInsets = safeInsets,
+            dimensions = pinnedDimensions
         )
         if (sourceRect == null) {
             clampVisible(state)
@@ -145,8 +152,13 @@ class PinnedScreenshotManager(
             setViewTreeSavedStateRegistryOwner(service)
             setContent {
                 SideGestureTheme {
+                    val dimensions = MaterialTheme.dimensions.pinnedScreenshot
+                    SideEffect {
+                        updatePinnedDimensions(dimensions)
+                    }
                     PinnedScreenshotWindow(
                         state = state,
+                        dimensions = dimensions,
                         onGestureStart = {
                             cancelLayoutAnimation(state)
                         },
@@ -261,13 +273,20 @@ class PinnedScreenshotManager(
             setViewTreeSavedStateRegistryOwner(service)
             setContent {
                 SideGestureTheme {
-                    PinDeleteTarget(state = deleteTargetState)
+                    val dimensions = MaterialTheme.dimensions.pinnedScreenshot
+                    SideEffect {
+                        updatePinnedDimensions(dimensions)
+                    }
+                    PinDeleteTarget(
+                        state = deleteTargetState,
+                        dimensions = dimensions
+                    )
                 }
             }
         }
         val layoutParams = WindowManager.LayoutParams().apply {
             width = WindowManager.LayoutParams.MATCH_PARENT
-            height = deleteTargetHeightPx()
+            height = deleteTargetHeightPx(pinnedDimensions)
             x = 0
             y = rootSize.height - height
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
@@ -297,10 +316,11 @@ class PinnedScreenshotManager(
 
     private fun isOverDeleteTarget(pointer: Offset): Boolean {
         val root = rootSize
-        val width = deleteTargetWidthPx().toFloat()
-        val height = deleteTargetCardHeightPx().toFloat()
+        val width = deleteTargetWidthPx(pinnedDimensions).toFloat()
+        val height = deleteTargetCardHeightPx(pinnedDimensions).toFloat()
         val left = (root.width - width) / 2f
-        val top = root.height - deleteTargetHeightPx() + (deleteTargetHeightPx() - height) / 2f
+        val deleteTargetHeight = deleteTargetHeightPx(pinnedDimensions)
+        val top = root.height - deleteTargetHeight + (deleteTargetHeight - height) / 2f
         return pointer.x in left..(left + width) &&
                 pointer.y in top..(top + height)
     }
@@ -334,7 +354,7 @@ class PinnedScreenshotManager(
         if (state.collapsedEdge != null) {
             return
         }
-        val chromeSize = pinChromeSizePx().toFloat()
+        val chromeSize = pinChromeSizePx(state.dimensions).toFloat()
         val width = state.contentWidth().toFloat()
         val anchor = when (handleSide) {
             PinResizeHandleSide.Left -> Offset(state.x + chromeSize + width, state.y + chromeSize)
@@ -365,7 +385,7 @@ class PinnedScreenshotManager(
             .coerceIn(minScale(state.bitmap), maxScale(state.bitmap))
         state.scale = scale
         state.y = start.y
-        val chromeSize = pinChromeSizePx()
+        val chromeSize = pinChromeSizePx(state.dimensions)
         state.x = when (start.handleSide) {
             PinResizeHandleSide.Left -> start.anchor.x - chromeSize - state.contentWidth()
             PinResizeHandleSide.Right -> start.x
@@ -565,7 +585,7 @@ class PinnedScreenshotManager(
 
     private fun maxScale(bitmap: Bitmap): Float {
         val root = rootSize
-        val chromeSize = pinChromeSizePx() * 2f
+        val chromeSize = pinChromeSizePx(pinnedDimensions) * 2f
         return min(
             MAX_SCALE,
             min(
@@ -643,7 +663,7 @@ class PinnedScreenshotManager(
 
     private fun allowedYRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
         val root = rootSize
-        val handleOutset = pinHandleOutsetPx().toFloat()
+        val handleOutset = pinHandleOutsetPx(state.dimensions).toFloat()
         val minY = state.safeInsets.top - handleOutset
         val maxY = root.height - state.safeInsets.bottom - state.displayHeight() + handleOutset
         return if (maxY >= minY) {
@@ -682,11 +702,24 @@ class PinnedScreenshotManager(
 
     private fun updateDeleteTargetLayout() {
         val window = deleteTargetWindow ?: return
-        window.layoutParams.height = deleteTargetHeightPx()
+        window.layoutParams.height = deleteTargetHeightPx(pinnedDimensions)
         window.layoutParams.y = rootSize.height - window.layoutParams.height
         try {
             windowManager.updateViewLayout(window.view, window.layoutParams)
         } catch (_: Exception) {
+        }
+    }
+
+    private fun updatePinnedDimensions(dimensions: PinnedScreenshotDimensions) {
+        if (pinnedDimensions == dimensions) {
+            return
+        }
+        pinnedDimensions = dimensions
+        updateDeleteTargetLayout()
+        windows.values.forEach { window ->
+            window.state.dimensions = dimensions
+            clampVisible(window.state)
+            updateLayout(window)
         }
     }
 
@@ -850,7 +883,8 @@ private class PinWindowState(
     scale: Float,
     x: Float,
     y: Float,
-    safeInsets: PinSafeInsets
+    safeInsets: PinSafeInsets,
+    dimensions: PinnedScreenshotDimensions
 ) {
     var scale by mutableStateOf(scale)
     var x by mutableStateOf(x)
@@ -861,6 +895,7 @@ private class PinWindowState(
     var collapsedEdge by mutableStateOf<PinEdge?>(null)
     var anchoredEdge by mutableStateOf(PinEdge.Right)
     var safeInsets by mutableStateOf(safeInsets)
+    var dimensions by mutableStateOf(dimensions)
     var resizeStart: PinResizeStart? = null
     var layoutAnimator: ValueAnimator? = null
     var overDeleteTarget by mutableStateOf(false)
@@ -868,8 +903,8 @@ private class PinWindowState(
 
     fun contentWidth(): Int = (bitmap.width * scale).roundToInt().coerceAtLeast(1)
     fun contentHeight(): Int = (bitmap.height * scale).roundToInt().coerceAtLeast(1)
-    fun displayWidth(): Int = contentWidth() + pinChromeSizePx() * 2
-    fun displayHeight(): Int = contentHeight() + pinChromeSizePx() * 2
+    fun displayWidth(): Int = contentWidth() + pinChromeSizePx(dimensions) * 2
+    fun displayHeight(): Int = contentHeight() + pinChromeSizePx(dimensions) * 2
     fun center(): Offset = Offset(x + displayWidth() / 2f, y + displayHeight() / 2f)
     fun snapshot(): PinLayoutSnapshot = PinLayoutSnapshot(
         scale = scale,
@@ -891,6 +926,7 @@ private class PinWindowState(
 @Composable
 private fun PinnedScreenshotWindow(
     state: PinWindowState,
+    dimensions: PinnedScreenshotDimensions,
     onGestureStart: () -> Unit,
     onDrag: (Offset, Offset, Long) -> Unit,
     onResizeStart: (Offset, PinResizeHandleSide) -> Unit,
@@ -900,13 +936,21 @@ private fun PinnedScreenshotWindow(
 ) {
     val bitmap = remember(state.bitmap) { state.bitmap.asImageBitmap() }
     val pinScale by animateFloatAsState(
-        targetValue = if (state.overDeleteTarget) DELETE_TARGET_PIN_SCALE else 1f,
-        animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+        targetValue = if (state.overDeleteTarget) {
+            MaterialTheme.motion.pinnedScreenshotScale
+        } else {
+            1f
+        },
+        animationSpec = tween(MaterialTheme.motion.pinnedScreenshotScaleDurationMillis),
         label = "pinDeleteScale"
     )
     val pinAlpha by animateFloatAsState(
-        targetValue = if (state.overDeleteTarget) DELETE_TARGET_PIN_ALPHA else 1f,
-        animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+        targetValue = if (state.overDeleteTarget) {
+            MaterialTheme.motion.pinnedScreenshotAlpha
+        } else {
+            1f
+        },
+        animationSpec = tween(MaterialTheme.motion.pinnedScreenshotScaleDurationMillis),
         label = "pinDeleteAlpha"
     )
     val latestOnGestureStart = rememberUpdatedState(onGestureStart)
@@ -923,7 +967,7 @@ private fun PinnedScreenshotWindow(
                 awaitEachGesture {
                     val down = awaitFirstDown(pass = PointerEventPass.Initial)
                     latestOnGestureStart.value()
-                    val touchTarget = PIN_RESIZE_TOUCH_TARGET_DP.dp.toPx()
+                    val touchTarget = dimensions.resizeTouchTarget.toPx()
                     val resizeHandleSide = pinResizeHandleAt(
                         position = down.position,
                         state = state,
@@ -978,19 +1022,21 @@ private fun PinnedScreenshotWindow(
                     alpha = pinAlpha
                 }
         ) {
-            val shape = RoundedCornerShape(8.dp)
+            val shape = MaterialTheme.componentShapes.pinnedScreenshotPanel
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(PIN_HANDLE_OUTSET_DP.dp)
+                    .padding(dimensions.handleOutset)
                     .clipToBackground(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.32f),
+                        MaterialTheme.colorScheme.surface.copy(
+                            alpha = MaterialTheme.alpha.pinnedSurface
+                        ),
                         shape = shape
                     )
             ) {
                 Image(
                     modifier = Modifier
-                        .padding(PIN_IMAGE_INSET_DP.dp)
+                        .padding(dimensions.imageInset)
                         .fillMaxSize()
                         .clip(shape),
                     bitmap = bitmap,
@@ -1001,10 +1047,17 @@ private fun PinnedScreenshotWindow(
                 AnimatedVisibility(
                     visible = handleSide in visibleResizeHandleSides(state),
                     modifier = Modifier.align(pinResizeHandleAlignment(handleSide)),
-                    enter = fadeIn(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS)),
-                    exit = fadeOut(animationSpec = tween(PIN_HANDLE_FADE_DURATION_MS))
+                    enter = fadeIn(
+                        animationSpec = tween(MaterialTheme.motion.pinnedScreenshotFadeDurationMillis)
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(MaterialTheme.motion.pinnedScreenshotFadeDurationMillis)
+                    )
                 ) {
-                    PinResizeHandle(handleSide = handleSide)
+                    PinResizeHandle(
+                        handleSide = handleSide,
+                        dimensions = dimensions
+                    )
                 }
             }
         }
@@ -1012,15 +1065,18 @@ private fun PinnedScreenshotWindow(
 }
 
 @Composable
-private fun PinResizeHandle(handleSide: PinResizeHandleSide) {
-    val color = Color(0xFFA7A7A7)
+private fun PinResizeHandle(
+    handleSide: PinResizeHandleSide,
+    dimensions: PinnedScreenshotDimensions
+) {
+    val color = MaterialTheme.appColors.resizeHandle
     Canvas(
         modifier = Modifier
-            .padding(2.dp)
-            .size(PIN_RESIZE_HANDLE_SIZE_DP.dp)
+            .padding(dimensions.handlePadding)
+            .size(dimensions.resizeHandleSize)
     ) {
         val stroke = Stroke(
-            width = 5.dp.toPx(),
+            width = dimensions.handleStrokeWidth.toPx(),
             cap = StrokeCap.Round
         )
         val width = size.width
@@ -1068,21 +1124,36 @@ private fun pinResizeHandleAlignment(handleSide: PinResizeHandleSide): Alignment
 }
 
 @Composable
-private fun PinDeleteTarget(state: PinDeleteTargetState) {
+private fun PinDeleteTarget(
+    state: PinDeleteTargetState,
+    dimensions: PinnedScreenshotDimensions
+) {
     AnimatedVisibility(
         visible = state.visible,
-        enter = fadeIn(animationSpec = tween(DELETE_TARGET_FADE_DURATION_MS)),
-        exit = fadeOut(animationSpec = tween(DELETE_TARGET_FADE_DURATION_MS))
+        enter = fadeIn(
+            animationSpec = tween(MaterialTheme.motion.pinnedScreenshotFadeDurationMillis)
+        ),
+        exit = fadeOut(
+            animationSpec = tween(MaterialTheme.motion.pinnedScreenshotFadeDurationMillis)
+        )
     ) {
         val containerColor = if (state.active) {
-            MaterialTheme.colorScheme.error.copy(alpha = 0.72f)
+            MaterialTheme.colorScheme.error.copy(alpha = MaterialTheme.alpha.pinnedDeleteActive)
         } else {
-            Color.Black.copy(alpha = 0.58f)
+            MaterialTheme.appColors.fixedBlack.copy(
+                alpha = MaterialTheme.alpha.pinnedDeleteInactive
+            )
         }
-        val contentColor = Color.White.copy(alpha = if (state.active) 1f else 0.9f)
+        val contentColor = MaterialTheme.appColors.fixedWhite.copy(
+            alpha = if (state.active) 1f else MaterialTheme.alpha.pinnedContentInactive
+        )
         val iconScale by animateFloatAsState(
-            targetValue = if (state.active) DELETE_TARGET_ACTIVE_SCALE else 1f,
-            animationSpec = tween(DELETE_TARGET_PIN_ANIMATION_MS),
+            targetValue = if (state.active) {
+                MaterialTheme.motion.pinnedDeleteActiveScale
+            } else {
+                1f
+            },
+            animationSpec = tween(MaterialTheme.motion.pinnedScreenshotScaleDurationMillis),
             label = "deleteTargetScale"
         )
         Box(
@@ -1091,19 +1162,19 @@ private fun PinDeleteTarget(state: PinDeleteTargetState) {
         ) {
             Column(
                 modifier = Modifier
-                    .width(DELETE_TARGET_WIDTH_DP.dp)
-                    .height(DELETE_TARGET_CARD_HEIGHT_DP.dp)
+                    .width(dimensions.deleteTargetWidth)
+                    .height(dimensions.deleteTargetCardHeight)
                     .clipToBackground(
                         color = containerColor,
-                        shape = RoundedCornerShape(DELETE_TARGET_CORNER_DP.dp)
+                        shape = RoundedCornerShape(dimensions.deleteTargetCornerRadius)
                     )
-                    .padding(vertical = 14.dp),
+                    .padding(vertical = dimensions.deleteTargetVerticalPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Icon(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(dimensions.deleteTargetIconSize)
                         .graphicsLayer {
                             scaleX = iconScale
                             scaleY = iconScale
@@ -1168,7 +1239,7 @@ private fun isPinnedToRightEdge(state: PinWindowState): Boolean {
 
 private fun pinAllowedXRange(state: PinWindowState): ClosedFloatingPointRange<Float> {
     val root = rootSize
-    val handleOutset = pinHandleOutsetPx().toFloat()
+    val handleOutset = pinHandleOutsetPx(state.dimensions).toFloat()
     val minX = state.safeInsets.left - handleOutset
     val maxX = root.width - state.safeInsets.right - state.displayWidth() + handleOutset
     return if (maxX >= minX) {
@@ -1196,7 +1267,7 @@ private fun twoHandleVisibleYRange(state: PinWindowState): ClosedFloatingPointRa
     return if (maxY >= minY) {
         minY..maxY
     } else {
-        val handleOutset = pinHandleOutsetPx().toFloat()
+        val handleOutset = pinHandleOutsetPx(state.dimensions).toFloat()
         val fallbackMinY = state.safeInsets.top - handleOutset
         val fallbackMaxY = root.height - state.safeInsets.bottom - state.displayHeight() + handleOutset
         if (fallbackMaxY >= fallbackMinY) {
@@ -1221,38 +1292,26 @@ private fun lerp(
     return start + (stop - start) * fraction
 }
 
-private fun pinChromeSizePx(): Int {
-    return ConvertUtils.dp2px(PIN_HANDLE_OUTSET_DP + PIN_IMAGE_INSET_DP)
+private fun pinChromeSizePx(dimensions: PinnedScreenshotDimensions): Int {
+    return ConvertUtils.dp2px(
+        dimensions.handleOutset.value + dimensions.imageInset.value
+    )
 }
 
-private fun pinHandleOutsetPx(): Int {
-    return ConvertUtils.dp2px(PIN_HANDLE_OUTSET_DP)
+private fun pinHandleOutsetPx(dimensions: PinnedScreenshotDimensions): Int {
+    return ConvertUtils.dp2px(dimensions.handleOutset.value)
 }
 
-private fun deleteTargetHeightPx(): Int {
-    return ConvertUtils.dp2px(DELETE_TARGET_HEIGHT_DP)
+private fun deleteTargetHeightPx(dimensions: PinnedScreenshotDimensions): Int {
+    return ConvertUtils.dp2px(dimensions.deleteTargetWindowHeight.value)
 }
 
-private fun deleteTargetWidthPx(): Int {
-    return ConvertUtils.dp2px(DELETE_TARGET_WIDTH_DP)
+private fun deleteTargetWidthPx(dimensions: PinnedScreenshotDimensions): Int {
+    return ConvertUtils.dp2px(dimensions.deleteTargetWidth.value)
 }
 
-private fun deleteTargetCardHeightPx(): Int {
-    return ConvertUtils.dp2px(DELETE_TARGET_CARD_HEIGHT_DP)
+private fun deleteTargetCardHeightPx(dimensions: PinnedScreenshotDimensions): Int {
+    return ConvertUtils.dp2px(dimensions.deleteTargetCardHeight.value)
 }
 
-private const val PIN_HANDLE_OUTSET_DP = 8f
-private const val PIN_IMAGE_INSET_DP = 4f
-private const val PIN_RESIZE_TOUCH_TARGET_DP = 24f
-private const val PIN_RESIZE_HANDLE_SIZE_DP = 16f
-private const val PIN_HANDLE_FADE_DURATION_MS = 140
 private const val EDGE_SNAP_EPSILON_PX = 1f
-private const val DELETE_TARGET_HEIGHT_DP = 144f
-private const val DELETE_TARGET_WIDTH_DP = 208f
-private const val DELETE_TARGET_CARD_HEIGHT_DP = 88f
-private const val DELETE_TARGET_CORNER_DP = 30f
-private const val DELETE_TARGET_FADE_DURATION_MS = 140
-private const val DELETE_TARGET_PIN_ANIMATION_MS = 140
-private const val DELETE_TARGET_PIN_SCALE = 1.08f
-private const val DELETE_TARGET_PIN_ALPHA = 0.62f
-private const val DELETE_TARGET_ACTIVE_SCALE = 1.12f

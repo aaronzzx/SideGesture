@@ -90,6 +90,9 @@ Windows：.\gradlew.bat assembleDebug
 - Compose 页面默认遵循 `UDF` 单向数据流：`ViewModel` 输出 `UiState`，`UI` 负责渲染和派发事件，不反向持有一份等价业务状态。
 - Composable 函数内不写嵌套函数，保持 UI 结构清晰
 - UI 界面一般不持有状态；搜索态、筛选结果、加载态、弹窗显隐、权限分支、联动显示等页面状态，默认放进 `ViewModel` 的 `UiState` 统一管理。
+- Compose 渲染风格值统一通过 `MaterialTheme` 获取：颜色、排版和基础圆角分别使用 `colorScheme`、`typography`、`shapes`，应用扩展值使用 `dimensions`、`textStyles`、`componentShapes`、`elevations`、`motion`、`alpha` 和 `appColors`；非主题源码不得直接写数字 `dp`／`sp`、固定颜色、数字圆角或视觉透明度。
+- 用户配置动态值、手势阈值、命中范围、窗口边界和绘制算法参数不属于主题；需要与 Composable 共用主题尺寸时，在 Composition 边界读取不可变主题快照并显式传给纯函数，不得在 ViewModel、实体或平台层读取 `MaterialTheme`。
+- `0.dp` 等明确的 API 哨兵值可以保留；调用端不得通过主题值乘除或加减拼出新样式，派生结果应在主题模型中定义为有语义的字段。
 - ViewModel 实现类命名以 VM 结尾
 - `remember` / `rememberSaveable` 仅用于少量纯展示、瞬时、与业务无关的本地状态，例如焦点、滚动位置、动画展开态；只要状态会影响页面逻辑、数据派生、跨组件同步或保存行为，就上移到 `UiState`。
 - 新增依赖统一写入 `gradle/libs.versions.toml`，再在模块 `build.gradle.kts` 引用。

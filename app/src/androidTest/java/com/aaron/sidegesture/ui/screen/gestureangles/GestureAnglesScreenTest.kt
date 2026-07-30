@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.gestureangles
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aaron.sidegesture.entity.GestureAngles
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -33,7 +33,7 @@ class GestureAnglesScreenTest {
         var uiState by mutableStateOf(UiState())
 
         composeTestRule.setContent {
-            MaterialTheme {
+            AppTheme(darkTheme = false, dynamicColor = false) {
                 GestureAnglesContent(
                     uiState = uiState,
                     onBack = {},
@@ -77,7 +77,7 @@ class GestureAnglesScreenTest {
         val originalP1 = uiState.angle.p1
 
         composeTestRule.setContent {
-            MaterialTheme {
+            AppTheme(darkTheme = false, dynamicColor = false) {
                 GestureAnglesContent(
                     uiState = uiState,
                     onBack = {},

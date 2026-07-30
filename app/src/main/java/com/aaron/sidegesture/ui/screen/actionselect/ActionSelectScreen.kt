@@ -41,7 +41,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrandingWatermark
 import androidx.compose.material.icons.filled.Delete
@@ -82,11 +81,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -99,7 +95,6 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.compose.ktx.toDp
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.constant.GlobalActions
-import com.aaron.sidegesture.constant.GlobalSettings
 import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.ActionSelect
 import com.aaron.sidegesture.entity.AppInfo
@@ -107,25 +102,18 @@ import com.aaron.sidegesture.entity.IconResize
 import com.aaron.sidegesture.entity.LauncherInfo
 import com.aaron.sidegesture.ktx.actionIcon
 import com.aaron.sidegesture.ktx.actionText
-import com.aaron.sidegesture.ktx.alipayColor
 import com.aaron.sidegesture.ktx.deniedForever
 import com.aaron.sidegesture.ktx.gotoAppDetailSettings
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.qualifiedName
 import com.aaron.sidegesture.ktx.rememberGetInstalledAppsPermissionState
-import com.aaron.sidegesture.ktx.wechatColor
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiEvent
 import com.aaron.sidegesture.ui.screen.actionselect.ActionSelectVM.UiState.SelectedRecord
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinIconSize
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
-import com.aaron.sidegesture.ui.theme.RootPadding
-import com.aaron.sidegesture.ui.theme.ScrollBottomPadding
-import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.ui.widget.ActionSettingsDialog
 import com.aaron.sidegesture.ui.widget.MySnackbarHost
 import com.aaron.sidegesture.ui.widget.SearchTopBarField
@@ -213,7 +201,7 @@ fun ActionSelectScreen(
                             } else {
                                 Text(
                                     text = uiState.title,
-                                    style = TextStyle(fontSize = 18.sp)
+                                    style = MaterialTheme.textStyles.screenSearchField
                                 )
                             }
                         }
@@ -254,7 +242,9 @@ fun ActionSelectScreen(
                 ) {
                     pages.fastForEach { tabIndex ->
                         Tab(
-                            modifier = Modifier.height(48.dp),
+                            modifier = Modifier.height(
+                                MaterialTheme.dimensions.actionSelect.tabHeight
+                            ),
                             selected = tabIndex == pages[pagerState.currentPage],
                             onClick = {
                                 coroutineScope.launch {
@@ -333,7 +323,8 @@ fun ActionSelectScreen(
                                     PaddingValues(
                                         start = contentPadding.calculateStartPadding(direction),
                                         end = contentPadding.calculateEndPadding(direction),
-                                        bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                        bottom = contentPadding.calculateBottomPadding() +
+                                            MaterialTheme.dimensions.layout.scrollBottomPadding
                                     )
                                 },
                                 actions = uiState.actions,
@@ -372,7 +363,8 @@ fun ActionSelectScreen(
                                         PaddingValues(
                                             start = contentPadding.calculateStartPadding(direction),
                                             end = contentPadding.calculateEndPadding(direction),
-                                            bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                            bottom = contentPadding.calculateBottomPadding() +
+                                                MaterialTheme.dimensions.layout.scrollBottomPadding
                                         )
                                     },
                                     onSelect = { appInfo, selected ->
@@ -433,7 +425,8 @@ fun ActionSelectScreen(
                                         PaddingValues(
                                             start = contentPadding.calculateStartPadding(direction),
                                             end = contentPadding.calculateEndPadding(direction),
-                                            bottom = contentPadding.calculateBottomPadding() + ScrollBottomPadding
+                                            bottom = contentPadding.calculateBottomPadding() +
+                                                MaterialTheme.dimensions.layout.scrollBottomPadding
                                         )
                                     },
                                     onSelect = { shortcutInfo, selected ->
@@ -556,25 +549,26 @@ private fun ActionItem(
     showSettings: Boolean = false,
     onSettingsClick: (() -> Unit)? = null
 ) {
+    val disabledContentAlpha = MaterialTheme.alpha.disabledContent
     Row(
         modifier = Modifier
             .graphicsLayer {
-                alpha = if (enabled) 1f else GlobalSettings.DisabledAlpha
+                alpha = if (enabled) 1f else disabledContentAlpha
             }
             .fillMaxWidth()
-            .heightIn(min = MinInteractiveSize)
+            .heightIn(min = MaterialTheme.dimensions.listItem.minimumTouchTarget)
             .onClick(enabled = enabled) {
                 onSelect(!selected)
             }
-            .padding(vertical = 2.dp),
+            .padding(vertical = MaterialTheme.dimensions.actionSelect.compactVerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
         val icon = actionIcon(action)
         Box(
             modifier = Modifier
-                .padding(start = ContentPaddingHorizontal * 2)
-                .size(MinIconSize)
+                .padding(start = MaterialTheme.dimensions.layout.nestedItemIndent)
+                .size(MaterialTheme.dimensions.listItem.iconSize)
         ) {
             if (icon is ImageVector) {
                 Image(
@@ -590,9 +584,13 @@ private fun ActionItem(
                     contentScale = ContentScale.Crop,
                     colorFilter = when (icon) {
                         R.drawable.wechat_scan,
-                        R.drawable.wechat_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.wechatColor)
+                        R.drawable.wechat_paycode -> ColorFilter.tint(
+                            MaterialTheme.appColors.weChat
+                        )
                         R.drawable.alipay_scan,
-                        R.drawable.alipay_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.alipayColor)
+                        R.drawable.alipay_paycode -> ColorFilter.tint(
+                            MaterialTheme.appColors.aliPay
+                        )
                         else -> null
                     }
                 )
@@ -601,15 +599,19 @@ private fun ActionItem(
 
         Row(
             modifier = Modifier
-                .padding(horizontal = ItemPadding)
+                .padding(horizontal = MaterialTheme.dimensions.listItem.contentGap)
                 .weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+            horizontalArrangement = Arrangement.spacedBy(
+                MaterialTheme.dimensions.listItem.contentGap
+            )
         ) {
             Text(
                 modifier = Modifier
                     .weight(1f, false)
-                    .basicMarquee(velocity = 50.dp),
+                    .basicMarquee(
+                        velocity = MaterialTheme.dimensions.actionSelect.marqueeVelocity
+                    ),
                 text = actionText(action = action, emptyIfNone = false),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -617,7 +619,7 @@ private fun ActionItem(
             if (showSettings) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(MaterialTheme.dimensions.actionSelect.appIconSize)
                         .clipToBackground(
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = CircleShape
@@ -628,7 +630,9 @@ private fun ActionItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(
+                            MaterialTheme.dimensions.actionSelect.accessoryIconSize
+                        ),
                         imageVector = Icons.Default.Settings,
                         contentDescription = stringResource(R.string.settings),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -638,7 +642,7 @@ private fun ActionItem(
         }
         if (!selectSingle) {
             Checkbox(
-                modifier = Modifier.padding(end = TopBarPaddingExtra),
+                modifier = Modifier.padding(end = MaterialTheme.dimensions.topBar.contentInset),
                 enabled = enabled,
                 checked = selected,
                 onCheckedChange = onSelect
@@ -722,8 +726,13 @@ private fun ShortcutPage(
                             modifier = Modifier
                                 .background(color = MaterialTheme.colorScheme.background)
                                 .fillMaxWidth()
-                                .padding(vertical = ContentPaddingVertical)
-                                .padding(horizontal = ContentPaddingHorizontal * 2),
+                                .padding(
+                                    vertical =
+                                        MaterialTheme.dimensions.layout.contentVerticalPadding
+                                )
+                                .padding(
+                                    horizontal = MaterialTheme.dimensions.layout.nestedItemIndent
+                                ),
                             text = stringResource(R.string.create_shortcut),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium
@@ -759,8 +768,13 @@ private fun ShortcutPage(
                             modifier = Modifier
                                 .background(color = MaterialTheme.colorScheme.background)
                                 .fillMaxWidth()
-                                .padding(vertical = ContentPaddingVertical)
-                                .padding(horizontal = ContentPaddingHorizontal * 2),
+                                .padding(
+                                    vertical =
+                                        MaterialTheme.dimensions.layout.contentVerticalPadding
+                                )
+                                .padding(
+                                    horizontal = MaterialTheme.dimensions.layout.nestedItemIndent
+                                ),
                             text = stringResource(R.string.launch_shortcut),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium
@@ -844,10 +858,11 @@ private fun AppItem(
     selectSingle: Boolean,
     enabled: Boolean = true
 ) {
+    val disabledContentAlpha = MaterialTheme.alpha.disabledContent
     Row(
         modifier = Modifier
             .graphicsLayer {
-                alpha = if (enabled) 1f else GlobalSettings.DisabledAlpha
+                alpha = if (enabled) 1f else disabledContentAlpha
             }
             .fillMaxWidth()
             .combinedClickable(
@@ -857,14 +872,14 @@ private fun AppItem(
                     onSelect(!selected)
                 }
             )
-            .padding(vertical = ContentPaddingVertical),
+            .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
         AsyncImage(
             modifier = Modifier
-                .padding(start = ContentPaddingHorizontal * 2)
-                .size(MinInteractiveSize),
+                .padding(start = MaterialTheme.dimensions.layout.nestedItemIndent)
+                .size(MaterialTheme.dimensions.listItem.minimumTouchTarget),
             model = appInfo.icon,
             contentDescription = null,
             imageLoader = context.imageLoader,
@@ -872,16 +887,23 @@ private fun AppItem(
         )
         Column(
             modifier = Modifier
-                .padding(start = IconTextPadding, end = ItemPadding)
+                .padding(
+                    start = MaterialTheme.dimensions.listItem.iconTextGap,
+                    end = MaterialTheme.dimensions.listItem.contentGap
+                )
                 .weight(1f)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.actionSelect.compactItemGap
+                )
             ) {
                 if (appInfo.miniWindow) {
                     Icon(
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(
+                            MaterialTheme.dimensions.actionSelect.nestedIconSize
+                        ),
                         imageVector = Icons.Default.BrandingWatermark,
                         contentDescription = null
                     )
@@ -904,7 +926,7 @@ private fun AppItem(
         }
         if (!selectSingle) {
             Checkbox(
-                modifier = Modifier.padding(end = TopBarPaddingExtra),
+                modifier = Modifier.padding(end = MaterialTheme.dimensions.topBar.contentInset),
                 enabled = enabled,
                 checked = selected,
                 onCheckedChange = onSelect
@@ -925,11 +947,16 @@ private fun LauncherInfoItem(
     launcherInfo: LauncherInfo,
     selectSingle: Boolean
 ) {
+    val disabledContentAlpha = MaterialTheme.alpha.disabledContent
     Column(
         modifier = Modifier
             .graphicsLayer {
                 alpha =
-                    if (canLauncherInfoEnabled(launcherInfo)) 1f else GlobalSettings.DisabledAlpha
+                    if (canLauncherInfoEnabled(launcherInfo)) {
+                        1f
+                    } else {
+                        disabledContentAlpha
+                    }
             }
             .fillMaxWidth()
     ) {
@@ -939,21 +966,24 @@ private fun LauncherInfoItem(
                 .onClick(enabled = canLauncherInfoEnabled(launcherInfo)) {
                     onClick()
                 }
-                .padding(vertical = ContentPaddingVertical),
+                .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val context = LocalContext.current
             AsyncImage(
                 modifier = Modifier
-                    .padding(start = ContentPaddingHorizontal * 2)
-                    .size(MinInteractiveSize),
+                    .padding(start = MaterialTheme.dimensions.layout.nestedItemIndent)
+                    .size(MaterialTheme.dimensions.listItem.minimumTouchTarget),
                 model = launcherInfo.icon,
                 contentDescription = null,
                 imageLoader = context.imageLoader
             )
             Column(
                 modifier = Modifier
-                    .padding(start = IconTextPadding, end = ItemPadding)
+                    .padding(
+                        start = MaterialTheme.dimensions.listItem.iconTextGap,
+                        end = MaterialTheme.dimensions.listItem.contentGap
+                    )
                     .weight(1f)
             ) {
                 Text(
@@ -988,32 +1018,40 @@ private fun LauncherInfoItem(
                                 onClick = {
                                     onSelect(shortcutInfo, !selected)
                                 }
-                            )
-                        /*.padding(start = ContentPaddingHorizontal * 2 + MinInteractiveSize)*/,
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val context = LocalContext.current
                         AsyncImage(
                             modifier = Modifier
-                                .padding(start = ContentPaddingHorizontal * 3)
-                                .size(SubMinInteractiveSize),
+                                .padding(start = MaterialTheme.dimensions.layout.deepNestedItemIndent)
+                                .size(
+                                    MaterialTheme.dimensions.listItem.compactControlVisualSize
+                                ),
                             model = shortcutInfo.icon,
                             contentDescription = null,
                             imageLoader = context.imageLoader
                         )
                         Column(
                             modifier = Modifier
-                                .padding(start = IconTextPadding, end = ItemPadding)
+                                .padding(
+                                    start = MaterialTheme.dimensions.listItem.iconTextGap,
+                                    end = MaterialTheme.dimensions.listItem.contentGap
+                                )
                                 .weight(1f)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    MaterialTheme.dimensions.actionSelect.compactItemGap
+                                )
                             ) {
                                 if (shortcutInfo.miniWindow) {
                                     Icon(
-                                        modifier = Modifier.size(16.dp),
+                                        modifier = Modifier.size(
+                                            MaterialTheme.dimensions.actionSelect.nestedIconSize
+                                        ),
                                         imageVector = Icons.Default.BrandingWatermark,
                                         contentDescription = null
                                     )
@@ -1028,7 +1066,9 @@ private fun LauncherInfoItem(
                         }
                         if (!selectSingle) {
                             Checkbox(
-                                modifier = Modifier.padding(end = TopBarPaddingExtra),
+                                modifier = Modifier.padding(
+                                    end = MaterialTheme.dimensions.topBar.contentInset
+                                ),
                                 enabled = canShortcutInfoEnabled(shortcutInfo),
                                 checked = selected,
                                 onCheckedChange = { newSelected ->
@@ -1053,20 +1093,22 @@ private fun SelectedList(
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
     expanded: Boolean = false,
-    contentPadding: PaddingValues = PaddingValues(RootPadding),
-    itemPadding: Dp = RootPadding
+    contentPadding: PaddingValues = PaddingValues(
+        MaterialTheme.dimensions.actionSelect.gridContentPadding
+    ),
+    itemPadding: Dp = MaterialTheme.dimensions.actionSelect.gridContentPadding
 ) {
     val context = LocalContext.current
-    val itemSize = MinInteractiveSize
+    val itemSize = MaterialTheme.dimensions.listItem.minimumTouchTarget
     val itemComposable: @Composable ReorderableCollectionItemScope.(Any, Any) -> Unit = { reorderableState, item ->
         val listItem = when (item) {
             is Action -> {
                 val actionIcon = actionIcon(item)
                 val colorFilter = when (actionIcon) {
                     R.drawable.wechat_scan,
-                    R.drawable.wechat_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.wechatColor)
+                    R.drawable.wechat_paycode -> ColorFilter.tint(MaterialTheme.appColors.weChat)
                     R.drawable.alipay_scan,
-                    R.drawable.alipay_paycode -> ColorFilter.tint(MaterialTheme.colorScheme.alipayColor)
+                    R.drawable.alipay_paycode -> ColorFilter.tint(MaterialTheme.appColors.aliPay)
                     else -> null
                 }
                 SelectedListItem(actionIcon, colorFilter)
@@ -1096,14 +1138,14 @@ private fun SelectedList(
                 )
                 .clipToBackground(
                     color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(RootPadding)
+                    shape = MaterialTheme.componentShapes.actionSelectGrid
                 )
                 .onSingleClick {
                     onUnselected(item)
                 }
                 .let {
                     if (item !is Action) it else {
-                        it.padding(12.dp)
+                        it.padding(MaterialTheme.dimensions.actionSelect.gridContentPadding)
                     }
                 },
             contentAlignment = Alignment.Center
@@ -1132,7 +1174,7 @@ private fun SelectedList(
         modifier = modifier
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(RootPadding)
+                shape = MaterialTheme.componentShapes.actionSelectGrid
             )
     ) {
         Row(
@@ -1141,15 +1183,22 @@ private fun SelectedList(
                 .onClick {
                     onExpandedChange(!expanded)
                 }
-                .padding(start = RootPadding, end = RootPadding + 8.dp),
+                .padding(
+                    start = MaterialTheme.dimensions.actionSelect.gridContentPadding,
+                    end = MaterialTheme.dimensions.actionSelect.gridEndPadding
+                ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(
+                MaterialTheme.dimensions.actionSelect.compactItemGap
+            )
         ) {
             Text(
                 modifier = Modifier.weight(1f),
                 text = stringResource(R.string.drag_icon_to_reorder_click_to_unselect),
                 style = MaterialTheme.typography.labelMedium,
-                color = contentColorFor(backgroundColor).copy(alpha = 0.5f)
+                color = contentColorFor(backgroundColor).copy(
+                    alpha = MaterialTheme.alpha.lowEmphasis
+                )
             )
 
             IconButton(
@@ -1169,7 +1218,7 @@ private fun SelectedList(
             )
             Icon(
                 modifier = Modifier
-                    .size(MinIconSize)
+                    .size(MaterialTheme.dimensions.listItem.iconSize)
                     .graphicsLayer {
                         rotationZ = iconRotation.value
                     },
@@ -1199,7 +1248,10 @@ private fun SelectedList(
                 LazyVerticalGrid(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 200.dp, max = 400.dp),
+                        .heightIn(
+                            min = MaterialTheme.dimensions.actionSelect.dialogMinHeight,
+                            max = MaterialTheme.dimensions.actionSelect.dialogMaxHeight
+                        ),
                     columns = GridCells.Adaptive(itemSize),
                     state = listState,
                     contentPadding = PaddingValues(

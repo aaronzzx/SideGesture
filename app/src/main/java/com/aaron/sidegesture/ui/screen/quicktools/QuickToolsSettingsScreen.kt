@@ -28,11 +28,7 @@ import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.global.QuickToolItem
 import com.aaron.sidegesture.feature.quicktools.quickToolIcon
 import com.aaron.sidegesture.feature.quicktools.quickToolText
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextButton
@@ -62,7 +58,7 @@ fun QuickToolsSettingsScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(R.string.quick_tools_reorder_hint)
                 ) {
                     val listState = rememberLazyListState()
@@ -73,7 +69,9 @@ fun QuickToolsSettingsScreen(
                         }
                     )
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = 560.dp),
+                        modifier = Modifier.heightIn(
+                            max = MaterialTheme.dimensions.quickToolsSettings.dialogMaxHeight
+                        ),
                         state = listState
                     ) {
                         items(uiState.items, key = { it.type }) { item ->
@@ -100,17 +98,17 @@ private fun ReorderableCollectionItemScope.QuickToolRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = MinItemHeightNoSecondary)
+            .heightIn(min = MaterialTheme.dimensions.listItem.singleLineMinHeight)
             .draggableHandle(
                 dragGestureDetector = DragGestureDetector.LongPress
             )
             .onSingleClick { onEnabledChange(!item.enabled) }
             .padding(
-                horizontal = ContentPaddingHorizontal,
-                vertical = ContentPaddingVerticalWithSection
+                horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.listItem.contentGap)
     ) {
         Icon(
             imageVector = quickToolIcon(item.type),
@@ -123,7 +121,9 @@ private fun ReorderableCollectionItemScope.QuickToolRow(
             style = MaterialTheme.typography.titleMedium
         )
         Icon(
-            modifier = Modifier.padding(end = 4.dp),
+            modifier = Modifier.padding(
+                end = MaterialTheme.dimensions.quickToolsSettings.dragHandleEndPadding
+            ),
             imageVector = Icons.Default.DragIndicator,
             contentDescription = stringResource(R.string.quick_tools_reorder_hint),
             tint = MaterialTheme.colorScheme.secondary

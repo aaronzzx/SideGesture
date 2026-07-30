@@ -1,6 +1,5 @@
 package com.aaron.sidegesture.ui.screen.animationstyle.capsule
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -43,9 +43,10 @@ import com.aaron.sidegesture.entity.WaveStyle.Companion.ICON_TYPE_ARROW_NEW
 import com.aaron.sidegesture.entity.WaveStyle.Companion.ICON_TYPE_TRIANGLE
 import com.aaron.sidegesture.ktx.getWaveStyleIcon
 import com.aaron.sidegesture.ui.screen.animationstyle.capsule.CapsuleStyleVM.UiEvent
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
-import com.aaron.sidegesture.ui.theme.SectionPadding
-import com.aaron.sidegesture.ui.theme.SubMinInteractiveSize
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyColorDisplay
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -70,6 +71,8 @@ fun CapsuleStyleScreen(
 ) {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
+    val settingsContentPlacementStiffness =
+        MaterialTheme.motion.settingsContentPlacementStiffness
     UDFComponent(
         component = vm.udfComponent,
         onEvent = { event ->
@@ -78,7 +81,7 @@ fun CapsuleStyleScreen(
                     coroutineScope.launch {
                         scrollState.animateScrollBy(
                             value = 1000f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            animationSpec = spring(stiffness = settingsContentPlacementStiffness)
                         )
                     }
                 }
@@ -141,7 +144,7 @@ fun CapsuleStyleScreen(
                 }
 
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.shape_size)
                 ) {
                     MyTextSlider(
@@ -174,7 +177,7 @@ fun CapsuleStyleScreen(
                 }
 
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.icon)
                 ) {
                     MyTextButton(
@@ -209,7 +212,7 @@ fun CapsuleStyleScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(MinInteractiveSize),
+                                .height(MaterialTheme.dimensions.listItem.minimumTouchTarget),
                             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
@@ -222,11 +225,13 @@ fun CapsuleStyleScreen(
                                 val selected = uiState.animationStyle.iconType == iconType
                                 Image(
                                     modifier = Modifier
-                                        .size(SubMinInteractiveSize)
+                                        .size(MaterialTheme.dimensions.listItem.compactControlVisualSize)
                                         .clipToBackground(
                                             color = when (selected) {
                                                 true -> androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                                else -> androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                                else -> MaterialTheme.colorScheme.primary.copy(
+                                                    alpha = MaterialTheme.alpha.lowEmphasis
+                                                )
                                             },
                                             shape = CircleShape
                                         )
@@ -236,7 +241,9 @@ fun CapsuleStyleScreen(
                                     painter = getWaveStyleIcon(iconType),
                                     contentDescription = null,
                                     contentScale = ContentScale.Inside,
-                                    colorFilter = ColorFilter.tint(Color.White)
+                                    colorFilter = ColorFilter.tint(
+                                        MaterialTheme.appColors.fixedWhite
+                                    )
                                 )
                             }
                         }

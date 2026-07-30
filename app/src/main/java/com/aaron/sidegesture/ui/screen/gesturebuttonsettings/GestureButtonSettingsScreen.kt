@@ -32,7 +32,6 @@ import androidx.core.graphics.red
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaron.compose.component.UDFComponent
 import com.aaron.sidegesture.R
-import com.aaron.sidegesture.constant.GlobalSettings.GestureButtonColorAlpha
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonPosition
 import com.aaron.sidegesture.constant.GlobalSettings.MaxGestureButtonWidth
 import com.aaron.sidegesture.constant.GlobalSettings.MinGestureButtonPosition
@@ -51,10 +50,8 @@ import com.aaron.sidegesture.entity.TriggerDirection.Up
 import com.aaron.sidegesture.entity.TriggerDirection.Up2
 import com.aaron.sidegesture.ktx.actionTextCompose
 import com.aaron.sidegesture.ktx.bounds
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.MarkColorSize
-import com.aaron.sidegesture.ui.theme.SectionPadding
-import com.aaron.sidegesture.ui.theme.SectionPaddingNoTitle
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.ColorPickerDialog
 import com.aaron.sidegesture.ui.widget.MyAlertDialog
 import com.aaron.sidegesture.ui.widget.MyColumn
@@ -129,12 +126,16 @@ fun GestureButtonSettingsScreen(
                         if (uiState.gestureButton != null) {
                             Box(
                                 modifier = Modifier
-                                    .padding(start = IconTextPadding)
-                                    .size(MarkColorSize)
+                                    .padding(start = MaterialTheme.dimensions.listItem.iconTextGap)
+                                    .size(MaterialTheme.dimensions.listItem.markerSize)
                                     .background(
                                         color = when (uiState.gestureButton.isDefault) {
-                                            true -> MaterialTheme.colorScheme.primary.copy(alpha = GestureButtonColorAlpha)
-                                            else -> Color(uiState.gestureButton.color).copy(alpha = GestureButtonColorAlpha)
+                                            true -> MaterialTheme.colorScheme.primary.copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
+                                            else -> Color(uiState.gestureButton.color).copy(
+                                                alpha = MaterialTheme.alpha.gestureButton
+                                            )
                                         },
                                         shape = CircleShape
                                     )
@@ -249,7 +250,9 @@ fun GestureButtonSettingsScreen(
                         }
 
                         MySection(
-                            modifier = Modifier.padding(top = SectionPadding),
+                            modifier = Modifier.padding(
+                                top = MaterialTheme.dimensions.layout.sectionSpacing
+                            ),
                             title = stringResource(id = R.string.long_slide_action)
                         ) {
                             val navToActionSelect: (TriggerDirection) -> Unit = { direction ->
@@ -309,7 +312,11 @@ fun GestureButtonSettingsScreen(
                             )
                         }
 
-                        MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                        MySection(
+                            modifier = Modifier.padding(
+                                top = MaterialTheme.dimensions.layout.compactSectionSpacing
+                            )
+                        ) {
                             MyTextSlider(
                                 value = gestureButton.width.toFloat(),
                                 onValueChange = { vm.onGestureButtonWidthChange(it) },
@@ -359,20 +366,27 @@ fun GestureButtonSettingsScreen(
                             }
                         }
                         if (!gestureButton.isDefault) {
-                            MySection(modifier = Modifier.padding(top = SectionPaddingNoTitle)) {
+                            MySection(
+                                modifier = Modifier.padding(
+                                    top = MaterialTheme.dimensions.layout.compactSectionSpacing
+                                )
+                            ) {
                                 MyTextButton(
                                     onClick = { vm.colorPickerDialog.show(true) },
                                     text = stringResource(id = R.string.gesture_button_color),
                                     prefix = {
                                         Box(
                                             modifier = Modifier
-                                                .size(30.dp)
+                                                .size(
+                                                    MaterialTheme.dimensions.listItem.colorDisplaySize
+                                                )
                                                 .background(
                                                     color = Color(gestureButton.color),
                                                     shape = CircleShape
                                                 )
                                                 .border(
-                                                    width = 1.dp,
+                                                    width = MaterialTheme.dimensions
+                                                        .listItem.colorDisplayBorderWidth,
                                                     color = MaterialTheme.colorScheme.outlineVariant,
                                                     shape = CircleShape
                                                 )
@@ -386,6 +400,7 @@ fun GestureButtonSettingsScreen(
             }
 
             val colorScheme = MaterialTheme.colorScheme
+            val gestureButtonAlpha = MaterialTheme.alpha.gestureButton
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -405,7 +420,7 @@ fun GestureButtonSettingsScreen(
                             drawRect(
                                 color = when (highlight) {
                                     true -> color
-                                    else -> color.copy(alpha = GestureButtonColorAlpha)
+                                    else -> color.copy(alpha = gestureButtonAlpha)
                                 },
                                 topLeft = bounds.topLeft,
                                 size = bounds.size
@@ -507,7 +522,7 @@ private fun MySideGestureSettings(
                             }
                         }
                     }
-                    .size(20.dp)
+                    .size(MaterialTheme.dimensions.styleCard.editIconSize)
                     .background(
                         color = when (isLongSlide) {
                             true -> MaterialTheme.colorScheme.outlineVariant
@@ -516,7 +531,7 @@ private fun MySideGestureSettings(
                         shape = CircleShape
                     )
                     .border(
-                        width = 1.dp,
+                        width = MaterialTheme.dimensions.listItem.colorDisplayBorderWidth,
                         color = MaterialTheme.colorScheme.onSurface,
                         shape = CircleShape
                     ),

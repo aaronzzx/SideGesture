@@ -21,7 +21,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -38,11 +37,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MinMoveScreenRate
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.ktx.icon
 import com.aaron.sidegesture.ktx.qualifiedName
-import com.aaron.sidegesture.ui.theme.ContentPaddingVertical
-import com.aaron.sidegesture.ui.theme.IconTextPadding
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinInteractiveSize
-import com.aaron.sidegesture.ui.theme.TopBarPaddingExtra
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyTextSlider
 import com.aaron.sidegesture.ui.widget.MyTextSwitch
 import com.aaron.sidegesture.ui.widget.formatSliderDecimal
@@ -52,8 +47,6 @@ import com.aaron.sidegesture.ui.widget.formatSliderInteger
  * @author DS-Z
  * @since 2025/6/30
  */
-
-private val PreviousAppListHeight = 280.dp
 
 @Composable
 fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
@@ -68,7 +61,9 @@ fun MoveScreenSettingsContent(vm: ActionSettingsVM = viewModel()) {
             val moveScreen = uiState.actionSettings.moveScreen
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.contentGap
+                )
             ) {
                 MyTextSwitch(
                     checked = moveScreen.popupEnabled,
@@ -129,7 +124,9 @@ fun PreviousAppSettingsContent(vm: ActionSettingsVM = viewModel()) {
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.contentGap
+                )
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -154,7 +151,7 @@ fun PreviousAppSettingsContent(vm: ActionSettingsVM = viewModel()) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(PreviousAppListHeight)
+                        .height(MaterialTheme.dimensions.dialog.previousAppsListHeight)
                 ) {
                     items(
                         items = uiState.previousAppVisibleAppInfos,
@@ -186,7 +183,9 @@ fun GotoBottomSettingsContent(vm: ActionSettingsVM = viewModel()) {
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(ItemPadding)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.listItem.contentGap
+                )
             ) {
                 MyTextSlider(
                     value = uiState.actionSettings.gotoBottom.strength.toFloat(),
@@ -214,12 +213,12 @@ private fun PreviousAppItem(
             .onClick {
                 onSelect(!selected)
             }
-            .padding(vertical = ContentPaddingVertical),
+            .padding(vertical = MaterialTheme.dimensions.layout.contentVerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
         AsyncImage(
-            modifier = Modifier.size(MinInteractiveSize),
+            modifier = Modifier.size(MaterialTheme.dimensions.listItem.minimumTouchTarget),
             model = appInfo.icon,
             contentDescription = null,
             imageLoader = context.imageLoader,
@@ -227,7 +226,7 @@ private fun PreviousAppItem(
         )
         Column(
             modifier = Modifier
-                .padding(start = IconTextPadding)
+                .padding(start = MaterialTheme.dimensions.listItem.iconTextGap)
                 .weight(1f)
         ) {
             Text(
@@ -246,7 +245,7 @@ private fun PreviousAppItem(
             )
         }
         Checkbox(
-            modifier = Modifier.padding(end = TopBarPaddingExtra),
+            modifier = Modifier.padding(end = MaterialTheme.dimensions.topBar.contentInset),
             checked = selected,
             onCheckedChange = onSelect
         )

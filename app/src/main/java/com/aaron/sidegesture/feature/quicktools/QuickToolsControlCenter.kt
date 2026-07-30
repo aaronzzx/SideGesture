@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -69,8 +68,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.SideGestureService
 import com.aaron.sidegesture.constant.GlobalActions
@@ -80,6 +77,13 @@ import com.aaron.sidegesture.entity.global.QuickToolType
 import com.aaron.sidegesture.entity.global.QuickToolsSettings
 import com.aaron.sidegesture.ktx.gotoManageWriteSettings
 import com.aaron.sidegesture.ktx.gotoNotificationListenerSettings
+import com.aaron.sidegesture.ui.theme.AppAlpha
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.appColors
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
+import com.aaron.sidegesture.ui.theme.elevations
+import com.aaron.sidegesture.ui.theme.textStyles
 import com.aaron.sidegesture.ui.widget.MySlider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -119,9 +123,16 @@ fun QuickToolsControlCenter(
         QuickToolsExecutor.currentFlashlightEnabled(service)
     }
     val colorScheme = MaterialTheme.colorScheme
+    val dimensions = MaterialTheme.dimensions.quickTools
+    val layout = remember(dimensions) { calculateQuickToolsLayout(dimensions) }
+    val alpha = MaterialTheme.alpha
     val isDarkTheme = colorScheme.surface.luminance() < 0.5f
-    val panelColors = remember(colorScheme, isDarkTheme) {
-        quickToolsPanelColors(colorScheme = colorScheme, isDarkTheme = isDarkTheme)
+    val panelColors = remember(colorScheme, isDarkTheme, alpha) {
+        quickToolsPanelColors(
+            colorScheme = colorScheme,
+            isDarkTheme = isDarkTheme,
+            alpha = alpha
+        )
     }
 
     AnimatedVisibility(
@@ -141,7 +152,11 @@ fun QuickToolsControlCenter(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = if (isDarkTheme) 0.52f else 0.28f))
+                .background(
+                    MaterialTheme.appColors.fixedBlack.copy(
+                        alpha = if (isDarkTheme) alpha.overlayScrimDark else alpha.overlayScrimLight
+                    )
+                )
         ) {
             val scope = rememberCoroutineScope()
             val density = LocalDensity.current
@@ -149,33 +164,33 @@ fun QuickToolsControlCenter(
             val cutoutInsets = WindowInsets.displayCutout
             val systemBarInsets = WindowInsets.systemBars
             val safeLeftPadding = with(density) {
-                16.dp + maxOf(
+                dimensions.edgePadding + maxOf(
                     cutoutInsets.getLeft(density, layoutDirection),
                     systemBarInsets.getLeft(density, layoutDirection)
                 ).toDp()
             }
             val safeTopPadding = with(density) {
-                16.dp + maxOf(
+                dimensions.edgePadding + maxOf(
                     cutoutInsets.getTop(density),
                     systemBarInsets.getTop(density)
                 ).toDp()
             }
             val safeRightPadding = with(density) {
-                16.dp + maxOf(
+                dimensions.edgePadding + maxOf(
                     cutoutInsets.getRight(density, layoutDirection),
                     systemBarInsets.getRight(density, layoutDirection)
                 ).toDp()
             }
             val safeBottomPadding = with(density) {
-                16.dp + maxOf(
+                dimensions.edgePadding + maxOf(
                     cutoutInsets.getBottom(density),
                     systemBarInsets.getBottom(density)
                 ).toDp()
             }
             val panelSize = remember(density) {
                 IntSize(
-                    with(density) { QuickToolsGridSpec.PanelWidth.toPx().roundToInt() },
-                    with(density) { QuickToolsGridSpec.PanelHeight.toPx().roundToInt() }
+                    with(density) { layout.panelWidth.toPx().roundToInt() },
+                    with(density) { layout.panelHeight.toPx().roundToInt() }
                 )
             }
             val panelOffset = remember(
@@ -219,23 +234,28 @@ fun QuickToolsControlCenter(
             Surface(
                 modifier = Modifier
                     .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
-                    .padding(QuickToolsGridSpec.PanelOuterPadding)
-                    .width(QuickToolsGridSpec.PanelWidth)
-                    .height(QuickToolsGridSpec.PanelHeight)
-                    .clip(RoundedCornerShape(QuickToolsGridSpec.PanelCornerRadius))
+                    .padding(layout.panelOuterPadding)
+                    .width(layout.panelWidth)
+                    .height(layout.panelHeight)
+                    .clip(MaterialTheme.componentShapes.quickToolsPanel)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { },
-                shape = RoundedCornerShape(QuickToolsGridSpec.PanelCornerRadius),
+                shape = MaterialTheme.componentShapes.quickToolsPanel,
                 color = panelColors.panelContainer,
                 contentColor = panelColors.onPanel,
-                tonalElevation = 0.dp,
-                shadowElevation = if (isDarkTheme) 10.dp else 14.dp
+                tonalElevation = MaterialTheme.elevations.quickToolsTonal,
+                shadowElevation = if (isDarkTheme) {
+                    MaterialTheme.elevations.quickToolsShadowDark
+                } else {
+                    MaterialTheme.elevations.quickToolsShadowLight
+                }
             ) {
                 QuickToolsGrid(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(QuickToolsGridSpec.PanelInnerPadding),
+                    contentPadding = PaddingValues(layout.panelInnerPadding),
+                    layout = layout,
                     types = enabledTypes,
                     mediaState = mediaState,
                     brightness = brightness,
@@ -385,6 +405,7 @@ private suspend fun handleQuickToolClick(
 private fun QuickToolsGrid(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
+    layout: QuickToolsLayoutMetrics,
     types: List<QuickToolType>,
     mediaState: QuickToolsMediaControllerState,
     brightness: Float,
@@ -406,8 +427,8 @@ private fun QuickToolsGrid(
         modifier = modifier,
         contentPadding = contentPadding,
         columns = GridCells.Fixed(QuickToolsGridSpec.Columns),
-        horizontalArrangement = Arrangement.spacedBy(QuickToolsGridSpec.ItemSpacing),
-        verticalArrangement = Arrangement.spacedBy(QuickToolsGridSpec.ItemSpacing)
+        horizontalArrangement = Arrangement.spacedBy(layout.itemSpacing),
+        verticalArrangement = Arrangement.spacedBy(layout.itemSpacing)
     ) {
         items(
             items = types,
@@ -417,7 +438,7 @@ private fun QuickToolsGrid(
             QuickToolGridItem(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(type.layoutSpan().itemHeight()),
+                    .height(type.layoutSpan().itemHeight(layout)),
                 type = type,
                 mediaState = mediaState,
                 brightness = brightness,
@@ -428,6 +449,7 @@ private fun QuickToolsGrid(
                 bluetoothEnabled = bluetoothEnabled,
                 muteEnabled = muteEnabled,
                 flashlightEnabled = flashlightEnabled,
+                compactButtonSize = layout.compactButtonSize,
                 onOpenPermission = onOpenPermission,
                 onBrightnessChange = onBrightnessChange,
                 onBrightnessAutoClick = onBrightnessAutoClick,
@@ -451,6 +473,7 @@ private fun QuickToolGridItem(
     bluetoothEnabled: Boolean,
     muteEnabled: Boolean,
     flashlightEnabled: Boolean,
+    compactButtonSize: Dp,
     onOpenPermission: () -> Unit,
     onBrightnessChange: (Float) -> Unit,
     onBrightnessAutoClick: () -> Unit,
@@ -489,7 +512,7 @@ private fun QuickToolGridItem(
         else -> QuickToolCircleButton(
             modifier = modifier,
             type = type,
-            buttonSize = QuickToolsGridSpec.CompactButtonSize,
+            buttonSize = compactButtonSize,
             colors = colors,
             active = when (type) {
                 QuickToolType.Flashlight -> flashlightEnabled
@@ -532,32 +555,36 @@ private fun CompactSliderRow(
     active: Boolean = false,
     onIconClick: (() -> Unit)? = null
 ) {
+    val dimensions = MaterialTheme.dimensions.quickTools
     val iconContainerColor = if (active) colors.primary else colors.primarySoft
     val iconTint = if (active) colors.onPrimary else colors.primary
     val click = onIconClick
     val iconModifier = if (click != null) {
         Modifier
-            .size(28.dp)
+            .size(dimensions.sliderIconContainerSize)
             .shapedClickable(CircleShape) {
                 click()
             }
     } else {
         Modifier
-            .size(28.dp)
+            .size(dimensions.sliderIconContainerSize)
             .clip(CircleShape)
     }
     Surface(
         modifier = modifier,
         color = colors.rowContainer,
         contentColor = colors.onPanel,
-        shape = RoundedCornerShape(18.dp)
+        shape = MaterialTheme.componentShapes.quickToolsSlider
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .padding(
+                    horizontal = dimensions.sliderHorizontalPadding,
+                    vertical = dimensions.sliderVerticalPadding
+                ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(dimensions.sliderContentGap)
         ) {
             Box(
                 modifier = iconModifier.background(iconContainerColor),
@@ -567,13 +594,13 @@ private fun CompactSliderRow(
                     imageVector = icon,
                     contentDescription = contentDescription,
                     tint = iconTint,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(dimensions.sliderIconSize)
                 )
             }
             MySlider(
                 modifier = Modifier
                     .weight(1f)
-                    .height(20.dp),
+                    .height(dimensions.sliderHeight),
                 value = value,
                 onValueChange = {
                     onValueChange(it)
@@ -590,6 +617,9 @@ private fun CompactMediaCard(
     onOpenPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = MaterialTheme.dimensions.quickTools
+    val appColors = MaterialTheme.appColors
+    val alpha = MaterialTheme.alpha
     val info = state.info
     val mediaText = remember(info.title, info.artist) {
         when {
@@ -600,14 +630,18 @@ private fun CompactMediaCard(
         }
     }
     val hasArtwork = info.artwork != null
-    val titleColor = if (hasArtwork) Color.White else colors.onPanel
-    val secondaryColor = if (hasArtwork) Color.White else colors.subText
-    val iconContainerColor = if (hasArtwork) Color.Black.copy(alpha = 0.54f) else colors.iconContainer
+    val titleColor = if (hasArtwork) appColors.fixedWhite else colors.onPanel
+    val secondaryColor = if (hasArtwork) appColors.fixedWhite else colors.subText
+    val iconContainerColor = if (hasArtwork) {
+        appColors.fixedBlack.copy(alpha = alpha.quickToolsArtworkIconContainer)
+    } else {
+        colors.iconContainer
+    }
     Surface(
         modifier = modifier,
         color = colors.mediaContainer,
         contentColor = colors.onPanel,
-        shape = RoundedCornerShape(20.dp)
+        shape = MaterialTheme.componentShapes.quickToolsMedia
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (hasArtwork) {
@@ -623,8 +657,12 @@ private fun CompactMediaCard(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Black.copy(alpha = 0.50f),
-                                    Color.Black.copy(alpha = 0.42f)
+                                    appColors.fixedBlack.copy(
+                                        alpha = alpha.quickToolsArtworkGradientStart
+                                    ),
+                                    appColors.fixedBlack.copy(
+                                        alpha = alpha.quickToolsArtworkGradientEnd
+                                    )
                                 )
                             )
                         )
@@ -634,28 +672,36 @@ private fun CompactMediaCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(
+                        horizontal = dimensions.mediaHorizontalPadding,
+                        vertical = dimensions.mediaVerticalPadding
+                    ),
+                verticalArrangement = Arrangement.spacedBy(dimensions.mediaContentGap)
             ) {
                 if (!info.permissionGranted) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(8.dp),
+                            .padding(dimensions.permissionOuterPadding),
                         contentAlignment = Alignment.Center
                     ) {
                         Surface(
-                            modifier = Modifier.shapedClickable(RoundedCornerShape(12.dp)) {
+                            modifier = Modifier.shapedClickable(
+                                MaterialTheme.componentShapes.quickToolsPermission
+                            ) {
                                 onOpenPermission()
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.componentShapes.quickToolsPermission,
                             color = colors.primary
                         ) {
                             Text(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = dimensions.permissionHorizontalPadding,
+                                    vertical = dimensions.permissionVerticalPadding
+                                ),
                                 text = stringResource(R.string.quick_tools_open_listener_settings),
                                 color = colors.onPrimary,
-                                fontSize = 12.sp,
+                                style = MaterialTheme.textStyles.quickToolsPermission,
                                 maxLines = 1,
                                 textAlign = TextAlign.Center
                             )
@@ -676,8 +722,7 @@ private fun CompactMediaCard(
                             .basicMarquee(iterations = Int.MAX_VALUE),
                         text = mediaText.ifBlank { stringResource(R.string.quick_tools_no_media) },
                         color = if (mediaText.isBlank()) secondaryColor else titleColor,
-                        fontSize = 15.sp,
-                        lineHeight = 16.sp,
+                        style = MaterialTheme.textStyles.quickToolsMedia,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
@@ -694,20 +739,26 @@ private fun CompactMediaCard(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.size(dimensions.mediaButtonSize),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CompactIconButton(
                                 imageVector = Icons.Default.SkipPrevious,
                                 contentDescription = stringResource(R.string.quick_tool_media_control),
                                 onClick = {
                                     state.skipPrevious()
                                 },
-                                size = 28.dp,
-                                iconSize = 16.dp,
+                                size = dimensions.mediaButtonSize,
+                                iconSize = dimensions.mediaIconSize,
                                 containerColor = iconContainerColor,
                                 iconTint = titleColor
                             )
                         }
-                        Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.size(dimensions.mediaPrimaryButtonSize),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
                                 shape = CircleShape,
@@ -725,20 +776,23 @@ private fun CompactMediaCard(
                                         imageVector = if (info.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                         contentDescription = stringResource(R.string.quick_tool_media_control),
                                         tint = colors.onPrimary,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(dimensions.mediaPrimaryIconSize)
                                     )
                                 }
                             }
                         }
-                        Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.size(dimensions.mediaButtonSize),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CompactIconButton(
                                 imageVector = Icons.Default.SkipNext,
                                 contentDescription = stringResource(R.string.quick_tool_media_control),
                                 onClick = {
                                     state.skipNext()
                                 },
-                                size = 28.dp,
-                                iconSize = 16.dp,
+                                size = dimensions.mediaButtonSize,
+                                iconSize = dimensions.mediaIconSize,
                                 containerColor = iconContainerColor,
                                 iconTint = titleColor
                             )
@@ -760,6 +814,7 @@ private fun QuickToolCircleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = MaterialTheme.dimensions.quickTools
     val isToggle = type.isToggleType()
     val containerColor = if (isToggle && active) colors.primary else colors.iconContainer
     val iconTint = if (isToggle && active) colors.onPrimary else colors.onPanel
@@ -779,7 +834,7 @@ private fun QuickToolCircleButton(
                     imageVector = quickToolIcon(type),
                     contentDescription = quickToolText(type),
                     tint = iconTint,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(dimensions.toolIconSize)
                 )
             }
         }
@@ -787,12 +842,12 @@ private fun QuickToolCircleButton(
             Box(
                 modifier = Modifier
                     .size(buttonSize)
-                    .padding(3.dp),
+                    .padding(dimensions.statusDotPadding),
                 contentAlignment = statusDotAlignment
             ) {
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(dimensions.statusDotSize)
                         .clip(CircleShape)
                         .background(colors.statusDot)
                 )
@@ -807,10 +862,10 @@ private fun CompactIconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 34.dp,
-    iconSize: Dp = 18.dp,
+    size: Dp,
+    iconSize: Dp,
     containerColor: Color = Color.Transparent,
-    iconTint: Color = Color.White
+    iconTint: Color
 ) {
     Box(
         modifier = modifier.size(size),
@@ -868,20 +923,21 @@ private data class QuickToolsPanelColors(
 
 private fun quickToolsPanelColors(
     colorScheme: ColorScheme,
-    isDarkTheme: Boolean
+    isDarkTheme: Boolean,
+    alpha: AppAlpha
 ): QuickToolsPanelColors {
     return if (isDarkTheme) {
         QuickToolsPanelColors(
-            panelContainer = colorScheme.surfaceContainer.copy(alpha = 0.96f),
-            rowContainer = colorScheme.surfaceContainerHighest.copy(alpha = 0.94f),
-            mediaContainer = colorScheme.surfaceContainerHighest.copy(alpha = 0.98f),
+            panelContainer = colorScheme.surfaceContainer.copy(alpha = alpha.quickToolsDarkPanel),
+            rowContainer = colorScheme.surfaceContainerHighest.copy(alpha = alpha.quickToolsDarkRow),
+            mediaContainer = colorScheme.surfaceContainerHighest.copy(alpha = alpha.quickToolsDarkMedia),
             iconContainer = colorScheme.surfaceContainerHigh,
             primary = colorScheme.primary,
-            primarySoft = colorScheme.primary.copy(alpha = 0.18f),
+            primarySoft = colorScheme.primary.copy(alpha = alpha.quickToolsDarkPrimarySoft),
             onPrimary = colorScheme.onPrimary,
             onPanel = colorScheme.onSurface,
             subText = colorScheme.onSurfaceVariant,
-            track = colorScheme.onSurface.copy(alpha = 0.14f),
+            track = colorScheme.onSurface.copy(alpha = alpha.quickToolsDarkTrack),
             statusDot = colorScheme.secondary
         )
     } else {
@@ -891,11 +947,11 @@ private fun quickToolsPanelColors(
             mediaContainer = colorScheme.surfaceContainerHigh,
             iconContainer = colorScheme.surfaceContainerHighest,
             primary = colorScheme.primary,
-            primarySoft = colorScheme.primary.copy(alpha = 0.12f),
+            primarySoft = colorScheme.primary.copy(alpha = alpha.quickToolsLightPrimarySoft),
             onPrimary = colorScheme.onPrimary,
             onPanel = colorScheme.onSurface,
             subText = colorScheme.onSurfaceVariant,
-            track = colorScheme.onSurface.copy(alpha = 0.12f),
+            track = colorScheme.onSurface.copy(alpha = alpha.quickToolsLightTrack),
             statusDot = colorScheme.secondary
         )
     }

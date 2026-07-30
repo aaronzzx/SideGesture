@@ -2,6 +2,7 @@ package com.aaron.sidegesture.ui.screen.actionpanelstyle.sector
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -14,7 +15,7 @@ import com.aaron.sidegesture.constant.GlobalSettings.MaxActionPanelItemSpacingRa
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelInitialRadiusRatio
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelItemSize
 import com.aaron.sidegesture.constant.GlobalSettings.MinActionPanelItemSpacingRatio
-import com.aaron.sidegesture.ui.theme.SectionPadding
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.MySection
 import com.aaron.sidegesture.ui.widget.MyTextSlider
@@ -51,7 +52,7 @@ fun SectorActionPanelStyleScreen(
                     )
                 }
                 MySection(
-                    modifier = Modifier.padding(top = SectionPadding),
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.layout.sectionSpacing),
                     title = stringResource(id = R.string.layout)
                 ) {
                     MyTextSlider(

@@ -11,7 +11,6 @@ import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -23,6 +22,7 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.QuickLauncherSettings
+import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.utils.JsonHelper
 import java.io.File
 import java.io.FileOutputStream
@@ -336,7 +336,7 @@ class QuickLauncherPanelTest {
         val scenario = ActivityScenario.launch(ComponentActivity::class.java)
         scenario.onActivity { activity ->
             activity.setContent {
-                MaterialTheme {
+                AppTheme(darkTheme = false, dynamicColor = false) {
                     QuickLauncherPanel(
                         state = state,
                         settings = settingsProvider(),

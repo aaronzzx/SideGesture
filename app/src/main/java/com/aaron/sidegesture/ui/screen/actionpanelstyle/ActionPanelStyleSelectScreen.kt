@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -35,10 +34,9 @@ import com.aaron.compose.ktx.onSingleClick
 import com.aaron.sidegesture.R
 import com.aaron.sidegesture.entity.ActionPanelStyles
 import com.aaron.sidegesture.ui.screen.actionpanelstyle.ActionPanelStyleSelectVM.ActionPanelStyleItem
-import com.aaron.sidegesture.ui.theme.ContentPaddingHorizontal
-import com.aaron.sidegesture.ui.theme.ContentPaddingVerticalWithSection
-import com.aaron.sidegesture.ui.theme.ItemPadding
-import com.aaron.sidegesture.ui.theme.MinItemHeightNoSecondary
+import com.aaron.sidegesture.ui.theme.alpha
+import com.aaron.sidegesture.ui.theme.componentShapes
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.widget.MyColumn
 import com.aaron.sidegesture.ui.widget.TopBar
 import kotlin.math.cos
@@ -60,7 +58,11 @@ fun ActionPanelStyleSelectScreen(
                 onBack = onBack,
                 title = stringResource(id = R.string.action_panel_style)
             )
-            MyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            MyColumn(
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.styleCard.listSpacing
+                )
+            ) {
                 uiState.items.forEach { item ->
                     ActionPanelStyleCard(
                         item = item,
@@ -85,17 +87,21 @@ private fun ActionPanelStyleCard(
     val borderColor = if (selected) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+        MaterialTheme.colorScheme.outline.copy(alpha = MaterialTheme.alpha.subtleBorder)
     }
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        MaterialTheme.colorScheme.primary.copy(alpha = MaterialTheme.alpha.subtleContainer)
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clipToBorder(width = 1.5.dp, color = borderColor, shape = shape)
+            .clipToBorder(
+                width = MaterialTheme.dimensions.styleCard.selectedBorderWidth,
+                color = borderColor,
+                shape = shape
+            )
             .onSingleClick { onClick() },
         shape = shape,
         color = containerColor
@@ -103,15 +109,17 @@ private fun ActionPanelStyleCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = MinItemHeightNoSecondary + 28.dp)
+                .heightIn(min = MaterialTheme.dimensions.styleCard.minHeight)
                 .padding(
-                    horizontal = ContentPaddingHorizontal,
-                    vertical = ContentPaddingVerticalWithSection
+                    horizontal = MaterialTheme.dimensions.layout.contentHorizontalPadding,
+                    vertical = MaterialTheme.dimensions.layout.contentVerticalPaddingWithSection
                 ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ItemPadding)
+            horizontalArrangement = Arrangement.spacedBy(
+                MaterialTheme.dimensions.listItem.contentGap
+            )
         ) {
-            Box(modifier = Modifier.size(80.dp)) {
+            Box(modifier = Modifier.size(MaterialTheme.dimensions.styleCard.previewSize)) {
                 when (item.type) {
                     ActionPanelStyles.TYPE_FOLDER -> FolderStylePreview(modifier = Modifier.fillMaxSize())
                     else -> SectorStylePreview(modifier = Modifier.fillMaxSize())
@@ -134,7 +142,9 @@ private fun ActionPanelStyleCard(
                     }
                 )
                 Text(
-                    modifier = Modifier.padding(top = 2.dp),
+                    modifier = Modifier.padding(
+                        top = MaterialTheme.dimensions.styleCard.subtitleTopPadding
+                    ),
                     text = stringResource(id = item.descriptionRes),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
@@ -146,17 +156,19 @@ private fun ActionPanelStyleCard(
             if (selected && item.hasSettings) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(MaterialTheme.dimensions.styleCard.radioSize)
                         .clipToBorder(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            width = MaterialTheme.dimensions.styleCard.radioBorderWidth,
+                            color = MaterialTheme.colorScheme.primary.copy(
+                                alpha = MaterialTheme.alpha.selectedIndicator
+                            ),
                             shape = CircleShape
                         )
                         .onSingleClick { onSettingsClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(MaterialTheme.dimensions.styleCard.editIconSize),
                         imageVector = Icons.Default.Settings,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
@@ -176,23 +188,35 @@ private fun FolderStylePreview(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .size(width = 58.dp, height = 44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(colorScheme.primary.copy(alpha = 0.16f))
-                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .size(
+                    width = MaterialTheme.dimensions.styleCard.actionPanelPreviewWidth,
+                    height = MaterialTheme.dimensions.styleCard.actionPanelPreviewHeight
+                )
+                .clip(MaterialTheme.componentShapes.stylePreview)
+                .background(
+                    colorScheme.primary.copy(alpha = MaterialTheme.alpha.previewContainer)
+                )
+                .padding(
+                    horizontal = MaterialTheme.dimensions.styleCard.previewHorizontalPadding,
+                    vertical = MaterialTheme.dimensions.styleCard.previewVerticalPadding
+                )
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(
+                    MaterialTheme.dimensions.styleCard.previewItemSpacing
+                )
             ) {
                 repeat(2) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(
+                            MaterialTheme.dimensions.styleCard.previewItemSpacing
+                        )
                     ) {
                         repeat(3) {
                             Box(
                                 modifier = Modifier
-                                    .size(8.dp)
+                                    .size(MaterialTheme.dimensions.styleCard.previewItemSize)
                                     .clip(CircleShape)
                                     .background(colorScheme.primary)
                             )
@@ -210,13 +234,14 @@ private fun SectorStylePreview(
 ) {
     PreviewStage(modifier = modifier) {
         val colorScheme = MaterialTheme.colorScheme
+        val itemRadius = MaterialTheme.dimensions.styleCard.previewItemRadius
         Canvas(modifier = Modifier.fillMaxSize()) {
             val color = colorScheme.primary
             val anchor = Offset(
                 x = -size.width * 0.08f,
                 y = size.height * 0.5f
             )
-            val itemRadius = 4.dp.toPx()
+            val itemRadiusPx = itemRadius.toPx()
             val innerArcRadius = size.minDimension * 0.37f
             val outerArcRadius = size.minDimension * 0.56f
 
@@ -231,7 +256,7 @@ private fun SectorStylePreview(
             fun drawItem(radius: Float, angleDegree: Float) {
                 drawCircle(
                     color = color,
-                    radius = itemRadius,
+                    radius = itemRadiusPx,
                     center = pointOnArc(radius, angleDegree)
                 )
             }
@@ -261,10 +286,12 @@ private fun PreviewStage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp)
+                .padding(MaterialTheme.dimensions.styleCard.previewBorderPadding)
                 .clipToBorder(
-                    width = 1.dp,
-                    color = colorScheme.outlineVariant.copy(alpha = 0.9f),
+                    width = MaterialTheme.dimensions.styleCard.radioBorderWidth,
+                    color = colorScheme.outlineVariant.copy(
+                        alpha = MaterialTheme.alpha.previewDivider
+                    ),
                     shape = MaterialTheme.shapes.small
                 ),
             content = content
