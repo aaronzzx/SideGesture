@@ -93,7 +93,7 @@ fun UpdateDialog(
                         start = dimensions.titlePadding,
                         end = dimensions.contentPadding / 2,
                         top = dimensions.contentPadding,
-                        bottom = MaterialTheme.dimensions.updateDialog.notesBottomPadding
+                        bottom = MaterialTheme.dimensions.updateDialog.titleBottomPadding
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {

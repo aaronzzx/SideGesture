@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -22,6 +23,8 @@ import com.aaron.sidegesture.entity.Action
 import com.aaron.sidegesture.entity.AppInfo
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.entity.global.QuickLauncherSettings
+import com.aaron.sidegesture.ui.theme.AppDimensions
+import com.aaron.sidegesture.ui.theme.QuickLauncherDimensions
 import com.aaron.sidegesture.ui.theme.generator.AppTheme
 import com.aaron.sidegesture.utils.JsonHelper
 import java.io.File
@@ -48,6 +51,7 @@ class QuickLauncherPanelTest {
         const val BACKGROUND_EDGE_OFFSET = 12
         const val PANEL_WIDTH_DP = 260f
         const val COMPACT_PANEL_WIDTH_DP = 140f
+        const val CUSTOM_DIMENSION_PANEL_WIDTH_DP = 276f
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -217,6 +221,51 @@ class QuickLauncherPanelTest {
     }
 
     @Test
+    fun themeDimensionsReflowCurrentSessionWhileSettingsStayFrozen() {
+        val items = (1..17).map(::createAppAction)
+        val state = QuickLauncherPanelState().apply {
+            show(items, Offset(120f, 320f), Position.Left)
+        }
+        val settings = mutableStateOf(QuickLauncherSettings())
+        val dimensions = mutableStateOf(AppDimensions())
+        val scenario = launchPanel(
+            state = state,
+            settingsProvider = { settings.value },
+            dimensionsProvider = { dimensions.value },
+            onLaunch = { _, _ -> }
+        )
+        try {
+            waitForPageDescription("第 1 页，共 2 页")
+
+            scenario.onActivity {
+                settings.value = QuickLauncherSettings(rows = 1, columns = 2)
+                dimensions.value = AppDimensions(
+                    quickLauncher = QuickLauncherDimensions(
+                        panelPadding = 20.dp,
+                        itemVerticalPadding = 2000.dp
+                    )
+                )
+            }
+
+            waitForPageDescription("第 1 页，共 5 页")
+            val expectedPanelWidth = (
+                CUSTOM_DIMENSION_PANEL_WIDTH_DP *
+                    instrumentation.targetContext.resources.displayMetrics.density
+            ).roundToInt()
+            val pagerBounds = waitForNodeBounds("reflowed horizontal pager") { node ->
+                if (!node.isScrollable) return@waitForNodeBounds false
+                val bounds = Rect().also(node::getBoundsInScreen)
+                bounds.width() in expectedPanelWidth - 1..expectedPanelWidth + 1
+            }
+
+            assertTrue(pagerBounds.width() in expectedPanelWidth - 1..expectedPanelWidth + 1)
+            assertFalse(hasContentDescription("第 1 页，共 9 页"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
     fun itemTapAndLongPressKeepExistingMiniWindowRule() {
         val action = createAppAction(index = 1, miniWindow = false)
         val launches = CopyOnWriteArrayList<Pair<Action, Boolean>>()
@@ -330,13 +379,18 @@ class QuickLauncherPanelTest {
         state: QuickLauncherPanelState,
         settings: QuickLauncherSettings = QuickLauncherSettings(),
         settingsProvider: () -> QuickLauncherSettings = { settings },
+        dimensionsProvider: () -> AppDimensions = { AppDimensions() },
         onLaunch: (Action, Boolean) -> Unit
     ): ActivityScenario<ComponentActivity> {
         instrumentation.uiAutomation.executeShellCommand("cmd statusbar collapse").close()
         val scenario = ActivityScenario.launch(ComponentActivity::class.java)
         scenario.onActivity { activity ->
             activity.setContent {
-                AppTheme(darkTheme = false, dynamicColor = false) {
+                AppTheme(
+                    darkTheme = false,
+                    dynamicColor = false,
+                    dimensions = dimensionsProvider()
+                ) {
                     QuickLauncherPanel(
                         state = state,
                         settings = settingsProvider(),

@@ -187,7 +187,11 @@ fun QuickToolsControlCenter(
                     systemBarInsets.getBottom(density)
                 ).toDp()
             }
-            val panelSize = remember(density) {
+            val panelSize = remember(
+                density,
+                layout.panelWidth,
+                layout.panelHeight
+            ) {
                 IntSize(
                     with(density) { layout.panelWidth.toPx().roundToInt() },
                     with(density) { layout.panelHeight.toPx().roundToInt() }

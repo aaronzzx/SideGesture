@@ -90,6 +90,7 @@ data class SliderDimensions(
     val bubbleVerticalPadding: Dp = 6.dp,
     val bubblePointerWidth: Dp = 12.dp,
     val bubblePointerHeight: Dp = 8.dp,
+    val bubbleCornerInset: Dp = 8.dp,
     val bubblePointerOverlap: Dp = 1.dp,
     val bubbleBodyToThumbClearance: Dp = 40.dp
 )
@@ -104,8 +105,7 @@ data class DialogDimensions(
     val optionBorderWidth: Dp = 1.dp,
     val progressWidth: Dp = 120.dp,
     val actionGap: Dp = 8.dp,
-    val previousAppsListHeight: Dp = 280.dp,
-    val compactBottomSpacing: Dp = 4.dp
+    val previousAppsListHeight: Dp = 280.dp
 )
 
 @Immutable
@@ -172,8 +172,7 @@ data class GestureAngleDimensions(
 
 @Immutable
 data class ColorPreviewDimensions(
-    val largeSize: Dp = 30.dp,
-    val smallSize: Dp = 20.dp,
+    val displaySize: Dp = 30.dp,
     val borderWidth: Dp = 1.dp,
     val miniWindowBorderWidth: Dp = 2.dp
 )
@@ -333,7 +332,7 @@ data class GestureAnimationDimensions(
 
 @Immutable
 data class UpdateDialogDimensions(
-    val notesBottomPadding: Dp = 4.dp,
+    val titleBottomPadding: Dp = 4.dp,
     val progressTrackHeight: Dp = 8.dp
 )
 

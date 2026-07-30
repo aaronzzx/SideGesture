@@ -2,15 +2,14 @@
 
 ## 当前状态／进度概览
 
-- 当前阶段：v1.6.1 已发布；Compose 视觉值主题化与 Debug 默认签名配置已实现并验证。
+- 当前阶段：v1.6.1 已发布；Compose 主题化提交的签名配置、手势拖动与动态布局漏项已修复并验证。
 - 进行中：无。
-- 阻塞：本轮主题与构建配置调整无阻塞。
+- 阻塞：本轮修复无阻塞。
 - 已知风险：API 23～25 的备份恢复 `java.nio.file` 兼容问题维持原决定，本轮不处理。
-- 下一步：按发布安排提交并集成本轮主题与构建配置改动。
+- 下一步：按发布安排提交并集成本轮审查修复。
 
 ## 已完成
 
-- [x] 2026-07-23：本轮需求开发完成后移除阶段性 SPEC 文档，并清理路线图中的失效链接和旧需求待办。
 - [x] 2026-07-23：补充 SPEC 生命周期规范，要求已完成并验证的需求在当次交付中删除对应 SPEC，同时保留未完成文档并同步长期约束与引用。
 - [x] 2026-07-24：修复手势角度设置页顶部切换入口和顶部角度画布被工具栏覆盖的问题，顶部入口与四个拖拽点统一避开工具栏实际高度，并补充顶部入口触摸和角度拖拽回归测试。
 - [x] 2026-07-24：修复线上 1.6.0 因 Shizuku UserService 包迁移后 keep 规则失效导致的全部 Shizuku 动作故障，为反射入口增加双重保留并补充 Release 配置回归测试；测试改用局部路径读取，消除 Android Studio 对测试类共享成员的错误解析；同步审计应用内反射、Manifest 组件和 R8 移除结果，未发现其他有效混淆缺陷。
@@ -20,10 +19,11 @@
 - [x] 2026-07-26：迁移到 Compose BOM `2026.06.00`，对齐 Kotlin `2.1.21` 和 AGP `8.6.1`，并将两个 FastCompose 依赖同步为 `main-SNAPSHOT`。
 - [x] 2026-07-26：FastCompose 推送后通过 JitPack 远端快照完成 SideGesture 单元测试、Debug 构建和依赖解析复验。
 - [x] 2026-07-30：将 Compose 尺寸、文字样式、组件形状、层级、动画、透明度和扩展颜色统一接入 `MaterialTheme` 语义 token，增加硬编码门禁与主题契约测试；Debug 构建恢复 Android 默认 Debug 签名，Release 签名仅在执行 Release 任务且配置完整时启用。
+- [x] 2026-07-30：将 Release APK／AAB 绑定到标准 Release signingConfig、保持 Debug 使用默认签名；同时修复手势角度快速拖动命中及首帧位移重复累计、主题 token 语义与浮层动态布局缓存漏项，并补齐主题重组和设备回归测试。
 
 ## 进行中
 
-无；本轮 Compose 主题 token 迁移与 Debug 默认签名配置已验证。
+无；本轮审查修复已验证。
 
 ## 待办
 
@@ -36,7 +36,6 @@
 
 ## 最近验证
 
-- 2026-07-23：Shizuku 服务通过无线调试正确启动后，此前的亮度测试失败未再复现，当前证据支持其属于测试环境前置条件问题而非产品代码回归；Shizuku 服务以 `shell` 用户运行、应用已授予 `API_V23` 且 `WRITE_SETTINGS` 保持 `default` 时，`QuickToolsBrightnessShizukuInstrumentedTest` 连续两轮强制冷启动均为 2／2 通过，共 4／4。测试覆盖亮度写入、自动模式切换、外部变化观察及停止／重启读回；结束后亮度恢复为 102、手动模式，权限状态保持不变，crash buffer 为空。结合此前结果，当前 49 项仪器测试有效结果为 49／49。
 - 2026-07-23：`AGENTS.md` 新增 SPEC 生命周期规范，明确需求实现并验证后当次删除对应 SPEC，整轮完成后清理剩余 SPEC、索引与空目录；删除前必须沉淀长期约束并清理引用，未完成或未验证的 SPEC 保留。该清理为严格限于 SPEC 的项目级预授权，不扩展到其他文件。
 - 2026-07-24：手势角度页顶部入口与拖拽区域修复通过真机 `MGFVB20402001742` 定向仪器测试 2／2，覆盖顶部入口实际触摸命中和顶部角度拖拽回调；`assembleDebug`、`assembleDebugAndroidTest` 与 `git diff --check` 通过。真机 UI 树确认顶部入口由工具栏覆盖区 `[0,0][1080,264]` 下移到 `[468,312][612,456]`，实触后成功切换到顶部角度；截图确认圆弧与四个拖拽点完整位于工具栏下方，crash buffer 为空。
 - 2026-07-24：线上 1.6.0 Shizuku 故障修复通过 Debug／Release 定向 JVM 测试各 2／2、`assembleDebug`、R8 `assembleRelease` 与产物审计；`ShizukuShellUserService` 在 mapping 中保持原名，无参构造、`execute()`、`destroy()` 及 AIDL Stub／Proxy 均被保留。Android 16／API 36 `Medium_Phone` 模拟器以修复后的 R8 APK 反射创建 UserService 成功，任务切换器最近任务查询返回 9 项且 `exitCode=0`，独立亮度查询返回 `102` 且 `exitCode=0`；应用内其他反射均指向系统／厂商类，Manifest 组件由 AGP 自动保留，未发现其他有效混淆缺陷。测试文件改用局部项目路径并直接读取目标源码后，Android Studio 的 4 个未解析引用和 3 个连带检查结果全部消失，仅保留专有名词 `Shizuku` 的拼写提示。
@@ -46,3 +45,4 @@
 - 2026-07-26：通过临时 Gradle 组合替换让 `main-SNAPSHOT` 坐标直接消费本地 FastCompose `compose` 与 `compose-accessibility`，`testDebugUnitTest assembleDebug` 成功；依赖解析确认 Compose UI 为 BOM `2026.06.00` 约束的 `1.11.3`。
 - 2026-07-26：JitPack 的代码提交构建 `main-bc4a9756a6-1` 与最终构建 `main-8b290e32b8-1` 状态均为 `ok`；不使用本地替换刷新依赖后，`testDebugUnitTest assembleDebug` 成功，依赖解析确认两个 FastCompose 模块均为最新 `main-SNAPSHOT:8b290e32b8-1`，Compose UI 仍由 BOM `2026.06.00` 对齐到 `1.11.3`。
 - 2026-07-30：主题硬编码门禁、签名配置和 QuickTools 布局定向 JVM 测试 5／5 通过；`assembleDebug` 与 `assembleDebugAndroidTest` 通过；实体机 `MGFVB20402001742`（HLK-AL00）定向 `AppThemeContractTest` 1／1 通过。`apksigner verify --print-certs` 确认 `app-debug.apk` 证书主体为 `C=US, O=Android, CN=Android Debug`。
+- 2026-07-30：最终 JVM 测试 123／123 通过，受影响功能定向仪器测试 17／17 通过，审查修正后的手势角度测试再跑 2／2 通过，crash buffer 为空；`assembleDebug`、`assembleDebugAndroidTest`、`assembleRelease`、`bundleRelease`、R8 与 Release Lint Vital 均通过。Release APK／AAB 直接绑定标准 Release signingConfig，Debug 不覆盖默认签名；无 Release 凭据的临时副本中 Debug 签名校验通过，Release APK 在 `packageRelease`、AAB 在 `signReleaseBundle` 由 AGP 按预期阻止。Debug APK 使用 Android Debug 证书，Release APK 使用正式证书 `c586e71b4db31b5444eced408742c58884324804c105a8a9f8f09ddf265e609d`，AAB 签名校验通过；完整 Lint 与父提交保持相同的 35 个 Error、91 个 Warning、7 个 Information，未新增问题，`git diff --check` 通过。

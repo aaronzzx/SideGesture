@@ -1,9 +1,11 @@
 package com.aaron.sidegesture.ui.screen.gestureangles
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -12,10 +14,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aaron.sidegesture.entity.GestureAngles
 import com.aaron.sidegesture.entity.Position
 import com.aaron.sidegesture.ui.screen.gestureangles.GestureAnglesVM.UiState
+import com.aaron.sidegesture.ui.theme.dimensions
 import com.aaron.sidegesture.ui.theme.generator.AppTheme
+import kotlin.math.atan
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -66,7 +71,7 @@ class GestureAnglesScreenTest {
     }
 
     @Test
-    fun topAngleHandleRespondsToDrag() {
+    fun topAngleHandleRespondsWhenFirstDragMoveLeavesHandleBounds() {
         var uiState by mutableStateOf(
             UiState(
                 angle = GestureAngles().top,
@@ -74,10 +79,15 @@ class GestureAnglesScreenTest {
             )
         )
         var changeCount = 0
+        var handleRadiusPx = 0f
         val originalP1 = uiState.angle.p1
+        var expectedP1 = originalP1
 
         composeTestRule.setContent {
             AppTheme(darkTheme = false, dynamicColor = false) {
+                handleRadiusPx = with(LocalDensity.current) {
+                    MaterialTheme.dimensions.gestureAngles.topEdgeIndicatorRadius.toPx()
+                }
                 GestureAnglesContent(
                     uiState = uiState,
                     onBack = {},
@@ -106,13 +116,22 @@ class GestureAnglesScreenTest {
                     x = width / 2f - neighbor,
                     y = opposite
                 )
+                val fastFirstMove = Offset(
+                    x = handleRadiusPx * 1.5f,
+                    y = handleRadiusPx * 1.5f
+                )
+                val target = handle + fastFirstMove
+                expectedP1 = Math.toDegrees(
+                    atan(target.y / (width / 2f - target.x)).toDouble()
+                ).toFloat() / 180f
                 down(handle)
-                moveTo(handle + Offset(20f, 40f))
+                moveTo(target)
                 up()
             }
         composeTestRule.waitForIdle()
 
         assertTrue("top handle drag must emit an angle change", changeCount > 0)
         assertNotEquals(originalP1, uiState.angle.p1)
+        assertEquals(expectedP1, uiState.angle.p1, 0.01f)
     }
 }

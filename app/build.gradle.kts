@@ -6,16 +6,6 @@ val releaseSigningProperties = Properties().apply {
         localPropertiesFile.inputStream().use(::load)
     }
 }
-val releaseSigningPropertyNames = listOf(
-    "STORE_FILE_NAME",
-    "KEYSTORE_PASSWORD",
-    "STORE_ALIAS",
-    "KEY_PASSWORD"
-)
-val hasReleaseSigningProperties = releaseSigningPropertyNames.all {
-    !releaseSigningProperties.getProperty(it).isNullOrBlank()
-}
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -41,13 +31,13 @@ android {
         }
     }
     signingConfigs {
-        if (hasReleaseSigningProperties) {
-            register("release") {
-                storeFile = file(releaseSigningProperties.getProperty("STORE_FILE_NAME"))
-                storePassword = releaseSigningProperties.getProperty("KEYSTORE_PASSWORD")
-                keyAlias = releaseSigningProperties.getProperty("STORE_ALIAS")
-                keyPassword = releaseSigningProperties.getProperty("KEY_PASSWORD")
-            }
+        register("release") {
+            storeFile = releaseSigningProperties.getProperty("STORE_FILE_NAME")
+                ?.takeIf { it.isNotBlank() }
+                ?.let { file(it) }
+            storePassword = releaseSigningProperties.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = releaseSigningProperties.getProperty("STORE_ALIAS")
+            keyPassword = releaseSigningProperties.getProperty("KEY_PASSWORD")
         }
     }
     buildTypes {
@@ -58,9 +48,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfigs.findByName("release")?.let {
-                signingConfig = it
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".dev"
@@ -93,19 +81,6 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-    }
-}
-
-gradle.taskGraph.whenReady {
-    val releasePackageRequested = allTasks.any { task ->
-        task.name == "assembleRelease" ||
-            task.name == "bundleRelease" ||
-            task.name == "packageRelease"
-    }
-    if (releasePackageRequested && !hasReleaseSigningProperties) {
-        throw GradleException(
-            "Release 打包缺少签名配置：${releaseSigningPropertyNames.joinToString()}"
-        )
     }
 }
 

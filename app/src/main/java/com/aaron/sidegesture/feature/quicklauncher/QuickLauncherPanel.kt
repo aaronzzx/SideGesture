@@ -149,35 +149,81 @@ fun QuickLauncherPanel(
             val availableWidth = containerWidthPx - safeLeft - safeRight
             val availableHeight = containerHeightPx - safeTop - safeBottom
             val sessionSettings = remember(state.sessionId) { currentSettings }
-            val horizontalLayout = remember(state.sessionId) {
+            val requestedIconSizePx = with(density) {
+                sessionSettings.iconSizeDp.dp.toPx()
+            }
+            val itemHorizontalPaddingPx = with(density) {
+                dimensions.itemHorizontalPadding.toPx()
+            }
+            val horizontalSpacingPx = with(density) {
+                dimensions.gridHorizontalSpacing.toPx()
+            }
+            val panelPaddingPx = with(density) {
+                dimensions.panelPadding.toPx()
+            }
+            val horizontalLayout = remember(
+                state.sessionId,
+                sessionSettings.columns,
+                requestedIconSizePx,
+                availableWidth,
+                itemHorizontalPaddingPx,
+                horizontalSpacingPx,
+                panelPaddingPx
+            ) {
                 calculateQuickLauncherHorizontalLayout(
                     columns = sessionSettings.columns,
-                    requestedIconSize = with(density) { sessionSettings.iconSizeDp.dp.toPx() },
+                    requestedIconSize = requestedIconSizePx,
                     availableWidth = availableWidth,
-                    itemHorizontalPadding = with(density) { dimensions.itemHorizontalPadding.toPx() },
-                    itemSpacing = with(density) { dimensions.gridHorizontalSpacing.toPx() },
-                    contentPadding = with(density) { dimensions.panelPadding.toPx() }
+                    itemHorizontalPadding = itemHorizontalPaddingPx,
+                    itemSpacing = horizontalSpacingPx,
+                    contentPadding = panelPaddingPx
                 )
             }
             val panelWidthPx = horizontalLayout.panelWidth
             val textSize = sessionSettings.textSizeSp.sp
             val labelLineHeight = (sessionSettings.textSizeSp + 3).sp
+            val itemVerticalPaddingPx = with(density) {
+                dimensions.itemVerticalPadding.toPx()
+            }
+            val itemLabelTopPaddingPx = with(density) {
+                dimensions.itemLabelTopPadding.toPx()
+            }
             val itemHeightPx = with(density) {
                 horizontalLayout.iconSize +
-                    dimensions.itemVerticalPadding.toPx() * 2f +
-                    dimensions.itemLabelTopPadding.toPx() +
+                    itemVerticalPaddingPx * 2f +
+                    itemLabelTopPaddingPx +
                     labelLineHeight.toPx()
             }
-            val pageLayout = remember(state.sessionId) {
+            val verticalSpacingPx = with(density) {
+                dimensions.gridVerticalSpacing.toPx()
+            }
+            val indicatorHeightPx = with(density) {
+                dimensions.pageIndicatorSize.toPx()
+            }
+            val indicatorSpacingPx = with(density) {
+                dimensions.pageIndicatorSpacing.toPx()
+            }
+            val pageLayout = remember(
+                state.sessionId,
+                state.items.size,
+                availableHeight,
+                itemHeightPx,
+                verticalSpacingPx,
+                panelPaddingPx,
+                indicatorHeightPx,
+                indicatorSpacingPx,
+                sessionSettings.columns,
+                sessionSettings.rows
+            ) {
                 calculateQuickLauncherPageLayout(
                     itemCount = state.items.size,
                     availableHeight = availableHeight,
                     maxPanelHeight = availableHeight,
                     itemHeight = itemHeightPx,
-                    rowSpacing = with(density) { dimensions.gridVerticalSpacing.toPx() },
-                    contentPadding = with(density) { dimensions.panelPadding.toPx() },
-                    indicatorHeight = with(density) { dimensions.pageIndicatorSize.toPx() },
-                    indicatorSpacing = with(density) { dimensions.pageIndicatorSpacing.toPx() },
+                    rowSpacing = verticalSpacingPx,
+                    contentPadding = panelPaddingPx,
+                    indicatorHeight = indicatorHeightPx,
+                    indicatorSpacing = indicatorSpacingPx,
                     columns = sessionSettings.columns,
                     maxRows = sessionSettings.rows
                 )
@@ -185,7 +231,7 @@ fun QuickLauncherPanel(
             val pages = remember(state.sessionId, pageLayout.itemsPerPage) {
                 buildQuickLauncherPages(state.items, pageLayout.itemsPerPage)
             }
-            val pagerState = remember(state.sessionId) {
+            val pagerState = remember(state.sessionId, pageLayout.itemsPerPage) {
                 PagerState(currentPage = 0) { pages.size }
             }
             val itemHeight = with(density) { itemHeightPx.toDp() }
@@ -194,7 +240,7 @@ fun QuickLauncherPanel(
             val panelHeight = with(density) { pageLayout.panelHeight.toDp() }
 
             val panelOffset = remember(
-                maxWidth, maxHeight,
+                containerWidthPx, containerHeightPx,
                 state.fingerAnchor, state.triggerEdge,
                 safeLeft, safeTop, safeRight, safeBottom,
                 panelWidthPx, pageLayout.panelHeight

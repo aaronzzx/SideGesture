@@ -7,22 +7,46 @@ import org.junit.Test
 
 class SigningConfigurationTest {
 
+    private val buildScript = File(projectRoot(), "app/build.gradle.kts").readText()
+
     @Test
-    fun debugConfigurationDoesNotRequireReleaseSigningProperties() {
-        val projectRoot = generateSequence(
-            File(requireNotNull(System.getProperty("user.dir")))
-        ) {
-            it.parentFile
-        }.first { File(it, "app/build.gradle.kts").isFile }
-        val buildScript = File(projectRoot, "app/build.gradle.kts").readText()
+    fun releaseBuildUsesReleaseSigningConfiguration() {
+        assertTrue(buildScript.contains("""register("release")"""))
+        assertTrue(
+            buildScript.contains(
+                """signingConfig = signingConfigs.getByName("release")"""
+            )
+        )
+        listOf(
+            "STORE_FILE_NAME",
+            "KEYSTORE_PASSWORD",
+            "STORE_ALIAS",
+            "KEY_PASSWORD"
+        ).forEach { propertyName ->
+            assertTrue(buildScript.contains("""getProperty("$propertyName")"""))
+        }
+    }
+
+    @Test
+    fun debugBuildUsesDefaultDebugSigningConfiguration() {
         val debugBlock = requireNotNull(
             Regex(
                 """debug\s*\{([\s\S]*?)\n\s{8}\}"""
             ).find(buildScript)
         ).groupValues[1]
 
-        assertTrue(buildScript.contains("if (hasReleaseSigningProperties)"))
-        assertTrue(buildScript.contains("releasePackageRequested && !hasReleaseSigningProperties"))
         assertFalse(debugBlock.contains("signingConfig"))
+        assertFalse(buildScript.contains("validateReleaseSigning"))
+        assertFalse(buildScript.contains("verifyReleaseSigningTaskGraph"))
+    }
+
+    companion object {
+        private fun projectRoot(): File {
+            return generateSequence(
+                File(requireNotNull(System.getProperty("user.dir")))
+            ) {
+                it.parentFile
+            }.first { File(it, "app/build.gradle.kts").isFile }
+        }
     }
 }

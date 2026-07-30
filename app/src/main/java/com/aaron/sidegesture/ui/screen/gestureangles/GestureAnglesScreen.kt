@@ -268,16 +268,17 @@ private fun AdjustAngle(
                 var dragOffset = Offset.Zero
                 var property: KProperty0<Float>? = null
                 detectDragGestures(
-                    onDragStart = { offset ->
-                        dragOffset = offset
-                        // 找到手指按住的那个拖拽触点
+                    orientationLock = null,
+                    onDragStart = { down, slopTriggerChange, overSlopOffset ->
+                        dragOffset = slopTriggerChange.position - overSlopOffset
+                        // 根据真实按下点锁定拖拽触点，避免越过 touch slop 后触点已移出命中范围
                         val p = curAngle.ps.find { p ->
                             val index = curAngle.ps.indexOf(p)
                             val degree = curAngle.getDegree(index)
                             // 计算触点坐标
                             val pOffset = calcDragHandleOffset(curPosition, circleCenter, circleRadius, degree)
                             val bounds = Rect(center = pOffset, radius = dragHandleRadius.toPx())
-                            bounds.contains(offset)
+                            bounds.contains(down.position)
                         }
                         property = curAngle.getKProperty(p)
                     },

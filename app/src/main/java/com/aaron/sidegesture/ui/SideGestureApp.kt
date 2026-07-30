@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -18,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -73,7 +75,9 @@ import com.aaron.sidegesture.ui.screen.miniwindowsettings.MiniWindowSettingsScre
 import com.aaron.sidegesture.ui.screen.quicklauncher.QuickLauncherSettingsScreen
 import com.aaron.sidegesture.ui.screen.quicktools.QuickToolsSettingsScreen
 import com.aaron.sidegesture.ui.screen.unlock.UnlockScreen
+import com.aaron.sidegesture.ui.theme.AppMotion
 import com.aaron.sidegesture.ui.theme.SideGestureTheme
+import com.aaron.sidegesture.ui.theme.motion
 import com.aaron.sidegesture.feature.update.ui.NotificationPermissionDialog
 import com.aaron.sidegesture.feature.update.ui.UpdateDialog
 import com.aaron.sidegesture.feature.update.ui.UpdateVM
@@ -93,7 +97,7 @@ import kotlin.reflect.KType
 fun SideGestureApp() {
     SideGestureTheme {
         val navController = rememberNavController()
-        val durationMs = ANIMATION_DURATION_MS
+        val navigationSpec = createNavigationAnimationSpec(MaterialTheme.motion)
         val updateVm: UpdateVM = viewModel()
         LaunchedEffect(Unit) {
             updateVm.checkOnLaunch()
@@ -106,16 +110,16 @@ fun SideGestureApp() {
                 navController = navController,
                 startDestination = Home,
                 enterTransition = {
-                    slideInHorizontally(animationSpec = tween(durationMs)) { it }
+                    slideInHorizontally(animationSpec = navigationSpec) { it }
                 },
                 exitTransition = {
-                    slideOutHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+                    slideOutHorizontally(animationSpec = navigationSpec) { -it / 3 }
                 },
                 popEnterTransition = {
-                    slideInHorizontally(animationSpec = tween(durationMs)) { -it / 3 }
+                    slideInHorizontally(animationSpec = navigationSpec) { -it / 3 }
                 },
                 popExitTransition = {
-                    slideOutHorizontally(animationSpec = tween(durationMs)) { it }
+                    slideOutHorizontally(animationSpec = navigationSpec) { it }
                 }
             ) {
                 myComposable<Home> {
@@ -340,4 +344,6 @@ private inline fun <reified T : Any> NavGraphBuilder.myComposable(
     }
 }
 
-private const val ANIMATION_DURATION_MS = 400
+fun createNavigationAnimationSpec(motion: AppMotion): TweenSpec<IntOffset> {
+    return tween(durationMillis = motion.navigationDurationMillis)
+}

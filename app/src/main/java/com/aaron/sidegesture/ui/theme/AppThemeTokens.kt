@@ -72,6 +72,7 @@ data class AppMotion(
     val settingsContentPlacementStiffness: Float = Spring.StiffnessMediumLow,
     val overlayVisibilityStiffness: Float = Spring.StiffnessMedium,
     val actionPanelPlacementStiffness: Float = Spring.StiffnessHigh,
+    val actionPanelMiniWindowResizeStiffness: Float = 5000f,
     val actionPanelSelectionStiffness: Float = Spring.StiffnessHigh,
     val moveScreenPopupStiffness: Float = Spring.StiffnessHigh,
     val actionPanelSecondaryEnterScale: Float = 0.90f,

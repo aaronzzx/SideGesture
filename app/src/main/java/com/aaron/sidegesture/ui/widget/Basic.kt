@@ -722,7 +722,7 @@ private fun SliderValueBubble(
             bodyWidthPx = bodyPlaceable.width,
             pointerCenterInBodyPx = placement.pointerCenterInBodyPx,
             pointerWidthPx = pointerWidthPx,
-            cornerInsetPx = sliderDimensions.bubblePointerHeight.roundToPx()
+            cornerInsetPx = sliderDimensions.bubbleCornerInset.roundToPx()
         )
         val pointerPlaceable = subcompose(SliderBubbleSlot.Pointer) {
             Canvas(modifier = Modifier) {
@@ -998,15 +998,15 @@ fun MyColorDisplay(
     Box(
         modifier = modifier
             .defaultMinSize(
-                minWidth = MaterialTheme.dimensions.listItem.colorDisplaySize,
-                minHeight = MaterialTheme.dimensions.listItem.colorDisplaySize
+                minWidth = MaterialTheme.dimensions.colorPreview.displaySize,
+                minHeight = MaterialTheme.dimensions.colorPreview.displaySize
             )
             .background(
                 color = color,
                 shape = CircleShape
             )
             .border(
-                width = MaterialTheme.dimensions.listItem.colorDisplayBorderWidth,
+                width = MaterialTheme.dimensions.colorPreview.borderWidth,
                 color = MaterialTheme.colorScheme.outlineVariant,
                 shape = CircleShape
             )

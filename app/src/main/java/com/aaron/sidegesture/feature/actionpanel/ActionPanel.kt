@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState.Visible
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -67,6 +68,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
@@ -98,6 +100,8 @@ import com.aaron.sidegesture.ktx.toIntOffset
 import com.aaron.sidegesture.ktx.tryVibrateForActionPanel
 import com.aaron.sidegesture.utils.JsonHelper
 import com.aaron.sidegesture.ktx.wechatColor
+import com.aaron.sidegesture.ui.theme.ActionPanelDimensions
+import com.aaron.sidegesture.ui.theme.AppMotion
 import com.aaron.sidegesture.ui.theme.alpha
 import com.aaron.sidegesture.ui.theme.appColors
 import com.aaron.sidegesture.ui.theme.componentShapes
@@ -134,6 +138,12 @@ fun ActionPanel(
     val dimensions = MaterialTheme.dimensions
     val appColors = MaterialTheme.appColors
     val motion = MaterialTheme.motion
+    val density = LocalDensity.current
+    val labelShadow = actionPanelTextShadow(
+        dimensions = dimensions.actionPanel,
+        density = density,
+        color = appColors.fixedBlack
+    )
     AnimatedVisibility(
         modifier = modifier,
         visible = actionPanelState.visible,
@@ -175,7 +185,7 @@ fun ActionPanel(
                                 val miniWindow = actionPanelState.isMiniWindow(longPressLaunchPopup)
                                 val maxWidth = this@BoxWithConstraints.maxWidth
                                 val maxHeight = this@BoxWithConstraints.maxHeight
-                                val spec = spring<Dp>(stiffness = 5000f)
+                                val spec = actionPanelMiniWindowAnimationSpec(motion)
                                 val width by animateDpAsState(
                                     targetValue = when (miniWindow) {
                                         true -> dimensions.actionPanel.miniWindowSize
@@ -243,20 +253,31 @@ fun ActionPanel(
                 Text(
                     text = selectedLabel,
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        shadow = Shadow(
-                            color = appColors.fixedBlack,
-                            offset = Offset(
-                                dimensions.actionPanel.textShadowOffset.value,
-                                dimensions.actionPanel.textShadowOffset.value
-                            ),
-                            blurRadius = dimensions.actionPanel.textShadowBlurRadius.value
-                        )
+                        shadow = labelShadow
                     ),
                     color = appColors.fixedWhite
                 )
             }
         }
     }
+}
+
+fun actionPanelMiniWindowAnimationSpec(motion: AppMotion): SpringSpec<Dp> {
+    return spring(stiffness = motion.actionPanelMiniWindowResizeStiffness)
+}
+
+fun actionPanelTextShadow(
+    dimensions: ActionPanelDimensions,
+    density: Density,
+    color: Color
+): Shadow {
+    val offsetPx = with(density) { dimensions.textShadowOffset.toPx() }
+    val blurRadiusPx = with(density) { dimensions.textShadowBlurRadius.toPx() }
+    return Shadow(
+        color = color,
+        offset = Offset(offsetPx, offsetPx),
+        blurRadius = blurRadiusPx
+    )
 }
 
 private const val FolderAutoScrollFrameDelayMs = 16L
@@ -1342,6 +1363,7 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
     modifier: Modifier = Modifier,
     vibrations: Vibrations? = null
 ) {
+    val density = LocalDensity.current
     val motion = MaterialTheme.motion
     val itemSize = actionPanelStyle.itemSize.toDp()
     // 斜边，从origin原点到item中心的距离，值越大item散得越开
@@ -1372,13 +1394,10 @@ private fun AnimatedVisibilityScope.ArcActionPanel(
             Text(
                 text = selectedLabel,
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    shadow = Shadow(
-                        color = MaterialTheme.appColors.fixedBlack,
-                        offset = Offset(
-                            MaterialTheme.dimensions.actionPanel.textShadowOffset.value,
-                            MaterialTheme.dimensions.actionPanel.textShadowOffset.value
-                        ),
-                        blurRadius = MaterialTheme.dimensions.actionPanel.textShadowBlurRadius.value
+                    shadow = actionPanelTextShadow(
+                        dimensions = MaterialTheme.dimensions.actionPanel,
+                        density = density,
+                        color = MaterialTheme.appColors.fixedBlack
                     )
                 ),
                 color = MaterialTheme.appColors.fixedWhite
