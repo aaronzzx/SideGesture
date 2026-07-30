@@ -72,6 +72,13 @@ Windows：.\gradlew.bat assembleDebug
 - 用户配置通过 DataStore 持久化，文件名集中在 `DataStoreFiles.kt`。
 - Release 构建启用混淆，反射、序列化、无障碍相关类改动需检查 `app/proguard-rules.pro`。
 
+## Java／Kotlin 代码风格
+
+- Kotlin 类成员顺序：`companion object` → 字段 → `init` 和次构造函数 → 函数 → 内部类。主构造函数保留在类声明处。
+- Java 类成员顺序：静态字段和静态函数 → 实例字段 → 构造函数 → 实例函数 → 内部类。
+- Android 主模块（例如 `app` 模块）中的 Kotlin 代码禁止使用 `internal`，根据作用域改用 `private`、`protected` 或默认的 `public`。
+- 库模块等非主模块不受此限制，可以根据模块封装边界使用 `internal`。
+
 ## 修改规则
 
 - `app` 模块禁止使用 `internal` 可见性修饰符，类、构造函数、函数、对象和数据类统一使用默认 `public` 可见性。
